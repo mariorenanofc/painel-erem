@@ -1,65 +1,201 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { useState, useEffect } from "react";
+import Header from "./components/Header";
+import SearchFilter from "./components/SearchFilter";
+import StudentModal from "./components/StudentModal";
+import StudentTable from "./components/StudentTable";
+import LoginScreen from "./components/LoginScreen";
+import { formatarDataInput } from "@/utils/formatters";
+import { Aluno } from "@/types";
+
+const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL as string;  
+
+export default function DashboardAlunos() {
+  // === ESTADOS DE LOGIN ===
+  const [usuarioLogado, setUsuarioLogado] = useState<string | null>(null);
+  const [verificandoSessao, setVerificandoSessao] = useState(true);
+
+  // === ESTADOS DO SISTEMA ===
+  const [alunos, setAlunos] = useState<Aluno[]>([]);
+  const [carregando, setCarregando] = useState(false);
+  const [turmaSelecionada, setTurmaSelecionada] = useState("");
+  const [busca, setBusca] = useState("");
+
+  const [modalAberto, setModalAberto] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [salvando, setSalvando] = useState(false);
+
+  const [formData, setFormData] = useState({
+    matricula: "",
+    nome: "",
+    dataNasc: "",
+    email: "",
+    turma: "",
+    obs: "",
+  });
+
+  // 1. Ao abrir o site, verifica se já tem login salvo no navegador
+  useEffect(() => {
+    const usuarioSalvo = localStorage.getItem("usuarioLogado");
+    if (usuarioSalvo) {
+      setUsuarioLogado(usuarioSalvo);
+    }
+    setVerificandoSessao(false);
+  }, []);
+
+  // 2. Quando o usuário loga com sucesso, carrega a lista de alunos
+  useEffect(() => {
+    if (usuarioLogado) {
+      carregarAlunos();
+    }
+  }, [usuarioLogado]);
+
+  // Função para deslogar
+  const fazerLogout = () => {
+    localStorage.removeItem("usuarioLogado");
+    setUsuarioLogado(null);
+    setAlunos([]); // Limpa a tabela da memória por segurança
+  };
+
+  const carregarAlunos = async () => {
+    try {
+      setCarregando(true);
+      const res = await fetch(GOOGLE_API_URL);
+      const data = await res.json();
+      setAlunos(data);
+    } catch (error) {
+      console.error("Erro:", error);
+      alert("⚠️ Erro ao carregar os alunos da base de dados.");
+    } finally {
+      setCarregando(false);
+    }
+  };
+
+  const alunosFiltrados = alunos.filter((aluno) => {
+    const matchTurma =
+      turmaSelecionada === "" || aluno.turma === turmaSelecionada;
+    const matchBusca =
+      busca === "" ||
+      aluno.nome.toLowerCase().includes(busca.toLowerCase()) ||
+      aluno.matricula.includes(busca);
+    return matchTurma && matchBusca;
+  });
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const abrirModalNovo = () => {
+    setFormData({
+      matricula: "",
+      nome: "",
+      dataNasc: "",
+      email: "",
+      turma: "",
+      obs: "",
+    });
+    setIsEditing(false);
+    setModalAberto(true);
+  };
+
+  const preencherEdicao = (aluno: Aluno) => {
+    setFormData({
+      matricula: aluno.matricula,
+      nome: aluno.nome,
+      dataNasc: formatarDataInput(aluno.dataNasc),
+      email: aluno.email,
+      turma: aluno.turma,
+      obs: aluno.obs,
+    });
+    setIsEditing(true);
+    setModalAberto(true);
+  };
+
+  const salvarAluno = async () => {
+    if (!formData.matricula || !formData.nome || !formData.turma) {
+      alert("⚠️ Matrícula, Nome e Turma são obrigatórios!");
+      return;
+    }
+
+    setSalvando(true);
+
+    try {
+      const res = await fetch(GOOGLE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "salvar_aluno", // Avisa a API que é pra salvar aluno
+          ...formData,
+        }),
+      });
+
+      const resposta = await res.json();
+      if (resposta.status === "sucesso") {
+        alert("✅ Aluno salvo com sucesso!");
+        setModalAberto(false);
+        carregarAlunos();
+      } else {
+        alert("❌ Erro: " + resposta.mensagem);
+      }
+    } catch {
+      alert("🔌 Erro de conexão. Verifique sua internet.");
+    } finally {
+      setSalvando(false);
+    }
+  };
+
+  // Enquanto lê o navegador, não mostra nada
+  if (verificandoSessao)
+    return <div className="min-h-screen bg-slate-100"></div>;
+
+  // Se NÃO tiver logado, mostra a tela de Login
+  if (!usuarioLogado) {
+    return (
+      <LoginScreen
+        onLoginSuccess={(nome) => setUsuarioLogado(nome)}
+        apiUrl={GOOGLE_API_URL}
+      />
+    );
+  }
+
+  // Se tiver logado, mostra o Painel
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans">
+      <Header
+        carregando={carregando}
+        nomeUsuario={usuarioLogado}
+        onLogout={fazerLogout}
+      />
+
+      <SearchFilter
+        turmaSelecionada={turmaSelecionada}
+        setTurmaSelecionada={setTurmaSelecionada}
+        busca={busca}
+        setBusca={setBusca}
+        abrirModalNovoAluno={abrirModalNovo}
+      />
+
+      <StudentTable
+        alunosFiltrados={alunosFiltrados}
+        preencherEdicao={preencherEdicao}
+      />
+
+      <StudentModal
+        isOpen={modalAberto}
+        onClose={() => setModalAberto(false)}
+        formData={formData}
+        handleChange={handleChange}
+        salvarAluno={salvarAluno}
+        salvando={salvando}
+        isEditing={isEditing}
+      />
     </div>
   );
 }
+
+
+
+//Codigo de implantação: AKfycbxwSFpmHe6QV-czUhJMTBOoXbZGulchb8QrUvgRhS_HGA6VPusBPbwslxsou8IwOTDonQ

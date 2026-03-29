@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🏫 Painel de Gestão Escolar - EREM Barão do Exu
 
-## Getting Started
+Um sistema web responsivo e moderno desenvolvido para facilitar o gerenciamento de alunos da EREM Barão do Exu. A aplicação utiliza o **Google Sheets** como banco de dados dinâmico, garantindo custo zero de infraestrutura e facilidade de manutenção para a coordenação da escola.
 
-First, run the development server:
+## ✨ Funcionalidades
 
+- **Autenticação Segura:** Sistema de login validado diretamente no banco de dados.
+- **Leitura em Tempo Real:** Listagem completa de alunos carregada instantaneamente da base central.
+- **Filtros e Busca:** Pesquisa global por Nome ou Matrícula e filtro dinâmico por Turmas.
+- **Sistema de Cadastro/Edição (CRUD):** Modal intuitivo para adicionar novos alunos ou atualizar dados existentes, com travas de segurança na edição da matrícula.
+- **Espelhamento de Dados:** Ao salvar um aluno, o sistema atualiza automaticamente a Base de Dados Central e a aba específica da turma correspondente no Google Sheets.
+- **Design Responsivo:** Interface construída com Tailwind CSS, adaptando-se perfeitamente de celulares a monitores ultrawide.
+
+## 🛠️ Tecnologias Utilizadas
+
+**Frontend:**
+- [Next.js](https://nextjs.org/) (React Framework)
+- [TypeScript](https://www.typescriptlang.org/)
+- [Tailwind CSS](https://tailwindcss.com/)
+
+**Backend / Banco de Dados:**
+- [Google Apps Script](https://developers.google.com/apps-script) (Atuando como API RESTful)
+- Google Sheets (Atuando como Banco de Dados NoSQL em coleções separadas por abas)
+
+## 🚀 Como rodar o projeto localmente
+
+### 1. Pré-requisitos
+Certifique-se de ter o [Node.js](https://nodejs.org/) instalado em sua máquina.
+
+### 2. Clonar o repositório
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone [https://github.com/SEU_USUARIO/painel-erem.git](https://github.com/SEU_USUARIO/painel-erem.git)
+cd painel-erem
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 3. Instalar as dependências
+```bash
+npm install
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 4. Configurar Variáveis de Ambiente
+Crie um arquivo chamado `.env.local` na raiz do projeto e adicione a URL gerada pelo seu Google Apps Script:
+```env
+NEXT_PUBLIC_GOOGLE_API_URL="sua_url_da_api_do_google_aqui"
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 5. Iniciar o servidor de desenvolvimento
+```bash
+npm run dev
+```
+Abra [http://localhost:3000](http://localhost:3000) no seu navegador para ver o sistema rodando.
 
-## Learn More
+## 📦 Deploy na Vercel
 
-To learn more about Next.js, take a look at the following resources:
+Este projeto está pronto para ser hospedado na [Vercel](https://vercel.com/). 
+Durante a importação do repositório no painel da Vercel, não se esqueça de adicionar a variável de ambiente `NEXT_PUBLIC_GOOGLE_API_URL` na seção de *Environment Variables* antes de concluir o deploy.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+Desenvolvido com 💻 por Mario Renan.

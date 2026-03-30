@@ -43,7 +43,7 @@ export default function LoginScreen({
       } else {
         alert("❌ " + (resposta.mensagem || "Usuário ou senha incorretos."));
       }
-    } catch (error) {
+    } catch  {
       alert("🔌 Erro de conexão com o servidor. Tente novamente.");
     } finally {
       setCarregando(false);

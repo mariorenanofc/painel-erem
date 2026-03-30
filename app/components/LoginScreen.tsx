@@ -74,6 +74,8 @@ export default function LoginScreen({
               type="text"
               value={usuario}
               onChange={(e) => setUsuario(e.target.value)}
+              autoCapitalize="none"
+              autoCorrect="off"
               className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded-lg p-3 focus:ring-2 focus:ring-emerald-500 focus:outline-none"
               placeholder="Digite seu usuário"
             />

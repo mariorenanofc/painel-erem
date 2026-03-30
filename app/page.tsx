@@ -6,10 +6,10 @@ import SearchFilter from "./components/SearchFilter";
 import StudentModal from "./components/StudentModal";
 import StudentTable from "./components/StudentTable";
 import LoginScreen from "./components/LoginScreen";
-import { formatarDataInput } from "@/utils/formatters";
+import { formatarDataInput, formatarDataTabela } from "@/utils/formatters";
 import { Aluno } from "@/types";
 
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL as string;  
+const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL as string;
 
 export default function DashboardAlunos() {
   // === ESTADOS DE LOGIN ===
@@ -90,6 +90,44 @@ export default function DashboardAlunos() {
 
     return matchTurma && matchBusca && matchSemEmail;
   });
+
+  // === FUNÇÃO DE EXPORTAR RELATÓRIO ===
+  const exportarParaCSV = () => {
+    if (alunosFiltrados.length === 0) {
+      alert("⚠️ Não há alunos para exportar com os filtros atuais.");
+      return;
+    }
+
+    // 1. Cria os cabeçalhos da planilha
+    const cabecalhos = ["Nome", "Data de Nascimento", "Matricula", "Email", "Turma", "Observacoes"];
+
+    // 2. Transforma cada aluno em uma linha de texto separada por ponto-e-vírgula
+    const linhasCSV = alunosFiltrados.map(aluno => {
+      return [
+        `"${aluno.nome}"`,
+        `"${formatarDataTabela(aluno.dataNasc)}"`, // Data formatada padrão BR
+        `"${aluno.matricula}"`,
+        `"${aluno.email || 'Sem email'}"`,
+        `"${aluno.turma}"`,
+        `"${aluno.obs || ''}"`
+      ].join(";");
+    });
+
+    // 3. Junta tudo com quebras de linha
+    const conteudoCSV = [cabecalhos.join(";"), ...linhasCSV].join("\n");
+
+    // 4. Cria o arquivo na memória do navegador (O \uFEFF garante que o Excel leia os acentos)
+    const blob = new Blob(["\uFEFF" + conteudoCSV], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    
+    // 5. Força o download
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `Relatorio_EREM_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
@@ -187,6 +225,7 @@ export default function DashboardAlunos() {
         abrirModalNovoAluno={abrirModalNovo}
         mostrarSemEmail={mostrarSemEmail}
         setMostrarSemEmail={setMostrarSemEmail}
+        exportarDados={exportarParaCSV}
       />
 
       <StudentTable

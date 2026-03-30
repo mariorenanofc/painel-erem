@@ -113,7 +113,7 @@ export default function StudentModal({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
               <DataDisplay label="Nome Completo" value={formData.nome} />
               <DataDisplay label="Matrícula" value={formData.matricula} />
-              <DataDisplay label="Data de Nasc." value={formData.dataNasc} />
+              <DataDisplay label="Data de Nasc." value={formData.dataNasc ? formData.dataNasc.split('-').reverse().join('/') : ''} />
               <DataDisplay label="Turma" value={formData.turma} />
               <DataDisplay
                 label="Email Institucional"

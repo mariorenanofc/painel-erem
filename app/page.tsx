@@ -21,10 +21,12 @@ export default function DashboardAlunos() {
   const [carregando, setCarregando] = useState(false);
   const [turmaSelecionada, setTurmaSelecionada] = useState("");
   const [busca, setBusca] = useState("");
+  const [mostrarSemEmail, setMostrarSemEmail] = useState(false);
 
   const [modalAberto, setModalAberto] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [salvando, setSalvando] = useState(false);
+  
 
   const [formData, setFormData] = useState({
     matricula: "",
@@ -73,13 +75,20 @@ export default function DashboardAlunos() {
   };
 
   const alunosFiltrados = alunos.filter((aluno) => {
-    const matchTurma =
-      turmaSelecionada === "" || aluno.turma === turmaSelecionada;
-    const matchBusca =
-      busca === "" ||
-      aluno.nome.toLowerCase().includes(busca.toLowerCase()) ||
+    // Regra da Turma e Barra de Busca
+    const matchTurma = turmaSelecionada === '' || aluno.turma === turmaSelecionada;
+    const matchBusca = busca === '' || 
+      aluno.nome.toLowerCase().includes(busca.toLowerCase()) || 
       aluno.matricula.includes(busca);
-    return matchTurma && matchBusca;
+    
+    // Regra do "Sem Email"
+    // Identifica emails vazios OU escritos como "Não encontrado" / "Sem email"
+    const isEmailVazio = !aluno.email || aluno.email.trim() === '' || aluno.email.toLowerCase() === 'não encontrado' || aluno.email.toLowerCase() === 'sem email';
+    
+    // Se o checkbox estiver marcado, exige que seja vazio. Se não, ignora essa regra (true).
+    const matchSemEmail = mostrarSemEmail ? isEmailVazio : true;
+
+    return matchTurma && matchBusca && matchSemEmail;
   });
 
   const handleChange = (
@@ -176,6 +185,8 @@ export default function DashboardAlunos() {
         busca={busca}
         setBusca={setBusca}
         abrirModalNovoAluno={abrirModalNovo}
+        mostrarSemEmail={mostrarSemEmail}
+        setMostrarSemEmail={setMostrarSemEmail}
       />
 
       <StudentTable

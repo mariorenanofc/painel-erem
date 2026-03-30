@@ -33,6 +33,8 @@ export default function DashboardAlunos() {
     dataNasc: "",
     email: "",
     turma: "",
+    telefoneAluno: "",
+    telefoneResponsavel: "",
     obs: "",
   });
 
@@ -110,6 +112,8 @@ export default function DashboardAlunos() {
       "Matricula",
       "Email",
       "Turma",
+      "Tel. Pessoal",
+      "Tel. Responsável",
       "Observacoes",
     ];
 
@@ -121,6 +125,8 @@ export default function DashboardAlunos() {
         `"${aluno.matricula}"`,
         `"${aluno.email || "Sem email"}"`,
         `"${aluno.turma}"`,
+        `"${aluno.telefoneAluno || ""}"`,
+        `"${aluno.telefoneResponsavel || ""}"`,
         `"${aluno.obs || ""}"`,
       ].join(";");
     });
@@ -159,19 +165,23 @@ export default function DashboardAlunos() {
       dataNasc: "",
       email: "",
       turma: "",
+      telefoneAluno: "",
+      telefoneResponsavel: "",
       obs: "",
     });
     setIsEditing(false);
     setModalAberto(true);
   };
 
-  const preencherEdicao = (aluno: Aluno) => {
+  const abrirVisualizacao = (aluno: Aluno) => {
     setFormData({
       matricula: aluno.matricula,
       nome: aluno.nome,
       dataNasc: formatarDataInput(aluno.dataNasc),
       email: aluno.email,
       turma: aluno.turma,
+      telefoneAluno: aluno.telefoneAluno || "",
+      telefoneResponsavel: aluno.telefoneResponsavel || "",
       obs: aluno.obs,
     });
     setIsEditing(true);
@@ -247,7 +257,7 @@ export default function DashboardAlunos() {
 
       <StudentTable
         alunosFiltrados={alunosFiltrados}
-        preencherEdicao={preencherEdicao}
+        preencherEdicao={abrirVisualizacao}
       />
 
       <StudentModal
@@ -262,5 +272,3 @@ export default function DashboardAlunos() {
     </div>
   );
 }
-
-//Codigo de implantação: AKfycbxwSFpmHe6QV-czUhJMTBOoXbZGulchb8QrUvgRhS_HGA6VPusBPbwslxsou8IwOTDonQ

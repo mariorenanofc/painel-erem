@@ -4,5 +4,7 @@ export interface Aluno {
   dataNasc: string;
   email: string;
   turma: string;
+  telefoneAluno: string;
+  telefoneResponsavel: string;
   obs: string;
 }

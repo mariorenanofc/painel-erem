@@ -26,7 +26,6 @@ export default function DashboardAlunos() {
   const [modalAberto, setModalAberto] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [salvando, setSalvando] = useState(false);
-  
 
   const [formData, setFormData] = useState({
     matricula: "",
@@ -76,15 +75,21 @@ export default function DashboardAlunos() {
 
   const alunosFiltrados = alunos.filter((aluno) => {
     // Regra da Turma e Barra de Busca
-    const matchTurma = turmaSelecionada === '' || aluno.turma === turmaSelecionada;
-    const matchBusca = busca === '' || 
-      aluno.nome.toLowerCase().includes(busca.toLowerCase()) || 
+    const matchTurma =
+      turmaSelecionada === "" || aluno.turma === turmaSelecionada;
+    const matchBusca =
+      busca === "" ||
+      aluno.nome.toLowerCase().includes(busca.toLowerCase()) ||
       aluno.matricula.includes(busca);
-    
+
     // Regra do "Sem Email"
     // Identifica emails vazios OU escritos como "Não encontrado" / "Sem email"
-    const isEmailVazio = !aluno.email || aluno.email.trim() === '' || aluno.email.toLowerCase() === 'não encontrado' || aluno.email.toLowerCase() === 'sem email';
-    
+    const isEmailVazio =
+      !aluno.email ||
+      aluno.email.trim() === "" ||
+      aluno.email.toLowerCase() === "não encontrado" ||
+      aluno.email.toLowerCase() === "sem email";
+
     // Se o checkbox estiver marcado, exige que seja vazio. Se não, ignora essa regra (true).
     const matchSemEmail = mostrarSemEmail ? isEmailVazio : true;
 
@@ -99,17 +104,24 @@ export default function DashboardAlunos() {
     }
 
     // 1. Cria os cabeçalhos da planilha
-    const cabecalhos = ["Nome", "Data de Nascimento", "Matricula", "Email", "Turma", "Observacoes"];
+    const cabecalhos = [
+      "Nome",
+      "Data de Nascimento",
+      "Matricula",
+      "Email",
+      "Turma",
+      "Observacoes",
+    ];
 
     // 2. Transforma cada aluno em uma linha de texto separada por ponto-e-vírgula
-    const linhasCSV = alunosFiltrados.map(aluno => {
+    const linhasCSV = alunosFiltrados.map((aluno) => {
       return [
         `"${aluno.nome}"`,
         `"${formatarDataTabela(aluno.dataNasc)}"`, // Data formatada padrão BR
         `"${aluno.matricula}"`,
-        `"${aluno.email || 'Sem email'}"`,
+        `"${aluno.email || "Sem email"}"`,
         `"${aluno.turma}"`,
-        `"${aluno.obs || ''}"`
+        `"${aluno.obs || ""}"`,
       ].join(";");
     });
 
@@ -117,13 +129,18 @@ export default function DashboardAlunos() {
     const conteudoCSV = [cabecalhos.join(";"), ...linhasCSV].join("\n");
 
     // 4. Cria o arquivo na memória do navegador (O \uFEFF garante que o Excel leia os acentos)
-    const blob = new Blob(["\uFEFF" + conteudoCSV], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + conteudoCSV], {
+      type: "text/csv;charset=utf-8;",
+    });
     const url = URL.createObjectURL(blob);
-    
+
     // 5. Força o download
     const link = document.createElement("a");
     link.href = url;
-    link.setAttribute("download", `Relatorio_EREM_${new Date().toLocaleDateString('pt-BR').replace(/\//g, '-')}.csv`);
+    link.setAttribute(
+      "download",
+      `Relatorio_EREM_${new Date().toLocaleDateString("pt-BR").replace(/\//g, "-")}.csv`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -245,7 +262,5 @@ export default function DashboardAlunos() {
     </div>
   );
 }
-
-
 
 //Codigo de implantação: AKfycbxwSFpmHe6QV-czUhJMTBOoXbZGulchb8QrUvgRhS_HGA6VPusBPbwslxsou8IwOTDonQ

@@ -1,9 +1,6 @@
 import { useState } from "react";
+import { LoginScreenProps } from "../types";
 
-interface LoginScreenProps {
-  onLoginSuccess: (nome: string) => void;
-  apiUrl: string;
-}
 
 export default function LoginScreen({
   onLoginSuccess,

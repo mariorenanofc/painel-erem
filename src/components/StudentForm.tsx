@@ -1,13 +1,5 @@
-import { Aluno } from "../types";
+import { StudentFormProps } from "../types";
 
-interface StudentFormProps {
-  formData: Aluno;
-  handleChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => void;
-  salvarAluno: () => void;
-  salvando: boolean;
-}
 
 export default function StudentForm({
   formData,

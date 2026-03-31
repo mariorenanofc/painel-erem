@@ -1,11 +1,8 @@
 import { useState } from 'react';
 import { formatarDataTabela } from "../utils/formatters";
-import { Aluno } from "../types";
+import { StudentTableProps } from "../types";
 
-interface StudentTableProps {
-  alunosFiltrados: Aluno[];
-  preencherEdicao: (aluno: Aluno) => void;
-}
+
 
 const EmailCell = ({ email }: { email?: string }) => {
   const [copiado, setCopiado] = useState(false);
@@ -54,6 +51,11 @@ export default function StudentTable({
     <div className="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden">
       {/* Contêiner que permite o scroll horizontal no celular */}
       <div className="overflow-x-auto">
+        <div
+          className="p-3 md:p-4 font-medium text-xs md:text-sm text-black">
+          Total de alunos nesta visualização:{" "}
+                <strong>{alunosFiltrados.length}</strong>
+        </div>
         <table className="w-full text-left border-collapse min-w-250">
           <thead>
             <tr className="bg-slate-800 text-white text-xs md:text-sm uppercase tracking-wider">
@@ -120,19 +122,7 @@ export default function StudentTable({
                 </td>
               </tr>
             )}
-          </tbody>
-          {/* Mostra quantidade total de alunos filtrados no final */}
-          <tfoot>
-            <tr className="bg-slate-50 text-slate-600">
-              <td
-                colSpan={6}
-                className="p-3 md:p-4 font-medium text-xs md:text-sm"
-              >
-                Total de alunos nesta visualização:{" "}
-                <strong>{alunosFiltrados.length}</strong>
-              </td>
-            </tr>
-          </tfoot>
+          </tbody>  
         </table>
       </div>
     </div>

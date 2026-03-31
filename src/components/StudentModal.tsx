@@ -1,26 +1,6 @@
-import { ChangeEvent, useState } from "react";
+import {  useState } from "react";
+import { StudentModalProps } from "../types";
 
-// Sua interface mantida intacta
-interface StudentFormData {
-  matricula: string;
-  nome: string;
-  dataNasc: string;
-  turma: string;
-  email: string;
-  telefoneAluno: string;
-  telefoneResponsavel: string;
-  obs: string;
-}
-
-interface StudentModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  formData: StudentFormData;
-  handleChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  salvarAluno: () => void;
-  salvando: boolean;
-  isEditing: boolean;
-}
 
 // --- Função utilitária para renderizar os dados bonitos no modo VISUALIZAÇÃO ---
 const DataDisplay = ({

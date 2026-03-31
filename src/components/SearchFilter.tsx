@@ -1,14 +1,4 @@
-
-interface SearchFilterProps {
-  turmaSelecionada: string;
-  setTurmaSelecionada: (val: string) => void;
-  busca: string;
-  setBusca: (val: string) => void;
-  mostrarSemEmail: boolean;
-  setMostrarSemEmail: (val: boolean) => void;
-  abrirModalNovoAluno: () => void;
-  exportarDados: () => void; // <-- ADICIONADO AQUI
-}
+import { SearchFilterProps } from "../types";
 
 export default function SearchFilter({ 
   turmaSelecionada, 
@@ -18,7 +8,7 @@ export default function SearchFilter({
   mostrarSemEmail,
   setMostrarSemEmail,
   abrirModalNovoAluno,
-  exportarDados // <-- ADICIONADO AQUI
+  exportarDados 
 }: SearchFilterProps) {
   
   return (

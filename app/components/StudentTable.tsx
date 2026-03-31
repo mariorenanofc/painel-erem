@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { formatarDataTabela } from "@/utils/formatters";
 import { Aluno } from "@/types";
 
@@ -5,6 +6,45 @@ interface StudentTableProps {
   alunosFiltrados: Aluno[];
   preencherEdicao: (aluno: Aluno) => void;
 }
+
+const EmailCell = ({ email }: { email?: string }) => {
+  const [copiado, setCopiado] = useState(false);
+
+  const copiarEmail = async () => {
+    if (!email) return;
+    try {
+      await navigator.clipboard.writeText(email);
+      setCopiado(true);
+      setTimeout(() => setCopiado(false), 2000); // Reseta o estado após 2 segundos
+    } catch (err) {
+      console.error("Erro ao copiar email: ", err);
+    }
+  };
+
+  return (
+    <div className="flex items-center gap-2 group">
+      <span className="whitespace-nowrap">{email}</span>
+      <button
+        onClick={copiarEmail}
+        title={copiado ? "Copiado!" : "Copiar e-mail"}
+        className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200 rounded transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100"
+      >
+        {copiado ? (
+          // Ícone de Check (Sucesso)
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        ) : (
+          // Ícone de Copiar (Duas folhinhas)
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        )}
+      </button>
+    </div>
+  );
+};
 
 export default function StudentTable({
   alunosFiltrados,
@@ -52,11 +92,7 @@ export default function StudentTable({
                     {aluno.matricula}
                   </td>
                   <td className="p-3 md:p-4">
-                    {aluno.email ? (
-                      <span className="whitespace-nowrap">{aluno.email}</span>
-                    ) : (
-                      <span className="text-slate-400 italic">Sem email</span>
-                    )}
+                    <EmailCell email={aluno.email} />
                   </td>
                   <td className="p-3 md:p-4 whitespace-nowrap">
                     <span className="bg-slate-200 px-2 py-1 rounded text-xs font-bold">

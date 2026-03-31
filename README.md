@@ -22,6 +22,15 @@ Um sistema web responsivo e moderno desenvolvido para facilitar o gerenciamento 
 - [Google Apps Script](https://developers.google.com/apps-script) (Atuando como API RESTful)
 - Google Sheets (Atuando como Banco de Dados NoSQL em coleções separadas por abas)
 
+## 📂 Arquitetura do Projeto
+
+O projeto segue o padrão estrutural do Next.js App Router, focado em separação de responsabilidades (Clean Code):
+
+- `/src/app`: Ponto de entrada da aplicação, rotas e estilos globais.
+- `/src/components`: Componentes UI isolados e reutilizáveis (Header, Modais, Tabelas).
+- `/src/types`: Definições de tipagem estática (Interfaces TypeScript) para garantir a integridade dos dados.
+- `/src/utils`: Funções auxiliares isoladas, como formatadores de data e máscaras de input.
+
 ## 🚀 Como rodar o projeto localmente
 
 ### 1. Pré-requisitos
@@ -29,7 +38,7 @@ Certifique-se de ter o [Node.js](https://nodejs.org/) instalado em sua máquina.
 
 ### 2. Clonar o repositório
 ```bash
-git clone [https://github.com/SEU_USUARIO/painel-erem.git](https://github.com/SEU_USUARIO/painel-erem.git)
+git clone [https://github.com/mariorenanofc/painel-erem.git](https://github.com/SEU_USUARIO/painel-erem.git)
 cd painel-erem
 ```
 

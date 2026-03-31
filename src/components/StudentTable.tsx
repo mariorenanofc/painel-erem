@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { formatarDataTabela } from "@/utils/formatters";
-import { Aluno } from "@/types";
+import { formatarDataTabela } from "../utils/formatters";
+import { Aluno } from "../types";
 
 interface StudentTableProps {
   alunosFiltrados: Aluno[];

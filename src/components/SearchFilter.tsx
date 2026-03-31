@@ -1,4 +1,3 @@
-// src/components/SearchFilter.tsx
 
 interface SearchFilterProps {
   turmaSelecionada: string;

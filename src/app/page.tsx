@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Header from "./components/Header";
-import SearchFilter from "./components/SearchFilter";
-import StudentModal from "./components/StudentModal";
-import StudentTable from "./components/StudentTable";
-import LoginScreen from "./components/LoginScreen";
-import { formatarDataInput, formatarDataTabela } from "@/utils/formatters";
-import { Aluno } from "@/types";
+import Header from "../components/Header";
+import SearchFilter from "../components/SearchFilter";
+import StudentModal from "../components/StudentModal";
+import StudentTable from "../components/StudentTable";
+import LoginScreen from "../components/LoginScreen";
+import { formatarDataInput, formatarDataTabela } from "../utils/formatters";
+import { Aluno } from "../types";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL as string;
 

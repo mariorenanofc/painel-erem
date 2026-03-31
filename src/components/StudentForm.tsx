@@ -1,4 +1,4 @@
-import { Aluno } from "@/types";
+import { Aluno } from "../types";
 
 interface StudentFormProps {
   formData: Aluno;

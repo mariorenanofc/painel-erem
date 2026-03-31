@@ -1,4 +1,4 @@
-// src/components/Header.tsx
+
 interface HeaderProps {
   carregando: boolean;
   nomeUsuario: string;

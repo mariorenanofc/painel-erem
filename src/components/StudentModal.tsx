@@ -2,6 +2,8 @@ import {  useState } from "react";
 import { StudentModalProps } from "../types";
 
 
+
+
 // --- Função utilitária para renderizar os dados bonitos no modo VISUALIZAÇÃO ---
 const DataDisplay = ({
   label,
@@ -45,6 +47,7 @@ export default function StudentModal({
   salvarAluno,
   salvando,
   isEditing,
+  inscreverNoTrilha
 }: StudentModalProps) {
   // --- Estado para controlar se o usuário ativou a edição manualmente ---
   // Começa como false por padrão. A lógica de "novo cadastro" vai forçar o formulário a aparecer mais embaixo.
@@ -55,6 +58,19 @@ export default function StudentModal({
   // OU
   // 2. O usuário clicou no botão de editar (modoEdicaoAtivo for true)
   const mostrarFormulario = !isEditing || modoEdicaoAtivo;
+  const [turmaCursoSelecionada, setTurmaCursoSelecionada] = useState(""); // <-- NOVO
+  const [inscrevendo, setInscrevendo] = useState(false); // <-- NOVO
+
+
+  // Função que será chamada ao clicar no botão
+  const handleInscricao = async () => {
+    if (inscreverNoTrilha) {
+      setInscrevendo(true);
+      await inscreverNoTrilha(formData.matricula, turmaCursoSelecionada);
+      setInscrevendo(false);
+      setTurmaCursoSelecionada(""); // Limpa após inscrever
+    }
+  }
 
   if (!isOpen) return null;
 
@@ -114,6 +130,47 @@ export default function StudentModal({
                 type="tel"
               />
               <DataDisplay label="Observações" value={formData.obs} />
+
+
+              {/* ---  DADOS DO TRILHA TECH --- */}
+              {formData.statusTrilha && (
+                <div className="md:col-span-2 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">🚀 Participação no Projeto Trilha Tech</h3>
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <p className="text-sm font-semibold text-slate-800"><span className="text-slate-500 font-normal">Turma:</span> {formData.turmaTrilha}</p>
+                    <p className="text-sm font-semibold text-slate-800"><span className="text-slate-500 font-normal">Status:</span> {formData.statusTrilha}</p>
+                  </div>
+                </div>
+              )}
+
+
+              {/* --- NOVO: CAIXA DE INSCRIÇÃO (SÓ APARECE SE NÃO ESTIVER INSCRITO) --- */}
+              {!formData.statusTrilha && isEditing && (
+                <div className="md:col-span-2 bg-blue-50 p-4 rounded-lg border border-blue-200 mt-2 animate-in fade-in">
+                  <h3 className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-3">🎓 Inscrever no Projeto Trilha Tech</h3>
+                  <div className="flex flex-col sm:flex-row gap-3 items-end">
+                    <div className="flex-1 w-full">
+                      <label className="text-xs font-bold text-slate-600 mb-1 block">Escolha a Turma do Curso:</label>
+                      <select
+                        value={turmaCursoSelecionada}
+                        onChange={(e) => setTurmaCursoSelecionada(e.target.value)}
+                        className="w-full bg-white border border-slate-300 text-slate-700 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium text-sm"
+                      >
+                        <option value="">Selecione a turma...</option>
+                        <option value="Turma 1 - 1º Ano">Turma 1 - 1º Ano</option>
+                        <option value="Turma 2 - 2º Ano">Turma 2 - 2º Ano</option>
+                      </select>
+                    </div>
+                    <button
+                      onClick={handleInscricao}
+                      disabled={!turmaCursoSelecionada || inscrevendo}
+                      className={`w-full sm:w-auto px-6 py-2 rounded-lg text-white font-bold text-sm transition-all shadow-sm ${!turmaCursoSelecionada || inscrevendo ? 'bg-slate-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 hover:-translate-y-0.5'}`}
+                    >
+                      {inscrevendo ? '⏳ Processando...' : '✅ Confirmar Inscrição'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

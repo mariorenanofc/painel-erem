@@ -221,6 +221,34 @@ export default function DashboardAlunos() {
     }
   };
 
+  // === FUNÇÃO PARA INSCREVER NO PROJETO TRILHA TECH ===
+  const inscreverNoTrilha = async (matricula: string, turmaCurso: string) => {
+    try {
+      const res = await fetch(GOOGLE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "inscrever_trilhatech",
+          matricula: matricula,
+          turmaCurso: turmaCurso,
+          statusCurso: "Inscrito", // Ele entra como "Inscrito" por padrão
+        }),
+      });
+
+      const resposta = await res.json();
+
+      if (resposta.status === "sucesso") {
+        alert("✅ Inscrição realizada com sucesso!");
+        carregarAlunos(); // Recarrega a tela para a etiqueta 🚀 aparecer na hora!
+        setModalAberto(false); // Fecha o modal
+      } else {
+        alert("⚠️ " + resposta.mensagem);
+      }
+    } catch (erro) {
+      alert("❌ Erro ao conectar com o sistema: " + erro);
+    }
+  };
+
   // Enquanto lê o navegador, não mostra nada
   if (verificandoSessao)
     return <div className="min-h-screen bg-slate-100"></div>;
@@ -268,6 +296,7 @@ export default function DashboardAlunos() {
         salvarAluno={salvarAluno}
         salvando={salvando}
         isEditing={isEditing}
+        inscreverNoTrilha={inscreverNoTrilha}
       />
     </div>
   );

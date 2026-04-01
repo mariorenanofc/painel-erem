@@ -1,8 +1,6 @@
-import { useState } from 'react';
+import { useState } from "react";
 import { formatarDataTabela } from "../utils/formatters";
 import { StudentTableProps } from "../types";
-
-
 
 const EmailCell = ({ email }: { email?: string }) => {
   const [copiado, setCopiado] = useState(false);
@@ -28,12 +26,32 @@ const EmailCell = ({ email }: { email?: string }) => {
       >
         {copiado ? (
           // Ícone de Check (Sucesso)
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#10b981"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <polyline points="20 6 9 17 4 12"></polyline>
           </svg>
         ) : (
           // Ícone de Copiar (Duas folhinhas)
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
             <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
           </svg>
@@ -51,10 +69,9 @@ export default function StudentTable({
     <div className="bg-white rounded-xl shadow-md border border-slate-200 overflow-hidden">
       {/* Contêiner que permite o scroll horizontal no celular */}
       <div className="overflow-x-auto">
-        <div
-          className="p-3 md:p-4 font-medium text-xs md:text-sm text-black">
+        <div className="p-3 md:p-4 font-medium text-xs md:text-sm text-black">
           Total de alunos nesta visualização:{" "}
-                <strong>{alunosFiltrados.length}</strong>
+          <strong>{alunosFiltrados.length}</strong>
         </div>
         <table className="w-full text-left border-collapse min-w-250">
           <thead>
@@ -86,7 +103,27 @@ export default function StudentTable({
                   key={index}
                   className={`border-b border-slate-200 hover:bg-slate-100 transition-colors ${index % 2 === 0 ? "bg-white" : "bg-slate-50"}`}
                 >
-                  <td className="p-3 md:p-4 font-medium">{aluno.nome}</td>
+                  <td className="p-3 md:p-4 font-medium">
+                    <div className="flex flex-col">
+                      <span>{aluno.nome}</span>
+                      {/* Só mostra a etiqueta se o aluno tiver um status no Trilha Tech */}
+                      {aluno.statusTrilha && (
+                        <span
+                          className={`inline-flex items-center gap-1 mt-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full w-max ${
+                            aluno.statusTrilha === "Ativo"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : aluno.statusTrilha === "Reserva"
+                                ? "bg-amber-100 text-amber-700"
+                                : aluno.statusTrilha === "Inscrito"
+                                  ? "bg-blue-100 text-blue-700"
+                                  : "bg-slate-100 text-slate-500" // Para desistentes/excluídos
+                          }`}
+                        >
+                          🚀 Trilha Tech: {aluno.statusTrilha}
+                        </span>
+                      )}
+                    </div>
+                  </td>
                   <td className="p-3 md:p-4 text-slate-500 whitespace-nowrap">
                     {formatarDataTabela(aluno.dataNasc)}
                   </td>
@@ -122,7 +159,7 @@ export default function StudentTable({
                 </td>
               </tr>
             )}
-          </tbody>  
+          </tbody>
         </table>
       </div>
     </div>

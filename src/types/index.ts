@@ -10,6 +10,8 @@ export interface Aluno {
   telefoneAluno: string;
   telefoneResponsavel: string;
   obs: string;
+  turmaTrilha?: string;
+  statusTrilha?: string;
 }
 
 // 2. TIPAGENS DOS COMPONENTES (PROPS)
@@ -57,4 +59,15 @@ export interface StudentFormProps {
   ) => void;
   salvarAluno: () => void;
   salvando: boolean;
+}
+
+export interface StudentModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  formData: Aluno;
+  handleChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  salvarAluno: () => void;
+  salvando: boolean;
+  isEditing: boolean;
+  inscreverNoTrilha?: (matricula: string, turmaCurso: string) => Promise<void>; // <-- NOVO AQUI
 }

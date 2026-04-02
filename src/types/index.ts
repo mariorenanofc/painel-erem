@@ -33,6 +33,8 @@ export interface SearchFilterProps {
   setBusca: (val: string) => void;
   mostrarSemEmail: boolean;
   setMostrarSemEmail: (val: boolean) => void;
+  mostrarComObs: boolean;
+  setMostrarComObs: (val: boolean) => void;
   abrirModalNovoAluno: () => void;
   exportarDados: () => void;
 }
@@ -70,4 +72,16 @@ export interface StudentModalProps {
   salvando: boolean;
   isEditing: boolean;
   inscreverNoTrilha?: (matricula: string, turmaCurso: string) => Promise<void>; // <-- NOVO AQUI
+}
+
+export interface TrilhaFiltersProps {
+  busca: string;
+  setBusca: (val: string) => void;
+  filtroTurma: string;
+  setFiltroTurma: (val: string) => void;
+  filtroStatus: string;
+  setFiltroStatus: (val: string) => void;
+  exportarListaFrequencia: () => void;
+  mostrarComObs: boolean;
+  setMostrarComObs: (val: boolean) => void;
 }

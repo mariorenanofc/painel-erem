@@ -38,6 +38,7 @@ export default function TrilhaTechPage() {
   const [busca, setBusca] = useState("");
   const [filtroTurma, setFiltroTurma] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("");
+  const [mostrarComObs, setMostrarComObs] = useState(false);
 
   const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
 
@@ -70,9 +71,15 @@ export default function TrilhaTechPage() {
         filtroTurma === "" || aluno.turmaTrilha === filtroTurma;
       const matchStatus =
         filtroStatus === "" || aluno.statusTrilha === filtroStatus;
-      return matchBusca && matchTurma && matchStatus;
+
+      // --- REGRA DE OBSERVAÇÕES ---
+      const temObs = aluno.obs && aluno.obs.trim() !== "";
+      const matchObs = mostrarComObs ? temObs : true;
+
+
+      return matchBusca && matchTurma && matchStatus && matchObs;
     });
-  }, [alunosCurso, busca, filtroTurma, filtroStatus]);
+  }, [alunosCurso, busca, filtroTurma, filtroStatus, mostrarComObs]);
 
   // 3. Calcula as estatísticas dos Cards
   const totalTurma1Ativos = useMemo(() => {
@@ -177,6 +184,7 @@ export default function TrilhaTechPage() {
           setFiltroTurma={setFiltroTurma}
           filtroStatus={filtroStatus}
           setFiltroStatus={setFiltroStatus}
+          mostrarComObs={mostrarComObs} setMostrarComObs={setMostrarComObs}
           exportarListaFrequencia={exportarListaFrequencia}
         />
 

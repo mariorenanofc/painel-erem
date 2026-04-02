@@ -24,13 +24,21 @@ export default function DashboardAlunos() {
   const [turmaSelecionada, setTurmaSelecionada] = useState("");
   const [busca, setBusca] = useState("");
   const [mostrarSemEmail, setMostrarSemEmail] = useState(false);
+  const [mostrarComObs, setMostrarComObs] = useState(false);
 
   // === ESTADOS DO MODAL ===
   const [modalAberto, setModalAberto] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [formData, setFormData] = useState<Aluno>({
-    matricula: "", nome: "", dataNasc: "", email: "", turma: "", telefoneAluno: "", telefoneResponsavel: "", obs: "",
+    matricula: "",
+    nome: "",
+    dataNasc: "",
+    email: "",
+    turma: "",
+    telefoneAluno: "",
+    telefoneResponsavel: "",
+    obs: "",
   });
 
   // 1. VERIFICAÇÃO DE LOGIN INICIAL
@@ -41,26 +49,38 @@ export default function DashboardAlunos() {
   }, []);
 
   // 2. BUSCA DE DADOS COM SWR (Só busca se a pessoa estiver logada)
-  const { data: alunos = [], isLoading: carregando, mutate } = useSWR(
-    usuarioLogado ? GOOGLE_API_URL : null, 
-    fetcher, 
-    { revalidateOnFocus: true }
-  );
+  const {
+    data: alunos = [],
+    isLoading: carregando,
+    mutate,
+  } = useSWR(usuarioLogado ? GOOGLE_API_URL : null, fetcher, {
+    revalidateOnFocus: true,
+  });
 
   // 3. FILTRO OTIMIZADO COM useMemo
   const alunosFiltrados = useMemo(() => {
     return alunos.filter((aluno: Aluno) => {
-      // Regra da Turma e Busca
-      const matchTurma = turmaSelecionada === "" || aluno.turma === turmaSelecionada;
-      const matchBusca = busca === "" || aluno.nome.toLowerCase().includes(busca.toLowerCase()) || aluno.matricula.includes(busca);
+      const matchTurma =
+        turmaSelecionada === "" || aluno.turma === turmaSelecionada;
+      const matchBusca =
+        busca === "" ||
+        aluno.nome.toLowerCase().includes(busca.toLowerCase()) ||
+        aluno.matricula.includes(busca);
 
-      // Regra do "Sem Email"
-      const isEmailVazio = !aluno.email || aluno.email.trim() === "" || aluno.email.toLowerCase() === "não encontrado" || aluno.email.toLowerCase() === "sem email";
+      const isEmailVazio =
+        !aluno.email ||
+        aluno.email.trim() === "" ||
+        aluno.email.toLowerCase() === "não encontrado" ||
+        aluno.email.toLowerCase() === "sem email";
       const matchSemEmail = mostrarSemEmail ? isEmailVazio : true;
 
-      return matchTurma && matchBusca && matchSemEmail;
+      // --- 2. NOVA REGRA DE OBSERVAÇÕES AQUI ---
+      const temObs = aluno.obs && aluno.obs.trim() !== "";
+      const matchObs = mostrarComObs ? temObs : true;
+
+      return matchTurma && matchBusca && matchSemEmail && matchObs;
     });
-  }, [alunos, turmaSelecionada, busca, mostrarSemEmail]);
+  }, [alunos, turmaSelecionada, busca, mostrarSemEmail, mostrarComObs]);
 
   // === FUNÇÕES DE AÇÃO ===
 
@@ -70,15 +90,36 @@ export default function DashboardAlunos() {
   };
 
   const exportarParaCSV = () => {
-    if (alunosFiltrados.length === 0) return alert("⚠️ Não há alunos para exportar com os filtros atuais.");
+    if (alunosFiltrados.length === 0)
+      return alert("⚠️ Não há alunos para exportar com os filtros atuais.");
 
-    const cabecalhos = ["Nome", "Data de Nascimento", "Matricula", "Email", "Turma", "Tel. Pessoal", "Tel. Responsável", "Observacoes"];
-    const linhasCSV = alunosFiltrados.map((aluno: Aluno) => [
-      `"${aluno.nome}"`, `"${formatarDataTabela(aluno.dataNasc)}"`, `"${aluno.matricula}"`, `"${aluno.email || "Sem email"}"`, `"${aluno.turma}"`, `"${aluno.telefoneAluno || ""}"`, `"${aluno.telefoneResponsavel || ""}"`, `"${aluno.obs || ""}"`
-    ].join(";"));
+    const cabecalhos = [
+      "Nome",
+      "Data de Nascimento",
+      "Matricula",
+      "Email",
+      "Turma",
+      "Tel. Pessoal",
+      "Tel. Responsável",
+      "Observacoes",
+    ];
+    const linhasCSV = alunosFiltrados.map((aluno: Aluno) =>
+      [
+        `"${aluno.nome}"`,
+        `"${formatarDataTabela(aluno.dataNasc)}"`,
+        `"${aluno.matricula}"`,
+        `"${aluno.email || "Sem email"}"`,
+        `"${aluno.turma}"`,
+        `"${aluno.telefoneAluno || ""}"`,
+        `"${aluno.telefoneResponsavel || ""}"`,
+        `"${aluno.obs || ""}"`,
+      ].join(";"),
+    );
 
     const conteudoCSV = [cabecalhos.join(";"), ...linhasCSV].join("\n");
-    const blob = new Blob(["\uFEFF" + conteudoCSV], { type: "text/csv;charset=utf-8;" });
+    const blob = new Blob(["\uFEFF" + conteudoCSV], {
+      type: "text/csv;charset=utf-8;",
+    });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
@@ -88,12 +129,23 @@ export default function DashboardAlunos() {
     document.body.removeChild(link);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const abrirModalNovo = () => {
-    setFormData({ matricula: "", nome: "", dataNasc: "", email: "", turma: "", telefoneAluno: "", telefoneResponsavel: "", obs: "" });
+    setFormData({
+      matricula: "",
+      nome: "",
+      dataNasc: "",
+      email: "",
+      turma: "",
+      telefoneAluno: "",
+      telefoneResponsavel: "",
+      obs: "",
+    });
     setIsEditing(false);
     setModalAberto(true);
   };
@@ -108,7 +160,8 @@ export default function DashboardAlunos() {
   };
 
   const salvarAluno = async () => {
-    if (!formData.matricula || !formData.nome || !formData.turma) return alert("⚠️ Matrícula, Nome e Turma são obrigatórios!");
+    if (!formData.matricula || !formData.nome || !formData.turma)
+      return alert("⚠️ Matrícula, Nome e Turma são obrigatórios!");
     setSalvando(true);
     try {
       const res = await fetch(GOOGLE_API_URL, {
@@ -136,7 +189,12 @@ export default function DashboardAlunos() {
       const res = await fetch(GOOGLE_API_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "inscrever_trilhatech", matricula, turmaCurso, statusCurso: "Inscrito" }),
+        body: JSON.stringify({
+          action: "inscrever_trilhatech",
+          matricula,
+          turmaCurso,
+          statusCurso: "Inscrito",
+        }),
       });
       const resposta = await res.json();
       if (resposta.status === "sucesso") {
@@ -152,34 +210,56 @@ export default function DashboardAlunos() {
   };
 
   // Enquanto lê o navegador, não mostra nada
-  if (verificandoSessao) return <div className="min-h-screen bg-slate-100"></div>;
+  if (verificandoSessao)
+    return <div className="min-h-screen bg-slate-100"></div>;
 
   // Se NÃO tiver logado, mostra a tela de Login
   if (!usuarioLogado) {
-    return <LoginScreen onLoginSuccess={(nome) => setUsuarioLogado(nome)} apiUrl={GOOGLE_API_URL} />;
+    return (
+      <LoginScreen
+        onLoginSuccess={(nome) => setUsuarioLogado(nome)}
+        apiUrl={GOOGLE_API_URL}
+      />
+    );
   }
 
   // Se tiver logado, mostra o Painel
   return (
     <div className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans">
       <div className="max-w-7xl mx-auto">
-        <Header carregando={carregando} nomeUsuario={usuarioLogado} onLogout={fazerLogout} />
+        <Header
+          carregando={carregando}
+          nomeUsuario={usuarioLogado}
+          onLogout={fazerLogout}
+        />
 
         <SearchFilter
-          turmaSelecionada={turmaSelecionada} setTurmaSelecionada={setTurmaSelecionada}
-          busca={busca} setBusca={setBusca}
+          turmaSelecionada={turmaSelecionada}
+          setTurmaSelecionada={setTurmaSelecionada}
+          busca={busca}
+          setBusca={setBusca}
           abrirModalNovoAluno={abrirModalNovo}
-          mostrarSemEmail={mostrarSemEmail} setMostrarSemEmail={setMostrarSemEmail}
+          mostrarSemEmail={mostrarSemEmail}
+          setMostrarSemEmail={setMostrarSemEmail}
+          mostrarComObs={mostrarComObs}
+          setMostrarComObs={setMostrarComObs}
           exportarDados={exportarParaCSV}
         />
 
-        <StudentTable alunosFiltrados={alunosFiltrados} preencherEdicao={abrirVisualizacao} />
+        <StudentTable
+          alunosFiltrados={alunosFiltrados}
+          preencherEdicao={abrirVisualizacao}
+        />
 
         <StudentModal
-          isOpen={modalAberto} onClose={() => setModalAberto(false)}
-          formData={formData} handleChange={handleChange}
-          salvarAluno={salvarAluno} salvando={salvando}
-          isEditing={isEditing} inscreverNoTrilha={inscreverNoTrilha}
+          isOpen={modalAberto}
+          onClose={() => setModalAberto(false)}
+          formData={formData}
+          handleChange={handleChange}
+          salvarAluno={salvarAluno}
+          salvando={salvando}
+          isEditing={isEditing}
+          inscreverNoTrilha={inscreverNoTrilha}
         />
       </div>
     </div>

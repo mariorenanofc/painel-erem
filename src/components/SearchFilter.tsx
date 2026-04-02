@@ -7,6 +7,8 @@ export default function SearchFilter({
   setBusca, 
   mostrarSemEmail,
   setMostrarSemEmail,
+  mostrarComObs,
+  setMostrarComObs,
   abrirModalNovoAluno,
   exportarDados 
 }: SearchFilterProps) {
@@ -59,6 +61,22 @@ export default function SearchFilter({
             />
             <span className="text-sm font-bold text-slate-600 select-none">Apenas Sem Email</span>
           </label>
+        </div>
+
+        {/* NOVO CHECKBOX: COM OBSERVAÇÕES */}
+        <div className="w-full md:w-auto flex items-center h-10 mb-1">
+          {setMostrarComObs && (
+            <label className="flex items-center gap-2 cursor-pointer bg-slate-50 border border-slate-300 px-4 py-2 rounded-lg hover:bg-slate-100 transition-colors text-amber-500 text-sm font-bold">
+              <input
+                type="checkbox"
+                checked={mostrarComObs}
+                onChange={(e) => setMostrarComObs(e.target.checked)}
+                className="rounded border-slate-300 text-amber-500 focus:ring-amber-500 w-4 h-4 cursor-pointer"
+              />
+              ⚠️ Com pendências/obs
+            </label>
+          )}
+
         </div>
       </div>
 

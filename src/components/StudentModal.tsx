@@ -45,6 +45,7 @@ export default function StudentModal({
   salvando,
   isEditing,
   inscreverNoTrilha,
+  mudarStatusTrilha,
 }: StudentModalProps) {
   // --- Estado para controlar se o usuário ativou a edição manualmente ---
   // Começa como false por padrão. A lógica de "novo cadastro" vai forçar o formulário a aparecer mais embaixo.
@@ -136,23 +137,37 @@ export default function StudentModal({
 
               {/* --- LÓGICA BLINDADA DO TRILHA TECH --- */}
               {formData.statusTrilha ? (
-                /* 1. SE O ALUNO JÁ TEM STATUS: Mostra apenas leitura (bloqueia nova inscrição) */
+                /* 1. SE O ALUNO JÁ TEM STATUS: Mostra o resumo */
                 <div className="md:col-span-2 bg-slate-50 p-4 rounded-lg border border-slate-200 mt-2">
-                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    🚀 Participação no Projeto Trilha Tech
-                  </h3>
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <p className="text-sm font-semibold text-slate-800">
-                      <span className="text-slate-500 font-normal">Turma:</span>{" "}
-                      {formData.turmaTrilha}
-                    </p>
-                    <p className="text-sm font-semibold text-slate-800">
-                      <span className="text-slate-500 font-normal">
-                        Status:
-                      </span>{" "}
-                      {formData.statusTrilha}
-                    </p>
+                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">🚀 Participação no Projeto Trilha Tech</h3>
+                  <div className="flex flex-col sm:flex-row gap-4 mb-2">
+                    <p className="text-sm font-semibold text-slate-800"><span className="text-slate-500 font-normal">Turma:</span> {formData.turmaTrilha}</p>
+                    <p className="text-sm font-semibold text-slate-800"><span className="text-slate-500 font-normal">Status Atual:</span> {formData.statusTrilha}</p>
                   </div>
+                  
+                  {/* --- NOVO: PAINEL DE APROVAÇÃO DA GESTÃO --- */}
+                  {/* Só aparece se o aluno estiver "Inscrito" e se a função existir (para não aparecer no painel do Tutor) */}
+                  {formData.statusTrilha === "Inscrito" && mudarStatusTrilha && (
+                    <div className="mt-4 pt-4 border-t border-blue-200 flex flex-col sm:flex-row gap-3 items-center bg-white p-3 rounded border  shadow-sm">
+                      <p className="text-sm text-slate-600 font-medium mb-2 sm:mb-0 sm:mr-auto flex items-center gap-2">
+                        <span>⏳</span> Avaliação Escolar Pendente:
+                      </p>
+                      <button 
+                        onClick={() => mudarStatusTrilha(formData.matricula, 'Ativo')} 
+                        disabled={salvando}
+                        className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white px-4 py-2 rounded text-sm font-bold transition-colors shadow-sm"
+                      >
+                        ✅ Aprovar (Tornar Ativo)
+                      </button>
+                      <button 
+                        onClick={() => mudarStatusTrilha(formData.matricula, 'Desclassificado')} 
+                        disabled={salvando}
+                        className="w-full sm:w-auto bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-4 py-2 rounded text-sm font-bold transition-colors shadow-sm"
+                      >
+                        ❌ Desclassificar
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 /* 2. SE NÃO TEM STATUS: Mostra a caixa de Inscrição (apenas se o aluno já existir no banco -> isEditing) */

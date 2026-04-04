@@ -209,6 +209,37 @@ export default function DashboardAlunos() {
     }
   };
 
+
+  const mudarStatusTrilha = async (matricula: string, novoStatus: string) => {
+    const acaoTexto = novoStatus === 'Ativo' ? 'APROVAR' : 'DESClASSIFICAR';
+    if (!confirm(`Deseja realmente ${acaoTexto} este aluno no projeto Trilha Tech?`)) return;
+
+    setSalvando(true);
+    try {
+      const res = await fetch(GOOGLE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({
+          action: "mudar_status_trilha",
+          matricula,
+          statusCurso: novoStatus,
+        }),
+      });
+      const resposta = await res.json();
+      if (resposta.status === "sucesso") {
+        alert(`✅ Aluno ${novoStatus == 'Ativo' ? 'aprovado' : 'desclassificado'} com sucesso!`);
+        mutate(); // 🚀 Atualiza a tabela para refletir a mudança de status!
+        setModalAberto(false);
+      } else {
+        alert("⚠️ " + resposta.mensagem);
+      }
+    } catch (erro) {
+      alert("❌ Erro ao conectar com o sistema: " + erro);
+    } finally {
+      setSalvando(false);
+    }
+  }
+
   // Enquanto lê o navegador, não mostra nada
   if (verificandoSessao)
     return <div className="min-h-screen bg-slate-100"></div>;
@@ -260,6 +291,7 @@ export default function DashboardAlunos() {
           salvando={salvando}
           isEditing={isEditing}
           inscreverNoTrilha={inscreverNoTrilha}
+          mudarStatusTrilha={mudarStatusTrilha}
         />
       </div>
     </div>

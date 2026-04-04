@@ -52,6 +52,8 @@ export interface StudentModalProps {
   salvarAluno: () => void;
   salvando: boolean;
   isEditing: boolean;
+  inscreverNoTrilha?: (matricula: string, turmaCurso: string) => Promise<void>;
+  mudarStatusTrilha?: (matricula: string, novaStatus: string) => Promise<void>;
 }
 
 export interface StudentFormProps {

@@ -209,10 +209,14 @@ export default function DashboardAlunos() {
     }
   };
 
-
   const mudarStatusTrilha = async (matricula: string, novoStatus: string) => {
-    const acaoTexto = novoStatus === 'Ativo' ? 'APROVAR' : 'DESClASSIFICAR';
-    if (!confirm(`Deseja realmente ${acaoTexto} este aluno no projeto Trilha Tech?`)) return;
+    const acaoTexto = novoStatus === "Ativo" ? "APROVAR" : "DESCLASSIFICAR";
+    if (
+      !confirm(
+        `Deseja realmente ${acaoTexto} este aluno no projeto Trilha Tech?`,
+      )
+    )
+      return;
 
     setSalvando(true);
     try {
@@ -220,15 +224,17 @@ export default function DashboardAlunos() {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({
-          action: "mudar_status_trilha",
+          action: "mudar_status_trilhatech",
           matricula,
-          statusCurso: novoStatus,
+          novoStatus,
         }),
       });
       const resposta = await res.json();
       if (resposta.status === "sucesso") {
-        alert(`✅ Aluno ${novoStatus == 'Ativo' ? 'aprovado' : 'desclassificado'} com sucesso!`);
-        mutate(); // 🚀 Atualiza a tabela para refletir a mudança de status!
+        alert(
+          `✅ Aluno ${novoStatus === "Ativo" ? "aprovado" : "desclassificado"} com sucesso!`,
+        );
+        mutate();
         setModalAberto(false);
       } else {
         alert("⚠️ " + resposta.mensagem);
@@ -238,7 +244,7 @@ export default function DashboardAlunos() {
     } finally {
       setSalvando(false);
     }
-  }
+  };
 
   // Enquanto lê o navegador, não mostra nada
   if (verificandoSessao)

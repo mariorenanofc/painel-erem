@@ -5,6 +5,7 @@ import useSWR from "swr";
 import Header from "@/src/components/Header";
 import { useRouter } from "next/navigation";
 
+// --- INTERFACES ---
 interface Atividade {
   id: string; titulo: string; descricao: string; dataLimite: string;
   xp: number | string; turmaAlvo: string; tipo: string;
@@ -14,6 +15,11 @@ interface Atividade {
 interface Entrega {
   idEntrega: string; matricula: string; nomeAluno: string;
   resposta: string; status: string; xpGanho: number;
+}
+
+interface RegistroFrequencia {
+  idCheckin: string; matricula: string; nomeAluno: string;
+  data: string; hora: string; xpGanho: number;
 }
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
@@ -28,7 +34,7 @@ export default function GestaoAulasPage() {
   const [nomeUsuario] = useState(() => typeof window !== "undefined" ? localStorage.getItem("usuarioLogado") || "" : "");
   const [montado, setMontado] = useState(false);
 
-  // === ESTADOS DO FORMULÁRIO ===
+  // === ESTADOS DO FORMULÁRIO (MISSÕES) ===
   const [idEditando, setIdEditando] = useState<string | null>(null);
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -47,11 +53,18 @@ export default function GestaoAulasPage() {
   const [carregandoEntregas, setCarregandoEntregas] = useState(false);
   const [notasTemp, setNotasTemp] = useState<Record<string, number>>({});
 
+  // === ESTADOS DO RELATÓRIO DE FREQUÊNCIA ===
+  const [modalFreqAberto, setModalFreqAberto] = useState(false);
+  const [listaFreq, setListaFreq] = useState<RegistroFrequencia[]>([]);
+  const [carregandoFreq, setCarregandoFreq] = useState(false);
+  const [filtroDataISO, setFiltroDataISO] = useState(""); // Formato yyyy-mm-dd do input date
+
   const { data, isLoading, mutate } = useSWR(nomeUsuario && GOOGLE_API_URL ? GOOGLE_API_URL : null, fetcherAtividades, { revalidateOnFocus: true });
   const atividades: Atividade[] = data?.status === "sucesso" ? data.atividades : [];
 
   useEffect(() => { setMontado(true); if (!nomeUsuario) window.location.href = "/"; }, [nomeUsuario]);
 
+  // --- FUNÇÕES DE MISSÕES ---
   const limparFormulario = () => {
     setIdEditando(null); setTitulo(""); setDescricao(""); setDataLimite(""); setXp("100"); setTurmaAlvo("Todas");
     setTipo("Projeto"); setOpcaoA(""); setOpcaoB(""); setOpcaoC(""); setOpcaoD(""); setRespostaCorreta("A");
@@ -65,7 +78,7 @@ export default function GestaoAulasPage() {
   };
 
   const excluirAtividade = async (id: string) => {
-    if (!confirm(`Tem certeza que deseja excluir a missão ${id}? Todas as respostas ligadas a ela ficarão órfãs.`)) return;
+    if (!confirm(`Tem certeza que deseja excluir a missão ${id}?`)) return;
     try {
       await fetch(GOOGLE_API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "excluir_atividade", idAtividade: id }) });
       mutate();
@@ -86,17 +99,14 @@ export default function GestaoAulasPage() {
     } catch { alert("Erro ao salvar."); } finally { setSalvando(false); }
   };
 
-  // === FUNÇÕES DE CORREÇÃO ===
+  // --- FUNÇÕES DE CORREÇÃO (ENTREGAS) ---
   const abrirModalEntregas = async (ativ: Atividade) => {
-    setMissaoAberta(ativ);
-    setCarregandoEntregas(true);
-    setNotasTemp({});
+    setMissaoAberta(ativ); setCarregandoEntregas(true); setNotasTemp({});
     try {
       const res = await fetch(GOOGLE_API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "buscar_entregas_atividade", idAtividade: ativ.id }) });
       const data = await res.json();
       if (data.status === "sucesso") {
         setEntregas(data.entregas);
-        // Preenche notas temporárias com as que já existem
         const notasIniciais: Record<string, number> = {};
         data.entregas.forEach((ent: Entrega) => notasIniciais[ent.idEntrega] = ent.xpGanho);
         setNotasTemp(notasIniciais);
@@ -111,20 +121,101 @@ export default function GestaoAulasPage() {
       const data = await res.json();
       if (data.status === "sucesso") {
         alert("✅ Avaliado com sucesso!");
-        // Atualiza status na tela
         setEntregas(entregas.map(e => e.idEntrega === entrega.idEntrega ? { ...e, status: "Avaliado", xpGanho: nota } : e));
       }
     } catch { alert("Erro ao avaliar."); }
   };
+
+  // --- FUNÇÕES DE FREQUÊNCIA ---
+  const abrirRelatorioFrequencia = async () => {
+    setModalFreqAberto(true);
+    setCarregandoFreq(true);
+    try {
+      const res = await fetch(GOOGLE_API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "buscar_frequencia" }) });
+      const data = await res.json();
+      if (data.status === "sucesso") setListaFreq(data.frequencia);
+    } catch { alert("Erro ao buscar relatório de presença."); setModalFreqAberto(false); } finally { setCarregandoFreq(false); }
+  };
+
+  // Lógica para filtrar a frequência pela data escolhida
+  const filtroDataBR = filtroDataISO ? filtroDataISO.split("-").reverse().join("/") : "";
+  const freqFiltrada = filtroDataBR ? listaFreq.filter(f => f.data === filtroDataBR) : listaFreq;
+
 
   if (!montado || !nomeUsuario) return <div className="min-h-screen bg-slate-100"></div>;
 
   return (
     <main className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans">
       
-      {/* MODAL DE ENTREGAS E CORREÇÃO */}
+      {/* ========================================== */}
+      {/* MODAL DO RELATÓRIO DE FREQUÊNCIA (NOVO)    */}
+      {/* ========================================== */}
+      {modalFreqAberto && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+            <div className="bg-emerald-700 text-white p-4 flex justify-between items-center">
+              <h2 className="font-bold text-lg flex items-center gap-2"><span>📍</span> Relatório de Frequência (Check-ins)</h2>
+              <button onClick={() => setModalFreqAberto(false)} className="text-3xl leading-none hover:text-emerald-200">&times;</button>
+            </div>
+            
+            <div className="p-4 bg-slate-50 border-b flex flex-col sm:flex-row justify-between items-center gap-4">
+               <span className="text-sm font-bold text-slate-600">Total listado: {freqFiltrada.length} alunos</span>
+               
+               <div className="flex items-center gap-2 w-full sm:w-auto">
+                 <label className="text-xs font-bold text-slate-500 uppercase">Filtrar Data:</label>
+                 <input 
+                   type="date" 
+                   value={filtroDataISO} 
+                   onChange={(e) => setFiltroDataISO(e.target.value)} 
+                   className="border border-slate-300 rounded p-1.5 text-sm outline-none focus:border-emerald-500 text-slate-800"
+                 />
+                 {filtroDataISO && (
+                   <button onClick={() => setFiltroDataISO("")} className="text-xs text-red-500 hover:underline font-bold px-2">Limpar</button>
+                 )}
+               </div>
+            </div>
+
+            <div className="p-0 flex-1 overflow-y-auto">
+              {carregandoFreq ? (
+                <p className="text-center text-slate-500 py-12 animate-pulse">Buscando registros...</p>
+              ) : freqFiltrada.length === 0 ? (
+                <p className="text-center text-slate-500 py-12">Nenhum check-in encontrado{filtroDataBR ? ` para a data ${filtroDataBR}` : ""}.</p>
+              ) : (
+                <table className="w-full text-left text-sm text-slate-600">
+                  <thead className="bg-slate-100 text-slate-700 text-xs uppercase font-bold sticky top-0">
+                    <tr>
+                      <th className="px-4 py-3">Data / Hora</th>
+                      <th className="px-4 py-3">Matrícula</th>
+                      <th className="px-4 py-3">Nome do Aluno</th>
+                      <th className="px-4 py-3 text-center">XP</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-200">
+                    {freqFiltrada.map((reg) => (
+                      <tr key={reg.idCheckin} className="hover:bg-slate-50 transition-colors">
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className="font-bold text-slate-700">{reg.data}</span> <span className="text-slate-400">às {reg.hora}</span>
+                        </td>
+                        <td className="px-4 py-3 font-mono text-slate-500">{reg.matricula}</td>
+                        <td className="px-4 py-3 font-semibold text-slate-800">{reg.nomeAluno}</td>
+                        <td className="px-4 py-3 text-center">
+                          <span className="bg-emerald-100 text-emerald-700 font-bold px-2 py-1 rounded text-xs">+{reg.xpGanho}</span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================== */}
+      {/* MODAL DE ENTREGAS (MANTIDO INTACTO)        */}
+      {/* ========================================== */}
       {missaoAberta && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95">
             <div className="bg-slate-800 text-white p-4 flex justify-between items-center">
               <h2 className="font-bold text-lg">📝 Entregas: {missaoAberta.titulo}</h2>
@@ -185,7 +276,8 @@ export default function GestaoAulasPage() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* FORMULÁRIO */}
+          
+          {/* COLUNA ESQUERDA: FORMULÁRIO */}
           <div className="lg:col-span-1">
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 sticky top-6">
               <div className="flex justify-between items-center mb-4">
@@ -235,11 +327,18 @@ export default function GestaoAulasPage() {
             </div>
           </div>
 
-          {/* LISTAGEM DAS MISSÕES COM BOTÕES DE AÇÃO */}
+          {/* COLUNA DIREITA: LISTAGEM DAS MISSÕES */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="p-5 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
                 <h3 className="text-lg font-bold text-slate-800">📚 Missões Cadastradas</h3>
+                {/* BOTÃO MÁGICO DA FREQUÊNCIA AQUI */}
+                <button 
+                  onClick={abrirRelatorioFrequencia} 
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-4 rounded shadow-sm transition-colors flex items-center gap-2"
+                >
+                  <span>📍</span> Ver Presenças
+                </button>
               </div>
               <div className="p-5">
                 {isLoading ? <p className="text-slate-500 text-center py-8 animate-pulse">Carregando missões...</p> : 

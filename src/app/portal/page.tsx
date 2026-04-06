@@ -40,6 +40,11 @@ export default function PortalDashboard() {
   const [atividades, setAtividades] = useState<Atividade[]>([]);
   const [carregandoAtividades, setCarregandoAtividades] = useState(true);
 
+  // --- NOVOS ESTADOS: XP E CHECK-IN ---
+  const [xpTotalSistema, setXpTotalSistema] = useState(0);
+  const [nivelSistema, setNivelSistema] = useState("Iniciante");
+  const [fazendoCheckin, setFazendoCheckin] = useState(false);
+
   const [missaoAberta, setMissaoAberta] = useState<Atividade | null>(null);
   const [resposta, setResposta] = useState("");
   const [enviando, setEnviando] = useState(false);
@@ -57,7 +62,12 @@ export default function PortalDashboard() {
     try {
       const res = await fetch(GOOGLE_API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "buscar_atividades", matricula: aluno.matricula, turma: aluno.turma }) });
       const respostaData = await res.json();
-      if (respostaData.status === "sucesso") setAtividades(respostaData.atividades);
+      if (respostaData.status === "sucesso") {
+        setAtividades(respostaData.atividades);
+        // Atualiza o XP e o Nível puxando direto do banco de dados (Aba TrilhaTech)
+        setXpTotalSistema(respostaData.xpTotal || 0);
+        setNivelSistema(respostaData.nivel || "Iniciante");
+      }
     } catch { console.error("Erro ao carregar missões"); } finally { setCarregandoAtividades(false); }
   };
 
@@ -79,6 +89,22 @@ export default function PortalDashboard() {
       if (respostaData.status === "sucesso") { alert("✅ " + respostaData.mensagem); setMissaoAberta(null); buscarAtividades(); } 
       else { alert("⚠️ " + respostaData.mensagem); }
     } catch { alert("❌ Erro de conexão."); } finally { setEnviando(false); }
+  };
+
+  // --- FUNÇÃO DO CHECK-IN ---
+  const registrarPresenca = async () => {
+    if (!aluno) return;
+    setFazendoCheckin(true);
+    try {
+      const res = await fetch(GOOGLE_API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "fazer_checkin", matricula: aluno.matricula }) });
+      const data = await res.json();
+      if (data.status === "sucesso") {
+        alert("🎉 " + data.mensagem);
+        buscarAtividades(); // Atualiza a tela para mostrar o novo XP na hora
+      } else {
+        alert("⚠️ " + data.mensagem);
+      }
+    } catch { alert("❌ Erro ao tentar registar a presença."); } finally { setFazendoCheckin(false); }
   };
 
   // --- FUNÇÕES DO PERFIL ---
@@ -108,7 +134,6 @@ export default function PortalDashboard() {
 
   if (!aluno) return <div className="min-h-screen bg-slate-50"></div>;
   const missoesPendentes = atividades.filter(a => a.status === "Pendente").length;
-  const xpTotal = atividades.reduce((acc, ativ) => acc + (Number(ativ.xpGanho) || 0), 0);
 
   return (
     <main 
@@ -136,7 +161,6 @@ export default function PortalDashboard() {
                     <strong>Aviso de Segurança:</strong> Você tem permissão apenas para atualizar seus números de telefone de contato. Para corrigir qualquer outro dado de registro, procure a secretaria.
                   </div>
 
-                  {/* Campos Bloqueados (Readonly) */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome Completo</label>
@@ -163,7 +187,6 @@ export default function PortalDashboard() {
 
                   <hr className="my-4 border-slate-200" />
 
-                  {/* Campos Editáveis (Contatos) */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <label className="block text-xs font-bold text-blue-600 uppercase mb-1">Telefone (Seu)</label>
@@ -190,7 +213,7 @@ export default function PortalDashboard() {
         </div>
       )}
 
-      {/* --- MODAL DA MISSÃO (Mantido intacto) --- */}
+      {/* --- MODAL DA MISSÃO --- */}
       {missaoAberta && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -237,7 +260,7 @@ export default function PortalDashboard() {
         </div>
       )}
 
-      {/* --- DASHBOARD PRINCIPAL (CABEÇALHO NOVO) --- */}
+      {/* --- DASHBOARD PRINCIPAL --- */}
       <header className="bg-blue-900 text-white p-4 shadow-md sticky top-0 z-10">
         <div className="max-w-5xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-3">
@@ -252,7 +275,16 @@ export default function PortalDashboard() {
               <p className="text-sm font-bold">{aluno.nome.split(' ')[0]}</p>
               <p className="text-xs text-blue-300">{aluno.turma}</p>
             </div>
-            {/* NOVO BOTÃO DE PERFIL */}
+            {/* BOTÃO CHECK-IN */}
+            <button 
+              onClick={registrarPresenca} 
+              disabled={fazendoCheckin}
+              className="bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded text-xs font-bold transition-all shadow-md disabled:bg-slate-400 flex items-center gap-1"
+            >
+              <span className="animate-pulse">📍</span>
+              <span className="hidden sm:inline">{fazendoCheckin ? "A registar..." : "Check-in (+10 XP)"}</span>
+              <span className="sm:hidden">{fazendoCheckin ? "..." : "+10 XP"}</span>
+            </button>
             <button onClick={abrirPerfil} className="bg-blue-800 hover:bg-blue-700 px-3 py-1.5 rounded text-xs font-bold transition-colors border border-blue-700 flex items-center gap-1">
               <span>👤</span> <span className="hidden sm:inline">Perfil</span>
             </button>
@@ -267,11 +299,22 @@ export default function PortalDashboard() {
             <h2 className="text-2xl font-black text-slate-800">Bem-vindo, {aluno.nome.split(' ')[0]}!</h2>
             <p className="text-slate-500 text-sm mt-1">Você tem <strong className="text-amber-600">{missoesPendentes} missões pendentes</strong> para concluir.</p>
           </div>
-          <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg flex items-center gap-3">
-            <div className="bg-emerald-100 p-2 rounded-full text-xl">⭐</div>
-            <div>
-              <p className="text-xs font-bold text-emerald-800 uppercase">Seu XP Total</p>
-              <p className="text-lg font-black text-emerald-600">{xpTotal} XP</p>
+          <div className="flex gap-4">
+            {/* CAIXA DE NÍVEL */}
+            <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg  items-center gap-3 hidden sm:flex">
+              <div className="bg-blue-100 p-2 rounded-full text-xl">🎓</div>
+              <div>
+                <p className="text-xs font-bold text-blue-800 uppercase">Nível Atual</p>
+                <p className="text-lg font-black text-blue-600">{nivelSistema}</p>
+              </div>
+            </div>
+            {/* CAIXA DE XP */}
+            <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg flex items-center gap-3">
+              <div className="bg-emerald-100 p-2 rounded-full text-xl">⭐</div>
+              <div>
+                <p className="text-xs font-bold text-emerald-800 uppercase">Seu XP Total</p>
+                <p className="text-lg font-black text-emerald-600">{xpTotalSistema} XP</p>
+              </div>
             </div>
           </div>
         </div>

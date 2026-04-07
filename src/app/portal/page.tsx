@@ -44,6 +44,7 @@ export default function PortalDashboard() {
   const [rankingAberto, setRankingAberto] = useState(false);
   const [dadosRanking, setDadosRanking] = useState<AlunoRanking[]>([]);
   const [carregandoRanking, setCarregandoRanking] = useState(false);
+  const [abaRanking, setAbaRanking] = useState<"Geral" | "Turma">("Geral")
 
   useEffect(() => { setMontado(true); }, []);
   useEffect(() => { if (montado && dadosSalvos === null) router.push("/portal/login"); }, [montado, dadosSalvos, router]);
@@ -61,7 +62,6 @@ export default function PortalDashboard() {
     } catch { console.error("Erro ao carregar missões"); } finally { setCarregandoAtividades(false); }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   useEffect(() => { 
     if (montado && aluno) {
       buscarAtividades(); 
@@ -151,12 +151,12 @@ export default function PortalDashboard() {
     <main className="min-h-screen bg-slate-50 font-sans pb-12 select-none" onContextMenu={(e) => e.preventDefault()} onCopy={(e) => { e.preventDefault(); alert("⚠️ Sistema Anti-Cola ativo."); }} onCut={(e) => e.preventDefault()}>
       
       {/* ========================================== */}
-      {/* MODAL DO RANKING (NOVO)                    */}
+      {/* MODAL DO RANKING (GERAL E POR TURMA)       */}
       {/* ========================================== */}
       {rankingAberto && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="bg-gradient-to-red from-amber-500 to-amber-600 p-5 border-b flex justify-between items-center text-white">
+            <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-5 border-b flex justify-between items-center text-white">
               <div>
                 <h2 className="font-black text-xl flex items-center gap-2"><span>🏆</span> Leaderboard</h2>
                 <p className="text-amber-100 text-xs mt-1">Os maiores pontuadores do Trilha Tech</p>
@@ -164,6 +164,21 @@ export default function PortalDashboard() {
               <button onClick={() => setRankingAberto(false)} className="text-3xl leading-none hover:text-amber-200 transition-colors">&times;</button>
             </div>
             
+            <div className="flex bg-slate-100 border-b border-slate-200">
+              <button 
+                onClick={() => setAbaRanking("Geral")}
+                className={`flex-1 py-3 text-sm font-bold transition-colors ${abaRanking === "Geral" ? "bg-white text-amber-600 border-b-2 border-amber-500" : "text-slate-500 hover:bg-slate-200"}`}
+              >
+                🌎 Ranking Geral
+              </button>
+              <button 
+                onClick={() => setAbaRanking("Turma")}
+                className={`flex-1 py-3 text-sm font-bold transition-colors ${abaRanking === "Turma" ? "bg-white text-amber-600 border-b-2 border-amber-500" : "text-slate-500 hover:bg-slate-200"}`}
+              >
+                👥 Minha Turma
+              </button>
+            </div>
+
             <div className="p-0 overflow-y-auto flex-1 bg-slate-50">
               {carregandoRanking ? (
                  <div className="flex justify-center py-16"><div className="animate-spin rounded-full h-10 w-10 border-b-4 border-amber-500"></div></div>
@@ -171,39 +186,52 @@ export default function PortalDashboard() {
                  <p className="text-center text-slate-500 py-12">Nenhum aluno no ranking ainda.</p>
               ) : (
                  <div className="p-4 space-y-3">
-                   {dadosRanking.map((userRank) => {
-                     const isMe = userRank.matricula === aluno.matricula;
-                     let medalha = "";
-                     let corFundo = "bg-white border-slate-200";
-                     let destaqueNome = "text-slate-800";
+                   {/* LÓGICA DE FILTRAGEM CORRIGIDA */}
+                   {(() => {
+                     // 1. Descobre a Turma do Projeto (ex: "Turma 1 - 1º Ano") buscando o próprio aluno na lista
+                     const minhaTurmaTrilha = dadosRanking.find(r => r.matricula === aluno?.matricula)?.turma;
                      
-                     // Pódio
-                     if (userRank.posicao === 1) { medalha = "🥇"; corFundo = "bg-amber-100 border-amber-300 shadow-sm"; destaqueNome = "text-amber-900"; }
-                     else if (userRank.posicao === 2) { medalha = "🥈"; corFundo = "bg-slate-200 border-slate-300 shadow-sm"; destaqueNome = "text-slate-800"; }
-                     else if (userRank.posicao === 3) { medalha = "🥉"; corFundo = "bg-orange-100 border-orange-200 shadow-sm"; destaqueNome = "text-orange-900"; }
-                     
-                     // Destaque se for o próprio aluno logado e ele não estiver no top 3
-                     if (isMe && userRank.posicao > 3) { corFundo = "bg-blue-50 border-blue-400 shadow-md"; destaqueNome = "text-blue-800"; }
+                     // 2. Filtra a lista com base nessa descoberta
+                     const listaExibicao = abaRanking === "Geral" 
+                        ? dadosRanking 
+                        : dadosRanking.filter(r => r.turma === minhaTurmaTrilha).map((r, index) => ({...r, posicao: index + 1}));
 
-                     return (
-                       <div key={userRank.matricula} className={`flex items-center gap-4 p-3 rounded-xl border transition-all hover:scale-[1.01] ${corFundo}`}>
-                          <div className="w-10 text-center font-black text-slate-600 text-lg">
-                            {medalha || `${userRank.posicao}º`}
-                          </div>
-                          <div className="flex-1">
-                            <h4 className={`font-bold text-sm md:text-base ${destaqueNome}`}>
-                              {userRank.nome} 
-                              {isMe && <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full ml-2 shadow-sm align-middle">VOCÊ</span>}
-                            </h4>
-                            <p className="text-xs text-slate-500 font-medium mt-0.5">{userRank.turma} • {userRank.nivel}</p>
-                          </div>
-                          <div className="text-right bg-white/60 px-3 py-1.5 rounded-lg border border-white/50">
-                            <span className="font-black text-amber-600 text-lg">{userRank.xp}</span>
-                            <span className="text-[10px] text-slate-500 ml-1 font-bold uppercase tracking-wider">XP</span>
-                          </div>
-                       </div>
-                     )
-                   })}
+                     if (abaRanking === "Turma" && !minhaTurmaTrilha) {
+                        return <p className="text-center text-slate-500 py-8">Não foi possível identificar a sua turma no projeto.</p>;
+                     }
+
+                     return listaExibicao.map((userRank) => {
+                       const isMe = userRank.matricula === aluno?.matricula;
+                       let medalha = "";
+                       let corFundo = "bg-white border-slate-200";
+                       let destaqueNome = "text-slate-800";
+                       
+                       if (userRank.posicao === 1) { medalha = "🥇"; corFundo = "bg-amber-100 border-amber-300 shadow-sm"; destaqueNome = "text-amber-900"; }
+                       else if (userRank.posicao === 2) { medalha = "🥈"; corFundo = "bg-slate-200 border-slate-300 shadow-sm"; destaqueNome = "text-slate-800"; }
+                       else if (userRank.posicao === 3) { medalha = "🥉"; corFundo = "bg-orange-100 border-orange-200 shadow-sm"; destaqueNome = "text-orange-900"; }
+                       
+                       if (isMe && userRank.posicao > 3) { corFundo = "bg-blue-50 border-blue-400 shadow-md"; destaqueNome = "text-blue-800"; }
+
+                       return (
+                         <div key={userRank.matricula} className={`flex items-center gap-4 p-3 rounded-xl border transition-all hover:scale-[1.01] ${corFundo}`}>
+                            <div className="w-10 text-center font-black text-slate-600 text-lg">
+                              {medalha || `${userRank.posicao}º`}
+                            </div>
+                            <div className="flex-1">
+                              <h4 className={`font-bold text-sm md:text-base ${destaqueNome}`}>
+                                {userRank.nome} 
+                                {isMe && <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full ml-2 shadow-sm align-middle">VOCÊ</span>}
+                              </h4>
+                              <p className="text-xs text-slate-500 font-medium mt-0.5">{userRank.turma} • {userRank.nivel}</p>
+                            </div>
+                            <div className="text-right bg-white/60 px-3 py-1.5 rounded-lg border border-white/50">
+                              <span className="font-black text-amber-600 text-lg">{userRank.xp}</span>
+                              <span className="text-[10px] text-slate-500 ml-1 font-bold uppercase tracking-wider">XP</span>
+                            </div>
+                         </div>
+                       )
+                     })
+                   })()}
                  </div>
               )}
             </div>

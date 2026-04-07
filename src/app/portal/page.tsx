@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
@@ -16,7 +17,6 @@ interface Atividade {
   status: string; respostaEnviada: string; xpGanho: number;
 }
 
-// Interface do Perfil
 interface PerfilAluno {
   nome: string; dataNasc: string; matricula: string;
   email: string; turma: string; telefoneAluno: string; telefoneResponsavel: string;
@@ -34,28 +34,39 @@ export default function PortalDashboard() {
   const router = useRouter();
   const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
 
+  const [montado, setMontado] = useState(false);
+
   const dadosSalvos = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
   const aluno: DadosAluno | null = dadosSalvos ? JSON.parse(dadosSalvos) : null;
 
   const [atividades, setAtividades] = useState<Atividade[]>([]);
   const [carregandoAtividades, setCarregandoAtividades] = useState(true);
 
-  // --- NOVOS ESTADOS: XP E CHECK-IN ---
   const [xpTotalSistema, setXpTotalSistema] = useState(0);
   const [nivelSistema, setNivelSistema] = useState("Iniciante");
+  
+  // --- ESTADOS DO CHECK-IN ---
   const [fazendoCheckin, setFazendoCheckin] = useState(false);
+  const [checkinRealizado, setCheckinRealizado] = useState(false);
 
   const [missaoAberta, setMissaoAberta] = useState<Atividade | null>(null);
   const [resposta, setResposta] = useState("");
   const [enviando, setEnviando] = useState(false);
 
-  // --- ESTADOS DO PERFIL ---
   const [perfilAberto, setPerfilAberto] = useState(false);
   const [dadosPerfil, setDadosPerfil] = useState<PerfilAluno | null>(null);
   const [carregandoPerfil, setCarregandoPerfil] = useState(false);
   const [salvandoPerfil, setSalvandoPerfil] = useState(false);
 
-  useEffect(() => { if (dadosSalvos === null) router.push("/portal/login"); }, [dadosSalvos, router]);
+  useEffect(() => {
+    setMontado(true);
+  }, []);
+
+  useEffect(() => {
+    if (montado && dadosSalvos === null) {
+      router.push("/portal/login");
+    }
+  }, [montado, dadosSalvos, router]);
 
   const buscarAtividades = async () => {
     if (!aluno || !GOOGLE_API_URL) return;
@@ -64,15 +75,25 @@ export default function PortalDashboard() {
       const respostaData = await res.json();
       if (respostaData.status === "sucesso") {
         setAtividades(respostaData.atividades);
-        // Atualiza o XP e o Nível puxando direto do banco de dados (Aba TrilhaTech)
         setXpTotalSistema(respostaData.xpTotal || 0);
         setNivelSistema(respostaData.nivel || "Iniciante");
       }
     } catch { console.error("Erro ao carregar missões"); } finally { setCarregandoAtividades(false); }
   };
 
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { buscarAtividades(); }, [aluno]);
+  
+  useEffect(() => { 
+    if (montado && aluno) {
+      buscarAtividades(); 
+      
+      // NOVO: Verifica se o aluno já fez check-in hoje olhando o LocalStorage
+      const dataHoje = new Date().toLocaleDateString("pt-BR");
+      const ultimoCheckin = localStorage.getItem(`checkin_${aluno.matricula}`);
+      if (ultimoCheckin === dataHoje) {
+        setCheckinRealizado(true);
+      }
+    }
+  }, [montado, aluno]);
 
   const fazerLogout = () => { localStorage.removeItem("alunoLogado"); router.push("/portal/login"); };
 
@@ -91,23 +112,32 @@ export default function PortalDashboard() {
     } catch { alert("❌ Erro de conexão."); } finally { setEnviando(false); }
   };
 
-  // --- FUNÇÃO DO CHECK-IN ---
   const registrarPresenca = async () => {
     if (!aluno) return;
     setFazendoCheckin(true);
     try {
       const res = await fetch(GOOGLE_API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "fazer_checkin", matricula: aluno.matricula }) });
       const data = await res.json();
+      
+      const dataHoje = new Date().toLocaleDateString("pt-BR");
+
       if (data.status === "sucesso") {
         alert("🎉 " + data.mensagem);
-        buscarAtividades(); // Atualiza a tela para mostrar o novo XP na hora
+        // NOVO: Salva que fez o check-in hoje no navegador do aluno
+        localStorage.setItem(`checkin_${aluno.matricula}`, dataHoje);
+        setCheckinRealizado(true);
+        buscarAtividades();
       } else {
         alert("⚠️ " + data.mensagem);
+        // NOVO: Se o backend disser que ele JÁ FEZ, nós bloqueamos a tela para arrumar
+        if (data.mensagem.includes("já garantiu")) {
+          localStorage.setItem(`checkin_${aluno.matricula}`, dataHoje);
+          setCheckinRealizado(true);
+        }
       }
     } catch { alert("❌ Erro ao tentar registar a presença."); } finally { setFazendoCheckin(false); }
   };
 
-  // --- FUNÇÕES DO PERFIL ---
   const abrirPerfil = async () => {
     if (!aluno) return;
     setPerfilAberto(true);
@@ -132,7 +162,12 @@ export default function PortalDashboard() {
     } catch { alert("❌ Erro ao salvar contatos."); } finally { setSalvandoPerfil(false); }
   };
 
-  if (!aluno) return <div className="min-h-screen bg-slate-50"></div>;
+  if (!montado || !aluno) return (
+    <div className="min-h-screen bg-slate-50 flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600"></div>
+    </div>
+  );
+
   const missoesPendentes = atividades.filter(a => a.status === "Pendente").length;
 
   return (
@@ -146,7 +181,13 @@ export default function PortalDashboard() {
       {/* --- MODAL DO MEU PERFIL --- */}
       {perfilAberto && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col">
+          {/* O ESCUDO ANTI-COLA FOI DESATIVADO AQUI NESTA DIV */}
+          <div 
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col select-text"
+            onContextMenu={(e) => e.stopPropagation()}
+            onCopy={(e) => e.stopPropagation()}
+            onCut={(e) => e.stopPropagation()}
+          >
             <div className="bg-blue-900 p-4 border-b flex justify-between items-center text-white">
               <h2 className="font-bold text-lg flex items-center gap-2"><span>👤</span> Meu Perfil</h2>
               <button onClick={() => setPerfilAberto(false)} className="text-2xl leading-none hover:text-blue-200">&times;</button>
@@ -236,7 +277,7 @@ export default function PortalDashboard() {
                       const opcaoTexto = missaoAberta[`opcao${letra}` as keyof Atividade];
                       return opcaoTexto ? (
                         <label key={letra} className={`block p-3 rounded-lg border cursor-pointer transition-colors ${resposta === letra ? 'bg-blue-50 border-blue-500' : 'bg-white border-slate-300 hover:bg-slate-50'}`}>
-                          <input type="radio" name="quiz" value={letra} checked={resposta === letra} onChange={(e) => setResposta(e.target.value)} disabled={missaoAberta.status === "Avaliador"} className="mr-3" />
+                          <input type="radio" name="quiz" value={letra} checked={resposta === letra} onChange={(e) => setResposta(e.target.value)} disabled={missaoAberta.status === "Avaliador" || missaoAberta.status === "Avaliado"} className="mr-3" />
                           <strong className="text-slate-700">{letra})</strong> <span className="text-slate-600">{opcaoTexto}</span>
                         </label>
                       ) : null;
@@ -245,13 +286,13 @@ export default function PortalDashboard() {
                 ) : (
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-2">Cole o link do seu projeto (GitHub, Replit, etc):</label>
-                    <input type="url" placeholder="https://..." value={resposta} onChange={(e) => setResposta(e.target.value)} required disabled={missaoAberta.status === "Avaliador"} className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-3 focus:ring-2 focus:ring-blue-500" />
+                    <input type="url" placeholder="https://..." value={resposta} onChange={(e) => setResposta(e.target.value)} required disabled={missaoAberta.status === "Avaliador" || missaoAberta.status === "Avaliado"} className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-3 focus:ring-2 focus:ring-blue-500" />
                   </div>
                 )}
                 <div className="mt-6 flex justify-end gap-3">
                   <button type="button" onClick={() => setMissaoAberta(null)} className="px-5 py-2.5 rounded-lg text-slate-600 font-bold hover:bg-slate-100">Cancelar</button>
-                  <button type="submit" disabled={enviando} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-md disabled:bg-slate-400">
-                    {enviando ? "Enviando..." : "Enviar Resposta"}
+                  <button type="submit" disabled={enviando || missaoAberta.status === "Avaliador" || missaoAberta.status === "Avaliado"} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-md disabled:bg-slate-400">
+                    {enviando ? "Enviando..." : (missaoAberta.status === "Avaliador" || missaoAberta.status === "Avaliado" ? "Já Enviado" : "Enviar Resposta")}
                   </button>
                 </div>
               </form>
@@ -275,20 +316,35 @@ export default function PortalDashboard() {
               <p className="text-sm font-bold">{aluno.nome.split(' ')[0]}</p>
               <p className="text-xs text-blue-300">{aluno.turma}</p>
             </div>
-            {/* BOTÃO CHECK-IN */}
+            
+            {/* --- O NOVO BOTÃO DE CHECK-IN INTELIGENTE --- */}
             <button 
               onClick={registrarPresenca} 
-              disabled={fazendoCheckin}
-              className="bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded text-xs font-bold transition-all shadow-md disabled:bg-slate-400 flex items-center gap-1"
+              disabled={fazendoCheckin || checkinRealizado}
+              className={`px-3 py-1.5 rounded text-xs font-bold transition-all shadow-md flex items-center gap-1 ${
+                checkinRealizado 
+                  ? 'bg-slate-200 text-slate-500 cursor-not-allowed border border-slate-300' 
+                  : 'bg-emerald-500 hover:bg-emerald-600 text-white disabled:bg-slate-400'
+              }`}
             >
-              <span className="animate-pulse">📍</span>
-              <span className="hidden sm:inline">{fazendoCheckin ? "A registar..." : "Check-in (+10 XP)"}</span>
-              <span className="sm:hidden">{fazendoCheckin ? "..." : "+10 XP"}</span>
+              {checkinRealizado ? (
+                <>
+                  <span>✅</span>
+                  <span className="hidden sm:inline">Check-in Realizado</span>
+                </>
+              ) : (
+                <>
+                  <span className={!fazendoCheckin ? "animate-pulse" : ""}>📍</span>
+                  <span className="hidden sm:inline">{fazendoCheckin ? "A registar..." : "Check-in (+10 XP)"}</span>
+                  <span className="sm:hidden">{fazendoCheckin ? "..." : "+10 XP"}</span>
+                </>
+              )}
             </button>
-            <button onClick={abrirPerfil} className="bg-blue-800 hover:bg-blue-700 px-3 py-1.5 rounded text-xs font-bold transition-colors border border-blue-700 flex items-center gap-1">
+
+            <button onClick={abrirPerfil} className="bg-blue-800 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-bold transition-colors border border-blue-700 flex items-center gap-1">
               <span>👤</span> <span className="hidden sm:inline">Perfil</span>
             </button>
-            <button onClick={fazerLogout} className="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded text-xs font-bold transition-colors border border-slate-700">Sair</button>
+            <button onClick={fazerLogout} className="bg-slate-800 hover:bg-slate-700 text-white px-3 py-1.5 rounded text-xs font-bold transition-colors border border-slate-700">Sair</button>
           </div>
         </div>
       </header>
@@ -300,15 +356,13 @@ export default function PortalDashboard() {
             <p className="text-slate-500 text-sm mt-1">Você tem <strong className="text-amber-600">{missoesPendentes} missões pendentes</strong> para concluir.</p>
           </div>
           <div className="flex gap-4">
-            {/* CAIXA DE NÍVEL */}
-            <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg  items-center gap-3 hidden sm:flex">
+            <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg flex items-center gap-3 sm:flex">
               <div className="bg-blue-100 p-2 rounded-full text-xl">🎓</div>
               <div>
                 <p className="text-xs font-bold text-blue-800 uppercase">Nível Atual</p>
                 <p className="text-lg font-black text-blue-600">{nivelSistema}</p>
               </div>
             </div>
-            {/* CAIXA DE XP */}
             <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg flex items-center gap-3">
               <div className="bg-emerald-100 p-2 rounded-full text-xl">⭐</div>
               <div>
@@ -322,7 +376,6 @@ export default function PortalDashboard() {
 
       <div className="max-w-5xl mx-auto p-4 md:p-8 mt-4">
         <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">🎯 Suas Missões</h3>
-
         {carregandoAtividades ? (
           <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div></div>
         ) : atividades.length === 0 ? (

@@ -3,11 +3,9 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { useRouter } from "next/navigation";
 
-// --- INTERFACES ---
 interface DadosAluno { matricula: string; nome: string; turma: string; }
 interface Atividade { id: string; titulo: string; descricao: string; dataLimite: string; xp: string | number; tipo: string; opcaoA: string; opcaoB: string; opcaoC: string; opcaoD: string; status: string; respostaEnviada: string; xpGanho: number; }
 interface PerfilAluno { nome: string; dataNasc: string; matricula: string; email: string; turma: string; telefoneAluno: string; telefoneResponsavel: string; }
-// NOVO: Interface do Ranking
 interface AlunoRanking { matricula: string; nome: string; turma: string; xp: number; nivel: string; posicao: number; }
 
 const subscribe = (callback: () => void) => { if (typeof window !== "undefined") { window.addEventListener("storage", callback); return () => window.removeEventListener("storage", callback); } return () => {}; };
@@ -28,8 +26,11 @@ export default function PortalDashboard() {
   const [xpTotalSistema, setXpTotalSistema] = useState(0);
   const [nivelSistema, setNivelSistema] = useState("Iniciante");
   
+  // --- ESTADOS DO CHECK-IN COM SENHA ---
   const [fazendoCheckin, setFazendoCheckin] = useState(false);
   const [checkinRealizado, setCheckinRealizado] = useState(false);
+  const [modalSenhaAberto, setModalSenhaAberto] = useState(false);
+  const [senhaDigitada, setSenhaDigitada] = useState("");
 
   const [missaoAberta, setMissaoAberta] = useState<Atividade | null>(null);
   const [resposta, setResposta] = useState("");
@@ -40,11 +41,12 @@ export default function PortalDashboard() {
   const [carregandoPerfil, setCarregandoPerfil] = useState(false);
   const [salvandoPerfil, setSalvandoPerfil] = useState(false);
 
-  // NOVO: ESTADOS DO RANKING
+  // --- ESTADOS DO RANKING ---
   const [rankingAberto, setRankingAberto] = useState(false);
   const [dadosRanking, setDadosRanking] = useState<AlunoRanking[]>([]);
   const [carregandoRanking, setCarregandoRanking] = useState(false);
-  const [abaRanking, setAbaRanking] = useState<"Geral" | "Turma">("Geral")
+  const [abaRanking, setAbaRanking] = useState<"Geral" | "Turma">("Geral");
+  const [filtroTempo, setFiltroTempo] = useState<"geral" | "semanal" | "mensal">("geral");
 
   useEffect(() => { setMontado(true); }, []);
   useEffect(() => { if (montado && dadosSalvos === null) router.push("/portal/login"); }, [montado, dadosSalvos, router]);
@@ -69,7 +71,6 @@ export default function PortalDashboard() {
       const ultimoCheckin = localStorage.getItem(`checkin_${aluno.matricula}`);
       if (ultimoCheckin === dataHoje) setCheckinRealizado(true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [montado, aluno]);
 
   const fazerLogout = () => { localStorage.removeItem("alunoLogado"); router.push("/portal/login"); };
@@ -88,22 +89,33 @@ export default function PortalDashboard() {
     } catch { alert("❌ Erro de conexão."); } finally { setEnviando(false); }
   };
 
-  const registrarPresenca = async () => {
+  // --- NOVA FUNÇÃO DE CHECK-IN COM SENHA ---
+  const confirmarCheckin = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!aluno) return;
+    if (!senhaDigitada.trim()) return alert("Digite a senha da lousa!");
+    
     setFazendoCheckin(true);
     try {
-      const res = await fetch(GOOGLE_API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "fazer_checkin", matricula: aluno.matricula }) });
+      const res = await fetch(GOOGLE_API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "fazer_checkin", matricula: aluno.matricula, senha: senhaDigitada }) });
       const data = await res.json();
       const dataHoje = new Date().toLocaleDateString("pt-BR");
 
       if (data.status === "sucesso") {
         alert("🎉 " + data.mensagem);
         localStorage.setItem(`checkin_${aluno.matricula}`, dataHoje);
-        setCheckinRealizado(true); buscarAtividades();
+        setCheckinRealizado(true);
+        setModalSenhaAberto(false);
+        setSenhaDigitada("");
+        buscarAtividades();
       } else {
         alert("⚠️ " + data.mensagem);
+        // Se a mensagem for sobre o dia errado ou senha errada, ele não marca como realizado.
+        // Só marca como realizado se a API disser que ele já garantiu.
         if (data.mensagem.includes("já garantiu")) {
-          localStorage.setItem(`checkin_${aluno.matricula}`, dataHoje); setCheckinRealizado(true);
+          localStorage.setItem(`checkin_${aluno.matricula}`, dataHoje);
+          setCheckinRealizado(true);
+          setModalSenhaAberto(false);
         }
       }
     } catch { alert("❌ Erro ao tentar registar a presença."); } finally { setFazendoCheckin(false); }
@@ -130,18 +142,26 @@ export default function PortalDashboard() {
     } catch { alert("❌ Erro."); } finally { setSalvandoPerfil(false); }
   };
 
-  // NOVO: Função para abrir e carregar o Ranking
-  const abrirRanking = async () => {
-    setRankingAberto(true);
+  // --- BUSCAR RANKING COM FILTRO ---
+  const carregarRanking = async (tempoSelecionado: string) => {
     setCarregandoRanking(true);
     try {
-      const res = await fetch(GOOGLE_API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "buscar_ranking" }) });
+      const res = await fetch(GOOGLE_API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "buscar_ranking", filtroTempo: tempoSelecionado }) });
       const data = await res.json();
       if (data.status === "sucesso") setDadosRanking(data.ranking);
       else alert("⚠️ " + data.mensagem);
-    } catch { alert("❌ Erro ao buscar ranking."); setRankingAberto(false); } finally { setCarregandoRanking(false); }
+    } catch { alert("❌ Erro ao buscar ranking."); } finally { setCarregandoRanking(false); }
   };
 
+  const abrirRanking = () => {
+    setRankingAberto(true);
+    carregarRanking(filtroTempo);
+  };
+
+  const mudarFiltroTempo = (novoTempo: "geral" | "semanal" | "mensal") => {
+    setFiltroTempo(novoTempo);
+    carregarRanking(novoTempo);
+  };
 
   if (!montado || !aluno) return <div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600"></div></div>;
 
@@ -151,82 +171,99 @@ export default function PortalDashboard() {
     <main className="min-h-screen bg-slate-50 font-sans pb-12 select-none" onContextMenu={(e) => e.preventDefault()} onCopy={(e) => { e.preventDefault(); alert("⚠️ Sistema Anti-Cola ativo."); }} onCut={(e) => e.preventDefault()}>
       
       {/* ========================================== */}
-      {/* MODAL DO RANKING (GERAL E POR TURMA)       */}
+      {/* MODAL DE SENHA DO CHECK-IN                 */}
+      {/* ========================================== */}
+      {modalSenhaAberto && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col p-6 text-center select-text">
+            <div className="text-4xl mb-4">🔐</div>
+            <h2 className="font-black text-xl text-slate-800 mb-2">Presença em Sala</h2>
+            <p className="text-sm text-slate-500 mb-6">Digite a senha que o tutor escreveu na lousa para garantir os seus 10 XP.</p>
+            <form onSubmit={confirmarCheckin}>
+              <input 
+                type="text" 
+                value={senhaDigitada} 
+                onChange={(e) => setSenhaDigitada(e.target.value.toUpperCase())}
+                placeholder="SENHA DA LOUSA"
+                className="w-full text-center text-2xl font-black font-mono border-2 border-slate-300 rounded-lg p-3 mb-4 focus:border-emerald-500 outline-none uppercase tracking-widest text-slate-800"
+                autoFocus
+              />
+              <div className="flex gap-3 mt-2">
+                <button type="button" onClick={() => setModalSenhaAberto(false)} className="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-100 rounded-lg transition-colors">Cancelar</button>
+                <button type="submit" disabled={fazendoCheckin} className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-md transition-colors disabled:bg-emerald-400">
+                  {fazendoCheckin ? "Validando..." : "Confirmar"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================== */}
+      {/* MODAL DO RANKING COM FILTROS TEMPORAIS     */}
       {/* ========================================== */}
       {rankingAberto && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-5 border-b flex justify-between items-center text-white">
+        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh]">
+            <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-4 md:p-5 border-b flex justify-between items-center text-white">
               <div>
-                <h2 className="font-black text-xl flex items-center gap-2"><span>🏆</span> Leaderboard</h2>
-                <p className="text-amber-100 text-xs mt-1">Os maiores pontuadores do Trilha Tech</p>
+                <h2 className="font-black text-lg md:text-xl flex items-center gap-2"><span>🏆</span> Leaderboard</h2>
+                <p className="text-amber-100 text-[10px] md:text-xs mt-1">Os maiores pontuadores do Trilha Tech</p>
               </div>
               <button onClick={() => setRankingAberto(false)} className="text-3xl leading-none hover:text-amber-200 transition-colors">&times;</button>
             </div>
             
+            {/* ABAS DE NAVEGAÇÃO DE TURMA */}
             <div className="flex bg-slate-100 border-b border-slate-200">
-              <button 
-                onClick={() => setAbaRanking("Geral")}
-                className={`flex-1 py-3 text-sm font-bold transition-colors ${abaRanking === "Geral" ? "bg-white text-amber-600 border-b-2 border-amber-500" : "text-slate-500 hover:bg-slate-200"}`}
-              >
-                🌎 Ranking Geral
-              </button>
-              <button 
-                onClick={() => setAbaRanking("Turma")}
-                className={`flex-1 py-3 text-sm font-bold transition-colors ${abaRanking === "Turma" ? "bg-white text-amber-600 border-b-2 border-amber-500" : "text-slate-500 hover:bg-slate-200"}`}
-              >
-                👥 Minha Turma
-              </button>
+              <button onClick={() => setAbaRanking("Geral")} className={`flex-1 py-3 text-xs md:text-sm font-bold transition-colors ${abaRanking === "Geral" ? "bg-white text-amber-600 border-b-2 border-amber-500" : "text-slate-500 hover:bg-slate-200"}`}>🌎 Ranking Geral</button>
+              <button onClick={() => setAbaRanking("Turma")} className={`flex-1 py-3 text-xs md:text-sm font-bold transition-colors ${abaRanking === "Turma" ? "bg-white text-amber-600 border-b-2 border-amber-500" : "text-slate-500 hover:bg-slate-200"}`}>👥 Minha Turma</button>
+            </div>
+
+            {/* NOVOS FILTROS TEMPORAIS */}
+            <div className="bg-white px-4 py-3 flex justify-center gap-2 border-b border-slate-100 shadow-sm z-10">
+              <button onClick={() => mudarFiltroTempo("geral")} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${filtroTempo === "geral" ? "bg-amber-100 text-amber-700 border border-amber-300 shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200 border border-transparent"}`}>Histórico Total</button>
+              <button onClick={() => mudarFiltroTempo("mensal")} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${filtroTempo === "mensal" ? "bg-amber-100 text-amber-700 border border-amber-300 shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200 border border-transparent"}`}>Este Mês</button>
+              <button onClick={() => mudarFiltroTempo("semanal")} className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${filtroTempo === "semanal" ? "bg-amber-100 text-amber-700 border border-amber-300 shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200 border border-transparent"}`}>Esta Semana</button>
             </div>
 
             <div className="p-0 overflow-y-auto flex-1 bg-slate-50">
               {carregandoRanking ? (
                  <div className="flex justify-center py-16"><div className="animate-spin rounded-full h-10 w-10 border-b-4 border-amber-500"></div></div>
               ) : dadosRanking.length === 0 ? (
-                 <p className="text-center text-slate-500 py-12">Nenhum aluno no ranking ainda.</p>
+                 <div className="text-center py-16 px-4">
+                   <div className="text-4xl mb-3 opacity-50">📭</div>
+                   <p className="text-slate-500 font-medium">Nenhum aluno pontuou neste período ainda.</p>
+                   <p className="text-slate-400 text-xs mt-2">Corra e faça a primeira entrega para garantir o topo!</p>
+                 </div>
               ) : (
-                 <div className="p-4 space-y-3">
-                   {/* LÓGICA DE FILTRAGEM CORRIGIDA */}
+                 <div className="p-3 md:p-4 space-y-3">
                    {(() => {
-                     // 1. Descobre a Turma do Projeto (ex: "Turma 1 - 1º Ano") buscando o próprio aluno na lista
                      const minhaTurmaTrilha = dadosRanking.find(r => r.matricula === aluno?.matricula)?.turma;
-                     
-                     // 2. Filtra a lista com base nessa descoberta
-                     const listaExibicao = abaRanking === "Geral" 
-                        ? dadosRanking 
-                        : dadosRanking.filter(r => r.turma === minhaTurmaTrilha).map((r, index) => ({...r, posicao: index + 1}));
+                     const listaExibicao = abaRanking === "Geral" ? dadosRanking : dadosRanking.filter(r => r.turma === minhaTurmaTrilha).map((r, index) => ({...r, posicao: index + 1}));
 
-                     if (abaRanking === "Turma" && !minhaTurmaTrilha) {
-                        return <p className="text-center text-slate-500 py-8">Não foi possível identificar a sua turma no projeto.</p>;
-                     }
+                     if (abaRanking === "Turma" && !minhaTurmaTrilha) return <p className="text-center text-slate-500 py-8">Não foi possível identificar a sua turma.</p>;
+                     if (listaExibicao.length === 0) return <p className="text-center text-slate-500 py-8">Ninguém da sua turma pontuou ainda.</p>;
 
                      return listaExibicao.map((userRank) => {
                        const isMe = userRank.matricula === aluno?.matricula;
-                       let medalha = "";
-                       let corFundo = "bg-white border-slate-200";
-                       let destaqueNome = "text-slate-800";
-                       
+                       let medalha = ""; let corFundo = "bg-white border-slate-200"; let destaqueNome = "text-slate-800";
                        if (userRank.posicao === 1) { medalha = "🥇"; corFundo = "bg-amber-100 border-amber-300 shadow-sm"; destaqueNome = "text-amber-900"; }
                        else if (userRank.posicao === 2) { medalha = "🥈"; corFundo = "bg-slate-200 border-slate-300 shadow-sm"; destaqueNome = "text-slate-800"; }
                        else if (userRank.posicao === 3) { medalha = "🥉"; corFundo = "bg-orange-100 border-orange-200 shadow-sm"; destaqueNome = "text-orange-900"; }
-                       
                        if (isMe && userRank.posicao > 3) { corFundo = "bg-blue-50 border-blue-400 shadow-md"; destaqueNome = "text-blue-800"; }
 
                        return (
-                         <div key={userRank.matricula} className={`flex items-center gap-4 p-3 rounded-xl border transition-all hover:scale-[1.01] ${corFundo}`}>
-                            <div className="w-10 text-center font-black text-slate-600 text-lg">
-                              {medalha || `${userRank.posicao}º`}
-                            </div>
-                            <div className="flex-1">
-                              <h4 className={`font-bold text-sm md:text-base ${destaqueNome}`}>
-                                {userRank.nome} 
-                                {isMe && <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full ml-2 shadow-sm align-middle">VOCÊ</span>}
+                         <div key={userRank.matricula} className={`flex items-center gap-3 md:gap-4 p-3 rounded-xl border transition-all hover:scale-[1.01] ${corFundo}`}>
+                            <div className="w-8 md:w-10 text-center font-black text-slate-600 text-base md:text-lg">{medalha || `${userRank.posicao}º`}</div>
+                            <div className="flex-1 min-w-0">
+                              <h4 className={`font-bold text-sm md:text-base truncate ${destaqueNome}`}>
+                                {userRank.nome} {isMe && <span className="text-[9px] md:text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full ml-1 md:ml-2 shadow-sm align-middle flex-shrink-0">VOCÊ</span>}
                               </h4>
-                              <p className="text-xs text-slate-500 font-medium mt-0.5">{userRank.turma} • {userRank.nivel}</p>
+                              <p className="text-[10px] md:text-xs text-slate-500 font-medium mt-0.5 truncate">{userRank.turma} • {userRank.nivel}</p>
                             </div>
-                            <div className="text-right bg-white/60 px-3 py-1.5 rounded-lg border border-white/50">
-                              <span className="font-black text-amber-600 text-lg">{userRank.xp}</span>
-                              <span className="text-[10px] text-slate-500 ml-1 font-bold uppercase tracking-wider">XP</span>
+                            <div className="text-right bg-white/60 px-2 md:px-3 py-1 md:py-1.5 rounded-lg border border-white/50 whitespace-nowrap">
+                              <span className="font-black text-amber-600 text-base md:text-lg">{userRank.xp}</span>
+                              <span className="text-[9px] md:text-[10px] text-slate-500 ml-1 font-bold uppercase tracking-wider">XP</span>
                             </div>
                          </div>
                        )
@@ -239,7 +276,7 @@ export default function PortalDashboard() {
         </div>
       )}
 
-      {/* --- MODAL DO MEU PERFIL (OCULTO AQUI NO CHAT POR TAMANHO, MAS IDÊNTICO AO ANTERIOR) --- */}
+      {/* --- MODAL DO MEU PERFIL (OCULTO AQUI NO CHAT POR TAMANHO, MAS IDÊNTICO) --- */}
       {perfilAberto && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col select-text" onContextMenu={(e) => e.stopPropagation()} onCopy={(e) => e.stopPropagation()} onCut={(e) => e.stopPropagation()}>
@@ -259,7 +296,7 @@ export default function PortalDashboard() {
         </div>
       )}
 
-      {/* --- MODAL DA MISSÃO --- */}
+      {/* --- MODAL DA MISSÃO (MANTIDO INTACTO) --- */}
       {missaoAberta && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -297,20 +334,17 @@ export default function PortalDashboard() {
               <p className="text-xs text-blue-300">{aluno.turma}</p>
             </div>
             
-            {/* NOVO: BOTÃO DO RANKING (TROFÉU) */}
-            <button 
-              onClick={abrirRanking} 
-              className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-xs font-bold transition-all shadow-md flex items-center gap-1"
-            >
+            <button onClick={abrirRanking} className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-xs font-bold transition-all shadow-md flex items-center gap-1">
               <span>🏆</span> <span className="hidden sm:inline">Ranking</span>
             </button>
 
-            {/* BOTÃO CHECK-IN INTELIGENTE */}
+            {/* BOTÃO DE CHECK-IN ABRE O MODAL DA SENHA AGORA */}
             <button 
-              onClick={registrarPresenca} disabled={fazendoCheckin || checkinRealizado}
-              className={`px-3 py-1.5 rounded text-xs font-bold transition-all shadow-md flex items-center gap-1 ${checkinRealizado ? 'bg-slate-200 text-slate-500 cursor-not-allowed border border-slate-300' : 'bg-emerald-500 hover:bg-emerald-600 text-white disabled:bg-slate-400'}`}
+              onClick={() => setModalSenhaAberto(true)} 
+              disabled={checkinRealizado}
+              className={`px-3 py-1.5 rounded text-xs font-bold transition-all shadow-md flex items-center gap-1 ${checkinRealizado ? 'bg-slate-200 text-slate-500 cursor-not-allowed border border-slate-300' : 'bg-emerald-500 hover:bg-emerald-600 text-white'}`}
             >
-              {checkinRealizado ? (<><span>✅</span><span className="hidden sm:inline">Check-in Realizado</span></>) : (<><span className={!fazendoCheckin ? "animate-pulse" : ""}>📍</span><span className="hidden sm:inline">{fazendoCheckin ? "..." : "Check-in (+10 XP)"}</span><span className="sm:hidden">{fazendoCheckin ? "..." : "+10 XP"}</span></>)}
+              {checkinRealizado ? (<><span>✅</span><span className="hidden sm:inline">Check-in Realizado</span></>) : (<><span className="animate-pulse">📍</span><span className="hidden sm:inline">Check-in (+10 XP)</span><span className="sm:hidden">+10 XP</span></>)}
             </button>
 
             <button onClick={abrirPerfil} className="bg-blue-800 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-bold transition-colors border border-blue-700 flex items-center gap-1"><span>👤</span> <span className="hidden lg:inline">Perfil</span></button>
@@ -319,22 +353,13 @@ export default function PortalDashboard() {
         </div>
       </header>
 
-      {/* --- CORPO DO DASHBOARD --- */}
+      {/* --- CORPO DO DASHBOARD (MANTIDO) --- */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-5xl mx-auto p-4 md:p-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div>
-            <h2 className="text-2xl font-black text-slate-800">Bem-vindo, {aluno.nome.split(' ')[0]}!</h2>
-            <p className="text-slate-500 text-sm mt-1">Você tem <strong className="text-amber-600">{missoesPendentes} missões pendentes</strong> para concluir.</p>
-          </div>
+          <div><h2 className="text-2xl font-black text-slate-800">Bem-vindo, {aluno.nome.split(' ')[0]}!</h2><p className="text-slate-500 text-sm mt-1">Você tem <strong className="text-amber-600">{missoesPendentes} missões pendentes</strong> para concluir.</p></div>
           <div className="flex gap-4">
-            <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg flex items-center gap-3  sm:flex">
-              <div className="bg-blue-100 p-2 rounded-full text-xl">🎓</div>
-              <div><p className="text-xs font-bold text-blue-800 uppercase">Nível Atual</p><p className="text-lg font-black text-blue-600">{nivelSistema}</p></div>
-            </div>
-            <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg flex items-center gap-3">
-              <div className="bg-emerald-100 p-2 rounded-full text-xl">⭐</div>
-              <div><p className="text-xs font-bold text-emerald-800 uppercase">Seu XP Total</p><p className="text-lg font-black text-emerald-600">{xpTotalSistema} XP</p></div>
-            </div>
+            <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg flex items-center gap-3 hidden sm:flex"><div className="bg-blue-100 p-2 rounded-full text-xl">🎓</div><div><p className="text-xs font-bold text-blue-800 uppercase">Nível Atual</p><p className="text-lg font-black text-blue-600">{nivelSistema}</p></div></div>
+            <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg flex items-center gap-3"><div className="bg-emerald-100 p-2 rounded-full text-xl">⭐</div><div><p className="text-xs font-bold text-emerald-800 uppercase">Seu XP Total</p><p className="text-lg font-black text-emerald-600">{xpTotalSistema} XP</p></div></div>
           </div>
         </div>
       </div>

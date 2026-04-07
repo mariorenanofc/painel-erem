@@ -52,6 +52,9 @@ export default function GestaoAulasPage() {
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [carregandoEntregas, setCarregandoEntregas] = useState(false);
   const [notasTemp, setNotasTemp] = useState<Record<string, number>>({});
+  // === ESTADOS DA SENHA DA LOUSA ===
+  const [senhaLousa, setSenhaLousa] = useState("");
+  const [salvandoSenha, setSalvandoSenha] = useState(false);
 
   // === ESTADOS DO RELATÓRIO DE FREQUÊNCIA ===
   const [modalFreqAberto, setModalFreqAberto] = useState(false);
@@ -62,7 +65,32 @@ export default function GestaoAulasPage() {
   const { data, isLoading, mutate } = useSWR(nomeUsuario && GOOGLE_API_URL ? GOOGLE_API_URL : null, fetcherAtividades, { revalidateOnFocus: true });
   const atividades: Atividade[] = data?.status === "sucesso" ? data.atividades : [];
 
-  useEffect(() => { setMontado(true); if (!nomeUsuario) window.location.href = "/"; }, [nomeUsuario]);
+  useEffect(() => { 
+    setMontado(true); 
+    if (!nomeUsuario) window.location.href = "/"; 
+    
+    // Busca a senha atual do backend ao carregar a página
+    const buscarSenhaAtual = async () => {
+      try {
+        const res = await fetch(GOOGLE_API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "buscar_senha_checkin" }) });
+        const data = await res.json();
+        if (data.status === "sucesso") setSenhaLousa(data.senha);
+      } catch (e) { console.error("Erro ao buscar senha"); }
+    };
+    if (GOOGLE_API_URL) buscarSenhaAtual();
+
+  }, [nomeUsuario]);
+
+  // Função para salvar a nova senha
+  const salvarNovaSenha = async () => {
+    if (!senhaLousa) return alert("Digite uma senha válida!");
+    setSalvandoSenha(true);
+    try {
+      const res = await fetch(GOOGLE_API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "atualizar_senha_checkin", novaSenha: senhaLousa }) });
+      const data = await res.json();
+      if (data.status === "sucesso") alert("✅ " + data.mensagem);
+    } catch { alert("Erro ao salvar senha."); } finally { setSalvandoSenha(false); }
+  };
 
   // --- FUNÇÕES DE MISSÕES ---
   const limparFormulario = () => {
@@ -278,7 +306,31 @@ export default function GestaoAulasPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           
           {/* COLUNA ESQUERDA: FORMULÁRIO */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 space-y-6">
+
+            {/* NOVO: PAINEL DA SENHA DA LOUSA */}
+            <div className="bg-amber-50 p-6 rounded-xl shadow-sm border border-amber-200">
+              <h3 className="text-lg font-bold text-amber-900 flex items-center gap-2 mb-2">
+                <span>🔐</span> Senha do Check-in
+              </h3>
+              <p className="text-xs text-amber-700 mb-4">Anote esta senha na lousa. Os alunos precisarão dela para garantir os 10 XP da presença hoje.</p>
+              <div className="flex gap-2">
+                <input 
+                  type="text" 
+                  value={senhaLousa} 
+                  onChange={(e) => setSenhaLousa(e.target.value.toUpperCase())} 
+                  placeholder="Ex: AULA01"
+                  className="w-full font-mono font-black text-center border-2 border-amber-300 rounded p-2 text-slate-800 uppercase focus:border-amber-500 outline-none"
+                />
+                <button 
+                  onClick={salvarNovaSenha} 
+                  disabled={salvandoSenha}
+                  className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-4 rounded disabled:bg-slate-400 transition-colors"
+                >
+                  {salvandoSenha ? "..." : "Salvar"}
+                </button>
+              </div>
+            </div>
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 sticky top-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">

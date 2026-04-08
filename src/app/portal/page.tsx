@@ -296,30 +296,85 @@ export default function PortalDashboard() {
         </div>
       )}
 
-      {/* --- MODAL DA MISSÃO (MANTIDO INTACTO) --- */}
-      {missaoAberta && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className={`p-4 border-b flex justify-between items-center text-white ${missaoAberta.tipo === 'Quiz' ? 'bg-amber-600' : 'bg-blue-600'}`}>
-              <h2 className="font-bold text-lg">🎯 {missaoAberta.tipo}: {missaoAberta.titulo}</h2>
-              <button onClick={() => setMissaoAberta(null)} className="text-2xl leading-none hover:text-slate-200">&times;</button>
-            </div>
-            <div className="p-6 overflow-y-auto">
-              <div className="flex gap-4 mb-4 text-sm font-bold"><span className="bg-slate-100 text-slate-600 px-3 py-1 rounded border border-slate-200">ID: {missaoAberta.id}</span><span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded border border-emerald-200">⭐ {missaoAberta.xp} XP Possíveis</span></div>
-              <p className="text-slate-700 whitespace-pre-wrap text-base mb-6 bg-slate-50 p-4 rounded-lg border border-slate-100">{missaoAberta.descricao}</p>
-              <form onSubmit={enviarMissao} className="border-t border-slate-200 pt-6">
-                <h3 className="font-bold text-slate-800 mb-3 uppercase text-sm">Sua Resposta:</h3>
-                {missaoAberta.tipo === "Quiz" ? (
-                  <div className="space-y-3">{['A', 'B', 'C', 'D'].map((letra) => { const opcaoTexto = missaoAberta[`opcao${letra}` as keyof Atividade]; return opcaoTexto ? (<label key={letra} className={`block p-3 rounded-lg border cursor-pointer transition-colors ${resposta === letra ? 'bg-blue-50 border-blue-500' : 'bg-white border-slate-300 hover:bg-slate-50'}`}><input type="radio" name="quiz" value={letra} checked={resposta === letra} onChange={(e) => setResposta(e.target.value)} disabled={missaoAberta.status === "Avaliador" || missaoAberta.status === "Avaliado"} className="mr-3" /><strong className="text-slate-700">{letra})</strong> <span className="text-slate-600">{opcaoTexto}</span></label>) : null; })}</div>
-                ) : (
-                  <div><label className="block text-xs font-bold text-slate-500 mb-2">Cole o link do seu projeto:</label><input type="url" placeholder="https://..." value={resposta} onChange={(e) => setResposta(e.target.value)} required disabled={missaoAberta.status === "Avaliador" || missaoAberta.status === "Avaliado"} className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-3 focus:ring-2 focus:ring-blue-500" /></div>
-                )}
-                <div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setMissaoAberta(null)} className="px-5 py-2.5 rounded-lg text-slate-600 font-bold hover:bg-slate-100">Cancelar</button><button type="submit" disabled={enviando || missaoAberta.status === "Avaliador" || missaoAberta.status === "Avaliado"} className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2.5 rounded-lg font-bold shadow-md disabled:bg-slate-400">{enviando ? "Enviando..." : (missaoAberta.status === "Avaliador" || missaoAberta.status === "Avaliado" ? "Já Enviado" : "Enviar Resposta")}</button></div>
-              </form>
+      {/* --- MODAL DA MISSÃO --- */}
+      {missaoAberta && (() => {
+        // Lógica Inteligente para verificar o prazo
+        const verificarPrazo = (dataStr: string) => {
+          if (!dataStr) return false;
+          const hoje = new Date();
+          hoje.setHours(0, 0, 0, 0);
+          const partes = dataStr.split('-');
+          if (partes.length === 3) {
+            const limite = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
+            return hoje > limite;
+          }
+          return false;
+        };
+
+        const prazoEncerrado = verificarPrazo(missaoAberta.dataLimite);
+        const inputDesabilitado = enviando || missaoAberta.status === "Avaliador" || missaoAberta.status === "Avaliado" || prazoEncerrado;
+
+        return (
+          <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+              <div className={`p-4 border-b flex justify-between items-center text-white ${missaoAberta.tipo === 'Quiz' ? 'bg-amber-600' : 'bg-blue-600'}`}>
+                <h2 className="font-bold text-lg">🎯 {missaoAberta.tipo}: {missaoAberta.titulo}</h2>
+                <button onClick={() => setMissaoAberta(null)} className="text-2xl leading-none hover:text-slate-200">&times;</button>
+              </div>
+              
+              <div className="p-6 overflow-y-auto">
+                <div className="flex gap-4 mb-4 text-sm font-bold">
+                  <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded border border-slate-200">ID: {missaoAberta.id}</span>
+                  <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded border border-emerald-200">⭐ {missaoAberta.xp} XP Possíveis</span>
+                  
+                  {/* ALERTA VISUAL SE O PRAZO ESTIVER ENCERRADO */}
+                  {prazoEncerrado && (
+                    <span className="bg-red-100 text-red-700 px-3 py-1 rounded border border-red-200 animate-pulse">⏳ Prazo Encerrado</span>
+                  )}
+                </div>
+                
+                <p className="text-slate-700 whitespace-pre-wrap text-base mb-6 bg-slate-50 p-4 rounded-lg border border-slate-100">{missaoAberta.descricao}</p>
+                
+                <form onSubmit={enviarMissao} className="border-t border-slate-200 pt-6">
+                  <h3 className="font-bold text-slate-800 mb-3 uppercase text-sm">Sua Resposta:</h3>
+                  {missaoAberta.tipo === "Quiz" ? (
+                    <div className="space-y-3">
+                      {['A', 'B', 'C', 'D'].map((letra) => {
+                        const opcaoTexto = missaoAberta[`opcao${letra}` as keyof Atividade];
+                        return opcaoTexto ? (
+                          <label key={letra} className={`block p-3 rounded-lg border cursor-pointer transition-colors ${resposta === letra ? 'bg-blue-50 border-blue-500' : 'bg-white border-slate-300 hover:bg-slate-50'} ${inputDesabilitado ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                            <input type="radio" name="quiz" value={letra} checked={resposta === letra} onChange={(e) => setResposta(e.target.value)} disabled={inputDesabilitado} className="mr-3" />
+                            <strong className="text-slate-700">{letra})</strong> <span className="text-slate-600">{opcaoTexto}</span>
+                          </label>
+                        ) : null;
+                      })}
+                    </div>
+                  ) : (
+                    <div>
+                      <label className="block text-xs font-bold text-slate-500 mb-2">Cole o link do seu projeto (GitHub, Replit, etc):</label>
+                      <input type="url" placeholder="https://..." value={resposta} onChange={(e) => setResposta(e.target.value)} required disabled={inputDesabilitado} className={`w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-3 focus:ring-2 focus:ring-blue-500 ${inputDesabilitado ? 'opacity-60 cursor-not-allowed bg-slate-100' : ''}`} />
+                    </div>
+                  )}
+                  
+                  <div className="mt-6 flex justify-end gap-3">
+                    <button type="button" onClick={() => setMissaoAberta(null)} className="px-5 py-2.5 rounded-lg text-slate-600 font-bold hover:bg-slate-100">Cancelar</button>
+                    <button 
+                      type="submit" 
+                      disabled={inputDesabilitado} 
+                      className={`text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition-all ${
+                        prazoEncerrado ? 'bg-red-500 hover:bg-red-600' : 
+                        inputDesabilitado ? 'bg-slate-400' : 'bg-emerald-600 hover:bg-emerald-700'
+                      }`}
+                    >
+                      {prazoEncerrado ? "Bloqueado pelo Prazo" : enviando ? "Enviando..." : (missaoAberta.status === "Avaliador" || missaoAberta.status === "Avaliado" ? "Já Enviado" : "Enviar Resposta")}
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* --- CABEÇALHO DO DASHBOARD --- */}
       <header className="bg-blue-900 text-white p-4 shadow-md sticky top-0 z-10">

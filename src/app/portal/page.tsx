@@ -410,8 +410,24 @@ export default function PortalDashboard() {
 
       {/* --- CORPO DO DASHBOARD (MANTIDO) --- */}
       <div className="bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto p-4 md:p-8 flex flex-col md:flex-row justify-between items-center gap-4">
-          <div><h2 className="text-2xl font-black text-slate-800">Bem-vindo, {aluno.nome.split(' ')[0]}!</h2><p className="text-slate-500 text-sm mt-1">Você tem <strong className="text-amber-600">{missoesPendentes} missões pendentes</strong> para concluir.</p></div>
+        <div className="max-w-5xl mx-auto p-4 md:p-8 flex flex-col md:flex-row justify-between items-center gap-6">
+          <div className="flex flex-col items-center md:items-start text-center md:text-left">
+            <h2 className="text-2xl font-black text-slate-800">Bem-vindo, {aluno.nome.split(' ')[0]}!</h2>
+            <p className="text-slate-500 text-sm mt-1">Você tem <strong className="text-amber-600">{missoesPendentes} missões pendentes</strong> para concluir.</p>
+            
+            {/* NOVO BOTÃO DE ACESSO AO AVA */}
+            <div className="mt-4 md:mt-5">
+              <a 
+                href="https://classroom.google.com/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
+              >
+                <span className="text-xl leading-none">🏫</span>
+                Acessar o AVA (Classroom)
+              </a>
+            </div>
+          </div>
           <div className="flex gap-4">
             <div className="bg-blue-50 border border-blue-200 p-3 rounded-lg flex items-center gap-3 hidden sm:flex"><div className="bg-blue-100 p-2 rounded-full text-xl">🎓</div><div><p className="text-xs font-bold text-blue-800 uppercase">Nível Atual</p><p className="text-lg font-black text-blue-600">{nivelSistema}</p></div></div>
             <div className="bg-emerald-50 border border-emerald-200 p-3 rounded-lg flex items-center gap-3"><div className="bg-emerald-100 p-2 rounded-full text-xl">⭐</div><div><p className="text-xs font-bold text-emerald-800 uppercase">Seu XP Total</p><p className="text-lg font-black text-emerald-600">{xpTotalSistema} XP</p></div></div>

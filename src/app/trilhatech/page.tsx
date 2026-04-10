@@ -76,7 +76,6 @@ export default function TrilhaTechPage() {
       const temObs = aluno.obs && aluno.obs.trim() !== "";
       const matchObs = mostrarComObs ? temObs : true;
 
-
       return matchBusca && matchTurma && matchStatus && matchObs;
     });
   }, [alunosCurso, busca, filtroTurma, filtroStatus, mostrarComObs]);
@@ -170,6 +169,18 @@ export default function TrilhaTechPage() {
           }}
         />
 
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 mt-4 gap-4">
+          <h2 className="text-2xl font-black text-slate-800">
+            Alunos Trilha Tech
+          </h2>
+          <button
+            onClick={() => (window.location.href = "/trilhatech/aulas")}
+            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
+          >
+            <span>👨‍🏫</span> Gestão de Aulas
+          </button>
+        </div>
+
         {/* COMPONENTES QUE CRIAMOS SEPARADOS */}
         <TrilhaStatsCards
           totalInscritos={alunosCurso.length}
@@ -184,7 +195,8 @@ export default function TrilhaTechPage() {
           setFiltroTurma={setFiltroTurma}
           filtroStatus={filtroStatus}
           setFiltroStatus={setFiltroStatus}
-          mostrarComObs={mostrarComObs} setMostrarComObs={setMostrarComObs}
+          mostrarComObs={mostrarComObs}
+          setMostrarComObs={setMostrarComObs}
           exportarListaFrequencia={exportarListaFrequencia}
         />
 

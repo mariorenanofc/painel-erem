@@ -1,4 +1,4 @@
-import { TrilhaFiltersProps } from '@/src/types';
+import { TrilhaFiltersProps } from '@/src/types/index';
 
 export default function TrilhaFilters({
   busca,

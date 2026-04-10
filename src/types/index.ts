@@ -64,3 +64,15 @@ export interface StudentModalProps {
   inscreverNoTrilha?: (matricula: string, turmaCurso: string) => Promise<void>;
   mudarStatusTrilha?: (matricula: string, novaStatus: string) => Promise<void>;
 }
+
+export interface TrilhaFiltersProps {
+  busca: string;
+  setBusca: (val: string) => void;
+  filtroTurma: string;
+  setFiltroTurma: (val: string) => void;
+  filtroStatus: string;
+  setFiltroStatus: (val: string) => void;
+  exportarListaFrequencia: () => void;
+  mostrarComObs: boolean;
+  setMostrarComObs: (val: boolean) => void;
+};

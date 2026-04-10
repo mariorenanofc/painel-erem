@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -82,6 +83,8 @@ export default function GestaoAulasPage() {
   // === ESTADOS DA SENHA DA LOUSA ===
   const [senhaLousa, setSenhaLousa] = useState("");
   const [salvandoSenha, setSalvandoSenha] = useState(false);
+  
+  const [aniversariantes, setAniversariantes] = useState<{nome: string, turma: string}[]>([]);
 
   // === ESTADOS DO DIÁRIO DE CLASSE ===
   const [modalFreqAberto, setModalFreqAberto] = useState(false);
@@ -127,7 +130,26 @@ export default function GestaoAulasPage() {
         console.error("Erro ao buscar senha");
       }
     };
-    if (GOOGLE_API_URL) buscarSenhaAtual();
+    
+    // Busca os aniversariantes do dia
+    const buscarAniversariantes = async () => {
+      try {
+        const res = await fetch(GOOGLE_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "buscar_aniversariantes_dia" }),
+        });
+        const data = await res.json();
+        if (data.status === "sucesso") setAniversariantes(data.aniversariantes);
+      } catch (e) {
+        console.error("Erro ao buscar aniversariantes");
+      }
+    };
+    
+    if (GOOGLE_API_URL) {
+       buscarSenhaAtual();
+       buscarAniversariantes();
+    }
   }, [nomeUsuario]);
 
   // Função para salvar a nova senha
@@ -794,6 +816,19 @@ export default function GestaoAulasPage() {
             </span>
           </a>
         </div>
+
+        {/* ========================================== */}
+        {/* AVISO DE ANIVERSARIANTES DO DIA            */}
+        {/* ========================================== */}
+        {aniversariantes.length > 0 && (
+          <div className="bg-gradient-to-r from-amber-100 to-orange-100 border border-amber-300 text-amber-900 px-5 py-4 rounded-xl shadow-sm mb-6 flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2">
+            <span className="text-4xl animate-bounce drop-shadow-sm">🎂</span>
+            <div>
+              <h3 className="font-black text-sm md:text-base uppercase tracking-tight text-amber-700">Aniversariantes de Hoje!</h3>
+              <p className="text-xs md:text-sm font-medium mt-0.5">Deixe um parabéns especial para: <strong>{aniversariantes.map(a => `${a.nome} (${a.turma})`).join(', ')}</strong></p>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* COLUNA ESQUERDA: FORMULÁRIO */}

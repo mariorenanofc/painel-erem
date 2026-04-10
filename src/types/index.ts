@@ -44,18 +44,6 @@ export interface StudentTableProps {
   preencherEdicao: (aluno: Aluno) => void;
 }
 
-export interface StudentModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  formData: Aluno; // Usando a interface principal do Aluno aqui!
-  handleChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  salvarAluno: () => void;
-  salvando: boolean;
-  isEditing: boolean;
-  inscreverNoTrilha?: (matricula: string, turmaCurso: string) => Promise<void>;
-  mudarStatusTrilha?: (matricula: string, novaStatus: string) => Promise<void>;
-}
-
 export interface StudentFormProps {
   formData: Aluno;
   handleChange: (
@@ -68,22 +56,11 @@ export interface StudentFormProps {
 export interface StudentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  formData: Aluno;
+  formData: Aluno; 
   handleChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   salvarAluno: () => void;
   salvando: boolean;
   isEditing: boolean;
-  inscreverNoTrilha?: (matricula: string, turmaCurso: string) => Promise<void>; // <-- NOVO AQUI
-}
-
-export interface TrilhaFiltersProps {
-  busca: string;
-  setBusca: (val: string) => void;
-  filtroTurma: string;
-  setFiltroTurma: (val: string) => void;
-  filtroStatus: string;
-  setFiltroStatus: (val: string) => void;
-  exportarListaFrequencia: () => void;
-  mostrarComObs: boolean;
-  setMostrarComObs: (val: boolean) => void;
+  inscreverNoTrilha?: (matricula: string, turmaCurso: string) => Promise<void>;
+  mudarStatusTrilha?: (matricula: string, novaStatus: string) => Promise<void>;
 }

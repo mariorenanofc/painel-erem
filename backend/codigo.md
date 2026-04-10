@@ -1357,7 +1357,7 @@ function doPost(e) {
       return ContentService.createTextOutput(JSON.stringify({ status: "sucesso" })).setMimeType(ContentService.MimeType.JSON);
     }
 
-        // ==========================================
+    // ==========================================
     // ROTA 23: BUSCAR ANIVERSARIANTES DO DIA
     // ==========================================
     if (action === "buscar_aniversariantes_dia") {
@@ -1411,6 +1411,54 @@ function doPost(e) {
     }
 
 
+    // ==========================================
+    // ROTA 24: RECUPERAR MATRÍCULA (PORTAL DO ALUNO)
+    // ==========================================
+    if (action === "recuperar_matricula") {
+      const nomeDigitado = String(dadosApp.nome || "").trim();
+      const dataNascDigitada = String(dadosApp.dataNasc || "").trim(); // O Front envia DD/MM/YYYY
+
+      const planBase = planilha.getSheetByName("basededados");
+      if (!planBase) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Base de dados não encontrada." })).setMimeType(ContentService.MimeType.JSON);
+
+      // Função Mágica: Remove acentos, cedilhas, espaços duplos e coloca tudo em minúsculo
+      const normalizar = (texto) => texto.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/\s+/g, ' ').trim();
+      const nomeBusca = normalizar(nomeDigitado);
+
+      const dadosBase = planBase.getDataRange().getValues();
+      
+      for (let i = 1; i < dadosBase.length; i++) {
+        let nomeBanco = normalizar(String(dadosBase[i][0]).trim());
+        let dataBruta = dadosBase[i][1];
+        let matricula = String(dadosBase[i][2]).trim();
+
+        // Formatação universal de data para evitar conflitos de fuso horário do Google Sheets
+        let dataBancoFormatada = String(dataBruta).trim();
+        if (dataBruta instanceof Date) {
+          let d = String(dataBruta.getDate()).padStart(2, '0');
+          let m = String(dataBruta.getMonth() + 1).padStart(2, '0');
+          let y = String(dataBruta.getFullYear());
+          dataBancoFormatada = `${d}/${m}/${y}`;
+        } else if (dataBancoFormatada.includes("T")) {
+          let partes = dataBancoFormatada.split("T")[0].split("-");
+          if (partes.length === 3) dataBancoFormatada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+        }
+
+        // Match perfeito: Nome e Data conferem
+        if (nomeBanco === nomeBusca && dataBancoFormatada === dataNascDigitada) {
+           return ContentService.createTextOutput(JSON.stringify({
+             status: "sucesso",
+             matricula: matricula,
+             nomeReal: String(dadosBase[i][0]).trim()
+           })).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({
+        status: "erro",
+        mensagem: "Aluno não encontrado. Verifique se digitou o Nome Completo exatamente igual ao da escola e a Data de Nascimento correta."
+      })).setMimeType(ContentService.MimeType.JSON);
+    }
 
   } catch (erro) {
     return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: erro.toString() })).setMimeType(ContentService.MimeType.JSON);

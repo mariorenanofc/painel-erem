@@ -533,8 +533,6 @@ export default function DashboardAlunos() {
           salvarAluno={salvarAluno}
           salvando={salvando}
           isEditing={isEditing}
-          inscreverNoTrilha={inscreverNoTrilha}
-          mudarStatusTrilha={mudarStatusTrilha}
         />
       </div>
     </div>

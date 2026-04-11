@@ -87,6 +87,8 @@ export default function StudentTable({ alunosFiltrados, preencherEdicao }: Stude
                           🚀 Trilha Tech: {aluno.statusTrilha}
                         </span>
                       )}
+
+                      
                     </div>
                   </td>
                   <td className="p-3 md:p-4 text-slate-500 whitespace-nowrap">{formatarDataTabela(aluno.dataNasc)}</td>

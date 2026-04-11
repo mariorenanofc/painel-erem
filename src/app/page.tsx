@@ -249,23 +249,82 @@ export default function DashboardAlunos() {
     if (e) e.preventDefault();
     setSalvando(true);
     try {
-      const action = isEditing ? "editar_aluno" : "adicionar_aluno";
+      // O backend espera exatamente a ação "salvar_aluno" para ambas as operações
+      const action = "salvar_aluno";
       const res = await fetch(GOOGLE_API_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
         body: JSON.stringify({ action, ...formData }),
       });
-      const resData = await res.json();
-      if (resData.status === "sucesso") {
-        setModalAberto(false);
-        mutate();
-      } else {
-        alert(resData.mensagem);
+
+      const text = await res.text();
+      try {
+        const resData = JSON.parse(text);
+        if (resData.status === "sucesso") {
+          setModalAberto(false);
+          mutate();
+        } else {
+          alert("❌ Erro da API: " + resData.mensagem);
+        }
+      } catch (parseError) {
+        console.error("Erro na API (Resposta não foi um JSON):", text);
+        alert(
+          "❌ Erro no servidor ao salvar. Aperte F12 e veja o console para mais detalhes.",
+        );
       }
     } catch (err) {
-      alert("Erro ao salvar aluno.");
+      alert("❌ Erro de conexão ao salvar aluno.");
     } finally {
       setSalvando(false);
+    }
+  };
+
+  const inscreverNoTrilha = async (matricula: string, turmaCurso: string) => {
+    try {
+      const res = await fetch(GOOGLE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          action: "inscrever_trilhatech",
+          matricula,
+          turmaCurso,
+          statusCurso: "Inscrito",
+        }),
+      });
+      const resData = await res.json();
+      if (resData.status === "sucesso") {
+        alert("✅ " + resData.mensagem);
+        mutate(); // Atualiza a lista com o novo status
+        setModalAberto(false);
+      } else {
+        alert("❌ Erro: " + resData.mensagem);
+      }
+    } catch (err) {
+      alert("❌ Erro de conexão ao inscrever aluno.");
+    }
+  };
+
+  const mudarStatusTrilha = async (matricula: string, novoStatus: string) => {
+    try {
+      const res = await fetch(GOOGLE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          action: "mudar_status_trilhatech",
+          matricula,
+          novoStatus,
+        }),
+      });
+      const resData = await res.json();
+      if (resData.status === "sucesso") {
+        alert("✅ " + resData.mensagem);
+        mutate(); // Atualiza a lista
+        setModalAberto(false);
+      } else {
+        alert("❌ Erro: " + resData.mensagem);
+      }
+    } catch (err) {
+      alert("❌ Erro de conexão ao mudar status.");
     }
   };
 
@@ -431,6 +490,8 @@ export default function DashboardAlunos() {
           salvarAluno={salvarAluno}
           salvando={salvando}
           isEditing={isEditing}
+          inscreverNoTrilha={inscreverNoTrilha}
+          mudarStatusTrilha={mudarStatusTrilha}
         />
       </div>
     </div>

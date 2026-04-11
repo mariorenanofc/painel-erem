@@ -81,6 +81,10 @@ export default function PortalDashboard() {
   const [resposta, setResposta] = useState("");
   const [enviando, setEnviando] = useState(false);
 
+  const [zapConfirmado, setZapConfirmado] = useState(true); // Começa true pra não piscar na tela
+  const [zapLink, setZapLink] = useState("");
+  const [confirmandoZap, setConfirmandoZap] = useState(false);
+
   const [perfilAberto, setPerfilAberto] = useState(false);
   const [dadosPerfil, setDadosPerfil] = useState<PerfilAluno | null>(null);
   const [carregandoPerfil, setCarregandoPerfil] = useState(false);
@@ -111,6 +115,48 @@ export default function PortalDashboard() {
   const [isAniversario, setIsAniversario] = useState(false);
   const [modalPresenteAberto, setModalPresenteAberto] = useState(false);
   const [resgatandoPresente, setResgatandoPresente] = useState(false);
+
+  const checarWhatsapp = useCallback(async () => {
+    if (!aluno || !GOOGLE_API_URL) return;
+    try {
+      const res = await fetch(GOOGLE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          action: "status_whatsapp_aluno",
+          matricula: aluno.matricula,
+        }),
+      });
+      const data = await res.json();
+      if (data.status === "sucesso") {
+        setZapConfirmado(data.confirmado);
+        setZapLink(data.link);
+      }
+    } catch {}
+  }, [aluno, GOOGLE_API_URL]);
+
+  const confirmarEntradaGrupo = async () => {
+    if (!aluno) return;
+    setConfirmandoZap(true);
+    try {
+      const res = await fetch(GOOGLE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          action: "confirmar_whatsapp",
+          matricula: aluno.matricula,
+        }),
+      });
+      const data = await res.json();
+      if (data.status === "sucesso") {
+        setZapConfirmado(true);
+        alert("✅ Perfeito! Agora você não perde nenhum aviso.");
+      }
+    } catch {
+    } finally {
+      setConfirmandoZap(false);
+    }
+  };
 
   useEffect(() => {
     setMontado(true);
@@ -147,6 +193,9 @@ export default function PortalDashboard() {
   useEffect(() => {
     if (montado && aluno) {
       buscarAtividades();
+      checarWhatsapp();
+
+      // --- VERIFICAÇÃO DE CHECK-IN ---
       const dataHoje = new Date().toLocaleDateString("pt-BR");
       const ultimoCheckin = localStorage.getItem(`checkin_${aluno.matricula}`);
       if (ultimoCheckin === dataHoje) setCheckinRealizado(true);
@@ -175,7 +224,7 @@ export default function PortalDashboard() {
       };
       checarAniversario();
     }
-  }, [montado, aluno, buscarAtividades, GOOGLE_API_URL]);
+  }, [montado, aluno, buscarAtividades, checarWhatsapp, GOOGLE_API_URL]);
 
   const fazerLogout = () => {
     localStorage.removeItem("alunoLogado");
@@ -417,6 +466,8 @@ export default function PortalDashboard() {
       }}
       onCut={(e) => e.preventDefault()}
     >
+      
+
       {/* ========================================== */}
       {/* MODAL DE SENHA DO CHECK-IN                 */}
       {/* ========================================== */}
@@ -461,13 +512,48 @@ export default function PortalDashboard() {
         </div>
       )}
 
+      {/* BANNER DO WHATSAPP */}
+      {!zapConfirmado && zapLink && (
+        <div className="bg-emerald-600 text-white p-4 shadow-inner flex flex-col md:flex-row items-center justify-between gap-4 animate-in slide-in-from-top">
+          <div className="flex items-center gap-3">
+            <span className="text-4xl animate-bounce">💬</span>
+            <div>
+              <h3 className="font-bold text-lg leading-tight">
+                Você ainda não está no nosso WhatsApp!
+              </h3>
+              <p className="text-emerald-100 text-sm">
+                É obrigatório entrar no grupo da sua turma para receber links,
+                avisos e não perder missões.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 w-full md:w-auto">
+            <a
+              href={zapLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white text-emerald-800 font-black py-2 px-6 rounded-lg text-center flex-1 md:flex-none shadow hover:bg-emerald-50 transition-colors"
+            >
+              1. Entrar no Grupo
+            </a>
+            <button
+              onClick={confirmarEntradaGrupo}
+              disabled={confirmandoZap}
+              className="bg-emerald-900 hover:bg-emerald-950 text-white font-bold py-2 px-6 rounded-lg shadow transition-colors disabled:opacity-50 flex-1 md:flex-none"
+            >
+              {confirmandoZap ? "..." : "2. Já Entrei!"}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* ========================================== */}
       {/* MODAL DO RANKING COM FILTROS TEMPORAIS     */}
       {/* ========================================== */}
       {rankingAberto && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4 animate-in fade-in">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh]">
-            <div className="bg-linear-to-r from-amber-500 to-amber-600 p-4 md:p-5 border-b flex justify-between items-center text-white">
+            <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-4 md:p-5 border-b flex justify-between items-center text-white">
               <div>
                 <h2 className="font-black text-lg md:text-xl flex items-center gap-2">
                   <span>🏆</span> Leaderboard
@@ -600,7 +686,7 @@ export default function PortalDashboard() {
                             >
                               {userRank.nome}{" "}
                               {isMe && (
-                                <span className="text-[9px] md:text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full ml-1 md:ml-2 shadow-sm align-middle flex-shrink-0">
+                                <span className="text-[9px] md:text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full ml-1 md:ml-2 shadow-sm align-middle shrink-0">
                                   VOCÊ
                                 </span>
                               )}

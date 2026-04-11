@@ -12,6 +12,7 @@ export interface Aluno {
   obs: string;
   turmaTrilha?: string;
   statusTrilha?: string;
+  whatsapp?: boolean;
 }
 
 // 2. TIPAGENS DOS COMPONENTES (PROPS)

@@ -2,8 +2,8 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import useSWR from "swr"; 
-import * as XLSX from "xlsx"; 
+import useSWR from "swr";
+import * as XLSX from "xlsx";
 
 // Componentes
 import Header from "../components/Header";
@@ -58,13 +58,25 @@ export default function DashboardAlunos() {
   }, []);
 
   const alunosFiltrados = useMemo(() => {
-    if (!data || data.status !== "sucesso") return [];
-    return data.alunos.filter((aluno: Aluno) => {
+    if (!data) return [];
+
+    // Identificamos que a API retorna o array diretamente (ex: Array(362))
+    let listaAlunos: Aluno[] = [];
+    if (Array.isArray(data)) {
+      listaAlunos = data; // A API retornou diretamente a lista
+    } else if (data.status === "sucesso" && Array.isArray(data.alunos)) {
+      listaAlunos = data.alunos; // Comportamento em formato de objeto
+    } else {
+      console.error("Formato de dados inesperado. Resposta recebida:", data);
+      return [];
+    }
+
+    return listaAlunos.filter((aluno: Aluno) => {
       const matchesTurma =
         turmaSelecionada === "" || aluno.turma === turmaSelecionada;
       const matchesBusca =
-        aluno.nome.toLowerCase().includes(busca.toLowerCase()) ||
-        aluno.matricula.includes(busca);
+        (aluno.nome || "").toLowerCase().includes(busca.toLowerCase()) ||
+        (aluno.matricula || "").includes(busca);
       const matchesSemEmail =
         !mostrarSemEmail || !aluno.email || aluno.email.trim() === "";
       const matchesComObs =
@@ -88,7 +100,7 @@ export default function DashboardAlunos() {
       (a: Aluno) =>
         `${a.matricula},"${a.nome}",${a.turma},${a.dataNasc},${
           a.email
-        },${a.telefoneAluno || ""}`
+        },${a.telefoneAluno || ""}`,
     );
 
     const csvContent = [cabecalho.join(","), ...linhas].join("\n");
@@ -103,7 +115,7 @@ export default function DashboardAlunos() {
   };
 
   const handleFileUploadSIEPE = async (
-    e: React.ChangeEvent<HTMLInputElement>
+    e: React.ChangeEvent<HTMLInputElement>,
   ) => {
     if (!e.target.files || e.target.files.length === 0) return;
     setSincronizandoSiepe(true);
@@ -167,7 +179,7 @@ export default function DashboardAlunos() {
 
       if (todosAlunos.length === 0) {
         alert(
-          "⚠️ Nenhum aluno válido encontrado. Verifique se as planilhas contêm os dados no formato SIEPE."
+          "⚠️ Nenhum aluno válido encontrado. Verifique se as planilhas contêm os dados no formato SIEPE.",
         );
         setSincronizandoSiepe(false);
         return;
@@ -227,7 +239,7 @@ export default function DashboardAlunos() {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -256,6 +268,26 @@ export default function DashboardAlunos() {
       setSalvando(false);
     }
   };
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center text-red-600">
+        <div className="text-center p-8 bg-white shadow-2xl rounded-2xl max-w-lg mx-auto">
+          <h2 className="text-2xl font-black text-slate-800 mb-2">
+            ❌ Erro ao Carregar Dados
+          </h2>
+          <p className="text-slate-600 mb-4">
+            Não foi possível conectar-se à base de dados. Isso pode ocorrer por
+            um problema de rede ou uma falha na API.
+          </p>
+          <p className="text-xs text-slate-400 bg-slate-50 p-2 rounded">
+            <strong>Dica:</strong> Verifique o console do navegador (F12) para
+            mais detalhes técnicos sobre o erro.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (verificandoSessao)
     return (
@@ -384,6 +416,12 @@ export default function DashboardAlunos() {
           alunosFiltrados={alunosFiltrados}
           preencherEdicao={abrirVisualizacao}
         />
+
+        {isLoading && (
+          <div className="text-center p-10 font-semibold text-slate-500">
+            Carregando alunos...
+          </div>
+        )}
 
         <StudentModal
           isOpen={modalAberto}

@@ -5,7 +5,7 @@ import StudentModal from "@/src/components/StudentModal";
 import TrilhaStatsCards from "@/src/components/TrilhaStatsCards";
 import TrilhaFilters from "@/src/components/TrilhaFilters";
 import TrilhaTable from "@/src/components/TrilhaTable";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import useSWR from "swr";
 import { Aluno } from "@/src/types";
 
@@ -13,11 +13,14 @@ import { Aluno } from "@/src/types";
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function TrilhaTechPage() {
-  const [nomeUsuario] = useState(() => {
-    if (typeof window !== "undefined")
-      return localStorage.getItem("usuarioLogado") || "";
-    return "";
-  });
+  const [nomeUsuario, setNomeUsuario] = useState("");
+  const [verificandoSessao, setVerificandoSessao] = useState(true);
+
+  useEffect(() => {
+    const sessao = localStorage.getItem("usuarioLogado");
+    if (sessao) setNomeUsuario(sessao);
+    setVerificandoSessao(false);
+  }, []);
 
   const [atualizandoMatricula, setAtualizandoMatricula] = useState<
     string | null
@@ -56,7 +59,20 @@ export default function TrilhaTechPage() {
   // 1. Filtra a base geral para pegar apenas os alunos do Projeto
   const alunosCurso = useMemo(() => {
     if (!dadosBrutos) return [];
-    return dadosBrutos.filter(
+
+    let listaAlunos: Aluno[] = [];
+    if (Array.isArray(dadosBrutos)) {
+      listaAlunos = dadosBrutos;
+    } else if (
+      dadosBrutos.status === "sucesso" &&
+      Array.isArray(dadosBrutos.alunos)
+    ) {
+      listaAlunos = dadosBrutos.alunos;
+    } else {
+      return [];
+    }
+
+    return listaAlunos.filter(
       (aluno: Aluno) => aluno.statusTrilha && aluno.statusTrilha.trim() !== "",
     );
   }, [dadosBrutos]);
@@ -156,6 +172,14 @@ export default function TrilhaTechPage() {
     setAlunoSelecionado(aluno);
     setModalAberto(true);
   };
+
+  if (verificandoSessao) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex items-center justify-center font-bold text-slate-500">
+        Verificando sessão...
+      </div>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans">

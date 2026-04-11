@@ -553,7 +553,7 @@ export default function PortalDashboard() {
       {rankingAberto && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4 animate-in fade-in">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh]">
-            <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-4 md:p-5 border-b flex justify-between items-center text-white">
+            <div className="bg-linear-to-r from-amber-500 to-amber-600 p-4 md:p-5 border-b flex justify-between items-center text-white">
               <div>
                 <h2 className="font-black text-lg md:text-xl flex items-center gap-2">
                   <span>🏆</span> Leaderboard
@@ -720,7 +720,7 @@ export default function PortalDashboard() {
       {modalPresenteAberto && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in zoom-in duration-300">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col text-center border-4 border-amber-400 relative">
-            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-amber-200/50 to-transparent"></div>
+            <div className="absolute top-0 left-0 w-full h-32 bg-linear-to-b from-amber-200/50 to-transparent"></div>
             <div className="p-8 relative z-10">
               <div className="text-7xl animate-bounce mb-4 drop-shadow-md">
                 🎁
@@ -737,7 +737,7 @@ export default function PortalDashboard() {
               <button
                 onClick={resgatarPresente}
                 disabled={resgatandoPresente}
-                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black py-4 rounded-xl shadow-lg transition-transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50"
+                className="w-full bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black py-4 rounded-xl shadow-lg transition-transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50"
               >
                 {resgatandoPresente
                   ? "Abrindo Presente..."

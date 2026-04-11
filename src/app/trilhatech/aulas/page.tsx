@@ -602,7 +602,7 @@ export default function GestaoAulasPage() {
             ) : (
               <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
                 {/* Pódio Vertical */}
-                <div className="xl:col-span-1 bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl p-6 shadow-xl text-white relative">
+                <div className="xl:col-span-1 bg-linear-to-b from-slate-800 to-slate-900 rounded-2xl p-6 shadow-xl text-white relative">
                   <h3 className="font-black text-lg mb-6 text-center text-slate-200 uppercase tracking-widest">
                     Pódio Atual
                   </h3>
@@ -736,7 +736,7 @@ export default function GestaoAulasPage() {
 
       {/* MODAL DE JUSTIFICATIVA DE FALTA */}
       {modalJustificativaAberto && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in">
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-60 flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden p-6">
             <h3 className="font-bold text-lg text-slate-800 mb-1">
               Justificar Falta
@@ -869,13 +869,13 @@ export default function GestaoAulasPage() {
                 <table className="w-full text-left text-sm border-separate border-spacing-0">
                   <thead className="bg-slate-100 text-slate-600 text-xs uppercase font-bold sticky top-0 z-20 shadow-sm">
                     <tr>
-                      <th className="px-4 py-3 border-b border-r border-slate-200 sticky left-0 bg-slate-100 z-30 min-w-[250px]">
+                      <th className="px-4 py-3 border-b border-r border-slate-200 sticky left-0 bg-slate-100 z-30 min-w-62">
                         Nome do Aluno
                       </th>
                       {diasComAula.map((dia) => (
                         <th
                           key={dia}
-                          className="px-2 py-3 border-b border-slate-200 text-center min-w-[60px]"
+                          className="px-2 py-3 border-b border-slate-200 text-center min-w-15"
                           title={`Dia ${dia}`}
                         >
                           <div className="mx-auto text-slate-700 font-black">
@@ -892,7 +892,7 @@ export default function GestaoAulasPage() {
                         className="hover:bg-slate-50 transition-colors group"
                       >
                         <td className="px-4 py-3 border-b border-r border-slate-200 sticky left-0 bg-white group-hover:bg-slate-50 z-10 font-bold text-slate-800">
-                          <div className="truncate w-[230px]">{aluno.nome}</div>
+                          <div className="truncate w-57">{aluno.nome}</div>
                           <span className="text-[10px] text-slate-400 block font-normal">
                             {aluno.matricula}
                           </span>
@@ -903,7 +903,7 @@ export default function GestaoAulasPage() {
                           return (
                             <td
                               key={dia}
-                              className="px-2 py-2 border-b border-slate-100 text-center border-r border-slate-50"
+                              className="px-2 py-2 border-b border-slate-100 text-center border-r md:border-slate-50"
                             >
                               {infoDia?.status === "presente" && (
                                 <div
@@ -1210,7 +1210,7 @@ export default function GestaoAulasPage() {
         {/* AVISO DE ANIVERSARIANTES DO DIA            */}
         {/* ========================================== */}
         {aniversariantes.length > 0 && (
-          <div className="bg-gradient-to-r from-amber-100 to-orange-100 border border-amber-300 text-amber-900 px-5 py-4 rounded-xl shadow-sm mb-6 flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2">
+          <div className="bg-linear-to-r from-amber-100 to-orange-100 border border-amber-300 text-amber-900 px-5 py-4 rounded-xl shadow-sm mb-6 flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2">
             <span className="text-4xl animate-bounce drop-shadow-sm">🎂</span>
             <div>
               <h3 className="font-black text-sm md:text-base uppercase tracking-tight text-amber-700">

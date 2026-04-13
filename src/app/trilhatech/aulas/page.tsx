@@ -49,6 +49,15 @@ interface AlunoRanking {
   posicao?: number;
 }
 
+interface FrequenciaHoje {
+  matricula: string;
+  nome: string;
+  presencasTotais: number;
+  faltasTotais: number;
+  presenteHoje: boolean;
+  horaHoje: string;
+}
+
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
 
 const fetcherAtividades = async (url: string) => {
@@ -114,6 +123,7 @@ export default function GestaoAulasPage() {
 
   // === ESTADOS DO DIÁRIO DE CLASSE ===
   const [modalFreqAberto, setModalFreqAberto] = useState(false);
+  const [abaDiario, setAbaDiario] = useState<"mensal" | "hoje">("mensal");
   const [carregandoFreq, setCarregandoFreq] = useState(false);
   const [diasComAula, setDiasComAula] = useState<number[]>([]);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -129,6 +139,17 @@ export default function GestaoAulasPage() {
     idFalta?: string;
   } | null>(null);
   const [textoJustificativa, setTextoJustificativa] = useState("");
+
+  // === ESTADOS DA FREQUÊNCIA DE HOJE ===
+  const [carregandoFreqHoje, setCarregandoFreqHoje] = useState(false);
+  const [dadosFreqHoje, setDadosFreqHoje] = useState<FrequenciaHoje[]>([]);
+  const [totalAulasTurma, setTotalAulasTurma] = useState(0);
+  const [filtroStatusHoje, setFiltroStatusHoje] = useState<
+    "Todos" | "Presentes" | "Faltantes"
+  >("Todos");
+  const [ordenacaoFreq, setOrdenacaoFreq] = useState<
+    "alfabetica" | "mais_faltas"
+  >("mais_faltas");
 
   const { data, isLoading, mutate } = useSWR(
     nomeUsuario && GOOGLE_API_URL ? GOOGLE_API_URL : null,
@@ -473,7 +494,9 @@ export default function GestaoAulasPage() {
 
   const abrirRelatorioFrequencia = () => {
     setModalFreqAberto(true);
+    setAbaDiario("mensal");
     buscarDiarioClasse(turmaDiario, mesDiario, anoDiario);
+    buscarFrequenciaHoje(turmaDiario);
   };
 
   // Efeito para recarregar a tabela automaticamente quando o professor trocar de turma ou mês
@@ -519,6 +542,58 @@ export default function GestaoAulasPage() {
       alert("Erro ao salvar justificativa.");
     }
   };
+
+  // --- FUNÇÕES DE FREQUÊNCIA DE HOJE ---
+  const buscarFrequenciaHoje = async (turma: string) => {
+    setCarregandoFreqHoje(true);
+    try {
+      const res = await fetch(GOOGLE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action: "buscar_frequencia_hoje", turma }),
+      });
+      const data = await res.json();
+      if (data.status === "sucesso") {
+        setDadosFreqHoje(data.registros);
+        setTotalAulasTurma(data.totalAulas);
+      }
+    } catch {
+      alert("Erro ao buscar frequência de hoje.");
+    } finally {
+      setCarregandoFreqHoje(false);
+    }
+  };
+
+  useEffect(() => {
+    if (modalFreqAberto) {
+      buscarFrequenciaHoje(turmaDiario);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turmaDiario]);
+
+  const freqHojeFiltrada = useMemo(() => {
+    // Começamos com uma cópia da lista original
+    let lista = [...dadosFreqHoje];
+
+    // Aplicamos o filtro de Status
+    if (filtroStatusHoje === "Presentes") {
+      lista = lista.filter((aluno) => aluno.presenteHoje === true);
+    } else if (filtroStatusHoje === "Faltantes") {
+      lista = lista.filter((aluno) => aluno.presenteHoje === false);
+    }
+
+    // Aplicamos a ordenação (Alfabética ou por Faltas)
+    if (ordenacaoFreq === "mais_faltas") {
+      lista.sort((a, b) => b.faltasTotais - a.faltasTotais);
+    } else {
+      lista.sort((a, b) => a.nome.localeCompare(b.nome));
+    }
+
+    return lista;
+  }, [dadosFreqHoje, filtroStatusHoje, ordenacaoFreq]);
+
+  const totalPresentes = dadosFreqHoje.filter((a) => a.presenteHoje).length;
+  const totalFaltantes = dadosFreqHoje.length - totalPresentes;
 
   if (!montado || !nomeUsuario)
     return <div className="min-h-screen bg-slate-100"></div>;
@@ -777,15 +852,31 @@ export default function GestaoAulasPage() {
       )}
 
       {/* ========================================== */}
-      {/* MODAL DO RELATÓRIO DE FREQUÊNCIA (NOVO)    */}
+      {/* MODAL DO RELATÓRIO DE FREQUÊNCIA UNIFICADO */}
       {/* ========================================== */}
       {modalFreqAberto && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden">
             <div className="bg-emerald-700 text-white p-4 flex justify-between items-center">
-              <h2 className="font-bold text-lg flex items-center gap-2">
-                <span>📍</span> Diário de Classe Digital
-              </h2>
+              <div className="flex items-center gap-6">
+                <h2 className="font-bold text-lg flex items-center gap-2">
+                  <span>📍</span> Gestão de Frequência
+                </h2>
+                <div className="flex bg-emerald-800/50 rounded-lg p-1">
+                  <button
+                    onClick={() => setAbaDiario("mensal")}
+                    className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${abaDiario === "mensal" ? "bg-white text-emerald-800 shadow-sm" : "text-emerald-100 hover:text-white"}`}
+                  >
+                    Visão Mensal
+                  </button>
+                  <button
+                    onClick={() => setAbaDiario("hoje")}
+                    className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${abaDiario === "hoje" ? "bg-white text-emerald-800 shadow-sm" : "text-emerald-100 hover:text-white"}`}
+                  >
+                    Frequência de Hoje
+                  </button>
+                </div>
+              </div>
               <button
                 onClick={() => setModalFreqAberto(false)}
                 className="text-3xl leading-none hover:text-emerald-200"
@@ -804,152 +895,307 @@ export default function GestaoAulasPage() {
                   <option value="Turma 1 - 1º Ano">Turma 1 - 1º Ano</option>
                   <option value="Turma 2 - 2º Ano">Turma 2 - 2º Ano</option>
                 </select>
-                <select
-                  value={mesDiario}
-                  onChange={(e) => setMesDiario(e.target.value)}
-                  className="border border-slate-300 rounded p-2 text-sm font-bold text-slate-700 outline-none focus:border-emerald-500"
-                >
-                  <option value="1">Janeiro</option>
-                  <option value="2">Fevereiro</option>
-                  <option value="3">Março</option>
-                  <option value="4">Abril</option>
-                  <option value="5">Maio</option>
-                  <option value="6">Junho</option>
-                  <option value="7">Julho</option>
-                  <option value="8">Agosto</option>
-                  <option value="9">Setembro</option>
-                  <option value="10">Outubro</option>
-                  <option value="11">Novembro</option>
-                  <option value="12">Dezembro</option>
-                </select>
-                <select
-                  value={anoDiario}
-                  onChange={(e) => setAnoDiario(e.target.value)}
-                  className="border border-slate-300 rounded p-2 text-sm font-bold text-slate-700 outline-none focus:border-emerald-500"
-                >
-                  <option value={new Date().getFullYear()}>
-                    {new Date().getFullYear()}
-                  </option>
-                  <option value={new Date().getFullYear() + 1}>
-                    {new Date().getFullYear() + 1}
-                  </option>
-                </select>
+                {abaDiario === "mensal" && (
+                  <>
+                    <select
+                      value={mesDiario}
+                      onChange={(e) => setMesDiario(e.target.value)}
+                      className="border border-slate-300 rounded p-2 text-sm font-bold text-slate-700 outline-none focus:border-emerald-500"
+                    >
+                      <option value="1">Janeiro</option>
+                      <option value="2">Fevereiro</option>
+                      <option value="3">Março</option>
+                      <option value="4">Abril</option>
+                      <option value="5">Maio</option>
+                      <option value="6">Junho</option>
+                      <option value="7">Julho</option>
+                      <option value="8">Agosto</option>
+                      <option value="9">Setembro</option>
+                      <option value="10">Outubro</option>
+                      <option value="11">Novembro</option>
+                      <option value="12">Dezembro</option>
+                    </select>
+                    <select
+                      value={anoDiario}
+                      onChange={(e) => setAnoDiario(e.target.value)}
+                      className="border border-slate-300 rounded p-2 text-sm font-bold text-slate-700 outline-none focus:border-emerald-500"
+                    >
+                      <option value={new Date().getFullYear()}>
+                        {new Date().getFullYear()}
+                      </option>
+                      <option value={new Date().getFullYear() + 1}>
+                        {new Date().getFullYear() + 1}
+                      </option>
+                    </select>
+                  </>
+                )}
               </div>
 
-              <div className="flex items-center gap-4 text-xs font-bold text-slate-500 bg-white px-4 py-2 rounded-lg border border-slate-200">
-                <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-full bg-emerald-500"></span>{" "}
-                  Presente
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-full bg-red-500"></span>{" "}
-                  Falta
-                </span>
-                <span className="flex items-center gap-1">
-                  <span className="w-3 h-3 rounded-full bg-amber-400"></span>{" "}
-                  Justificada
-                </span>
-              </div>
+              {abaDiario === "mensal" ? (
+                <div className="flex items-center gap-4 text-xs font-bold text-slate-500 bg-white px-4 py-2 rounded-lg border border-slate-200">
+                  <span className="flex items-center gap-1">
+                    <span className="w-3 h-3 rounded-full bg-emerald-500"></span>{" "}
+                    Presente
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-3 h-3 rounded-full bg-red-500"></span>{" "}
+                    Falta
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <span className="w-3 h-3 rounded-full bg-amber-400"></span>{" "}
+                    Justificada
+                  </span>
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2 items-center">
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setFiltroStatusHoje("Todos")}
+                      className={`cursor-pointer px-3 py-1.5 rounded text-xs font-bold transition-all border ${
+                        filtroStatusHoje === "Todos"
+                          ? "bg-emerald-600 text-white border-emerald-700 shadow-inner"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      Todos ({dadosFreqHoje.length})
+                    </button>
+
+                    <button
+                      onClick={() => setFiltroStatusHoje("Presentes")}
+                      className={`cursor-pointer px-3 py-1.5 rounded text-xs font-bold transition-all border ${
+                        filtroStatusHoje === "Presentes"
+                          ? "bg-emerald-600 text-white border-emerald-700 shadow-inner"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      Presentes ({totalPresentes})
+                    </button>
+
+                    <button
+                      onClick={() => setFiltroStatusHoje("Faltantes")}
+                      className={`cursor-pointer px-3 py-1.5 rounded text-xs font-bold transition-all border ${
+                        filtroStatusHoje === "Faltantes"
+                          ? "bg-red-600 text-white border-red-700 shadow-inner"
+                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
+                      }`}
+                    >
+                      Faltantes ({totalFaltantes})
+                    </button>
+                  </div>
+
+                  <div className="flex gap-2 items-center ml-2 border pl-4 border-slate-200">
+                    <label className="text-xs font-bold text-slate-500 whitespace-nowrap">
+                      Ordenar:
+                    </label>
+                    <select
+                      value={ordenacaoFreq}
+                      onChange={(e) =>
+                        setOrdenacaoFreq(
+                          e.target.value as "alfabetica" | "mais_faltas",
+                        )
+                      }
+                      className="border border-slate-300 rounded p-2 text-sm font-bold text-slate-700 outline-none focus:border-emerald-500"
+                    >
+                      <option value="alfabetica">Ordem Alfabética</option>
+                      <option value="mais_faltas">Mais Faltas</option>
+                    </select>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* MATRIZ DE FREQUÊNCIA (COM ROLAGEM HORIZONTAL E COLUNA CONGELADA) */}
             <div className="p-0 flex-1 overflow-auto relative">
-              {carregandoFreq ? (
+              {abaDiario === "mensal" ? (
+                carregandoFreq ? (
+                  <div className="flex flex-col items-center justify-center py-20 opacity-50">
+                    <span className="text-4xl animate-bounce mb-3">📅</span>
+                    <p className="text-slate-600 font-bold">
+                      Processando Diário de Classe...
+                    </p>
+                  </div>
+                ) : diasComAula.length === 0 ? (
+                  <p className="text-center text-slate-500 py-12">
+                    Nenhuma aula registrada para esta turma neste mês.
+                  </p>
+                ) : (
+                  <table className="w-full text-left text-sm border-separate border-spacing-0">
+                    <thead className="bg-slate-100 text-slate-600 text-xs uppercase font-bold sticky top-0 z-20 shadow-sm">
+                      <tr>
+                        <th className="px-4 py-3 border-b border-r border-slate-200 sticky left-0 bg-slate-100 z-30 min-w-62">
+                          Nome do Aluno
+                        </th>
+                        {diasComAula.map((dia) => (
+                          <th
+                            key={dia}
+                            className="px-2 py-3 border-b border-slate-200 text-center min-w-15"
+                            title={`Dia ${dia}`}
+                          >
+                            <div className="mx-auto text-slate-700 font-black">
+                              Dia {dia}
+                            </div>
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white">
+                      {alunosDiario.map((aluno) => (
+                        <tr
+                          key={aluno.matricula}
+                          className="hover:bg-slate-50 transition-colors group"
+                        >
+                          <td className="px-4 py-3 border-b border-r border-slate-200 sticky left-0 bg-white group-hover:bg-slate-50 z-10 font-bold text-slate-800">
+                            <div className="truncate w-57">{aluno.nome}</div>
+                            <span className="text-[10px] text-slate-400 block font-normal">
+                              {aluno.matricula}
+                            </span>
+                          </td>
+
+                          {diasComAula.map((dia) => {
+                            const infoDia = aluno.frequencia[dia];
+                            return (
+                              <td
+                                key={dia}
+                                className="px-2 py-2 border-b border-slate-100 text-center border-r md:border-slate-50"
+                              >
+                                {infoDia?.status === "presente" && (
+                                  <div
+                                    className="w-6 h-6 mx-auto bg-emerald-100 text-emerald-600 rounded flex items-center justify-center font-bold text-xs"
+                                    title="Presente"
+                                  >
+                                    P
+                                  </div>
+                                )}
+                                {infoDia?.status === "falta" && (
+                                  <div
+                                    onClick={() =>
+                                      setModalJustificativaAberto({
+                                        matricula: aluno.matricula,
+                                        nome: aluno.nome,
+                                        dia: dia,
+                                        idFalta: infoDia?.idFalta,
+                                      })
+                                    }
+                                    className="w-6 h-6 mx-auto bg-red-100 text-red-600 rounded flex items-center justify-center font-bold text-xs cursor-pointer hover:bg-red-200 hover:scale-110 transition-all shadow-sm"
+                                    title="Falta - Clique para justificar"
+                                  >
+                                    F
+                                  </div>
+                                )}
+                                {infoDia?.status === "justificada" && (
+                                  <div
+                                    onClick={() =>
+                                      setModalJustificativaAberto({
+                                        matricula: aluno.matricula,
+                                        nome: aluno.nome,
+                                        dia: dia,
+                                        idFalta: infoDia?.idFalta,
+                                      })
+                                    }
+                                    className="w-6 h-6 mx-auto bg-amber-100 text-amber-600 rounded flex items-center justify-center font-bold text-xs cursor-help"
+                                    title={`Justificada: ${infoDia?.justificativa || "Sem observação"} - Clique para editar`}
+                                  >
+                                    J
+                                  </div>
+                                )}
+                              </td>
+                            );
+                          })}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )
+              ) : carregandoFreqHoje ? (
                 <div className="flex flex-col items-center justify-center py-20 opacity-50">
-                  <span className="text-4xl animate-bounce mb-3">📅</span>
+                  <span className="text-4xl animate-bounce mb-3">⏳</span>
                   <p className="text-slate-600 font-bold">
-                    Processando Diário de Classe...
+                    Carregando frequência de hoje...
                   </p>
                 </div>
-              ) : diasComAula.length === 0 ? (
-                <p className="text-center text-slate-500 py-12">
-                  Nenhuma aula registrada para esta turma neste mês.
-                </p>
               ) : (
-                <table className="w-full text-left text-sm border-separate border-spacing-0">
-                  <thead className="bg-slate-100 text-slate-600 text-xs uppercase font-bold sticky top-0 z-20 shadow-sm">
+                <table className="w-full text-left text-sm border-collapse">
+                  <thead className="bg-slate-100 text-slate-600 text-xs uppercase font-bold sticky top-0 z-10 shadow-sm">
                     <tr>
-                      <th className="px-4 py-3 border-b border-r border-slate-200 sticky left-0 bg-slate-100 z-30 min-w-62">
-                        Nome do Aluno
+                      <th className="px-4 py-3 border-b border-slate-200">
+                        Aluno
                       </th>
-                      {diasComAula.map((dia) => (
-                        <th
-                          key={dia}
-                          className="px-2 py-3 border-b border-slate-200 text-center min-w-15"
-                          title={`Dia ${dia}`}
-                        >
-                          <div className="mx-auto text-slate-700 font-black">
-                            Dia {dia}
-                          </div>
-                        </th>
-                      ))}
+                      <th className="px-4 py-3 border-b border-slate-200 text-center">
+                        Status Hoje
+                      </th>
+                      <th className="px-4 py-3 border-b border-slate-200 text-center">
+                        Faltas Acumuladas
+                      </th>
+                      <th className="px-4 py-3 border-b border-slate-200 text-center">
+                        % Presença
+                      </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white">
-                    {alunosDiario.map((aluno) => (
-                      <tr
-                        key={aluno.matricula}
-                        className="hover:bg-slate-50 transition-colors group"
-                      >
-                        <td className="px-4 py-3 border-b border-r border-slate-200 sticky left-0 bg-white group-hover:bg-slate-50 z-10 font-bold text-slate-800">
-                          <div className="truncate w-57">{aluno.nome}</div>
-                          <span className="text-[10px] text-slate-400 block font-normal">
-                            {aluno.matricula}
-                          </span>
-                        </td>
-
-                        {diasComAula.map((dia) => {
-                          const infoDia = aluno.frequencia[dia];
-                          return (
-                            <td
-                              key={dia}
-                              className="px-2 py-2 border-b border-slate-100 text-center border-r md:border-slate-50"
+                  <tbody className="bg-white divide-y divide-slate-100">
+                    {freqHojeFiltrada.map((aluno) => {
+                      const taxaPresenca =
+                        totalAulasTurma > 0
+                          ? Math.round(
+                              (aluno.presencasTotais / totalAulasTurma) * 100,
+                            )
+                          : 100;
+                      return (
+                        <tr key={aluno.matricula} className="hover:bg-slate-50">
+                          <td className="px-4 py-3">
+                            <div className="font-bold text-slate-800">
+                              {aluno.nome}
+                            </div>
+                            <div className="text-[10px] text-slate-400 font-mono">
+                              {aluno.matricula}
+                            </div>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {aluno.presenteHoje ? (
+                              <span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold inline-flex items-center gap-1">
+                                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>{" "}
+                                Presente ({aluno.horaHoje})
+                              </span>
+                            ) : (
+                              <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold inline-flex items-center gap-1">
+                                <span className="w-2 h-2 rounded-full bg-red-500"></span>{" "}
+                                Faltou
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span
+                              className={`font-black text-lg ${aluno.faltasTotais >= 3 ? "text-red-600" : "text-slate-600"}`}
                             >
-                              {infoDia?.status === "presente" && (
-                                <div
-                                  className="w-6 h-6 mx-auto bg-emerald-100 text-emerald-600 rounded flex items-center justify-center font-bold text-xs"
-                                  title="Presente"
-                                >
-                                  P
-                                </div>
-                              )}
-                              {infoDia?.status === "falta" && (
-                                <div
-                                  onClick={() =>
-                                    setModalJustificativaAberto({
-                                      matricula: aluno.matricula,
-                                      nome: aluno.nome,
-                                      dia: dia,
-                                      idFalta: infoDia?.idFalta,
-                                    })
-                                  }
-                                  className="w-6 h-6 mx-auto bg-red-100 text-red-600 rounded flex items-center justify-center font-bold text-xs cursor-pointer hover:bg-red-200 hover:scale-110 transition-all shadow-sm"
-                                  title="Falta - Clique para justificar"
-                                >
-                                  F
-                                </div>
-                              )}
-                              {infoDia?.status === "justificada" && (
-                                <div
-                                  onClick={() =>
-                                    setModalJustificativaAberto({
-                                      matricula: aluno.matricula,
-                                      nome: aluno.nome,
-                                      dia: dia,
-                                      idFalta: infoDia?.idFalta,
-                                    })
-                                  }
-                                  className="w-6 h-6 mx-auto bg-amber-100 text-amber-600 rounded flex items-center justify-center font-bold text-xs cursor-help"
-                                  title={`Justificada: ${infoDia?.justificativa || "Sem observação"} - Clique para editar`}
-                                >
-                                  J
-                                </div>
-                              )}
-                            </td>
-                          );
-                        })}
+                              {aluno.faltasTotais}
+                            </span>
+                            <span className="text-xs text-slate-400 ml-1">
+                              / {totalAulasTurma}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <div className="w-full bg-slate-200 rounded-full h-2.5 max-w-25 mx-auto mt-1 ">
+                              <div
+                                className={`h-2.5 rounded-full ${taxaPresenca >= 75 ? "bg-emerald-500" : "bg-red-500"}`}
+                                style={{ width: `${taxaPresenca}%` }}
+                              ></div>
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-500 mt-1">
+                              {taxaPresenca}%
+                            </span>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                    {freqHojeFiltrada.length === 0 && (
+                      <tr>
+                        <td
+                          colSpan={4}
+                          className="text-center py-8 text-slate-500"
+                        >
+                          Nenhum aluno encontrado para este filtro.
+                        </td>
                       </tr>
-                    ))}
+                    )}
                   </tbody>
                 </table>
               )}
@@ -1460,7 +1706,7 @@ export default function GestaoAulasPage() {
                     onClick={abrirRelatorioFrequencia}
                     className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-4 rounded shadow-sm transition-colors flex items-center gap-2"
                   >
-                    <span>📍</span> Ver Presenças
+                    <span>📍</span> Frequência e Diário
                   </button>
                 </div>
               </div>

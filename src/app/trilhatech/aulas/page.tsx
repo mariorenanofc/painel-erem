@@ -1556,6 +1556,7 @@ export default function GestaoAulasPage() {
                     </label>
                   </div>
                 </div>
+
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                     Título
@@ -1564,66 +1565,59 @@ export default function GestaoAulasPage() {
                     type="text"
                     value={titulo}
                     onChange={(e) => setTitulo(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-2"
+                    className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 </div>
+
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                    {tipo === "Quiz" ? "Pergunta" : "Instruções"}
+                    {tipo === "Quiz"
+                      ? "Pergunta / Enunciado com Código"
+                      : "Instruções"}
                   </label>
                   <textarea
-                    rows={3}
+                    rows={6}
                     value={descricao}
                     onChange={(e) => setDescricao(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-2 resize-none"
+                    placeholder="Digite o enunciado. Se houver código, pode colar mantendo a indentação..."
+                    className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                   ></textarea>
                 </div>
+
                 {tipo === "Quiz" && (
-                  <div className="bg-amber-50 p-4 rounded border border-amber-200 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-500">A)</span>{" "}
-                      <input
-                        type="text"
-                        value={opcaoA}
-                        onChange={(e) => setOpcaoA(e.target.value)}
-                        className="w-full border rounded p-1 text-sm text-slate-800"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-500">B)</span>{" "}
-                      <input
-                        type="text"
-                        value={opcaoB}
-                        onChange={(e) => setOpcaoB(e.target.value)}
-                        className="w-full border rounded p-1 text-sm text-slate-800"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-500">C)</span>{" "}
-                      <input
-                        type="text"
-                        value={opcaoC}
-                        onChange={(e) => setOpcaoC(e.target.value)}
-                        className="w-full border rounded p-1 text-sm text-slate-800"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-slate-500">D)</span>{" "}
-                      <input
-                        type="text"
-                        value={opcaoD}
-                        onChange={(e) => setOpcaoD(e.target.value)}
-                        className="w-full border rounded p-1 text-sm text-slate-800"
-                      />
-                    </div>
-                    <div className="pt-2">
+                  <div className="bg-amber-50 p-4 rounded border border-amber-200 space-y-4">
+                    <p className="text-[10px] font-bold text-amber-600 uppercase mb-2">
+                      Alternativas (Suportam blocos de código)
+                    </p>
+
+                    {[
+                      { label: "A", val: opcaoA, set: setOpcaoA },
+                      { label: "B", val: opcaoB, set: setOpcaoB },
+                      { label: "C", val: opcaoC, set: setOpcaoC },
+                      { label: "D", val: opcaoD, set: setOpcaoD },
+                    ].map((alt) => (
+                      <div key={alt.label} className="flex flex-col gap-1">
+                        <span className="font-bold text-xs text-slate-500 uppercase">
+                          {alt.label})
+                        </span>
+                        <textarea
+                          rows={4}
+                          value={alt.val}
+                          onChange={(e) => alt.set(e.target.value)}
+                          placeholder={`Código ou texto da alternativa ${alt.label}...`}
+                          className="w-full border border-amber-300 rounded p-2 text-xs text-slate-800 font-mono focus:ring-2 focus:ring-amber-500 outline-none bg-white"
+                        />
+                      </div>
+                    ))}
+
+                    <div className="pt-2 border-t border-amber-200">
                       <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                        Qual é a certa?
+                        Resposta Correta
                       </label>
                       <select
                         value={respostaCorreta}
                         onChange={(e) => setRespostaCorreta(e.target.value)}
-                        className="w-full border rounded p-1 font-bold text-emerald-600 bg-white"
+                        className="w-full border border-amber-300 rounded p-2 font-bold text-emerald-600 bg-white outline-none"
                       >
                         <option value="A">A</option>
                         <option value="B">B</option>
@@ -1633,6 +1627,7 @@ export default function GestaoAulasPage() {
                     </div>
                   </div>
                 )}
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
@@ -1642,21 +1637,22 @@ export default function GestaoAulasPage() {
                       type="date"
                       value={dataLimite}
                       onChange={(e) => setDataLimite(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-2"
+                      className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-2 outline-none"
                     />
                   </div>
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                      XP
+                      XP da Missão
                     </label>
                     <input
                       type="number"
                       value={xp}
                       onChange={(e) => setXp(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 text-emerald-700 rounded p-2 font-bold"
+                      className="w-full bg-slate-50 border border-slate-300 text-emerald-700 rounded p-2 font-bold outline-none"
                     />
                   </div>
                 </div>
+
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                     Turma Alvo
@@ -1664,20 +1660,25 @@ export default function GestaoAulasPage() {
                   <select
                     value={turmaAlvo}
                     onChange={(e) => setTurmaAlvo(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-2"
+                    className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-2 outline-none"
                   >
                     <option value="Todas">Todas as Turmas</option>
                     <option value="Turma 1 - 1º Ano">Turma 1 - 1º Ano</option>
                     <option value="Turma 2 - 2º Ano">Turma 2 - 2º Ano</option>
                   </select>
                 </div>
+
                 <button
                   type="submit"
                   disabled={salvando}
-                  className={`w-full text-white font-bold py-2.5 rounded transition-colors disabled:bg-slate-400 ${idEditando ? "bg-amber-500 hover:bg-amber-600" : "bg-blue-600 hover:bg-blue-700"}`}
+                  className={`w-full text-white font-bold py-3 rounded-lg shadow-md transition-all active:scale-95 disabled:bg-slate-400 ${
+                    idEditando
+                      ? "bg-amber-500 hover:bg-amber-600"
+                      : "bg-blue-600 hover:bg-blue-700"
+                  }`}
                 >
                   {salvando
-                    ? "Salvando..."
+                    ? "Processando..."
                     : idEditando
                       ? "Salvar Alterações"
                       : "Publicar Missão"}

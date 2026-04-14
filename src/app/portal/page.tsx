@@ -466,8 +466,6 @@ export default function PortalDashboard() {
       }}
       onCut={(e) => e.preventDefault()}
     >
-      
-
       {/* ========================================== */}
       {/* MODAL DE SENHA DO CHECK-IN                 */}
       {/* ========================================== */}
@@ -1090,7 +1088,6 @@ export default function PortalDashboard() {
                       ⭐ {missaoAberta.xp} XP Possíveis
                     </span>
 
-                    {/* ALERTA VISUAL SE O PRAZO ESTIVER ENCERRADO */}
                     {prazoEncerrado && (
                       <span className="bg-red-100 text-red-700 px-3 py-1 rounded border border-red-200 animate-pulse">
                         ⏳ Prazo Encerrado
@@ -1098,9 +1095,10 @@ export default function PortalDashboard() {
                     )}
                   </div>
 
-                  <p className="text-slate-700 whitespace-pre-wrap text-base mb-6 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                  {/* DESCRIÇÃO COM FORMATAÇÃO DE CÓDIGO */}
+                  <div className="text-slate-700 whitespace-pre-wrap font-mono text-sm mb-6 bg-slate-50 p-4 rounded-lg border border-slate-200 leading-relaxed shadow-inner">
                     {missaoAberta.descricao}
-                  </p>
+                  </div>
 
                   <form
                     onSubmit={enviarMissao}
@@ -1117,7 +1115,7 @@ export default function PortalDashboard() {
                           return opcaoTexto ? (
                             <label
                               key={letra}
-                              className={`block p-3 rounded-lg border cursor-pointer transition-colors ${resposta === letra ? "bg-blue-50 border-blue-500" : "bg-white border-slate-300 hover:bg-slate-50"} ${inputDesabilitado ? "opacity-60 cursor-not-allowed" : ""}`}
+                              className={`flex items-start p-3 rounded-lg border cursor-pointer transition-colors ${resposta === letra ? "bg-blue-50 border-blue-500 ring-1 ring-blue-500" : "bg-white border-slate-300 hover:bg-slate-50"} ${inputDesabilitado ? "opacity-60 cursor-not-allowed" : ""}`}
                             >
                               <input
                                 type="radio"
@@ -1126,14 +1124,17 @@ export default function PortalDashboard() {
                                 checked={resposta === letra}
                                 onChange={(e) => setResposta(e.target.value)}
                                 disabled={inputDesabilitado}
-                                className="mr-3"
+                                className="mt-1 mr-3"
                               />
-                              <strong className="text-slate-700">
-                                {letra})
-                              </strong>{" "}
-                              <span className="text-slate-600">
-                                {opcaoTexto}
-                              </span>
+                              <div className="flex-1 overflow-x-auto">
+                                <strong className="text-slate-700 mr-2">
+                                  {letra})
+                                </strong>
+                                {/* TEXTO DA ALTERNATIVA COM FORMATAÇÃO DE CÓDIGO */}
+                                <code className="text-slate-600 font-mono text-xs whitespace-pre-wrap leading-tight">
+                                  {opcaoTexto}
+                                </code>
+                              </div>
                             </label>
                           ) : null;
                         })}

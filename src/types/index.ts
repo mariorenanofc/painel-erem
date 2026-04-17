@@ -1,6 +1,8 @@
 import { ChangeEvent } from "react";
 
-// 1. MODELO DE DADOS PRINCIPAL
+// ==========================================
+// 1. MODELOS DE DADOS GERAIS
+// ==========================================
 export interface Aluno {
   matricula: string;
   nome: string;
@@ -15,7 +17,59 @@ export interface Aluno {
   whatsapp?: boolean;
 }
 
-// 2. TIPAGENS DOS COMPONENTES (PROPS)
+// ==========================================
+// 2. MODELOS DO PORTAL DO ALUNO
+// ==========================================
+export interface DadosAluno {
+  matricula: string;
+  nome: string;
+  turma: string;
+}
+
+export interface Atividade {
+  id: string;
+  titulo: string;
+  descricao: string;
+  dataLimite: string;
+  xp: string | number;
+  tipo: string;
+  opcaoA: string;
+  opcaoB: string;
+  opcaoC: string;
+  opcaoD: string;
+  status: string;
+  respostaEnviada: string;
+  xpGanho: number;
+  statusPrazo?: string;
+}
+
+export interface PerfilAluno {
+  nome: string;
+  dataNasc: string;
+  matricula: string;
+  email: string;
+  turma: string;
+  telefoneAluno: string;
+  telefoneResponsavel: string;
+}
+
+export interface AlunoRanking {
+  matricula: string;
+  nome: string;
+  turma: string;
+  xp: number;
+  nivel: string;
+  posicao: number;
+}
+
+export interface ColegaPix {
+  matricula: string;
+  nome: string;
+}
+
+// ==========================================
+// 3. TIPAGENS DOS COMPONENTES (PROPS GESTÃO)
+// ==========================================
 export interface HeaderProps {
   carregando: boolean;
   nomeUsuario: string;
@@ -47,9 +101,7 @@ export interface StudentTableProps {
 
 export interface StudentFormProps {
   formData: Aluno;
-  handleChange: (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
-  ) => void;
+  handleChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   salvarAluno: () => void;
   salvando: boolean;
 }
@@ -57,7 +109,7 @@ export interface StudentFormProps {
 export interface StudentModalProps {
   isOpen: boolean;
   onClose: () => void;
-  formData: Aluno; 
+  formData: Aluno;
   handleChange: (e: ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
   salvarAluno: () => void;
   salvando: boolean;
@@ -76,4 +128,18 @@ export interface TrilhaFiltersProps {
   exportarListaFrequencia: () => void;
   mostrarComObs: boolean;
   setMostrarComObs: (val: boolean) => void;
-};
+}
+
+export interface FrequenciaHistorico {
+  data: string;
+  status: "presente" | "justificada" | "falta";
+}
+
+export interface DadosFrequencia {
+  totalAulas: number;
+  totalPresencas: number;
+  totalFaltas: number;
+  taxa: number;
+  mensagem: string;
+  historico: FrequenciaHistorico[];
+}

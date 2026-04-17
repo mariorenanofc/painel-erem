@@ -3,47 +3,12 @@
 
 import { useEffect, useState, useSyncExternalStore, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { DadosAluno, Atividade, PerfilAluno, FrequenciaHistorico, DadosFrequencia } from "@/src/types";
 
-interface DadosAluno {
-  matricula: string;
-  nome: string;
-  turma: string;
-}
-interface Atividade {
-  id: string;
-  titulo: string;
-  descricao: string;
-  dataLimite: string;
-  xp: string | number;
-  tipo: string;
-  opcaoA: string;
-  opcaoB: string;
-  opcaoC: string;
-  opcaoD: string;
-  status: string;
-  respostaEnviada: string;
-  xpGanho: number;
-  statusPrazo?: string;
-}
-interface PerfilAluno {
-  nome: string;
-  dataNasc: string;
-  matricula: string;
-  email: string;
-  turma: string;
-  telefoneAluno: string;
-  telefoneResponsavel: string;
-}
-interface AlunoRanking {
-  matricula: string;
-  nome: string;
-  turma: string;
-  xp: number;
-  nivel: string;
-  posicao: number;
-}
 
-interface ColegaPix { matricula: string; nome: string; }
+// Importação dos Modais Refatorados
+import PixModal from "@/src/components/PixModal";
+import RankingModal from "@/src/components/RankingModal";
 
 const subscribe = (callback: () => void) => {
   if (typeof window !== "undefined") {
@@ -74,11 +39,11 @@ export default function PortalDashboard() {
   const [xpTotalSistema, setXpTotalSistema] = useState(0);
   const [nivelSistema, setNivelSistema] = useState("Iniciante");
 
-  // --- ESTADOS DE FILTROS DAS ATIVIDADES ---
-  const [abaAtividade, setAbaAtividade] = useState<"Pendentes" | "Atrasadas" | "Concluidas">("Pendentes");
+  const [abaAtividade, setAbaAtividade] = useState<
+    "Pendentes" | "Atrasadas" | "Concluidas"
+  >("Pendentes");
   const [buscaAtividade, setBuscaAtividade] = useState("");
 
-  // --- ESTADOS DO CHECK-IN COM SENHA ---
   const [fazendoCheckin, setFazendoCheckin] = useState(false);
   const [checkinRealizado, setCheckinRealizado] = useState(false);
   const [modalSenhaAberto, setModalSenhaAberto] = useState(false);
@@ -88,7 +53,7 @@ export default function PortalDashboard() {
   const [resposta, setResposta] = useState("");
   const [enviando, setEnviando] = useState(false);
 
-  const [zapConfirmado, setZapConfirmado] = useState(true); // Começa true pra não piscar na tela
+  const [zapConfirmado, setZapConfirmado] = useState(true);
   const [zapLink, setZapLink] = useState("");
   const [confirmandoZap, setConfirmandoZap] = useState(false);
 
@@ -97,46 +62,18 @@ export default function PortalDashboard() {
   const [carregandoPerfil, setCarregandoPerfil] = useState(false);
   const [salvandoPerfil, setSalvandoPerfil] = useState(false);
 
-  // --- ESTADOS DO RANKING ---
-  const [rankingAberto, setRankingAberto] = useState(false);
-  const [dadosRanking, setDadosRanking] = useState<AlunoRanking[]>([]);
-  const [carregandoRanking, setCarregandoRanking] = useState(false);
-  const [abaRanking, setAbaRanking] = useState<"Geral" | "Turma">("Geral");
-  const [filtroTempo, setFiltroTempo] = useState<
-    "geral" | "semanal" | "mensal"
-  >("geral");
-
-  // --- ESTADOS DE FREQUÊNCIA ---
   const [modalFrequenciaAberto, setModalFrequenciaAberto] = useState(false);
   const [carregandoFrequencia, setCarregandoFrequencia] = useState(false);
-  const [dadosFrequencia, setDadosFrequencia] = useState<{
-    taxa: number;
-    totalAulas: number;
-    totalPresencas: number;
-    totalFaltas: number;
-    mensagem: string;
-    historico: { data: string; status: string }[];
-  } | null>(null);
+  const [dadosFrequencia, setDadosFrequencia] =
+    useState<DadosFrequencia | null>(null);
 
-  // --- ESTADOS DE ANIVERSÁRIO ---
   const [isAniversario, setIsAniversario] = useState(false);
   const [modalPresenteAberto, setModalPresenteAberto] = useState(false);
   const [resgatandoPresente, setResgatandoPresente] = useState(false);
 
-
-  // === NOVOS ESTADOS DO PIX DE XP ===
+  // --- CONTROLES DOS MODAIS EXTRAÍDOS ---
   const [modalPixAberto, setModalPixAberto] = useState(false);
-  const [carregandoPix, setCarregandoPix] = useState(false);
-  const [dadosPix, setDadosPix] = useState<{ colegas: ColegaPix[], limiteDiario: number, xpDoadoHoje: number, temSenhaPix: boolean, meuXpTotal: number } | null>(null);
-  
-  const [novaSenhaPix, setNovaSenhaPix] = useState("");
-  const [confirmarNovaSenhaPix, setConfirmarNovaSenhaPix] = useState("");
-  
-  const [pixColega, setPixColega] = useState("");
-  const [pixQuantidade, setPixQuantidade] = useState<number | "">("");
-  const [pixMotivo, setPixMotivo] = useState("🤝 Parceria de Equipe");
-  const [pixSenha, setPixSenha] = useState("");
-  const [enviandoPix, setEnviandoPix] = useState(false);
+  const [rankingAberto, setRankingAberto] = useState(false);
 
   const checarWhatsapp = useCallback(async () => {
     if (!aluno || !GOOGLE_API_URL) return;
@@ -206,7 +143,6 @@ export default function PortalDashboard() {
         setNivelSistema(respostaData.nivel || "Iniciante");
       }
     } catch {
-      console.error("Erro ao carregar missões");
     } finally {
       setCarregandoAtividades(false);
     }
@@ -216,13 +152,10 @@ export default function PortalDashboard() {
     if (montado && aluno) {
       buscarAtividades();
       checarWhatsapp();
-
-      // --- VERIFICAÇÃO DE CHECK-IN ---
       const dataHoje = new Date().toLocaleDateString("pt-BR");
       const ultimoCheckin = localStorage.getItem(`checkin_${aluno.matricula}`);
       if (ultimoCheckin === dataHoje) setCheckinRealizado(true);
 
-      // --- VERIFICAÇÃO DE ANIVERSÁRIO ---
       const checarAniversario = async () => {
         try {
           const res = await fetch(GOOGLE_API_URL, {
@@ -236,13 +169,9 @@ export default function PortalDashboard() {
           const data = await res.json();
           if (data.status === "sucesso" && data.isAniversario) {
             setIsAniversario(true);
-            if (!data.jaResgatado) {
-              setModalPresenteAberto(true);
-            }
+            if (!data.jaResgatado) setModalPresenteAberto(true);
           }
-        } catch (e) {
-          console.error("Erro ao checar aniversário");
-        }
+        } catch {}
       };
       checarAniversario();
     }
@@ -252,6 +181,7 @@ export default function PortalDashboard() {
     localStorage.removeItem("alunoLogado");
     router.push("/portal/login");
   };
+
   const abrirMissao = (ativ: Atividade) => {
     setResposta(ativ.respostaEnviada || "");
     setMissaoAberta(ativ);
@@ -279,9 +209,7 @@ export default function PortalDashboard() {
         alert("✅ " + respostaData.mensagem);
         setMissaoAberta(null);
         buscarAtividades();
-      } else {
-        alert("⚠️ " + respostaData.mensagem);
-      }
+      } else alert("⚠️ " + respostaData.mensagem);
     } catch {
       alert("❌ Erro de conexão.");
     } finally {
@@ -289,12 +217,10 @@ export default function PortalDashboard() {
     }
   };
 
-  // --- NOVA FUNÇÃO DE CHECK-IN COM SENHA ---
   const confirmarCheckin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!aluno) return;
     if (!senhaDigitada.trim()) return alert("Digite a senha da lousa!");
-
     setFazendoCheckin(true);
     try {
       const res = await fetch(GOOGLE_API_URL, {
@@ -318,8 +244,6 @@ export default function PortalDashboard() {
         buscarAtividades();
       } else {
         alert("⚠️ " + data.mensagem);
-        // Se a mensagem for sobre o dia errado ou senha errada, ele não marca como realizado.
-        // Só marca como realizado se a API disser que ele já garantiu.
         if (data.mensagem.includes("já garantiu")) {
           localStorage.setItem(`checkin_${aluno.matricula}`, dataHoje);
           setCheckinRealizado(true);
@@ -385,39 +309,6 @@ export default function PortalDashboard() {
     }
   };
 
-  // --- BUSCAR RANKING COM FILTRO ---
-  const carregarRanking = async (tempoSelecionado: string) => {
-    setCarregandoRanking(true);
-    try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "buscar_ranking",
-          filtroTempo: tempoSelecionado,
-        }),
-      });
-      const data = await res.json();
-      if (data.status === "sucesso") setDadosRanking(data.ranking);
-      else alert("⚠️ " + data.mensagem);
-    } catch {
-      alert("❌ Erro ao buscar ranking.");
-    } finally {
-      setCarregandoRanking(false);
-    }
-  };
-
-  const abrirRanking = () => {
-    setRankingAberto(true);
-    carregarRanking(filtroTempo);
-  };
-
-  const mudarFiltroTempo = (novoTempo: "geral" | "semanal" | "mensal") => {
-    setFiltroTempo(novoTempo);
-    carregarRanking(novoTempo);
-  };
-
-  // --- FUNÇÕES DO PORTAL DO ALUNO (FREQUÊNCIA E ANIVERSÁRIO) ---
   const abrirMinhaFrequencia = async () => {
     if (!aluno) return;
     setModalFrequenciaAberto(true);
@@ -456,59 +347,13 @@ export default function PortalDashboard() {
       const data = await res.json();
       if (data.status === "sucesso") {
         setModalPresenteAberto(false);
-        buscarAtividades(); // Atualiza o XP na tela!
-      } else {
-        alert("⚠️ " + data.mensagem);
-      }
+        buscarAtividades();
+      } else alert("⚠️ " + data.mensagem);
     } catch {
       alert("❌ Erro ao resgatar presente.");
     } finally {
       setResgatandoPresente(false);
     }
-  };
-
-  // === FUNÇÕES DO PIX DE XP ===
-  const abrirPix = async () => {
-    if (!aluno) return;
-    setModalPixAberto(true); setCarregandoPix(true);
-    setPixColega(""); setPixQuantidade(""); setPixSenha(""); setNovaSenhaPix(""); setConfirmarNovaSenhaPix("");
-    try {
-      const res = await fetch(GOOGLE_API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "iniciar_pix", matricula: aluno.matricula }) });
-      const data = await res.json();
-      if (data.status === "sucesso") setDadosPix(data); else { alert("Erro ao carregar Pix."); setModalPixAberto(false); }
-    } catch { alert("Erro de conexão."); setModalPixAberto(false); } finally { setCarregandoPix(false); }
-  };
-
-  const criarSenhaPix = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (novaSenhaPix.length !== 6) return alert("A senha deve ter exatamente 6 números.");
-    if (novaSenhaPix !== confirmarNovaSenhaPix) return alert("As senhas não batem!");
-    setEnviandoPix(true);
-    try {
-      const res = await fetch(GOOGLE_API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "criar_senha_pix", matricula: aluno?.matricula, senha: novaSenhaPix }) });
-      const data = await res.json();
-      if (data.status === "sucesso") { alert("✅ Senha criada com sucesso!"); abrirPix(); } else alert(data.mensagem);
-    } catch { alert("Erro."); } finally { setEnviandoPix(false); }
-  };
-
-  const enviarPix = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!dadosPix) return;
-    if (pixQuantidade === "" || Number(pixQuantidade) <= 0) return alert("Digite um valor válido.");
-    if (Number(pixQuantidade) > (dadosPix.limiteDiario - dadosPix.xpDoadoHoje)) return alert("Isso ultrapassa o seu limite diário restante.");
-    if (Number(pixQuantidade) > dadosPix.meuXpTotal) return alert("Você não tem saldo suficiente para doar esse valor.");
-    if (pixSenha.length !== 6) return alert("Digite o seu PIN de 6 números corretamente.");
-
-    setEnviandoPix(true);
-    try {
-      const res = await fetch(GOOGLE_API_URL, { method: "POST", headers: { "Content-Type": "text/plain" }, body: JSON.stringify({ action: "transferir_xp", matriculaOrigem: aluno?.matricula, senha: pixSenha, matriculaDestino: pixColega, quantidade: Number(pixQuantidade), motivo: pixMotivo }) });
-      const data = await res.json();
-      if (data.status === "sucesso") {
-        alert("🎉 PIX ENVIADO COM SUCESSO!");
-        setModalPixAberto(false);
-        buscarAtividades(); // Atualiza saldo na tela
-      } else { alert("⚠️ " + data.mensagem); }
-    } catch { alert("Erro na transferência."); } finally { setEnviandoPix(false); }
   };
 
   if (!montado || !aluno)
@@ -521,16 +366,25 @@ export default function PortalDashboard() {
   const missoesPendentes = atividades.filter(
     (a) => a.status === "Pendente",
   ).length;
-  
-  const qtdPendentes = atividades.filter(a => a.status === "Pendente" && a.statusPrazo !== "Atrasada").length;
-  const qtdAtrasadas = atividades.filter(a => a.status === "Pendente" && a.statusPrazo === "Atrasada").length;
-  const qtdConcluidas = atividades.filter(a => a.status !== "Pendente").length;
+  const qtdPendentes = atividades.filter(
+    (a) => a.status === "Pendente" && a.statusPrazo !== "Atrasada",
+  ).length;
+  const qtdAtrasadas = atividades.filter(
+    (a) => a.status === "Pendente" && a.statusPrazo === "Atrasada",
+  ).length;
+  const qtdConcluidas = atividades.filter(
+    (a) => a.status !== "Pendente",
+  ).length;
 
   const atividadesFiltradas = atividades.filter((a) => {
-    const matchBusca = a.titulo.toLowerCase().includes(buscaAtividade.toLowerCase());
+    const matchBusca = a.titulo
+      .toLowerCase()
+      .includes(buscaAtividade.toLowerCase());
     if (!matchBusca) return false;
-    if (abaAtividade === "Pendentes") return a.status === "Pendente" && a.statusPrazo !== "Atrasada";
-    if (abaAtividade === "Atrasadas") return a.status === "Pendente" && a.statusPrazo === "Atrasada";
+    if (abaAtividade === "Pendentes")
+      return a.status === "Pendente" && a.statusPrazo !== "Atrasada";
+    if (abaAtividade === "Atrasadas")
+      return a.status === "Pendente" && a.statusPrazo === "Atrasada";
     if (abaAtividade === "Concluidas") return a.status !== "Pendente";
     return true;
   });
@@ -546,90 +400,18 @@ export default function PortalDashboard() {
       onCut={(e) => e.preventDefault()}
     >
       {/* ========================================== */}
-      {/* MODAL: PIX DE XP 💸                        */}
+      {/* COMPONENTES EXTRAÍDOS PARA LIMPAR O CÓDIGO */}
       {/* ========================================== */}
       {modalPixAberto && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-70 p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-5 border-b flex justify-between items-center text-white">
-              <div>
-                <h2 className="font-black text-xl flex items-center gap-2"><span>💸</span> Pix de XP</h2>
-                <p className="text-emerald-100 text-xs mt-1">Recompense seus colegas!</p>
-              </div>
-              <button onClick={() => setModalPixAberto(false)} className="text-3xl leading-none hover:text-emerald-200 transition-colors">&times;</button>
-            </div>
-
-            <div className="p-6 overflow-y-auto">
-              {carregandoPix ? (
-                <div className="flex justify-center py-12"><div className="animate-spin rounded-full h-10 w-10 border-b-4 border-emerald-500"></div></div>
-              ) : dadosPix && !dadosPix.temSenhaPix ? (
-                <form onSubmit={criarSenhaPix} className="text-center animate-in zoom-in">
-                  <div className="text-5xl mb-4">🔐</div>
-                  <h3 className="font-bold text-slate-800 text-lg mb-2">Crie sua Senha Pix</h3>
-                  <p className="text-sm text-slate-500 mb-6">Para sua segurança, crie uma senha numérica de <strong>6 dígitos</strong>. Você vai usá-la sempre que quiser enviar XP para um colega.</p>
-                  
-                  <div className="space-y-4 text-left mb-6">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nova Senha (6 números)</label>
-                      <input type="password" maxLength={6} value={novaSenhaPix} onChange={(e) => setNovaSenhaPix(e.target.value.replace(/\D/g, ''))} required className="w-full text-center text-slate-800 text-2xl tracking-widest border-2 border-slate-300 rounded p-2 outline-none focus:border-emerald-500" placeholder="••••••" />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Repita a Senha</label>
-                      <input type="password" maxLength={6} value={confirmarNovaSenhaPix} onChange={(e) => setConfirmarNovaSenhaPix(e.target.value.replace(/\D/g, ''))} required className="w-full text-center text-slate-800 text-2xl tracking-widest border-2 border-slate-300 rounded p-2 outline-none focus:border-emerald-500" placeholder="••••••" />
-                    </div>
-                  </div>
-                  <button type="submit" disabled={enviandoPix} className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow transition-colors disabled:opacity-50">{enviandoPix ? "Salvando..." : "Cadastrar Senha"}</button>
-                </form>
-              ) : dadosPix && dadosPix.temSenhaPix ? (
-                <form onSubmit={enviarPix} className="animate-in slide-in-from-bottom-4">
-                  <div className="flex justify-between items-center bg-slate-100 p-3 rounded-lg border border-slate-200 mb-5">
-                    <div><p className="text-[10px] uppercase font-bold text-slate-500">Seu Saldo Total</p><p className="font-black text-emerald-600 text-lg">{dadosPix.meuXpTotal} XP</p></div>
-                    <div className="text-right"><p className="text-[10px] uppercase font-bold text-slate-500">Limite Diário Restante</p><p className="font-black text-blue-600 text-lg">{Math.max(0, dadosPix.limiteDiario - dadosPix.xpDoadoHoje)} XP</p></div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Para quem você quer enviar?</label>
-                      <select value={pixColega} onChange={(e) => setPixColega(e.target.value)} required className="w-full bg-white border border-slate-300 text-slate-800 rounded p-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
-                        <option value="">Selecione um colega da sua turma...</option>
-                        {dadosPix.colegas.map(c => <option key={c.matricula} value={c.matricula}>{c.nome}</option>)}
-                      </select>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <div className="flex-1">
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Valor (XP)</label>
-                        <input type="number" min="1" max={Math.min(dadosPix.meuXpTotal, dadosPix.limiteDiario - dadosPix.xpDoadoHoje)} value={pixQuantidade} onChange={(e) => setPixQuantidade(Number(e.target.value))} required className="w-full bg-white border border-slate-300 text-emerald-700 font-black rounded p-2.5 outline-none focus:ring-2 focus:ring-emerald-500" placeholder="Ex: 10" />
-                      </div>
-                      <div className="flex-2">
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Motivo / Mensagem</label>
-                        <select value={pixMotivo} onChange={(e) => setPixMotivo(e.target.value)} required className="w-full bg-white border border-slate-300 text-slate-800 rounded p-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500">
-                          <option>🤝 Parceria de Equipe</option>
-                          <option>🧠 Mestre do Código (Me ajudou)</option>
-                          <option>🍕 Pagando uma aposta/lanche</option>
-                          <option>🎁 Presente de Aniversário</option>
-                          <option>🚀 Incentivo para não desistir</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="pt-4 border-t border-slate-200 mt-2">
-                      <label className="block text-xs font-bold text-amber-600 uppercase mb-1 text-center">Digite sua Senha Pix (6 Números)</label>
-                      <input type="password" maxLength={6} value={pixSenha} onChange={(e) => setPixSenha(e.target.value.replace(/\D/g, ''))} required className="w-full max-w-200 text-slate-800 mx-auto block text-center text-xl tracking-widest border-2 border-amber-300 bg-amber-50 rounded p-2 outline-none focus:border-amber-500" placeholder="••••••" />
-                    </div>
-                  </div>
-
-                  <button type="submit" disabled={enviandoPix || (dadosPix.limiteDiario - dadosPix.xpDoadoHoje <= 0)} className="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-lg shadow-md transition-all disabled:opacity-50 hover:-translate-y-0.5">
-                    {enviandoPix ? "Transferindo..." : "Confirmar Transferência 🚀"}
-                  </button>
-                  <p className="text-center text-[10px] text-slate-400 mt-3">Transação sujeita à auditoria do Tutor.</p>
-                </form>
-              ) : null}
-            </div>
-          </div>
-        </div>
+        <PixModal
+          aluno={aluno}
+          onClose={() => setModalPixAberto(false)}
+          onSuccess={buscarAtividades}
+        />
       )}
-
+      {rankingAberto && (
+        <RankingModal aluno={aluno} onClose={() => setRankingAberto(false)} />
+      )}
 
       {/* ========================================== */}
       {/* MODAL DE SENHA DO CHECK-IN                 */}
@@ -675,215 +457,13 @@ export default function PortalDashboard() {
         </div>
       )}
 
-      {/* BANNER DO WHATSAPP */}
-      {!zapConfirmado && zapLink && (
-        <div className="bg-emerald-600 text-white p-4 shadow-inner flex flex-col md:flex-row items-center justify-between gap-4 animate-in slide-in-from-top">
-          <div className="flex items-center gap-3">
-            <span className="text-4xl animate-bounce">💬</span>
-            <div>
-              <h3 className="font-bold text-lg leading-tight">
-                Você ainda não está no nosso WhatsApp!
-              </h3>
-              <p className="text-emerald-100 text-sm">
-                É obrigatório entrar no grupo da sua turma para receber links,
-                avisos e não perder missões.
-              </p>
-            </div>
-          </div>
-          <div className="flex gap-2 w-full md:w-auto">
-            <a
-              href={zapLink}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white text-emerald-800 font-black py-2 px-6 rounded-lg text-center flex-1 md:flex-none shadow hover:bg-emerald-50 transition-colors"
-            >
-              1. Entrar no Grupo
-            </a>
-            <button
-              onClick={confirmarEntradaGrupo}
-              disabled={confirmandoZap}
-              className="bg-emerald-900 hover:bg-emerald-950 text-white font-bold py-2 px-6 rounded-lg shadow transition-colors disabled:opacity-50 flex-1 md:flex-none"
-            >
-              {confirmandoZap ? "..." : "2. Já Entrei!"}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================== */}
-      {/* MODAL DO RANKING COM FILTROS TEMPORAIS     */}
-      {/* ========================================== */}
-      {rankingAberto && (
-        <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh]">
-            <div className="bg-linear-to-r from-amber-500 to-amber-600 p-4 md:p-5 border-b flex justify-between items-center text-white">
-              <div>
-                <h2 className="font-black text-lg md:text-xl flex items-center gap-2">
-                  <span>🏆</span> Leaderboard
-                </h2>
-                <p className="text-amber-100 text-[10px] md:text-xs mt-1">
-                  Os maiores pontuadores do Trilha Tech
-                </p>
-              </div>
-              <button
-                onClick={() => setRankingAberto(false)}
-                className="text-3xl leading-none hover:text-amber-200 transition-colors"
-              >
-                &times;
-              </button>
-            </div>
-
-            {/* ABAS DE NAVEGAÇÃO DE TURMA */}
-            <div className="flex bg-slate-100 border-b border-slate-200">
-              <button
-                onClick={() => setAbaRanking("Geral")}
-                className={`flex-1 py-3 text-xs md:text-sm font-bold transition-colors ${abaRanking === "Geral" ? "bg-white text-amber-600 border-b-2 border-amber-500" : "text-slate-500 hover:bg-slate-200"}`}
-              >
-                🌎 Ranking Geral
-              </button>
-              <button
-                onClick={() => setAbaRanking("Turma")}
-                className={`flex-1 py-3 text-xs md:text-sm font-bold transition-colors ${abaRanking === "Turma" ? "bg-white text-amber-600 border-b-2 border-amber-500" : "text-slate-500 hover:bg-slate-200"}`}
-              >
-                👥 Minha Turma
-              </button>
-            </div>
-
-            {/* NOVOS FILTROS TEMPORAIS */}
-            <div className="bg-white px-4 py-3 flex justify-center gap-2 border-b border-slate-100 shadow-sm z-10">
-              <button
-                onClick={() => mudarFiltroTempo("geral")}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${filtroTempo === "geral" ? "bg-amber-100 text-amber-700 border border-amber-300 shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200 border border-transparent"}`}
-              >
-                Histórico Total
-              </button>
-              <button
-                onClick={() => mudarFiltroTempo("mensal")}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${filtroTempo === "mensal" ? "bg-amber-100 text-amber-700 border border-amber-300 shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200 border border-transparent"}`}
-              >
-                Este Mês
-              </button>
-              <button
-                onClick={() => mudarFiltroTempo("semanal")}
-                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${filtroTempo === "semanal" ? "bg-amber-100 text-amber-700 border border-amber-300 shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200 border border-transparent"}`}
-              >
-                Esta Semana
-              </button>
-            </div>
-
-            <div className="p-0 overflow-y-auto flex-1 bg-slate-50">
-              {carregandoRanking ? (
-                <div className="flex justify-center py-16">
-                  <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-amber-500"></div>
-                </div>
-              ) : dadosRanking.length === 0 ? (
-                <div className="text-center py-16 px-4">
-                  <div className="text-4xl mb-3 opacity-50">📭</div>
-                  <p className="text-slate-500 font-medium">
-                    Nenhum aluno pontuou neste período ainda.
-                  </p>
-                  <p className="text-slate-400 text-xs mt-2">
-                    Corra e faça a primeira entrega para garantir o topo!
-                  </p>
-                </div>
-              ) : (
-                <div className="p-3 md:p-4 space-y-3">
-                  {(() => {
-                    const minhaTurmaTrilha = dadosRanking.find(
-                      (r) => r.matricula === aluno?.matricula,
-                    )?.turma;
-                    const listaExibicao =
-                      abaRanking === "Geral"
-                        ? dadosRanking
-                        : dadosRanking
-                            .filter((r) => r.turma === minhaTurmaTrilha)
-                            .map((r, index) => ({ ...r, posicao: index + 1 }));
-
-                    if (abaRanking === "Turma" && !minhaTurmaTrilha)
-                      return (
-                        <p className="text-center text-slate-500 py-8">
-                          Não foi possível identificar a sua turma.
-                        </p>
-                      );
-                    if (listaExibicao.length === 0)
-                      return (
-                        <p className="text-center text-slate-500 py-8">
-                          Ninguém da sua turma pontuou ainda.
-                        </p>
-                      );
-
-                    return listaExibicao.map((userRank) => {
-                      const isMe = userRank.matricula === aluno?.matricula;
-                      let medalha = "";
-                      let corFundo = "bg-white border-slate-200";
-                      let destaqueNome = "text-slate-800";
-                      if (userRank.posicao === 1) {
-                        medalha = "🥇";
-                        corFundo = "bg-amber-100 border-amber-300 shadow-sm";
-                        destaqueNome = "text-amber-900";
-                      } else if (userRank.posicao === 2) {
-                        medalha = "🥈";
-                        corFundo = "bg-slate-200 border-slate-300 shadow-sm";
-                        destaqueNome = "text-slate-800";
-                      } else if (userRank.posicao === 3) {
-                        medalha = "🥉";
-                        corFundo = "bg-orange-100 border-orange-200 shadow-sm";
-                        destaqueNome = "text-orange-900";
-                      }
-                      if (isMe && userRank.posicao > 3) {
-                        corFundo = "bg-blue-50 border-blue-400 shadow-md";
-                        destaqueNome = "text-blue-800";
-                      }
-
-                      return (
-                        <div
-                          key={userRank.matricula}
-                          className={`flex items-center gap-3 md:gap-4 p-3 rounded-xl border transition-all hover:scale-[1.01] ${corFundo}`}
-                        >
-                          <div className="w-8 md:w-10 text-center font-black text-slate-600 text-base md:text-lg">
-                            {medalha || `${userRank.posicao}º`}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <h4
-                              className={`font-bold text-sm md:text-base truncate ${destaqueNome}`}
-                            >
-                              {userRank.nome}{" "}
-                              {isMe && (
-                                <span className="text-[9px] md:text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full ml-1 md:ml-2 shadow-sm align-middle shrink-0">
-                                  VOCÊ
-                                </span>
-                              )}
-                            </h4>
-                            <p className="text-[10px] md:text-xs text-slate-500 font-medium mt-0.5 truncate">
-                              {userRank.turma} • {userRank.nivel}
-                            </p>
-                          </div>
-                          <div className="text-right bg-white/60 px-2 md:px-3 py-1 md:py-1.5 rounded-lg border border-white/50 whitespace-nowrap">
-                            <span className="font-black text-amber-600 text-base md:text-lg">
-                              {userRank.xp}
-                            </span>
-                            <span className="text-[9px] md:text-[10px] text-slate-500 ml-1 font-bold uppercase tracking-wider">
-                              XP
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    });
-                  })()}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* ========================================== */}
       {/* MODAL DE ANIVERSÁRIO (PRESENTE)            */}
       {/* ========================================== */}
       {modalPresenteAberto && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in zoom-in duration-300">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col text-center border-4 border-amber-400 relative">
-            <div className="absolute top-0 left-0 w-full h-32 bg-linear-to-b from-amber-200/50 to-transparent"></div>
+            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-amber-200/50 to-transparent"></div>
             <div className="p-8 relative z-10">
               <div className="text-7xl animate-bounce mb-4 drop-shadow-md">
                 🎁
@@ -900,7 +480,7 @@ export default function PortalDashboard() {
               <button
                 onClick={resgatarPresente}
                 disabled={resgatandoPresente}
-                className="w-full bg-linear-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black py-4 rounded-xl shadow-lg transition-transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50"
+                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black py-4 rounded-xl shadow-lg transition-transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50"
               >
                 {resgatandoPresente
                   ? "Abrindo Presente..."
@@ -974,22 +554,12 @@ export default function PortalDashboard() {
                     </div>
                   </div>
 
-                  {/* MENSAGEM DO SISTEMA */}
                   <div
-                    className={`p-4 rounded-xl font-medium shadow-inner text-sm md:text-base border ${
-                      dadosFrequencia.taxa >= 90
-                        ? "bg-emerald-50 text-emerald-800 border-emerald-200"
-                        : dadosFrequencia.taxa >= 75
-                          ? "bg-blue-50 text-blue-800 border-blue-200"
-                          : dadosFrequencia.taxa >= 60
-                            ? "bg-amber-50 text-amber-800 border-amber-200"
-                            : "bg-red-50 text-red-800 border-red-200 font-bold"
-                    }`}
+                    className={`p-4 rounded-xl font-medium shadow-inner text-sm md:text-base border ${dadosFrequencia.taxa >= 90 ? "bg-emerald-50 text-emerald-800 border-emerald-200" : dadosFrequencia.taxa >= 75 ? "bg-blue-50 text-blue-800 border-blue-200" : dadosFrequencia.taxa >= 60 ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-red-50 text-red-800 border-red-200 font-bold"}`}
                   >
                     {dadosFrequencia.mensagem}
                   </div>
 
-                  {/* HISTÓRICO EM GRADE */}
                   <div>
                     <h3 className="font-bold text-slate-700 mb-3 border-b pb-2">
                       Histórico Resumido de Aulas
@@ -1000,40 +570,42 @@ export default function PortalDashboard() {
                       </p>
                     ) : (
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                        {dadosFrequencia.historico.map((reg, idx) => (
-                          <div
-                            key={idx}
-                            className="bg-white border border-slate-200 p-2.5 rounded-lg flex justify-between items-center shadow-sm"
-                          >
-                            <span className="text-[11px] font-bold text-slate-600">
-                              {reg.data.slice(0, 5)}
-                            </span>
-                            {reg.status === "presente" && (
-                              <span
-                                className="bg-emerald-100 text-emerald-700 text-[10px] font-black px-1.5 py-0.5 rounded"
-                                title="Presente"
-                              >
-                                P
+                        {dadosFrequencia.historico.map(
+                          (reg: FrequenciaHistorico, idx: number) => (
+                            <div
+                              key={idx}
+                              className="bg-white border border-slate-200 p-2.5 rounded-lg flex justify-between items-center shadow-sm"
+                            >
+                              <span className="text-[11px] font-bold text-slate-600">
+                                {reg.data.slice(0, 5)}
                               </span>
-                            )}
-                            {reg.status === "justificada" && (
-                              <span
-                                className="bg-amber-100 text-amber-700 text-[10px] font-black px-1.5 py-0.5 rounded"
-                                title="Falta Justificada"
-                              >
-                                J
-                              </span>
-                            )}
-                            {reg.status === "falta" && (
-                              <span
-                                className="bg-red-100 text-red-600 text-[10px] font-black px-1.5 py-0.5 rounded"
-                                title="Falta"
-                              >
-                                F
-                              </span>
-                            )}
-                          </div>
-                        ))}
+                              {reg.status === "presente" && (
+                                <span
+                                  className="bg-emerald-100 text-emerald-700 text-[10px] font-black px-1.5 py-0.5 rounded"
+                                  title="Presente"
+                                >
+                                  P
+                                </span>
+                              )}
+                              {reg.status === "justificada" && (
+                                <span
+                                  className="bg-amber-100 text-amber-700 text-[10px] font-black px-1.5 py-0.5 rounded"
+                                  title="Falta Justificada"
+                                >
+                                  J
+                                </span>
+                              )}
+                              {reg.status === "falta" && (
+                                <span
+                                  className="bg-red-100 text-red-600 text-[10px] font-black px-1.5 py-0.5 rounded"
+                                  title="Falta"
+                                >
+                                  F
+                                </span>
+                              )}
+                            </div>
+                          ),
+                        )}
                       </div>
                     )}
                   </div>
@@ -1048,7 +620,9 @@ export default function PortalDashboard() {
         </div>
       )}
 
-      {/* --- MODAL DO MEU PERFIL (OCULTO AQUI NO CHAT POR TAMANHO, MAS IDÊNTICO) --- */}
+      {/* ========================================== */}
+      {/* MODAL DO MEU PERFIL                        */}
+      {/* ========================================== */}
       {perfilAberto && (
         <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
           <div
@@ -1203,7 +777,6 @@ export default function PortalDashboard() {
       {/* --- MODAL DA MISSÃO --- */}
       {missaoAberta &&
         (() => {
-          // Lógica Inteligente para verificar o prazo
           const verificarPrazo = (dataStr: string) => {
             if (!dataStr) return false;
             const hoje = new Date();
@@ -1219,7 +792,6 @@ export default function PortalDashboard() {
             }
             return false;
           };
-
           const prazoEncerrado = verificarPrazo(missaoAberta.dataLimite);
           const inputDesabilitado =
             enviando ||
@@ -1243,7 +815,6 @@ export default function PortalDashboard() {
                     &times;
                   </button>
                 </div>
-
                 <div className="p-6 overflow-y-auto">
                   <div className="flex gap-4 mb-4 text-sm font-bold">
                     <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded border border-slate-200">
@@ -1252,19 +823,15 @@ export default function PortalDashboard() {
                     <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded border border-emerald-200">
                       ⭐ {missaoAberta.xp} XP Possíveis
                     </span>
-
                     {prazoEncerrado && (
                       <span className="bg-red-100 text-red-700 px-3 py-1 rounded border border-red-200 animate-pulse">
                         ⏳ Prazo Encerrado
                       </span>
                     )}
                   </div>
-
-                  {/* DESCRIÇÃO COM FORMATAÇÃO DE CÓDIGO */}
                   <div className="text-slate-700 whitespace-pre-wrap font-mono text-sm mb-6 bg-slate-50 p-4 rounded-lg border border-slate-200 leading-relaxed shadow-inner">
                     {missaoAberta.descricao}
                   </div>
-
                   <form
                     onSubmit={enviarMissao}
                     className="border-t border-slate-200 pt-6"
@@ -1295,7 +862,6 @@ export default function PortalDashboard() {
                                 <strong className="text-slate-700 mr-2">
                                   {letra})
                                 </strong>
-                                {/* TEXTO DA ALTERNATIVA COM FORMATAÇÃO DE CÓDIGO */}
                                 <code className="text-slate-600 font-mono text-xs whitespace-pre-wrap leading-tight">
                                   {opcaoTexto}
                                 </code>
@@ -1320,7 +886,6 @@ export default function PortalDashboard() {
                         />
                       </div>
                     )}
-
                     <div className="mt-6 flex justify-end gap-3">
                       <button
                         type="button"
@@ -1332,13 +897,7 @@ export default function PortalDashboard() {
                       <button
                         type="submit"
                         disabled={inputDesabilitado}
-                        className={`text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition-all ${
-                          prazoEncerrado
-                            ? "bg-red-500 hover:bg-red-600"
-                            : inputDesabilitado
-                              ? "bg-slate-400"
-                              : "bg-emerald-600 hover:bg-emerald-700"
-                        }`}
+                        className={`text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition-all ${prazoEncerrado ? "bg-red-500 hover:bg-red-600" : inputDesabilitado ? "bg-slate-400" : "bg-emerald-600 hover:bg-emerald-700"}`}
                       >
                         {prazoEncerrado
                           ? "Bloqueado pelo Prazo"
@@ -1356,6 +915,41 @@ export default function PortalDashboard() {
             </div>
           );
         })()}
+
+      {/* BANNER DO WHATSAPP */}
+      {!zapConfirmado && zapLink && (
+        <div className="bg-emerald-600 text-white p-4 shadow-inner flex flex-col md:flex-row items-center justify-between gap-4 animate-in slide-in-from-top">
+          <div className="flex items-center gap-3">
+            <span className="text-4xl animate-bounce">💬</span>
+            <div>
+              <h3 className="font-bold text-lg leading-tight">
+                Você ainda não está no nosso WhatsApp!
+              </h3>
+              <p className="text-emerald-100 text-sm">
+                É obrigatório entrar no grupo da sua turma para receber links,
+                avisos e não perder missões.
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2 w-full md:w-auto">
+            <a
+              href={zapLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white text-emerald-800 font-black py-2 px-6 rounded-lg text-center flex-1 md:flex-none shadow hover:bg-emerald-50 transition-colors"
+            >
+              1. Entrar no Grupo
+            </a>
+            <button
+              onClick={confirmarEntradaGrupo}
+              disabled={confirmandoZap}
+              className="bg-emerald-900 hover:bg-emerald-950 text-white font-bold py-2 px-6 rounded-lg shadow transition-colors disabled:opacity-50 flex-1 md:flex-none"
+            >
+              {confirmandoZap ? "..." : "2. Já Entrei!"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* --- CABEÇALHO DO DASHBOARD --- */}
       <header className="bg-blue-900 text-white p-4 shadow-md sticky top-0 z-10">
@@ -1376,11 +970,13 @@ export default function PortalDashboard() {
               <p className="text-sm font-bold">{aluno.nome.split(" ")[0]}</p>
               <p className="text-xs text-blue-300">{aluno.turma}</p>
             </div>
-            {/* NOVO BOTAO PIX DE XP */}
-            <button onClick={abrirPix} className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded text-xs font-bold transition-all shadow-md flex items-center gap-1 border border-emerald-400">
-              <span>💸</span> <span className="hidden lg:inline">Pix de XP</span>
+            <button
+              onClick={() => setModalPixAberto(true)}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded text-xs font-bold transition-all shadow-md flex items-center gap-1 border border-emerald-400"
+            >
+              <span>💸</span>{" "}
+              <span className="hidden lg:inline">Pix de XP</span>
             </button>
-
             <button
               onClick={abrirMinhaFrequencia}
               className="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded text-xs font-bold transition-all shadow-md flex items-center gap-1"
@@ -1388,15 +984,12 @@ export default function PortalDashboard() {
               <span>📊</span>{" "}
               <span className="hidden sm:inline">Frequência</span>
             </button>
-
             <button
-              onClick={abrirRanking}
+              onClick={() => setRankingAberto(true)}
               className="bg-amber-500 hover:bg-amber-600 text-white px-3 py-1.5 rounded text-xs font-bold transition-all shadow-md flex items-center gap-1"
             >
               <span>🏆</span> <span className="hidden sm:inline">Ranking</span>
             </button>
-
-            {/* BOTÃO DE CHECK-IN ABRE O MODAL DA SENHA AGORA */}
             <button
               onClick={() => setModalSenhaAberto(true)}
               disabled={checkinRealizado}
@@ -1415,7 +1008,6 @@ export default function PortalDashboard() {
                 </>
               )}
             </button>
-
             <button
               onClick={abrirPerfil}
               className="bg-blue-800 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-xs font-bold transition-colors border border-blue-700 flex items-center gap-1"
@@ -1432,7 +1024,7 @@ export default function PortalDashboard() {
         </div>
       </header>
 
-      {/* --- CORPO DO DASHBOARD (MANTIDO) --- */}
+      {/* --- CORPO DO DASHBOARD --- */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-5xl mx-auto p-4 md:p-8 flex flex-col md:flex-row justify-between items-center gap-6">
           <div className="flex flex-col items-center md:items-start text-center md:text-left">
@@ -1446,8 +1038,6 @@ export default function PortalDashboard() {
               </strong>{" "}
               para concluir.
             </p>
-
-            {/* NOVO BOTÃO DE ACESSO AO AVA */}
             <div className="mt-4 md:mt-5">
               <a
                 href="https://classroom.google.com/"
@@ -1455,8 +1045,8 @@ export default function PortalDashboard() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 px-6 rounded-lg shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 active:translate-y-0"
               >
-                <span className="text-xl leading-none">🏫</span>
-                Acessar o AVA (Classroom)
+                <span className="text-xl leading-none">🏫</span>Acessar o AVA
+                (Classroom)
               </a>
             </div>
           </div>
@@ -1503,7 +1093,6 @@ export default function PortalDashboard() {
           </div>
         </div>
 
-        {/* ABAS DE CATEGORIZAÇÃO */}
         <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
           <button
             onClick={() => setAbaAtividade("Pendentes")}

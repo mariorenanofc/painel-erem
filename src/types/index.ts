@@ -143,3 +143,11 @@ export interface DadosFrequencia {
   mensagem: string;
   historico: FrequenciaHistorico[];
 }
+
+export interface Notificacao {
+  id: string;
+  mensagem: string;
+  xp: number;
+  tempo: number;
+  tipo: string;
+}

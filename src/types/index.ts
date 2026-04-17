@@ -33,14 +33,16 @@ export interface Atividade {
   dataLimite: string;
   xp: string | number;
   tipo: string;
-  opcaoA: string;
-  opcaoB: string;
-  opcaoC: string;
-  opcaoD: string;
-  status: string;
-  respostaEnviada: string;
-  xpGanho: number;
+  opcaoA?: string;
+  opcaoB?: string;
+  opcaoC?: string;
+  opcaoD?: string;
+  status?: string;
+  respostaEnviada?: string;
+  xpGanho?: number;
   statusPrazo?: string;
+  turmaAlvo?: string;
+  respostaCorreta?: string;
 }
 
 export interface PerfilAluno {
@@ -150,4 +152,42 @@ export interface Notificacao {
   xp: number;
   tempo: number;
   tipo: string;
+}
+
+// ==========================================
+// 4. MODELOS DO PAINEL DE GESTÃO (TUTOR)
+// ==========================================
+export interface Entrega {
+  idEntrega: string;
+  matricula: string;
+  nomeAluno: string;
+  resposta: string;
+  status: string;
+  xpGanho: number;
+}
+
+export interface FrequenciaHoje {
+  matricula: string;
+  nome: string;
+  presencasTotais: number;
+  faltasTotais: number;
+  presenteHoje: boolean;
+  horaHoje: string;
+}
+
+// Já deve existir no seu index.ts, mas garanta que tem estas propriedades:
+export interface AlunoRankingTutor {
+  matricula: string;
+  nome: string;
+  turma: string;
+  nivel: string | number; // O back manda string ("Iniciante"), mas o front antigo esperava number
+  xp: number;
+  posicao?: number;
+}
+
+// Tipagem para a Frequência do Diário (Mensal)
+export interface RegistroDiario {
+  matricula: string;
+  nome: string;
+  frequencia: Record<number, { status: string; justificativa?: string; idFalta?: string }>;
 }

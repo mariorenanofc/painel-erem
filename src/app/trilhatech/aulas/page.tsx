@@ -6,57 +6,16 @@ import useSWR from "swr";
 import Header from "@/src/components/Header";
 import { useRouter } from "next/navigation";
 
-// --- INTERFACES ---
-interface Atividade {
-  id: string;
-  titulo: string;
-  descricao: string;
-  dataLimite: string;
-  xp: number | string;
-  turmaAlvo: string;
-  tipo: string;
-  opcaoA?: string;
-  opcaoB?: string;
-  opcaoC?: string;
-  opcaoD?: string;
-  respostaCorreta?: string;
-}
-
-interface Entrega {
-  idEntrega: string;
-  matricula: string;
-  nomeAluno: string;
-  resposta: string;
-  status: string;
-  xpGanho: number;
-}
-
-interface RegistroFrequencia {
-  idCheckin: string;
-  matricula: string;
-  nomeAluno: string;
-  data: string;
-  hora: string;
-  xpGanho: number;
-}
-
-interface AlunoRanking {
-  matricula: string;
-  nome: string;
-  turma: string;
-  nivel: number;
-  xp: number;
-  posicao?: number;
-}
-
-interface FrequenciaHoje {
-  matricula: string;
-  nome: string;
-  presencasTotais: number;
-  faltasTotais: number;
-  presenteHoje: boolean;
-  horaHoje: string;
-}
+// Imports dos Tipos e Modais
+import {
+  Atividade,
+  Entrega,
+  AlunoRankingTutor,
+  FrequenciaHoje,
+} from "@/src/types";
+import RankingTutorModal from "@/src/components/RankingTutorModal";
+import CorrecaoMissoesModal from "@/src/components/CorrecaoMissoesModal";
+import GestaoFrequenciaModal from "@/src/components/GestaoFrequenciaModal";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
 
@@ -102,6 +61,7 @@ export default function GestaoAulasPage() {
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [carregandoEntregas, setCarregandoEntregas] = useState(false);
   const [notasTemp, setNotasTemp] = useState<Record<string, number>>({});
+
   // === ESTADOS DA SENHA DA LOUSA ===
   const [senhaLousa, setSenhaLousa] = useState("");
   const [salvandoSenha, setSalvandoSenha] = useState(false);
@@ -114,7 +74,7 @@ export default function GestaoAulasPage() {
 
   // === ESTADOS DO RANKING DO TUTOR ===
   const [modalRankingAberto, setModalRankingAberto] = useState(false);
-  const [dadosRanking, setDadosRanking] = useState<AlunoRanking[]>([]);
+  const [dadosRanking, setDadosRanking] = useState<AlunoRankingTutor[]>([]);
   const [carregandoRanking, setCarregandoRanking] = useState(false);
   const [filtroTempoRanking, setFiltroTempoRanking] = useState<
     "geral" | "mensal" | "semanal"
@@ -167,9 +127,9 @@ export default function GestaoAulasPage() {
     fetcherAtividades,
     { revalidateOnFocus: true },
   );
+
   const atividades: Atividade[] =
     data?.status === "sucesso" ? data.atividades : [];
-
   const atividadesVisiveis = atividades.filter((ativ) =>
     ativ.titulo.toLowerCase().includes(buscaAtiv.toLowerCase()),
   );
@@ -178,7 +138,6 @@ export default function GestaoAulasPage() {
     setMontado(true);
     if (!nomeUsuario) window.location.href = "/";
 
-    // Busca a senha atual do backend ao carregar a página
     const buscarSenhaAtual = async () => {
       try {
         const res = await fetch(GOOGLE_API_URL, {
@@ -193,7 +152,6 @@ export default function GestaoAulasPage() {
       }
     };
 
-    // Busca os aniversariantes do dia
     const buscarAniversariantes = async () => {
       try {
         const res = await fetch(GOOGLE_API_URL, {
@@ -212,7 +170,7 @@ export default function GestaoAulasPage() {
       buscarSenhaAtual();
       buscarAniversariantes();
     }
-  }, [nomeUsuario]);
+  }, [nomeUsuario, GOOGLE_API_URL]);
 
   const abrirModalZap = async () => {
     setModalZapAberto(true);
@@ -253,7 +211,6 @@ export default function GestaoAulasPage() {
     }
   };
 
-  // --- FUNÇÕES DE RANKING ---
   const abrirRankingTutor = () => {
     setModalRankingAberto(true);
     carregarRankingTutor("geral");
@@ -280,29 +237,15 @@ export default function GestaoAulasPage() {
     }
   };
 
-  const turmasRanking = useMemo(() => {
-    const turmas = new Set(dadosRanking.map((a: AlunoRanking) => a.turma));
-    return ["Todas", ...Array.from(turmas).sort()];
-  }, [dadosRanking]);
-
-  const rankingFiltrado = useMemo(() => {
+  const exportarRankingCSV = () => {
     let lista = dadosRanking;
     if (filtroTurmaRanking !== "Todas")
-      lista = dadosRanking.filter(
-        (a: AlunoRanking) => a.turma === filtroTurmaRanking,
-      );
-    return lista.map((aluno, index) => ({ ...aluno, posicao: index + 1 }));
-  }, [dadosRanking, filtroTurmaRanking]);
-
-  const podio = rankingFiltrado.slice(0, 3);
-
-  const exportarRankingCSV = () => {
-    if (rankingFiltrado.length === 0)
-      return alert("Nenhum dado para exportar.");
+      lista = dadosRanking.filter((a) => a.turma === filtroTurmaRanking);
+    if (lista.length === 0) return alert("Nenhum dado para exportar.");
     const cabecalho = ["Posição", "Matrícula", "Nome", "Turma", "Nível", "XP"];
-    const linhas = rankingFiltrado.map(
-      (a) =>
-        `${a.posicao},${a.matricula},"${a.nome}",${a.turma},${a.nivel},${a.xp}`,
+    const linhas = lista.map(
+      (a, index) =>
+        `${index + 1},${a.matricula},"${a.nome}",${a.turma},${a.nivel},${a.xp}`,
     );
     const csvContent = [cabecalho.join(","), ...linhas].join("\n");
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -315,7 +258,6 @@ export default function GestaoAulasPage() {
     document.body.removeChild(link);
   };
 
-  // Função para salvar a nova senha
   const salvarNovaSenha = async () => {
     if (!senhaLousa) return alert("Digite uma senha válida!");
     setSalvandoSenha(true);
@@ -337,7 +279,6 @@ export default function GestaoAulasPage() {
     }
   };
 
-  // --- FUNÇÕES DE MISSÕES ---
   const limparFormulario = () => {
     setIdEditando(null);
     setTitulo("");
@@ -354,18 +295,18 @@ export default function GestaoAulasPage() {
   };
 
   const preencherEdicao = (ativ: Atividade) => {
-    setIdEditando(ativ.id);
-    setTitulo(ativ.titulo);
-    setDescricao(ativ.descricao);
-    setDataLimite(ativ.dataLimite);
-    setXp(String(ativ.xp));
-    setTurmaAlvo(ativ.turmaAlvo);
-    setTipo(ativ.tipo);
-    setOpcaoA(ativ.opcaoA || "");
-    setOpcaoB(ativ.opcaoB || "");
-    setOpcaoC(ativ.opcaoC || "");
-    setOpcaoD(ativ.opcaoD || "");
-    setRespostaCorreta(ativ.respostaCorreta || "A");
+    setIdEditando(ativ.id ? String(ativ.id) : null);
+    setTitulo(String(ativ.titulo || ""));
+    setDescricao(String(ativ.descricao || ""));
+    setDataLimite(String(ativ.dataLimite || ""));
+    setXp(String(ativ.xp || "100"));
+    setTurmaAlvo(String(ativ.turmaAlvo || "Todas"));
+    setTipo(String(ativ.tipo || "Projeto"));
+    setOpcaoA(String(ativ.opcaoA || ""));
+    setOpcaoB(String(ativ.opcaoB || ""));
+    setOpcaoC(String(ativ.opcaoC || ""));
+    setOpcaoD(String(ativ.opcaoD || ""));
+    setRespostaCorreta(String(ativ.respostaCorreta || "A"));
   };
 
   const excluirAtividade = async (id: string) => {
@@ -416,7 +357,6 @@ export default function GestaoAulasPage() {
     }
   };
 
-  // --- FUNÇÕES DE CORREÇÃO (ENTREGAS) ---
   const abrirModalEntregas = async (ativ: Atividade) => {
     setMissaoAberta(ativ);
     setCarregandoEntregas(true);
@@ -477,7 +417,6 @@ export default function GestaoAulasPage() {
     }
   };
 
-  // --- FUNÇÕES DO DIÁRIO DE CLASSE (API) ---
   const buscarDiarioClasse = async (
     turma: string,
     mes: string,
@@ -507,6 +446,26 @@ export default function GestaoAulasPage() {
     }
   };
 
+  const buscarFrequenciaHoje = async (turma: string) => {
+    setCarregandoFreqHoje(true);
+    try {
+      const res = await fetch(GOOGLE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({ action: "buscar_frequencia_hoje", turma }),
+      });
+      const data = await res.json();
+      if (data.status === "sucesso") {
+        setDadosFreqHoje(data.registros);
+        setTotalAulasTurma(data.totalAulas);
+      }
+    } catch {
+      alert("Erro ao buscar frequência de hoje.");
+    } finally {
+      setCarregandoFreqHoje(false);
+    }
+  };
+
   const abrirRelatorioFrequencia = () => {
     setModalFreqAberto(true);
     setAbaDiario("mensal");
@@ -514,19 +473,19 @@ export default function GestaoAulasPage() {
     buscarFrequenciaHoje(turmaDiario);
   };
 
-  // Efeito para recarregar a tabela automaticamente quando o professor trocar de turma ou mês
   useEffect(() => {
-    if (modalFreqAberto) {
-      buscarDiarioClasse(turmaDiario, mesDiario, anoDiario);
-    }
+    if (modalFreqAberto) buscarDiarioClasse(turmaDiario, mesDiario, anoDiario);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [turmaDiario, mesDiario, anoDiario]);
+
+  useEffect(() => {
+    if (modalFreqAberto) buscarFrequenciaHoje(turmaDiario);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [turmaDiario]);
 
   const salvarJustificativa = async () => {
     if (!modalJustificativaAberto || !textoJustificativa)
       return alert("Digite o motivo da falta.");
-
-    // Monta a data no formato YYYY-MM-DD exigido pelo back-end
     const diaFormatado = String(modalJustificativaAberto.dia).padStart(2, "0");
     const mesFormatado = String(mesDiario).padStart(2, "0");
     const dataIso = `${anoDiario}-${mesFormatado}-${diaFormatado}`;
@@ -548,790 +507,82 @@ export default function GestaoAulasPage() {
         alert("✅ " + data.mensagem);
         setModalJustificativaAberto(null);
         setTextoJustificativa("");
-        // Recarrega a tabela para pintar o J de amarelo!
         buscarDiarioClasse(turmaDiario, mesDiario, anoDiario);
-      } else {
-        alert("⚠️ " + data.mensagem);
-      }
+      } else alert("⚠️ " + data.mensagem);
     } catch {
       alert("Erro ao salvar justificativa.");
     }
   };
 
-  // --- FUNÇÕES DE FREQUÊNCIA DE HOJE ---
-  const buscarFrequenciaHoje = async (turma: string) => {
-    setCarregandoFreqHoje(true);
-    try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({ action: "buscar_frequencia_hoje", turma }),
-      });
-      const data = await res.json();
-      if (data.status === "sucesso") {
-        setDadosFreqHoje(data.registros);
-        setTotalAulasTurma(data.totalAulas);
-      }
-    } catch {
-      alert("Erro ao buscar frequência de hoje.");
-    } finally {
-      setCarregandoFreqHoje(false);
-    }
-  };
-
-  useEffect(() => {
-    if (modalFreqAberto) {
-      buscarFrequenciaHoje(turmaDiario);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [turmaDiario]);
-
   const freqHojeFiltrada = useMemo(() => {
-    // Começamos com uma cópia da lista original
     let lista = [...dadosFreqHoje];
-
-    // Aplicamos o filtro de Status
-    if (filtroStatusHoje === "Presentes") {
+    if (filtroStatusHoje === "Presentes")
       lista = lista.filter((aluno) => aluno.presenteHoje === true);
-    } else if (filtroStatusHoje === "Faltantes") {
+    else if (filtroStatusHoje === "Faltantes")
       lista = lista.filter((aluno) => aluno.presenteHoje === false);
-    }
 
-    // Aplicamos a ordenação (Alfabética ou por Faltas)
-    if (ordenacaoFreq === "mais_faltas") {
+    if (ordenacaoFreq === "mais_faltas")
       lista.sort((a, b) => b.faltasTotais - a.faltasTotais);
-    } else {
-      lista.sort((a, b) => a.nome.localeCompare(b.nome));
-    }
-
+    else lista.sort((a, b) => a.nome.localeCompare(b.nome));
     return lista;
   }, [dadosFreqHoje, filtroStatusHoje, ordenacaoFreq]);
-
-  const totalPresentes = dadosFreqHoje.filter((a) => a.presenteHoje).length;
-  const totalFaltantes = dadosFreqHoje.length - totalPresentes;
 
   if (!montado || !nomeUsuario)
     return <div className="min-h-screen bg-slate-100"></div>;
 
   return (
     <main className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans">
-      {/* ========================================== */}
-      {/* MODAL TELA CHEIA: RANKING DO TUTOR         */}
-      {/* ========================================== */}
-      {modalRankingAberto && (
-        <div className="fixed inset-0 bg-slate-100 z-50 overflow-y-auto font-sans flex flex-col">
-          <div className="bg-blue-900 text-white p-4 sticky top-0 z-20 shadow-md">
-            <div className="max-w-6xl mx-auto flex justify-between items-center">
-              <div>
-                <h2 className="text-xl font-black flex items-center gap-2">
-                  <span>🏆</span> Painel de Relatórios e Rankings
-                </h2>
-                <p className="text-blue-300 text-xs">
-                  Visão estratégica de pontuação da escola
-                </p>
-              </div>
-              <button
-                onClick={() => setModalRankingAberto(false)}
-                className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition-colors text-xl leading-none"
-              >
-                &times;
-              </button>
-            </div>
-          </div>
+      {/* COMPONENTES DOS MODAIS ISOLADOS */}
+      <RankingTutorModal
+        isOpen={modalRankingAberto}
+        onClose={() => setModalRankingAberto(false)}
+        carregando={carregandoRanking}
+        dadosRanking={dadosRanking}
+        filtroTempo={filtroTempoRanking}
+        filtroTurma={filtroTurmaRanking}
+        setFiltroTurma={setFiltroTurmaRanking}
+        onMudarFiltroTempo={carregarRankingTutor}
+        onExportarCSV={exportarRankingCSV}
+      />
 
-          <div className="max-w-6xl mx-auto p-4 md:p-6 w-full flex-1">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-              <div className="flex bg-white p-1 rounded-xl shadow-sm border border-slate-200 w-full md:w-auto">
-                {(["geral", "mensal", "semanal"] as const).map((tempo) => (
-                  <button
-                    key={tempo}
-                    onClick={() => carregarRankingTutor(tempo)}
-                    className={`flex-1 md:flex-none px-6 py-2 rounded-lg text-sm font-bold capitalize transition-all ${filtroTempoRanking === tempo ? "bg-amber-100 text-amber-700 shadow-sm border border-amber-200" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}
-                  >
-                    {tempo === "geral" ? "Histórico Total" : tempo}
-                  </button>
-                ))}
-              </div>
+      <CorrecaoMissoesModal
+        missaoAberta={missaoAberta}
+        entregas={entregas}
+        carregando={carregandoEntregas}
+        notasTemp={notasTemp}
+        onClose={() => setMissaoAberta(null)}
+        onSetNotasTemp={setNotasTemp}
+        onAvaliar={avaliarAluno}
+      />
 
-              <div className="w-full md:w-auto flex items-center gap-3">
-                <label className="text-sm font-bold text-slate-500 whitespace-nowrap">
-                  Filtrar por Turma:
-                </label>
-                <select
-                  value={filtroTurmaRanking}
-                  onChange={(e) => setFiltroTurmaRanking(e.target.value)}
-                  className="w-full md:w-64 bg-white border border-slate-300 text-slate-800 rounded-lg p-2 text-sm font-bold shadow-sm outline-none focus:border-amber-500"
-                >
-                  {turmasRanking.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  onClick={exportarRankingCSV}
-                  title="Exportar CSV"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white p-2.5 rounded-lg shadow-sm transition-all flex items-center justify-center"
-                >
-                  📥
-                </button>
-              </div>
-            </div>
-
-            {carregandoRanking ? (
-              <div className="flex justify-center items-center py-32">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-amber-500"></div>
-              </div>
-            ) : rankingFiltrado.length === 0 ? (
-              <div className="bg-white p-16 rounded-2xl border border-slate-200 text-center shadow-sm">
-                <div className="text-6xl mb-4 opacity-50">📭</div>
-                <h3 className="text-xl font-bold text-slate-700">
-                  Nenhum aluno pontuou neste filtro.
-                </h3>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-                {/* Pódio Vertical */}
-                <div className="xl:col-span-1 bg-linear-to-b from-slate-800 to-slate-900 rounded-2xl p-6 shadow-xl text-white relative">
-                  <h3 className="font-black text-lg mb-6 text-center text-slate-200 uppercase tracking-widest">
-                    Pódio Atual
-                  </h3>
-                  <div className="flex justify-center items-end gap-2 h-56 mt-4">
-                    {podio[1] && (
-                      <div className="w-1/3 flex flex-col items-center">
-                        <div className="bg-slate-300 w-10 h-10 rounded-full flex items-center justify-center text-lg font-black text-slate-700 shadow-lg z-10 -mb-5 border-2 border-slate-400">
-                          2
-                        </div>
-                        <div className="bg-slate-700/80 w-full h-28 rounded-t-lg border border-slate-600/50 flex flex-col items-center pt-6 px-1 text-center">
-                          <p className="font-bold text-[10px] line-clamp-2">
-                            {podio[1].nome}
-                          </p>
-                          <p className="text-blue-300 font-black mt-auto mb-2 text-xs">
-                            {podio[1].xp} XP
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {podio[0] && (
-                      <div className="w-1/3 flex flex-col items-center z-10">
-                        <div className="text-3xl mb-1 filter drop-shadow-md animate-bounce">
-                          👑
-                        </div>
-                        <div className="bg-amber-400 w-14 h-14 rounded-full flex items-center justify-center text-xl font-black text-amber-900 shadow-xl z-10 -mb-7 border-2 border-amber-200">
-                          1
-                        </div>
-                        <div className="bg-blue-600 w-full h-40 rounded-t-lg shadow-2xl border border-blue-500 flex flex-col items-center pt-9 px-1 text-center">
-                          <p className="font-bold text-xs line-clamp-2 text-white">
-                            {podio[0].nome}
-                          </p>
-                          <p className="text-amber-300 font-black mt-auto mb-3 text-sm">
-                            {podio[0].xp} XP
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                    {podio[2] && (
-                      <div className="w-1/3 flex flex-col items-center">
-                        <div className="bg-orange-400 w-10 h-10 rounded-full flex items-center justify-center text-lg font-black text-orange-950 shadow-lg z-10 -mb-5 border-2 border-orange-300">
-                          3
-                        </div>
-                        <div className="bg-slate-700/60 w-full h-24 rounded-t-lg border border-slate-600/30 flex flex-col items-center pt-6 px-1 text-center">
-                          <p className="font-bold text-[10px] line-clamp-2 text-slate-300">
-                            {podio[2].nome}
-                          </p>
-                          <p className="text-orange-300 font-black mt-auto mb-2 text-xs">
-                            {podio[2].xp} XP
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Tabela Completa */}
-                <div className="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
-                  <div className="bg-slate-50 p-3 border-b border-slate-200 flex justify-between items-center">
-                    <h3 className="font-bold text-slate-700 text-sm">
-                      Lista Geral
-                    </h3>
-                    <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-full">
-                      {rankingFiltrado.length} Alunos
-                    </span>
-                  </div>
-                  <div className="overflow-x-auto max-h-[60vh] overflow-y-auto">
-                    <table className="w-full text-left border-collapse text-sm">
-                      <thead className="bg-slate-100 sticky top-0 z-10">
-                        <tr className="text-slate-500 text-xs uppercase">
-                          <th className="p-3 font-bold border-b border-slate-200 text-center">
-                            Pos
-                          </th>
-                          <th className="p-3 font-bold border-b border-slate-200">
-                            Aluno
-                          </th>
-                          <th className="p-3 font-bold border-b border-slate-200">
-                            Turma
-                          </th>
-                          <th className="p-3 font-bold border-b border-slate-200">
-                            Nível
-                          </th>
-                          <th className="p-3 font-bold border-b border-slate-200 text-right">
-                            XP
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100">
-                        {rankingFiltrado.map((aluno) => (
-                          <tr
-                            key={aluno.matricula}
-                            className={`hover:bg-slate-50 ${aluno.posicao <= 3 ? "bg-amber-50/20" : ""}`}
-                          >
-                            <td className="p-3 text-center font-black text-slate-400">
-                              {aluno.posicao}º
-                            </td>
-                            <td className="p-3">
-                              <p className="font-bold text-slate-800">
-                                {aluno.nome}
-                              </p>
-                              <p className="text-[10px] text-slate-400 font-mono">
-                                {aluno.matricula}
-                              </p>
-                            </td>
-                            <td className="p-3 text-slate-600 text-xs">
-                              {aluno.turma}
-                            </td>
-                            <td className="p-3">
-                              <span className="bg-blue-50 text-blue-700 text-[10px] font-bold px-2 py-1 rounded">
-                                {aluno.nivel}
-                              </span>
-                            </td>
-                            <td className="p-3 text-right">
-                              <span className="font-black text-emerald-600 text-base">
-                                {aluno.xp}
-                              </span>{" "}
-                              <span className="text-[10px] text-slate-400">
-                                XP
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* MODAL DE JUSTIFICATIVA DE FALTA */}
-      {modalJustificativaAberto && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-60 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden p-6">
-            <h3 className="font-bold text-lg text-slate-800 mb-1">
-              Justificar Falta
-            </h3>
-            <p className="text-xs text-slate-500 mb-4">
-              Aluno: <strong>{modalJustificativaAberto.nome}</strong> <br />{" "}
-              Data da Falta:{" "}
-              <strong>
-                {String(modalJustificativaAberto.dia).padStart(2, "0")}/
-                {String(mesDiario).padStart(2, "0")}
-              </strong>
-            </p>
-
-            <textarea
-              rows={4}
-              value={textoJustificativa}
-              onChange={(e) => setTextoJustificativa(e.target.value)}
-              placeholder="Digite o motivo (ex: Atestado médico entregue)"
-              className="w-full border border-slate-300 rounded p-2 text-sm text-slate-700 outline-none focus:border-amber-500 mb-4 resize-none"
-            ></textarea>
-
-            <div className="flex gap-2">
-              <button
-                onClick={() => setModalJustificativaAberto(null)}
-                className="flex-1 py-2 text-sm font-bold text-slate-500 hover:bg-slate-100 rounded"
-              >
-                Cancelar
-              </button>
-              <button
-                onClick={salvarJustificativa}
-                className="flex-1 py-2 text-sm font-bold text-white bg-amber-500 hover:bg-amber-600 rounded shadow-sm"
-              >
-                Salvar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================== */}
-      {/* MODAL DO RELATÓRIO DE FREQUÊNCIA UNIFICADO */}
-      {/* ========================================== */}
-      {modalFreqAberto && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-6xl h-[90vh] flex flex-col overflow-hidden">
-            <div className="bg-emerald-700 text-white p-4 flex justify-between items-center">
-              <div className="flex items-center gap-6">
-                <h2 className="font-bold text-lg flex items-center gap-2">
-                  <span>📍</span> Gestão de Frequência
-                </h2>
-                <div className="flex bg-emerald-800/50 rounded-lg p-1">
-                  <button
-                    onClick={() => setAbaDiario("mensal")}
-                    className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${abaDiario === "mensal" ? "bg-white text-emerald-800 shadow-sm" : "text-emerald-100 hover:text-white"}`}
-                  >
-                    Visão Mensal
-                  </button>
-                  <button
-                    onClick={() => setAbaDiario("hoje")}
-                    className={`px-4 py-1.5 rounded-md text-sm font-bold transition-all ${abaDiario === "hoje" ? "bg-white text-emerald-800 shadow-sm" : "text-emerald-100 hover:text-white"}`}
-                  >
-                    Frequência de Hoje
-                  </button>
-                </div>
-              </div>
-              <button
-                onClick={() => setModalFreqAberto(false)}
-                className="text-3xl leading-none hover:text-emerald-200"
-              >
-                &times;
-              </button>
-            </div>
-
-            <div className="p-4 bg-slate-50 border-b flex flex-col sm:flex-row justify-between items-center gap-4">
-              <div className="flex gap-3">
-                <select
-                  value={turmaDiario}
-                  onChange={(e) => setTurmaDiario(e.target.value)}
-                  className="border border-slate-300 rounded p-2 text-sm font-bold text-slate-700 outline-none focus:border-emerald-500"
-                >
-                  <option value="Turma 1 - 1º Ano">Turma 1 - 1º Ano</option>
-                  <option value="Turma 2 - 2º Ano">Turma 2 - 2º Ano</option>
-                </select>
-                {abaDiario === "mensal" && (
-                  <>
-                    <select
-                      value={mesDiario}
-                      onChange={(e) => setMesDiario(e.target.value)}
-                      className="border border-slate-300 rounded p-2 text-sm font-bold text-slate-700 outline-none focus:border-emerald-500"
-                    >
-                      <option value="1">Janeiro</option>
-                      <option value="2">Fevereiro</option>
-                      <option value="3">Março</option>
-                      <option value="4">Abril</option>
-                      <option value="5">Maio</option>
-                      <option value="6">Junho</option>
-                      <option value="7">Julho</option>
-                      <option value="8">Agosto</option>
-                      <option value="9">Setembro</option>
-                      <option value="10">Outubro</option>
-                      <option value="11">Novembro</option>
-                      <option value="12">Dezembro</option>
-                    </select>
-                    <select
-                      value={anoDiario}
-                      onChange={(e) => setAnoDiario(e.target.value)}
-                      className="border border-slate-300 rounded p-2 text-sm font-bold text-slate-700 outline-none focus:border-emerald-500"
-                    >
-                      <option value={new Date().getFullYear()}>
-                        {new Date().getFullYear()}
-                      </option>
-                      <option value={new Date().getFullYear() + 1}>
-                        {new Date().getFullYear() + 1}
-                      </option>
-                    </select>
-                  </>
-                )}
-              </div>
-
-              {abaDiario === "mensal" ? (
-                <div className="flex items-center gap-4 text-xs font-bold text-slate-500 bg-white px-4 py-2 rounded-lg border border-slate-200">
-                  <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-full bg-emerald-500"></span>{" "}
-                    Presente
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-full bg-red-500"></span>{" "}
-                    Falta
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="w-3 h-3 rounded-full bg-amber-400"></span>{" "}
-                    Justificada
-                  </span>
-                </div>
-              ) : (
-                <div className="flex flex-wrap gap-2 items-center">
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => setFiltroStatusHoje("Todos")}
-                      className={`cursor-pointer px-3 py-1.5 rounded text-xs font-bold transition-all border ${
-                        filtroStatusHoje === "Todos"
-                          ? "bg-emerald-600 text-white border-emerald-700 shadow-inner"
-                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      Todos ({dadosFreqHoje.length})
-                    </button>
-
-                    <button
-                      onClick={() => setFiltroStatusHoje("Presentes")}
-                      className={`cursor-pointer px-3 py-1.5 rounded text-xs font-bold transition-all border ${
-                        filtroStatusHoje === "Presentes"
-                          ? "bg-emerald-600 text-white border-emerald-700 shadow-inner"
-                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      Presentes ({totalPresentes})
-                    </button>
-
-                    <button
-                      onClick={() => setFiltroStatusHoje("Faltantes")}
-                      className={`cursor-pointer px-3 py-1.5 rounded text-xs font-bold transition-all border ${
-                        filtroStatusHoje === "Faltantes"
-                          ? "bg-red-600 text-white border-red-700 shadow-inner"
-                          : "bg-white text-slate-600 border-slate-200 hover:bg-slate-50"
-                      }`}
-                    >
-                      Faltantes ({totalFaltantes})
-                    </button>
-                  </div>
-
-                  <div className="flex gap-2 items-center ml-2 border pl-4 border-slate-200">
-                    <label className="text-xs font-bold text-slate-500 whitespace-nowrap">
-                      Ordenar:
-                    </label>
-                    <select
-                      value={ordenacaoFreq}
-                      onChange={(e) =>
-                        setOrdenacaoFreq(
-                          e.target.value as "alfabetica" | "mais_faltas",
-                        )
-                      }
-                      className="border border-slate-300 rounded p-2 text-sm font-bold text-slate-700 outline-none focus:border-emerald-500"
-                    >
-                      <option value="alfabetica">Ordem Alfabética</option>
-                      <option value="mais_faltas">Mais Faltas</option>
-                    </select>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* MATRIZ DE FREQUÊNCIA (COM ROLAGEM HORIZONTAL E COLUNA CONGELADA) */}
-            <div className="p-0 flex-1 overflow-auto relative">
-              {abaDiario === "mensal" ? (
-                carregandoFreq ? (
-                  <div className="flex flex-col items-center justify-center py-20 opacity-50">
-                    <span className="text-4xl animate-bounce mb-3">📅</span>
-                    <p className="text-slate-600 font-bold">
-                      Processando Diário de Classe...
-                    </p>
-                  </div>
-                ) : diasComAula.length === 0 ? (
-                  <p className="text-center text-slate-500 py-12">
-                    Nenhuma aula registrada para esta turma neste mês.
-                  </p>
-                ) : (
-                  <table className="w-full text-left text-sm border-separate border-spacing-0">
-                    <thead className="bg-slate-100 text-slate-600 text-xs uppercase font-bold sticky top-0 z-20 shadow-sm">
-                      <tr>
-                        <th className="px-4 py-3 border-b border-r border-slate-200 sticky left-0 bg-slate-100 z-30 min-w-62">
-                          Nome do Aluno
-                        </th>
-                        {diasComAula.map((dia) => (
-                          <th
-                            key={dia}
-                            className="px-2 py-3 border-b border-slate-200 text-center min-w-15"
-                            title={`Dia ${dia}`}
-                          >
-                            <div className="mx-auto text-slate-700 font-black">
-                              Dia {dia}
-                            </div>
-                          </th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody className="bg-white">
-                      {alunosDiario.map((aluno) => (
-                        <tr
-                          key={aluno.matricula}
-                          className="hover:bg-slate-50 transition-colors group"
-                        >
-                          <td className="px-4 py-3 border-b border-r border-slate-200 sticky left-0 bg-white group-hover:bg-slate-50 z-10 font-bold text-slate-800">
-                            <div className="truncate w-57">{aluno.nome}</div>
-                            <span className="text-[10px] text-slate-400 block font-normal">
-                              {aluno.matricula}
-                            </span>
-                          </td>
-
-                          {diasComAula.map((dia) => {
-                            const infoDia = aluno.frequencia[dia];
-                            return (
-                              <td
-                                key={dia}
-                                className="px-2 py-2 border-b border-slate-100 text-center border-r md:border-slate-50"
-                              >
-                                {infoDia?.status === "presente" && (
-                                  <div
-                                    className="w-6 h-6 mx-auto bg-emerald-100 text-emerald-600 rounded flex items-center justify-center font-bold text-xs"
-                                    title="Presente"
-                                  >
-                                    P
-                                  </div>
-                                )}
-                                {infoDia?.status === "falta" && (
-                                  <div
-                                    onClick={() =>
-                                      setModalJustificativaAberto({
-                                        matricula: aluno.matricula,
-                                        nome: aluno.nome,
-                                        dia: dia,
-                                        idFalta: infoDia?.idFalta,
-                                      })
-                                    }
-                                    className="w-6 h-6 mx-auto bg-red-100 text-red-600 rounded flex items-center justify-center font-bold text-xs cursor-pointer hover:bg-red-200 hover:scale-110 transition-all shadow-sm"
-                                    title="Falta - Clique para justificar"
-                                  >
-                                    F
-                                  </div>
-                                )}
-                                {infoDia?.status === "justificada" && (
-                                  <div
-                                    onClick={() =>
-                                      setModalJustificativaAberto({
-                                        matricula: aluno.matricula,
-                                        nome: aluno.nome,
-                                        dia: dia,
-                                        idFalta: infoDia?.idFalta,
-                                      })
-                                    }
-                                    className="w-6 h-6 mx-auto bg-amber-100 text-amber-600 rounded flex items-center justify-center font-bold text-xs cursor-help"
-                                    title={`Justificada: ${infoDia?.justificativa || "Sem observação"} - Clique para editar`}
-                                  >
-                                    J
-                                  </div>
-                                )}
-                              </td>
-                            );
-                          })}
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )
-              ) : carregandoFreqHoje ? (
-                <div className="flex flex-col items-center justify-center py-20 opacity-50">
-                  <span className="text-4xl animate-bounce mb-3">⏳</span>
-                  <p className="text-slate-600 font-bold">
-                    Carregando frequência de hoje...
-                  </p>
-                </div>
-              ) : (
-                <table className="w-full text-left text-sm border-collapse">
-                  <thead className="bg-slate-100 text-slate-600 text-xs uppercase font-bold sticky top-0 z-10 shadow-sm">
-                    <tr>
-                      <th className="px-4 py-3 border-b border-slate-200">
-                        Aluno
-                      </th>
-                      <th className="px-4 py-3 border-b border-slate-200 text-center">
-                        Status Hoje
-                      </th>
-                      <th className="px-4 py-3 border-b border-slate-200 text-center">
-                        Faltas Acumuladas
-                      </th>
-                      <th className="px-4 py-3 border-b border-slate-200 text-center">
-                        % Presença
-                      </th>
-                    </tr>
-                  </thead>
-                  <tbody className="bg-white divide-y divide-slate-100">
-                    {freqHojeFiltrada.map((aluno) => {
-                      const taxaPresenca =
-                        totalAulasTurma > 0
-                          ? Math.round(
-                              (aluno.presencasTotais / totalAulasTurma) * 100,
-                            )
-                          : 100;
-                      return (
-                        <tr key={aluno.matricula} className="hover:bg-slate-50">
-                          <td className="px-4 py-3">
-                            <div className="font-bold text-slate-800">
-                              {aluno.nome}
-                            </div>
-                            <div className="text-[10px] text-slate-400 font-mono">
-                              {aluno.matricula}
-                            </div>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            {aluno.presenteHoje ? (
-                              <span className="bg-emerald-100 text-emerald-700 px-2 py-1 rounded text-xs font-bold inline-flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>{" "}
-                                Presente ({aluno.horaHoje})
-                              </span>
-                            ) : (
-                              <span className="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold inline-flex items-center gap-1">
-                                <span className="w-2 h-2 rounded-full bg-red-500"></span>{" "}
-                                Faltou
-                              </span>
-                            )}
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <span
-                              className={`font-black text-lg ${aluno.faltasTotais >= 3 ? "text-red-600" : "text-slate-600"}`}
-                            >
-                              {aluno.faltasTotais}
-                            </span>
-                            <span className="text-xs text-slate-400 ml-1">
-                              / {totalAulasTurma}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 text-center">
-                            <div className="w-full bg-slate-200 rounded-full h-2.5 max-w-25 mx-auto mt-1 ">
-                              <div
-                                className={`h-2.5 rounded-full ${taxaPresenca >= 75 ? "bg-emerald-500" : "bg-red-500"}`}
-                                style={{ width: `${taxaPresenca}%` }}
-                              ></div>
-                            </div>
-                            <span className="text-[10px] font-bold text-slate-500 mt-1">
-                              {taxaPresenca}%
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                    {freqHojeFiltrada.length === 0 && (
-                      <tr>
-                        <td
-                          colSpan={4}
-                          className="text-center py-8 text-slate-500"
-                        >
-                          Nenhum aluno encontrado para este filtro.
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================== */}
-      {/* MODAL DE ENTREGAS (MANTIDO INTACTO)        */}
-      {/* ========================================== */}
-      {missaoAberta && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95">
-            <div className="bg-slate-800 text-white p-4 flex justify-between items-center">
-              <h2 className="font-bold text-lg">
-                📝 Entregas: {missaoAberta.titulo}
-              </h2>
-              <button
-                onClick={() => setMissaoAberta(null)}
-                className="text-3xl leading-none hover:text-slate-300"
-              >
-                &times;
-              </button>
-            </div>
-
-            <div className="p-4 bg-slate-50 border-b flex justify-between items-center">
-              <span className="text-sm font-bold text-slate-600">
-                Alunos que enviaram: {entregas.length}
-              </span>
-              <span className="text-xs bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full font-bold">
-                XP Máximo: {missaoAberta.xp}
-              </span>
-            </div>
-
-            <div className="p-4 flex-1 overflow-y-auto space-y-4">
-              {carregandoEntregas ? (
-                <p className="text-center text-slate-500 py-8 animate-pulse">
-                  Buscando cadernos...
-                </p>
-              ) : entregas.length === 0 ? (
-                <p className="text-center text-slate-500 py-8">
-                  Nenhum aluno enviou resposta ainda.
-                </p>
-              ) : (
-                entregas.map((ent) => (
-                  <div
-                    key={ent.idEntrega}
-                    className="border border-slate-200 rounded-lg bg-white p-4 flex flex-col md:flex-row gap-6"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <span
-                          className={`w-2 h-2 rounded-full ${ent.status === "Avaliado" ? "bg-emerald-500" : "bg-amber-400"}`}
-                        ></span>
-                        <h3 className="font-bold text-slate-800">
-                          {ent.nomeAluno}
-                        </h3>
-                        <span className="text-xs text-slate-400 font-mono">
-                          ({ent.matricula})
-                        </span>
-                      </div>
-                      <div className="bg-slate-50 p-3 rounded border border-slate-100 text-slate-700 text-sm break-all font-medium">
-                        {missaoAberta.tipo === "Projeto" &&
-                        ent.resposta.startsWith("http") ? (
-                          <a
-                            href={ent.resposta}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-blue-600 hover:underline flex items-center gap-1"
-                          >
-                            🔗 Abrir Link do Projeto
-                          </a>
-                        ) : (
-                          <p>
-                            <span className="text-slate-400 text-xs uppercase block mb-1">
-                              Resposta do Aluno:
-                            </span>{" "}
-                            {ent.resposta}
-                          </p>
-                        )}
-                        {missaoAberta.tipo === "Quiz" && (
-                          <p
-                            className={`mt-2 text-xs font-bold ${ent.resposta === missaoAberta.respostaCorreta ? "text-emerald-600" : "text-red-500"}`}
-                          >
-                            Gabarito Oficial: {missaoAberta.respostaCorreta}
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="w-full md:w-48 border-l border-slate-100 pl-0 md:pl-6 flex flex-col justify-center gap-2">
-                      <label className="text-xs font-bold text-slate-500 uppercase">
-                        Dar Nota (XP)
-                      </label>
-                      <input
-                        type="number"
-                        max={Number(missaoAberta.xp)}
-                        value={notasTemp[ent.idEntrega] ?? 0}
-                        onChange={(e) =>
-                          setNotasTemp({
-                            ...notasTemp,
-                            [ent.idEntrega]: Number(e.target.value),
-                          })
-                        }
-                        className="w-full border-2 border-emerald-200 focus:border-emerald-500 rounded p-2 text-center font-black text-emerald-700 outline-none"
-                      />
-                      <button
-                        onClick={() => avaliarAluno(ent)}
-                        className={`w-full py-2 rounded text-sm font-bold text-white transition-colors ${ent.status === "Avaliado" ? "bg-slate-400 hover:bg-slate-500" : "bg-emerald-600 hover:bg-emerald-700"}`}
-                      >
-                        {ent.status === "Avaliado" ? "Reavaliar" : "Avaliar"}
-                      </button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
-        </div>
-      )}
+      <GestaoFrequenciaModal
+        isOpen={modalFreqAberto}
+        onClose={() => setModalFreqAberto(false)}
+        abaDiario={abaDiario}
+        setAbaDiario={setAbaDiario}
+        turmaDiario={turmaDiario}
+        setTurmaDiario={setTurmaDiario}
+        mesDiario={mesDiario}
+        setMesDiario={setMesDiario}
+        anoDiario={anoDiario}
+        setAnoDiario={setAnoDiario}
+        carregandoFreq={carregandoFreq}
+        diasComAula={diasComAula}
+        alunosDiario={alunosDiario}
+        carregandoFreqHoje={carregandoFreqHoje}
+        freqHojeFiltrada={freqHojeFiltrada}
+        dadosFreqHoje={dadosFreqHoje}
+        totalAulasTurma={totalAulasTurma}
+        filtroStatusHoje={filtroStatusHoje}
+        setFiltroStatusHoje={setFiltroStatusHoje}
+        ordenacaoFreq={ordenacaoFreq}
+        setOrdenacaoFreq={setOrdenacaoFreq}
+        modalJustificativaAberto={modalJustificativaAberto}
+        setModalJustificativaAberto={setModalJustificativaAberto}
+        textoJustificativa={textoJustificativa}
+        setTextoJustificativa={setTextoJustificativa}
+        salvarJustificativa={salvarJustificativa}
+      />
 
       {/* MODAL CONFIGURAÇÃO WHATSAPP */}
       {modalZapAberto && (
@@ -1396,6 +647,7 @@ export default function GestaoAulasPage() {
             window.location.href = "/";
           }}
         />
+
         <div className="flex items-center gap-4 mb-6 mt-4">
           <button
             onClick={() => router.push("/trilhatech")}
@@ -1408,9 +660,7 @@ export default function GestaoAulasPage() {
           </h2>
         </div>
 
-        {/* ========================================== */}
-        {/* LINKS E ATALHOS RÁPIDOS                    */}
-        {/* ========================================== */}
+        {/* LINKS RÁPIDOS */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
           <a
             href="https://docs.google.com/spreadsheets/d/1himFlAIQbTyLiUnytkE5MsUiq9X47vdH3DaB59U9y-E/edit?usp=sharing"
@@ -1467,9 +717,7 @@ export default function GestaoAulasPage() {
           </a>
         </div>
 
-        {/* ========================================== */}
-        {/* AVISO DE ANIVERSARIANTES DO DIA            */}
-        {/* ========================================== */}
+        {/* AVISO ANIVERSARIANTES */}
         {aniversariantes.length > 0 && (
           <div className="bg-linear-to-r from-amber-100 to-orange-100 border border-amber-300 text-amber-900 px-5 py-4 rounded-xl shadow-sm mb-6 flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2">
             <span className="text-4xl animate-bounce drop-shadow-sm">🎂</span>
@@ -1498,7 +746,7 @@ export default function GestaoAulasPage() {
             >
               <span>💬</span> Links WhatsApp
             </button>
-            {/* NOVO: PAINEL DA SENHA DA LOUSA */}
+
             <div className="bg-amber-50 p-6 rounded-xl shadow-sm border border-amber-200">
               <h3 className="text-lg font-bold text-amber-900 flex items-center gap-2 mb-2">
                 <span>🔐</span> Senha do Check-in
@@ -1525,7 +773,7 @@ export default function GestaoAulasPage() {
               </div>
             </div>
 
-            {/* FORMULÁRIO DE CRIAÇÃO/EDIÇÃO DE MISSÕES */}
+            {/* FORM DE MISSÃO */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 sticky top-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -1542,7 +790,6 @@ export default function GestaoAulasPage() {
                   </button>
                 )}
               </div>
-
               <form onSubmit={salvarNovaAtividade} className="space-y-4">
                 <div className="bg-slate-50 p-3 rounded border border-slate-200">
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-2">
@@ -1571,7 +818,6 @@ export default function GestaoAulasPage() {
                     </label>
                   </div>
                 </div>
-
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                     Título
@@ -1583,7 +829,6 @@ export default function GestaoAulasPage() {
                     className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
                   />
                 </div>
-
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                     {tipo === "Quiz"
@@ -1598,13 +843,11 @@ export default function GestaoAulasPage() {
                     className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none"
                   ></textarea>
                 </div>
-
                 {tipo === "Quiz" && (
                   <div className="bg-amber-50 p-4 rounded border border-amber-200 space-y-4">
                     <p className="text-[10px] font-bold text-amber-600 uppercase mb-2">
                       Alternativas (Suportam blocos de código)
                     </p>
-
                     {[
                       { label: "A", val: opcaoA, set: setOpcaoA },
                       { label: "B", val: opcaoB, set: setOpcaoB },
@@ -1624,7 +867,6 @@ export default function GestaoAulasPage() {
                         />
                       </div>
                     ))}
-
                     <div className="pt-2 border-t border-amber-200">
                       <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                         Resposta Correta
@@ -1642,7 +884,6 @@ export default function GestaoAulasPage() {
                     </div>
                   </div>
                 )}
-
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
@@ -1667,7 +908,6 @@ export default function GestaoAulasPage() {
                     />
                   </div>
                 </div>
-
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                     Turma Alvo
@@ -1682,15 +922,10 @@ export default function GestaoAulasPage() {
                     <option value="Turma 2 - 2º Ano">Turma 2 - 2º Ano</option>
                   </select>
                 </div>
-
                 <button
                   type="submit"
                   disabled={salvando}
-                  className={`w-full text-white font-bold py-3 rounded-lg shadow-md transition-all active:scale-95 disabled:bg-slate-400 ${
-                    idEditando
-                      ? "bg-amber-500 hover:bg-amber-600"
-                      : "bg-blue-600 hover:bg-blue-700"
-                  }`}
+                  className={`w-full text-white font-bold py-3 rounded-lg shadow-md transition-all active:scale-95 disabled:bg-slate-400 ${idEditando ? "bg-amber-500 hover:bg-amber-600" : "bg-blue-600 hover:bg-blue-700"}`}
                 >
                   {salvando
                     ? "Processando..."
@@ -1711,14 +946,12 @@ export default function GestaoAulasPage() {
                     📚 Missões Cadastradas
                   </h3>
                   <div className="flex gap-2">
-                    {/* BOTÃO DO RANKING */}
                     <button
                       onClick={abrirRankingTutor}
                       className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2 px-4 rounded shadow-sm transition-colors flex items-center gap-2"
                     >
                       <span>🏆</span> Ver Ranking
                     </button>
-                    {/* BOTÃO MÁGICO DA FREQUÊNCIA AQUI */}
                     <button
                       onClick={abrirRelatorioFrequencia}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-4 rounded shadow-sm transition-colors flex items-center gap-2"
@@ -1727,8 +960,6 @@ export default function GestaoAulasPage() {
                     </button>
                   </div>
                 </div>
-
-                {/* FILTROS DO TUTOR */}
                 <div className="flex flex-col sm:flex-row gap-3">
                   <input
                     type="text"
@@ -1794,7 +1025,6 @@ export default function GestaoAulasPage() {
                             {ativ.descricao}
                           </p>
                         </div>
-
                         <div className="flex flex-col items-end justify-between min-w-30 gap-2">
                           <div className="flex gap-2 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
                             <button

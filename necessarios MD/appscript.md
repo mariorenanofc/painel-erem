@@ -14,7 +14,8 @@ for (let j = 1; j < dadosTrilha.length; j++) {
 let mat = String(dadosTrilha[j][0]).trim();
 trilhaMap[mat] = {
 turmaTrilha: String(dadosTrilha[j][1] || ""),
-statusTrilha: String(dadosTrilha[j][2] || "")
+statusTrilha: String(dadosTrilha[j][2] || ""),
+whatsapp: String(dadosTrilha[j][6] || "").trim() === "SIM"
 };
 }
 }
@@ -42,7 +43,8 @@ dataNascFormatada = dataNascFormatada.toISOString().split('T')[0];
       telefoneResponsavel: String(dados[i][6] || ""),
       obs: String(dados[i][7] || ""),
       turmaTrilha: infoTrilha.turmaTrilha,   // <-- INFORMAÇÃO TRILHA
-      statusTrilha: infoTrilha.statusTrilha  // <-- INFORMAÇÃO TRILHA
+      statusTrilha: infoTrilha.statusTrilha,  // <-- INFORMAÇÃO TRILHA
+      whatsapp: infoTrilha.whatsapp
     });
 
 }
@@ -448,7 +450,6 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
     if (action === "buscar_todas_atividades") {
       const filtroTurma = String(dadosApp.filtroTurma || "Todas").trim();
       const filtroTipo = String(dadosApp.filtroTipo || "Todos").trim();
-
       const abaAtividades = planilha.getSheetByName("atividades");
       let atividades = [];
       if (abaAtividades) {
@@ -469,8 +470,8 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             descricao: String(dadosAtiv[i][2]),
             dataLimite: dataLimiteStr,
             xp: dadosAtiv[i][4],
-            turmaAlvo: turmaAlvo,
-            tipo: tipoAtiv,
+            turmaAlvo: String(dadosAtiv[i][5]),
+            tipo: String(dadosAtiv[i][6] || "Projeto"),
             opcaoA: String(dadosAtiv[i][7] || ""),
             opcaoB: String(dadosAtiv[i][8] || ""),
             opcaoC: String(dadosAtiv[i][9] || ""),
@@ -831,34 +832,95 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
     }
 
     // ==========================================
-    // ROTA 15: BUSCAR RELATÓRIO DE FREQUÊNCIA (Professor)
+    // ROTA 15: BUSCAR FREQUÊNCIA HOJE (COM CONTROLE DE FALTAS ACUMULADAS)
     // ==========================================
-    if (action === "buscar_frequencia") {
+    if (action === "buscar_frequencia_hoje") {
+      const turma = String(dadosApp.turma || "").trim();
       const abaFrequencia = planilha.getSheetByName("frequencia");
-      let registros = [];
+      const abaTrilha = planilha.getSheetByName("trilhatech");
+      const planBase = planilha.getSheetByName("basededados");
 
-      if (abaFrequencia) {
-        const dadosFreq = abaFrequencia.getDataRange().getValues();
-
-        // Lemos de trás pra frente (dadosFreq.length - 1) para que os check-ins mais recentes apareçam no topo da lista
-        for (let i = dadosFreq.length - 1; i >= 1; i--) {
-          let dataBruta = dadosFreq[i][3];
-          let dataStr = dataBruta instanceof Date ? Utilities.formatDate(dataBruta, Session.getScriptTimeZone(), "dd/MM/yyyy") : String(dataBruta);
-
-          let horaBruta = dadosFreq[i][4];
-          let horaStr = horaBruta instanceof Date ? Utilities.formatDate(horaBruta, Session.getScriptTimeZone(), "HH:mm:ss") : String(horaBruta);
-
-          registros.push({
-            idCheckin: String(dadosFreq[i][0]),
-            matricula: String(dadosFreq[i][1]),
-            nomeAluno: String(dadosFreq[i][2]),
-            data: dataStr,
-            hora: horaStr,
-            xpGanho: Number(dadosFreq[i][5]) || 0
-          });
-        }
+      if (!abaFrequencia || !abaTrilha || !planBase) {
+        return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Abas não encontradas." })).setMimeType(ContentService.MimeType.JSON);
       }
-      return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", frequencia: registros })).setMimeType(ContentService.MimeType.JSON);
+
+      // 1. Data de Hoje Formatada (DD/MM/YYYY)
+      const timezone = Session.getScriptTimeZone();
+      const dataHojeStr = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
+
+      // 2. Mapear Alunos Ativos da Turma
+      let alunosDaTurma = {};
+      let nomesMap = {};
+
+      const dadosBase = planBase.getDataRange().getValues();
+      for(let i = 1; i < dadosBase.length; i++) {
+          nomesMap[String(dadosBase[i][2]).trim()] = String(dadosBase[i][0]).trim();
+      }
+
+      const dadosTrilha = abaTrilha.getDataRange().getValues();
+      for(let i = 1; i < dadosTrilha.length; i++) {
+         let mat = String(dadosTrilha[i][0]).trim();
+         let t = String(dadosTrilha[i][1]).trim();
+         let status = String(dadosTrilha[i][3]).trim().toLowerCase();
+
+         // Somente alunos ativos que pertencem à turma selecionada
+         if (mat && t === turma && status !== "desclassificado") {
+            alunosDaTurma[mat] = {
+               matricula: mat,
+               nome: nomesMap[mat] || "Aluno " + mat,
+               presencasTotais: 0,
+               faltasTotais: 0,
+               presenteHoje: false,
+               horaHoje: ""
+            };
+         }
+      }
+
+      // 3. Varre a Frequência para calcular totais e presenças de hoje
+      let diasDeAulaSet = new Set();
+      const dadosFreq = abaFrequencia.getDataRange().getValues();
+
+      for(let i = 1; i < dadosFreq.length; i++) {
+         let mat = String(dadosFreq[i][1]).trim();
+         let dataBruta = dadosFreq[i][3];
+         let dataFormatada = "";
+
+         if (dataBruta instanceof Date) {
+            dataFormatada = Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy");
+         } else {
+            dataFormatada = String(dataBruta).trim();
+         }
+
+         if (alunosDaTurma[mat]) {
+            // Conta os dias únicos de aula da turma
+            diasDeAulaSet.add(dataFormatada);
+            alunosDaTurma[mat].presencasTotais++;
+
+            // Verifica se o aluno fez check-in HOJE
+            if (dataFormatada === dataHojeStr) {
+               alunosDaTurma[mat].presenteHoje = true;
+               alunosDaTurma[mat].horaHoje = String(dadosFreq[i][4]);
+            }
+         }
+      }
+
+      let totalAulasTurma = diasDeAulaSet.size;
+
+      // 4. Calcula Faltas Acumuladas
+      let listaFinal = Object.values(alunosDaTurma).map(a => {
+         a.faltasTotais = totalAulasTurma - a.presencasTotais;
+         if (a.faltasTotais < 0) a.faltasTotais = 0; // Proteção
+         return a;
+      });
+
+      // Ordenar por ordem alfabética
+      listaFinal.sort((a, b) => a.nome.localeCompare(b.nome));
+
+      return ContentService.createTextOutput(JSON.stringify({
+         status: "sucesso",
+         registros: listaFinal,
+         totalAulas: totalAulasTurma
+      })).setMimeType(ContentService.MimeType.JSON);
     }
 
     // ==========================================
@@ -1485,8 +1547,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
       })).setMimeType(ContentService.MimeType.JSON);
     }
 
-
-        // ==========================================
+    // ==========================================
     // ROTAS 25: INTEGRAÇÃO WHATSAPP
     // ==========================================
 
@@ -1573,7 +1634,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
     }
 
     // ==========================================
-    // ROTAS DO PIX DE XP (P2P)
+    // ROTAS 27: DO PIX DE XP (P2P)
     // ==========================================
 
     // 1. INICIAR PIX (Carrega colegas, limite e status da senha)
@@ -1719,6 +1780,199 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
       abaEntregas.appendRow([idBase + "-RECEBEU", matriculaDestino, "PIX-XP", `Recebeu de ${matriculaOrigem}: ${motivo}`, "Avaliado", quantidade, timestamp]);
 
       return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ==========================================
+    // ROTA 28: CARREGAR PORTAL DO ALUNO (SUPER ROTA DE PERFORMANCE + ESTATÍSTICAS)
+    // ==========================================
+    if (action === "carregar_portal_aluno") {
+      const matricula = String(dadosApp.matricula).trim();
+
+      const abaTrilha = planilha.getSheetByName("trilhatech");
+      const planBase = planilha.getSheetByName("basededados");
+      const abaEntregas = planilha.getSheetByName("entregas");
+      const abaAtividades = planilha.getSheetByName("atividades");
+      const abaConfig = planilha.getSheetByName("configuracoes");
+      const abaFrequencia = planilha.getSheetByName("frequencia"); // NOVA ABA ADICIONADA
+
+      let dadosRetorno = {
+        status: "sucesso",
+        xpTotal: 0,
+        nivel: "Iniciante",
+        whatsapp: { confirmado: true, link: "" },
+        aniversario: { isAniversario: false, jaResgatado: false },
+        atividades: [],
+        notificacoes: [],
+        // NOVO: ESTATÍSTICAS PARA AS BADGES
+        stats: { xpDoado: 0, xpRecebido: 0, totalCheckins: 0 }
+      };
+
+      let turmaDoAlunoNoProjeto = "";
+      if (abaTrilha) {
+        const dadosTrilha = abaTrilha.getDataRange().getValues();
+        for (let t = 1; t < dadosTrilha.length; t++) {
+          if (String(dadosTrilha[t][0]).trim() === matricula) {
+            turmaDoAlunoNoProjeto = String(dadosTrilha[t][1]).trim();
+            dadosRetorno.xpTotal = Number(dadosTrilha[t][4]) || 0;
+            dadosRetorno.nivel = String(dadosTrilha[t][5]) || "Iniciante";
+            dadosRetorno.whatsapp.confirmado = String(dadosTrilha[t][6]).trim() === "SIM";
+            break;
+          }
+        }
+      }
+
+      if (abaConfig) {
+        let dadosConf = abaConfig.getDataRange().getValues();
+        for(let i = 1; i < dadosConf.length; i++) {
+          if(turmaDoAlunoNoProjeto.includes("1º") && dadosConf[i][0] === "WHATSAPP_1ANO") dadosRetorno.whatsapp.link = dadosConf[i][1];
+          if(turmaDoAlunoNoProjeto.includes("2º") && dadosConf[i][0] === "WHATSAPP_2ANO") dadosRetorno.whatsapp.link = dadosConf[i][1];
+        }
+      }
+
+      const timezone = Session.getScriptTimeZone();
+      const dataHoje = new Date();
+      const diaHoje = Utilities.formatDate(dataHoje, timezone, "dd");
+      const mesHoje = Utilities.formatDate(dataHoje, timezone, "MM");
+      const anoHoje = Utilities.formatDate(dataHoje, timezone, "yyyy");
+      const idNiver = "BDAY-" + anoHoje + "-" + matricula;
+
+      if (planBase) {
+        const dadosBase = planBase.getDataRange().getValues();
+        for (let i = 1; i < dadosBase.length; i++) {
+          if (String(dadosBase[i][2]).trim() === matricula) {
+            let celulaDataNasc = dadosBase[i][1];
+            let diaNasc = ""; let mesNasc = "";
+            if (celulaDataNasc instanceof Date) {
+              diaNasc = Utilities.formatDate(celulaDataNasc, timezone, "dd");
+              mesNasc = Utilities.formatDate(celulaDataNasc, timezone, "MM");
+            } else {
+              let partesNasc = String(celulaDataNasc).trim().split("/");
+              if (partesNasc.length === 3) { diaNasc = partesNasc[0].padStart(2, '0'); mesNasc = partesNasc[1].padStart(2, '0'); }
+            }
+            if (diaNasc === diaHoje && mesNasc === mesHoje) dadosRetorno.aniversario.isAniversario = true;
+            break;
+          }
+        }
+      }
+
+      let entregasMap = {};
+      if (abaEntregas) {
+        const dadosEntregas = abaEntregas.getDataRange().getValues();
+        for (let i = 1; i < dadosEntregas.length; i++) {
+          let idEntrega = String(dadosEntregas[i][0]).trim();
+          let mat = String(dadosEntregas[i][1]).trim();
+
+          if (mat === matricula) {
+            if (!idEntrega.startsWith("BDAY") && !idEntrega.startsWith("PIX")) {
+              let idAtividade = String(dadosEntregas[i][2]).trim();
+              entregasMap[idAtividade] = {
+                resposta: String(dadosEntregas[i][3]).trim(), status: String(dadosEntregas[i][4]).trim() || "Aguardando Correção", xpGanho: dadosEntregas[i][5] || 0
+              };
+            }
+            if (idEntrega.includes("PIX") && idEntrega.includes("-RECEBEU")) {
+               dadosRetorno.stats.xpRecebido += Number(dadosEntregas[i][5]) || 0; // SOMA XP RECEBIDO
+               let timestampEnvio = Number(dadosEntregas[i][6]) || 0;
+               dadosRetorno.notificacoes.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: Number(dadosEntregas[i][5]), tempo: timestampEnvio, tipo: "PIX" });
+            }
+            if (idEntrega.includes("PIX") && idEntrega.includes("-ENVIOU")) {
+               dadosRetorno.stats.xpDoado += Math.abs(Number(dadosEntregas[i][5]) || 0); // SOMA XP DOADO
+            }
+            if (idEntrega === idNiver) dadosRetorno.aniversario.jaResgatado = true;
+
+            // O replace inteligente remove apenas o prefixo e o sufixo, deixando o ID da badge intacto
+            if(idEntrega.startsWith("BADGE-")){
+              let badgeId = idEntrega.replace("BADGE-", "").replace("-" + matricula, "");
+              dadosRetorno.badgesResgatadas.push(badgeId);
+            }
+          }
+        }
+      }
+
+      dadosRetorno.notificacoes.sort((a, b) => b.tempo - a.tempo);
+      dadosRetorno.notificacoes = dadosRetorno.notificacoes.slice(0, 10);
+
+      // BUSCA O TOTAL DE CHECK-INS (FREQUÊNCIA)
+      if (abaFrequencia) {
+         const dadosFreq = abaFrequencia.getDataRange().getValues();
+         for (let i = 1; i < dadosFreq.length; i++) {
+            if (String(dadosFreq[i][1]).trim() === matricula && String(dadosFreq[i][4]).trim() !== "00:00:00") { // Ignora as faltas justificadas (00:00:00)
+               dadosRetorno.stats.totalCheckins++;
+            }
+         }
+      }
+
+      if (abaAtividades) {
+        const dadosAtiv = abaAtividades.getDataRange().getValues();
+        let hojeTime = new Date(); hojeTime.setHours(0,0,0,0);
+
+        for (let i = 1; i < dadosAtiv.length; i++) {
+          let turmaAlvo = String(dadosAtiv[i][5]).trim();
+          if (turmaAlvo.toLowerCase() === "todas" || turmaAlvo === turmaDoAlunoNoProjeto) {
+            let idAtiv = String(dadosAtiv[i][0]).trim();
+            let entregaAluno = entregasMap[idAtiv];
+            let dataLimiteBruta = dadosAtiv[i][3];
+            let dataLimiteStr = dataLimiteBruta instanceof Date ? Utilities.formatDate(dataLimiteBruta, timezone, "dd/MM/yyyy") : String(dataLimiteBruta);
+
+            let statusPrazo = "No Prazo";
+            if (!entregaAluno && dataLimiteStr) {
+               let partesData = dataLimiteStr.split('/');
+               if (partesData.length === 3) {
+                  let dataLim = new Date(Number(partesData[2]), Number(partesData[1])-1, Number(partesData[0]));
+                  if (hojeTime > dataLim) statusPrazo = "Atrasada";
+               }
+            }
+
+            dadosRetorno.atividades.push({
+              id: idAtiv, titulo: String(dadosAtiv[i][1]), descricao: String(dadosAtiv[i][2]), dataLimite: dataLimiteStr,
+              xp: dadosAtiv[i][4], tipo: String(dadosAtiv[i][6] || "Projeto"),
+              opcaoA: String(dadosAtiv[i][7] || ""), opcaoB: String(dadosAtiv[i][8] || ""), opcaoC: String(dadosAtiv[i][9] || ""), opcaoD: String(dadosAtiv[i][10] || ""),
+              status: entregaAluno ? entregaAluno.status : "Pendente", respostaEnviada: entregaAluno ? entregaAluno.resposta : "",
+              xpGanho: entregaAluno ? entregaAluno.xpGanho : 0, statusPrazo: statusPrazo
+            });
+          }
+        }
+      }
+
+      return ContentService.createTextOutput(JSON.stringify(dadosRetorno)).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ==========================================
+    // ROTA 29: RESGATAR RECOMPENSA DE CONQUISTA (BADGE)
+    // ==========================================
+    if (action === "resgatar_badge") {
+      const matricula = String(dadosApp.matricula).trim();
+      const badgeId = String(dadosApp.badgeId).trim();
+      const xpGanho = Number(dadosApp.xpGanho) || 0;
+      const nomeBadge = String(dadosApp.nomeBadge).trim();
+
+      const abaEntregas = planilha.getSheetByName("entregas");
+      const abaTrilha = planilha.getSheetByName("trilhatech");
+      const timestampAtual = new Date().getTime();
+      const idUnico = "BADGE-" + badgeId + "-" + matricula;
+
+      if (!abaEntregas || !abaTrilha) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Abas não encontradas." })).setMimeType(ContentService.MimeType.JSON);
+
+      // Proteção anti-fraude: verifica se já resgatou
+      const dadosEntregas = abaEntregas.getDataRange().getValues();
+      for (let i = 1; i < dadosEntregas.length; i++) {
+        if (String(dadosEntregas[i][0]).trim() === idUnico) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Recompensa já resgatada!" })).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+
+      // 1. Gera o recibo da conquista na aba Entregas
+      abaEntregas.appendRow([idUnico, matricula, "CONQUISTA-BADGE", `Desbloqueou: ${nomeBadge}`, "Avaliado", xpGanho, timestampAtual]);
+
+      // 2. Soma o XP na aba TrilhaTech
+      const dadosTrilha = abaTrilha.getDataRange().getValues();
+      for(let t = 1; t < dadosTrilha.length; t++) {
+         if(String(dadosTrilha[t][0]).trim() === matricula) {
+            let xpAtual = Number(dadosTrilha[t][4]) || 0;
+            abaTrilha.getRange(t+1, 5).setValue(xpAtual + xpGanho);
+            break;
+         }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: `+${xpGanho} XP Resgatado!` })).setMimeType(ContentService.MimeType.JSON);
     }
 
 } catch (erro) {

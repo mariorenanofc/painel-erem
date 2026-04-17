@@ -13,8 +13,29 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Painel EREM BARÃO",
-  description: "Verificação de dados e gestão de alunos da EREM Barão do Exu - Pernambuco",
+  title: "Portal Trilha Tech",
+  description:
+    "Verificação de dados e gestão de alunos da EREM Barão do Exu - Pernambuco",
+  metadataBase: new URL("https://painel-erem.vercel.app/"),
+
+  //Configuração do Open Graph
+  openGraph: {
+    title: "Portal do Aluno - Trilha Tech",
+    description:
+      "Acesse suas missões, XP, ranking e muito mais. Entre para o Trilha Tech!",
+    type: "website",
+    url: "/portal",
+    images: [
+      {
+        // A URL completa da imagem (deve ser um link público e acessível)
+        url: "/image-share.png",
+        // Largura e altura sugeridas para o preview (1200x630 é o padrão ideal)
+        width: 1200,
+        height: 630,
+        alt: "Imagem de visualização do Portal do Aluno Trilha Tech",
+      },
+    ],
+  },
 };
 
 export default function RootLayout({
@@ -24,7 +45,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="en"
+      lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>

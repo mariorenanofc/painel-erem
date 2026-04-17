@@ -28,7 +28,7 @@ export const metadata: Metadata = {
     images: [
       {
         // A URL completa da imagem (deve ser um link público e acessível)
-        url: "/image-share.png",
+        url: "/img-share.png",
         // Largura e altura sugeridas para o preview (1200x630 é o padrão ideal)
         width: 1200,
         height: 630,

@@ -351,6 +351,19 @@ function doPost(e) {
                dataLimiteStr = String(dataLimiteBruta);
             }
 
+            let statusPrazo = "No Prazo";
+            if (!entregaAluno && dataLimiteStr) {
+               let hoje = new Date();
+               hoje.setHours(0,0,0,0);
+               let partesData = dataLimiteStr.split('/');
+               if (partesData.length === 3) {
+                  let dataLim = new Date(Number(partesData[2]), Number(partesData[1])-1, Number(partesData[0]));
+                  if (hoje > dataLim) {
+                     statusPrazo = "Atrasada";
+                  }
+               }
+            }
+
             atividades.push({
               id: idAtiv,
               titulo: String(dadosAtiv[i][1]),
@@ -364,7 +377,8 @@ function doPost(e) {
               opcaoD: String(dadosAtiv[i][10] || ""),
               status: entregaAluno ? entregaAluno.status : "Pendente",
               respostaEnviada: entregaAluno ? entregaAluno.resposta : "",
-              xpGanho: entregaAluno ? entregaAluno.xpGanho : 0
+              xpGanho: entregaAluno ? entregaAluno.xpGanho : 0,
+              statusPrazo: statusPrazo
             });
           }
         }
@@ -431,6 +445,9 @@ function doPost(e) {
     // ROTA 8: BUSCAR TODAS ATIVIDADES (Professor)
     // ==========================================
     if (action === "buscar_todas_atividades") {
+      const filtroTurma = String(dadosApp.filtroTurma || "Todas").trim();
+      const filtroTipo = String(dadosApp.filtroTipo || "Todos").trim();
+
       const abaAtividades = planilha.getSheetByName("atividades");
       let atividades = [];
       if (abaAtividades) {
@@ -438,14 +455,21 @@ function doPost(e) {
         for (let i = 1; i < dadosAtiv.length; i++) {
           let dataLimiteBruta = dadosAtiv[i][3];
           let dataLimiteStr = dataLimiteBruta instanceof Date ? Utilities.formatDate(dataLimiteBruta, Session.getScriptTimeZone(), "yyyy-MM-dd") : String(dataLimiteBruta);
+
+          let turmaAlvo = String(dadosAtiv[i][5]);
+          let tipoAtiv = String(dadosAtiv[i][6] || "Projeto");
+
+          if (filtroTurma !== "Todas" && turmaAlvo !== "Todas" && turmaAlvo !== filtroTurma) continue;
+          if (filtroTipo !== "Todos" && tipoAtiv !== filtroTipo) continue;
+
           atividades.push({
             id: String(dadosAtiv[i][0]),
             titulo: String(dadosAtiv[i][1]),
             descricao: String(dadosAtiv[i][2]),
             dataLimite: dataLimiteStr,
             xp: dadosAtiv[i][4],
-            turmaAlvo: String(dadosAtiv[i][5]),
-            tipo: String(dadosAtiv[i][6] || "Projeto"),
+            turmaAlvo: turmaAlvo,
+            tipo: tipoAtiv,
             opcaoA: String(dadosAtiv[i][7] || ""),
             opcaoB: String(dadosAtiv[i][8] || ""),
             opcaoC: String(dadosAtiv[i][9] || ""),
@@ -1458,6 +1482,93 @@ function doPost(e) {
         status: "erro",
         mensagem: "Aluno não encontrado. Verifique se digitou o Nome Completo exatamente igual ao da escola e a Data de Nascimento correta."
       })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+
+        // ==========================================
+    // ROTAS 25: INTEGRAÇÃO WHATSAPP
+    // ==========================================
+    
+    // ROTA: Salvar os Links (Tutor)
+    if (action === "salvar_links_whatsapp") {
+      let abaConfig = planilha.getSheetByName("configuracoes");
+      // Cria a aba de configurações sozinha se não existir
+      if (!abaConfig) { abaConfig = planilha.insertSheet("configuracoes"); abaConfig.appendRow(["Chave", "Valor"]); }
+      
+      const link1 = String(dadosApp.link1Ano || "").trim();
+      const link2 = String(dadosApp.link2Ano || "").trim();
+
+      const salvarOuAtualizar = (chave, valor) => {
+        let dados = abaConfig.getDataRange().getValues();
+        for (let i = 1; i < dados.length; i++) {
+          if (dados[i][0] === chave) { abaConfig.getRange(i + 1, 2).setValue(valor); return; }
+        }
+        abaConfig.appendRow([chave, valor]);
+      };
+      
+      salvarOuAtualizar("WHATSAPP_1ANO", link1);
+      salvarOuAtualizar("WHATSAPP_2ANO", link2);
+
+      return ContentService.createTextOutput(JSON.stringify({ status: "sucesso" })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ROTA: Buscar Links para o Painel do Tutor
+    if (action === "buscar_links_whatsapp") {
+      let abaConfig = planilha.getSheetByName("configuracoes");
+      let link1 = "", link2 = "";
+      if (abaConfig) {
+        let dadosConf = abaConfig.getDataRange().getValues();
+        for(let i=1; i<dadosConf.length; i++){
+          if(dadosConf[i][0] === "WHATSAPP_1ANO") link1 = dadosConf[i][1];
+          if(dadosConf[i][0] === "WHATSAPP_2ANO") link2 = dadosConf[i][1];
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", link1Ano: link1, link2Ano: link2 })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ROTA: Verificar status do Aluno no Portal
+    if (action === "status_whatsapp_aluno") {
+      const matricula = String(dadosApp.matricula).trim();
+      let abaConfig = planilha.getSheetByName("configuracoes");
+      let link1 = "", link2 = "";
+      if (abaConfig) {
+        let dadosConf = abaConfig.getDataRange().getValues();
+        for(let i=1; i<dadosConf.length; i++) {
+          if(dadosConf[i][0] === "WHATSAPP_1ANO") link1 = dadosConf[i][1];
+          if(dadosConf[i][0] === "WHATSAPP_2ANO") link2 = dadosConf[i][1];
+        }
+      }
+
+      let abaTrilha = planilha.getSheetByName("trilhatech");
+      let confirmado = false; let linkDestino = "";
+      if (abaTrilha) {
+        let dadosTrilha = abaTrilha.getDataRange().getValues();
+        for (let i = 1; i < dadosTrilha.length; i++) {
+          if (String(dadosTrilha[i][0]).trim() === matricula) {
+            let turma = String(dadosTrilha[i][1]).trim();
+            confirmado = String(dadosTrilha[i][6]).trim() === "SIM"; // Coluna G
+            linkDestino = turma.includes("1º") ? link1 : link2;
+            break;
+          }
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", confirmado: confirmado, link: linkDestino })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+    // ROTA: Aluno clica em "Já entrei no grupo"
+    if (action === "confirmar_whatsapp") {
+      const matricula = String(dadosApp.matricula).trim();
+      let abaTrilha = planilha.getSheetByName("trilhatech");
+      if (abaTrilha) {
+        let dadosTrilha = abaTrilha.getDataRange().getValues();
+        for (let i = 1; i < dadosTrilha.length; i++) {
+          if (String(dadosTrilha[i][0]).trim() === matricula) {
+            abaTrilha.getRange(i + 1, 7).setValue("SIM"); // Grava SIM na Coluna G
+            break;
+          }
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ status: "sucesso" })).setMimeType(ContentService.MimeType.JSON);
     }
 
   } catch (erro) {

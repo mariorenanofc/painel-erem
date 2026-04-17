@@ -23,6 +23,7 @@ interface Atividade {
   status: string;
   respostaEnviada: string;
   xpGanho: number;
+  statusPrazo?: string;
 }
 interface PerfilAluno {
   nome: string;
@@ -70,6 +71,10 @@ export default function PortalDashboard() {
 
   const [xpTotalSistema, setXpTotalSistema] = useState(0);
   const [nivelSistema, setNivelSistema] = useState("Iniciante");
+
+  // --- ESTADOS DE FILTROS DAS ATIVIDADES ---
+  const [abaAtividade, setAbaAtividade] = useState<"Pendentes" | "Atrasadas" | "Concluidas">("Pendentes");
+  const [buscaAtividade, setBuscaAtividade] = useState("");
 
   // --- ESTADOS DO CHECK-IN COM SENHA ---
   const [fazendoCheckin, setFazendoCheckin] = useState(false);
@@ -455,6 +460,19 @@ export default function PortalDashboard() {
   const missoesPendentes = atividades.filter(
     (a) => a.status === "Pendente",
   ).length;
+  
+  const qtdPendentes = atividades.filter(a => a.status === "Pendente" && a.statusPrazo !== "Atrasada").length;
+  const qtdAtrasadas = atividades.filter(a => a.status === "Pendente" && a.statusPrazo === "Atrasada").length;
+  const qtdConcluidas = atividades.filter(a => a.status !== "Pendente").length;
+
+  const atividadesFiltradas = atividades.filter((a) => {
+    const matchBusca = a.titulo.toLowerCase().includes(buscaAtividade.toLowerCase());
+    if (!matchBusca) return false;
+    if (abaAtividade === "Pendentes") return a.status === "Pendente" && a.statusPrazo !== "Atrasada";
+    if (abaAtividade === "Atrasadas") return a.status === "Pendente" && a.statusPrazo === "Atrasada";
+    if (abaAtividade === "Concluidas") return a.status !== "Pendente";
+    return true;
+  });
 
   return (
     <main
@@ -1319,20 +1337,54 @@ export default function PortalDashboard() {
       </div>
 
       <div className="max-w-5xl mx-auto p-4 md:p-8 mt-4">
-        <h3 className="text-lg font-bold text-slate-800 mb-6 flex items-center gap-2">
-          🎯 Suas Missões
-        </h3>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
+          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+            🎯 Suas Missões
+          </h3>
+          <div className="w-full md:w-64">
+            <input
+              type="text"
+              placeholder="Pesquisar missão..."
+              value={buscaAtividade}
+              onChange={(e) => setBuscaAtividade(e.target.value)}
+              className="w-full bg-white border border-slate-200 text-slate-800 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+            />
+          </div>
+        </div>
+
+        {/* ABAS DE CATEGORIZAÇÃO */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
+          <button
+            onClick={() => setAbaAtividade("Pendentes")}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-colors border ${abaAtividade === "Pendentes" ? "bg-amber-100 text-amber-800 border-amber-300" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"}`}
+          >
+            ⏳ No Prazo ({qtdPendentes})
+          </button>
+          <button
+            onClick={() => setAbaAtividade("Atrasadas")}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-colors border ${abaAtividade === "Atrasadas" ? "bg-red-100 text-red-800 border-red-300" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"}`}
+          >
+            🚨 Atrasadas ({qtdAtrasadas})
+          </button>
+          <button
+            onClick={() => setAbaAtividade("Concluidas")}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-colors border ${abaAtividade === "Concluidas" ? "bg-emerald-100 text-emerald-800 border-emerald-300" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"}`}
+          >
+            ✅ Concluídas ({qtdConcluidas})
+          </button>
+        </div>
+
         {carregandoAtividades ? (
           <div className="flex justify-center py-12">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
           </div>
-        ) : atividades.length === 0 ? (
+        ) : atividadesFiltradas.length === 0 ? (
           <div className="bg-white p-8 rounded-xl border border-slate-200 text-center text-slate-500">
-            Nenhuma missão liberada no momento.
+            Nenhuma missão encontrada para esta categoria.
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {atividades.map((ativ) => (
+            {atividadesFiltradas.map((ativ) => (
               <div
                 key={ativ.id}
                 onClick={() => abrirMissao(ativ)}

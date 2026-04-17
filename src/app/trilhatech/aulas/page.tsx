@@ -60,11 +60,15 @@ interface FrequenciaHoje {
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
 
-const fetcherAtividades = async (url: string) => {
+const fetcherAtividades = async ([url, filtroTurma, filtroTipo]: string[]) => {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "text/plain" },
-    body: JSON.stringify({ action: "buscar_todas_atividades" }),
+    body: JSON.stringify({
+      action: "buscar_todas_atividades",
+      filtroTurma,
+      filtroTipo,
+    }),
   });
   return res.json();
 };
@@ -151,13 +155,24 @@ export default function GestaoAulasPage() {
     "alfabetica" | "mais_faltas"
   >("mais_faltas");
 
+  // === ESTADOS DE FILTROS DO TUTOR ===
+  const [filtroTurmaAtiv, setFiltroTurmaAtiv] = useState("Todas");
+  const [filtroTipoAtiv, setFiltroTipoAtiv] = useState("Todos");
+  const [buscaAtiv, setBuscaAtiv] = useState("");
+
   const { data, isLoading, mutate } = useSWR(
-    nomeUsuario && GOOGLE_API_URL ? GOOGLE_API_URL : null,
+    nomeUsuario && GOOGLE_API_URL
+      ? [GOOGLE_API_URL, filtroTurmaAtiv, filtroTipoAtiv]
+      : null,
     fetcherAtividades,
     { revalidateOnFocus: true },
   );
   const atividades: Atividade[] =
     data?.status === "sucesso" ? data.atividades : [];
+
+  const atividadesVisiveis = atividades.filter((ativ) =>
+    ativ.titulo.toLowerCase().includes(buscaAtiv.toLowerCase()),
+  );
 
   useEffect(() => {
     setMontado(true);
@@ -1690,25 +1705,56 @@ export default function GestaoAulasPage() {
           {/* COLUNA DIREITA: LISTAGEM DAS MISSÕES */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-              <div className="p-5 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-                <h3 className="text-lg font-bold text-slate-800">
-                  📚 Missões Cadastradas
-                </h3>
-                <div className="flex gap-2">
-                  {/* BOTÃO DO RANKING */}
-                  <button
-                    onClick={abrirRankingTutor}
-                    className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2 px-4 rounded shadow-sm transition-colors flex items-center gap-2"
+              <div className="p-5 border-b border-slate-200 bg-slate-50 flex flex-col gap-4">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-lg font-bold text-slate-800">
+                    📚 Missões Cadastradas
+                  </h3>
+                  <div className="flex gap-2">
+                    {/* BOTÃO DO RANKING */}
+                    <button
+                      onClick={abrirRankingTutor}
+                      className="bg-amber-500 hover:bg-amber-600 text-white text-xs font-bold py-2 px-4 rounded shadow-sm transition-colors flex items-center gap-2"
+                    >
+                      <span>🏆</span> Ver Ranking
+                    </button>
+                    {/* BOTÃO MÁGICO DA FREQUÊNCIA AQUI */}
+                    <button
+                      onClick={abrirRelatorioFrequencia}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-4 rounded shadow-sm transition-colors flex items-center gap-2"
+                    >
+                      <span>📍</span> Frequência e Diário
+                    </button>
+                  </div>
+                </div>
+
+                {/* FILTROS DO TUTOR */}
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <input
+                    type="text"
+                    placeholder="Buscar por título..."
+                    value={buscaAtiv}
+                    onChange={(e) => setBuscaAtiv(e.target.value)}
+                    className="flex-1 border text-slate-800 border-slate-300 rounded p-2 text-sm outline-none focus:border-blue-500"
+                  />
+                  <select
+                    value={filtroTurmaAtiv}
+                    onChange={(e) => setFiltroTurmaAtiv(e.target.value)}
+                    className="border text-slate-800 border-slate-300 rounded p-2 text-sm outline-none focus:border-blue-500 bg-white"
                   >
-                    <span>🏆</span> Ver Ranking
-                  </button>
-                  {/* BOTÃO MÁGICO DA FREQUÊNCIA AQUI */}
-                  <button
-                    onClick={abrirRelatorioFrequencia}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-4 rounded shadow-sm transition-colors flex items-center gap-2"
+                    <option value="Todas">Todas as Turmas</option>
+                    <option value="Turma 1 - 1º Ano">Turma 1 - 1º Ano</option>
+                    <option value="Turma 2 - 2º Ano">Turma 2 - 2º Ano</option>
+                  </select>
+                  <select
+                    value={filtroTipoAtiv}
+                    onChange={(e) => setFiltroTipoAtiv(e.target.value)}
+                    className="border text-slate-800 border-slate-300 rounded p-2 text-sm outline-none focus:border-blue-500 bg-white"
                   >
-                    <span>📍</span> Frequência e Diário
-                  </button>
+                    <option value="Todos">Todos os Tipos</option>
+                    <option value="Projeto">Projetos</option>
+                    <option value="Quiz">Quizzes</option>
+                  </select>
                 </div>
               </div>
               <div className="p-5">
@@ -1716,13 +1762,13 @@ export default function GestaoAulasPage() {
                   <p className="text-slate-500 text-center py-8 animate-pulse">
                     Carregando missões...
                   </p>
-                ) : atividades.length === 0 ? (
+                ) : atividadesVisiveis.length === 0 ? (
                   <p className="text-slate-500 text-center py-8">
-                    Nenhuma missão cadastrada ainda.
+                    Nenhuma missão encontrada para este filtro.
                   </p>
                 ) : (
                   <div className="space-y-4">
-                    {atividades.map((ativ) => (
+                    {atividadesVisiveis.map((ativ) => (
                       <div
                         key={ativ.id}
                         className="border border-slate-200 rounded-lg p-4 hover:bg-slate-50 transition-colors flex flex-col sm:flex-row justify-between gap-4 group"

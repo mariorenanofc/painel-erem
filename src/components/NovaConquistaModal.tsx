@@ -10,7 +10,7 @@ interface NovaConquistaModalProps {
 
 export default function NovaConquistaModal({ badge, loading, onResgatar }: NovaConquistaModalProps) {
   return (
-    <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in duration-300">
+    <div className="fixed inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center z-100 p-4 animate-in fade-in duration-300">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col text-center border-4 border-amber-400 relative">
         <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-amber-200/60 to-transparent pointer-events-none"></div>
         <div className="p-8 relative z-10 flex flex-col items-center">

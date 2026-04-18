@@ -163,7 +163,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
 
       {/* MODAL SOBREPOSTO DE JUSTIFICATIVA */}
       {props.modalJustificativaAberto && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in">
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-60 flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden p-6">
             <h3 className="font-bold text-lg text-slate-800 mb-1">Justificar Falta</h3>
             <p className="text-xs text-slate-500 mb-4">Aluno: <strong>{props.modalJustificativaAberto.nome}</strong> <br /> Data da Falta: <strong>{String(props.modalJustificativaAberto.dia).padStart(2, "0")}/{String(props.mesDiario).padStart(2, "0")}</strong></p>

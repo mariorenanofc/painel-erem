@@ -660,6 +660,24 @@ export default function GestaoAulasPage() {
           </h2>
         </div>
 
+        <div
+          onClick={() => router.push("/trilhatech/analytics")}
+          className="cursor-pointer bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-300 hover:-translate-y-1 transition-all flex flex-col items-center text-center group"
+        >
+          <div className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">
+            📈
+          </div>
+          <h3 className="font-black text-xl text-slate-800 mb-2">
+            Analytics & CRM
+          </h3>
+          <p className="text-sm text-slate-500 font-medium">
+            Radar de risco, ficha 360º dos alunos e economia de XP da escola.
+          </p>
+          <div className="mt-6 text-xs font-bold text-indigo-600 bg-indigo-50 px-4 py-2 rounded-full uppercase tracking-widest group-hover:bg-indigo-100 transition-colors">
+            Acessar Painel
+          </div>
+        </div>
+
         {/* LINKS RÁPIDOS */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
           <a
@@ -957,6 +975,12 @@ export default function GestaoAulasPage() {
                       className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 px-4 rounded shadow-sm transition-colors flex items-center gap-2"
                     >
                       <span>📍</span> Frequência e Diário
+                    </button>
+                    <button
+                      onClick={() => router.push("/trilhatech/analytics")}
+                      className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2 px-4 rounded shadow-sm transition-colors flex items-center gap-2"
+                    >
+                      <span>📈</span> Analytics & CRM
                     </button>
                   </div>
                 </div>

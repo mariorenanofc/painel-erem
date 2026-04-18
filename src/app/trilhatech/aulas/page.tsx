@@ -41,6 +41,10 @@ export default function GestaoAulasPage() {
   );
   const [montado, setMontado] = useState(false);
 
+  // === CONFIGURAÇÕES DINÂMICAS (WHITE-LABEL) ===
+  const [turmasDisponiveis, setTurmasDisponiveis] = useState<string[]>(["Turma 1 - 1º Ano", "Turma 2 - 2º Ano"]);
+  const [nomeProjeto, setNomeProjeto] = useState("Trilha Tech");
+
   // === ESTADOS DO FORMULÁRIO (MISSÕES) ===
   const [idEditando, setIdEditando] = useState<string | null>(null);
   const [titulo, setTitulo] = useState("");
@@ -68,9 +72,6 @@ export default function GestaoAulasPage() {
 
   // === ESTADOS DO WHATSAPP ===
   const [modalZapAberto, setModalZapAberto] = useState(false);
-  const [link1Ano, setLink1Ano] = useState("");
-  const [link2Ano, setLink2Ano] = useState("");
-  const [salvandoZap, setSalvandoZap] = useState(false);
 
   // === ESTADOS DO RANKING DO TUTOR ===
   const [modalRankingAberto, setModalRankingAberto] = useState(false);
@@ -93,7 +94,7 @@ export default function GestaoAulasPage() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [alunosDiario, setAlunosDiario] = useState<any[]>([]);
 
-  const [turmaDiario, setTurmaDiario] = useState("Turma 1 - 1º Ano");
+  const [turmaDiario, setTurmaDiario] = useState("");
   const [mesDiario, setMesDiario] = useState(String(new Date().getMonth() + 1));
   const [anoDiario, setAnoDiario] = useState(String(new Date().getFullYear()));
   const [modalJustificativaAberto, setModalJustificativaAberto] = useState<{
@@ -138,6 +139,28 @@ export default function GestaoAulasPage() {
     setMontado(true);
     if (!nomeUsuario) window.location.href = "/";
 
+    // Busca Configurações da Planilha
+    const buscarConfiguracoes = async () => {
+      try {
+        const res = await fetch(GOOGLE_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "buscar_configuracoes" }),
+        });
+        const data = await res.json();
+        if (data.status === "sucesso") {
+          const turmasPlanilha = data.configuracoes.turmas;
+          if (turmasPlanilha && turmasPlanilha.length > 0) {
+            setTurmasDisponiveis(turmasPlanilha);
+            setTurmaDiario(turmasPlanilha[0]); // Define a primeira turma como padrão
+          }
+          setNomeProjeto(data.configuracoes.nomeProjeto || "Trilha Tech");
+        }
+      } catch (e) {
+        console.error("Erro ao buscar configurações");
+      }
+    };
+
     const buscarSenhaAtual = async () => {
       try {
         const res = await fetch(GOOGLE_API_URL, {
@@ -167,48 +190,15 @@ export default function GestaoAulasPage() {
     };
 
     if (GOOGLE_API_URL) {
+      buscarConfiguracoes();
       buscarSenhaAtual();
       buscarAniversariantes();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nomeUsuario, GOOGLE_API_URL]);
 
-  const abrirModalZap = async () => {
+  const abrirModalZap = () => {
     setModalZapAberto(true);
-    try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        body: JSON.stringify({ action: "buscar_links_whatsapp" }),
-      });
-      const data = await res.json();
-      if (data.status === "sucesso") {
-        setLink1Ano(data.link1Ano);
-        setLink2Ano(data.link2Ano);
-      }
-    } catch {}
-  };
-
-  const salvarLinksZap = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSalvandoZap(true);
-    try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        body: JSON.stringify({
-          action: "salvar_links_whatsapp",
-          link1Ano,
-          link2Ano,
-        }),
-      });
-      const data = await res.json();
-      if (data.status === "sucesso") {
-        alert("✅ Links salvos!");
-        setModalZapAberto(false);
-      }
-    } catch {
-      alert("Erro ao salvar.");
-    } finally {
-      setSalvandoZap(false);
-    }
   };
 
   const abrirRankingTutor = () => {
@@ -422,6 +412,7 @@ export default function GestaoAulasPage() {
     mes: string,
     ano: string,
   ) => {
+    if (!turma) return;
     setCarregandoFreq(true);
     try {
       const res = await fetch(GOOGLE_API_URL, {
@@ -447,6 +438,7 @@ export default function GestaoAulasPage() {
   };
 
   const buscarFrequenciaHoje = async (turma: string) => {
+    if (!turma) return;
     setCarregandoFreqHoje(true);
     try {
       const res = await fetch(GOOGLE_API_URL, {
@@ -469,17 +461,19 @@ export default function GestaoAulasPage() {
   const abrirRelatorioFrequencia = () => {
     setModalFreqAberto(true);
     setAbaDiario("mensal");
-    buscarDiarioClasse(turmaDiario, mesDiario, anoDiario);
-    buscarFrequenciaHoje(turmaDiario);
+    if (turmaDiario) {
+      buscarDiarioClasse(turmaDiario, mesDiario, anoDiario);
+      buscarFrequenciaHoje(turmaDiario);
+    }
   };
 
   useEffect(() => {
-    if (modalFreqAberto) buscarDiarioClasse(turmaDiario, mesDiario, anoDiario);
+    if (modalFreqAberto && turmaDiario) buscarDiarioClasse(turmaDiario, mesDiario, anoDiario);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [turmaDiario, mesDiario, anoDiario]);
 
   useEffect(() => {
-    if (modalFreqAberto) buscarFrequenciaHoje(turmaDiario);
+    if (modalFreqAberto && turmaDiario) buscarFrequenciaHoje(turmaDiario);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [turmaDiario]);
 
@@ -591,48 +585,18 @@ export default function GestaoAulasPage() {
             <h2 className="font-bold text-xl text-slate-800 flex items-center gap-2 mb-4">
               <span>💬</span> Configurar Grupos
             </h2>
-            <form onSubmit={salvarLinksZap} className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">
-                  Link do Grupo - Turma 1º Ano
-                </label>
-                <input
-                  type="url"
-                  value={link1Ano}
-                  onChange={(e) => setLink1Ano(e.target.value)}
-                  placeholder="https://chat.whatsapp.com/..."
-                  className="w-full text-blue-950 border-slate-300 rounded p-2 text-sm outline-none focus:border-emerald-500"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 mb-1">
-                  Link do Grupo - Turma 2º Ano
-                </label>
-                <input
-                  type="url"
-                  value={link2Ano}
-                  onChange={(e) => setLink2Ano(e.target.value)}
-                  placeholder="https://chat.whatsapp.com/..."
-                  className="w-full text-blue-950 border-slate-300 rounded p-2 text-sm outline-none focus:border-emerald-500"
-                />
-              </div>
-              <div className="flex justify-end gap-2 mt-4 pt-4 border-t">
-                <button
-                  type="button"
-                  onClick={() => setModalZapAberto(false)}
-                  className="px-4 py-2 font-bold text-slate-500"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={salvandoZap}
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded font-bold shadow-md"
-                >
-                  {salvandoZap ? "Salvando..." : "Salvar Links"}
-                </button>
-              </div>
-            </form>
+            <div className="bg-amber-50 border border-amber-200 p-4 rounded-lg mb-4 text-sm text-amber-800 font-medium">
+              As configurações de WhatsApp agora devem ser alteradas diretamente na aba <strong>&quot;configuracoes&quot;</strong> da sua Planilha do Google!
+            </div>
+            <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-200">
+              <button
+                type="button"
+                onClick={() => setModalZapAberto(false)}
+                className="px-6 py-2 bg-slate-200 hover:bg-slate-300 rounded font-bold text-slate-700 transition-colors"
+              >
+                Entendido, Fechar
+              </button>
+            </div>
           </div>
         </div>
       )}
@@ -656,13 +620,13 @@ export default function GestaoAulasPage() {
             ← Voltar
           </button>
           <h2 className="text-2xl font-black text-slate-800 border-l-4 border-blue-500 pl-3">
-            Gestão de Ensino
+            Gestão: {nomeProjeto}
           </h2>
         </div>
 
         <div
           onClick={() => router.push("/trilhatech/analytics")}
-          className="cursor-pointer bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-300 hover:-translate-y-1 transition-all flex flex-col items-center text-center group"
+          className="cursor-pointer bg-white p-8 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-indigo-300 hover:-translate-y-1 transition-all flex flex-col items-center text-center group mb-6"
         >
           <div className="text-6xl mb-4 group-hover:scale-110 transition-transform duration-300">
             📈
@@ -930,15 +894,19 @@ export default function GestaoAulasPage() {
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                     Turma Alvo
                   </label>
+
+                  {/* SELECT DINÂMICO DE TURMAS DA PLANILHA */}
                   <select
                     value={turmaAlvo}
                     onChange={(e) => setTurmaAlvo(e.target.value)}
                     className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-2 outline-none"
                   >
                     <option value="Todas">Todas as Turmas</option>
-                    <option value="Turma 1 - 1º Ano">Turma 1 - 1º Ano</option>
-                    <option value="Turma 2 - 2º Ano">Turma 2 - 2º Ano</option>
+                    {turmasDisponiveis.map(turma => (
+                      <option key={turma} value={turma}>{turma}</option>
+                    ))}
                   </select>
+
                 </div>
                 <button
                   type="submit"
@@ -992,15 +960,19 @@ export default function GestaoAulasPage() {
                     onChange={(e) => setBuscaAtiv(e.target.value)}
                     className="flex-1 border text-slate-800 border-slate-300 rounded p-2 text-sm outline-none focus:border-blue-500"
                   />
+                  
+                  {/* SELECT DINÂMICO NO FILTRO DA LISTA */}
                   <select
                     value={filtroTurmaAtiv}
                     onChange={(e) => setFiltroTurmaAtiv(e.target.value)}
                     className="border text-slate-800 border-slate-300 rounded p-2 text-sm outline-none focus:border-blue-500 bg-white"
                   >
                     <option value="Todas">Todas as Turmas</option>
-                    <option value="Turma 1 - 1º Ano">Turma 1 - 1º Ano</option>
-                    <option value="Turma 2 - 2º Ano">Turma 2 - 2º Ano</option>
+                    {turmasDisponiveis.map(turma => (
+                      <option key={turma} value={turma}>{turma}</option>
+                    ))}
                   </select>
+
                   <select
                     value={filtroTipoAtiv}
                     onChange={(e) => setFiltroTipoAtiv(e.target.value)}

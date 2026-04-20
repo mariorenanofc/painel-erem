@@ -49,7 +49,7 @@ export default function GestaoAulasPage() {
   ]);
   const [nomeProjeto, setNomeProjeto] = useState("Trilha Tech");
 
-  // === NOVOS ESTADOS PARA OS LINKS DINÂMICOS ===
+  // === LINKS DINÂMICOS ===
   const [linksGerais, setLinksGerais] = useState({
     planilha: "https://docs.google.com/spreadsheets",
     classroom: "https://classroom.google.com/",
@@ -57,6 +57,10 @@ export default function GestaoAulasPage() {
     ajuda: "#",
     cronograma: "#",
   });
+
+  // === NOVO ESTADO: MODO REPOSIÇÃO ===
+  const [modoReposicao, setModoReposicao] = useState(false);
+  const [carregandoReposicao, setCarregandoReposicao] = useState(false);
 
   // === ESTADOS DO FORMULÁRIO (MISSÕES) ===
   const [idEditando, setIdEditando] = useState<string | null>(null);
@@ -155,7 +159,6 @@ export default function GestaoAulasPage() {
           }
           setNomeProjeto(data.configuracoes.nomeProjeto || "Trilha Tech");
 
-          // ATUALIZA OS LINKS DINÂMICOS
           setLinksGerais({
             planilha:
               data.configuracoes.linkPlanilha ||
@@ -167,6 +170,9 @@ export default function GestaoAulasPage() {
             ajuda: data.configuracoes.linkAjuda || "#",
             cronograma: data.configuracoes.linkCronograma || "#",
           });
+
+          // Puxa o estado atual do Modo Reposição
+          setModoReposicao(data.configuracoes.modoReposicao === "LIGADO");
         }
       } catch (e) {
         console.error("Erro", e);
@@ -204,6 +210,32 @@ export default function GestaoAulasPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nomeUsuario, GOOGLE_API_URL]);
+
+  // === FUNÇÃO DO BOTÃO DE MODO REPOSIÇÃO ===
+  const toggleModoReposicao = async () => {
+    setCarregandoReposicao(true);
+    const novoStatus = !modoReposicao ? "LIGADO" : "DESLIGADO";
+    try {
+      const res = await fetch(GOOGLE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          action: "toggle_modo_reposicao",
+          status: novoStatus,
+        }),
+      });
+      const data = await res.json();
+      if (data.status === "sucesso") {
+        setModoReposicao(!modoReposicao);
+      } else {
+        alert("Erro ao alterar modo: " + data.mensagem);
+      }
+    } catch (e) {
+      alert("Erro de conexão ao alterar o modo de reposição.");
+    } finally {
+      setCarregandoReposicao(false);
+    }
+  };
 
   const carregarRankingTutor = async (
     tempo: "geral" | "mensal" | "semanal",
@@ -617,9 +649,6 @@ export default function GestaoAulasPage() {
           </h2>
         </div>
 
-        {/* ========================================================= */}
-        {/* LINKS RÁPIDOS DINÂMICOS (Agora vêm da Planilha)           */}
-        {/* ========================================================= */}
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
           <a
             href={linksGerais.planilha}
@@ -699,12 +728,47 @@ export default function GestaoAulasPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-1 space-y-6">
+            {/* NOVO CARD: MODO DE REPOSIÇÃO COM SWITCH */}
+            <div
+              className={`p-6 rounded-xl shadow-sm border transition-all duration-300 ${modoReposicao ? "bg-indigo-50 border-indigo-300 shadow-indigo-100" : "bg-white border-slate-200"}`}
+            >
+              <div className="flex justify-between items-center mb-2">
+                <h3
+                  className={`text-lg font-bold flex items-center gap-2 ${modoReposicao ? "text-indigo-900" : "text-slate-800"}`}
+                >
+                  <span className={modoReposicao ? "animate-spin-slow" : ""}>
+                    ⚙️
+                  </span>{" "}
+                  Modo Reposição
+                </h3>
+
+                {/* O SWITCH DE LIGAR/DESLIGAR */}
+                <button
+                  onClick={toggleModoReposicao}
+                  disabled={carregandoReposicao}
+                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none ${modoReposicao ? "bg-indigo-600 hover:bg-indigo-700" : "bg-slate-300 hover:bg-slate-400"} ${carregandoReposicao ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+                >
+                  <span
+                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${modoReposicao ? "translate-x-6" : "translate-x-1"}`}
+                  />
+                </button>
+              </div>
+              <p
+                className={`text-xs ${modoReposicao ? "text-indigo-700 font-medium" : "text-slate-500"}`}
+              >
+                {modoReposicao
+                  ? "Ativado! Os alunos podem fazer check-in de presença hoje, ignorando a trava dos dias da semana."
+                  : "Desativado. O check-in obedece rigorosamente aos dias letivos definidos para cada turma."}
+              </p>
+            </div>
+
             <button
               onClick={() => setModalZapAberto(true)}
               className="bg-blue-100 hover:bg-blue-200 text-blue-800 text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2 border border-blue-200"
             >
               <span>💬</span> Links WhatsApp
             </button>
+
             <div className="bg-slate-50 p-6 rounded-xl shadow-sm border border-slate-200">
               <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-2">
                 <span>🔐</span> Senha do Check-in

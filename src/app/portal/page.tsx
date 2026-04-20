@@ -9,6 +9,7 @@ import {
   useMemo,
 } from "react";
 import { useRouter } from "next/navigation";
+import confetti from "canvas-confetti"; // <--- A MÁGICA DOS CONFETES ESTÁ AQUI
 import {
   DadosAluno,
   Atividade,
@@ -48,12 +49,12 @@ export default function PortalDashboard() {
     getServerSnapshot,
   );
 
-  // O useMemo protege a página contra loops infinitos de renderização
   const aluno: DadosAluno | null = useMemo(() => {
     return dadosSalvos ? JSON.parse(dadosSalvos) : null;
   }, [dadosSalvos]);
 
   // ESTADOS GLOBAIS DE ALTA PERFORMANCE
+  const [nomeProjeto, setNomeProjeto] = useState("Portal Educacional"); // <-- WHITE LABEL
   const [carregandoPortal, setCarregandoPortal] = useState(true);
   const [atividades, setAtividades] = useState<Atividade[]>([]);
   const [xpTotalSistema, setXpTotalSistema] = useState(0);
@@ -122,7 +123,7 @@ export default function PortalDashboard() {
         setZapLink(data.whatsapp.link);
         setAtividades(data.atividades);
         setNotificacoes(data.notificacoes || []);
-        setBadgesResgatadas(data.badgesResgatadas || []); // GUARDA O HISTÓRICO REAL DO BANCO
+        setBadgesResgatadas(data.badgesResgatadas || []);
         if (data.stats) setEstatisticas(data.stats);
         if (data.aniversario.isAniversario && !data.aniversario.jaResgatado)
           setModalPresenteAberto(true);
@@ -136,7 +137,23 @@ export default function PortalDashboard() {
 
   useEffect(() => {
     setMontado(true);
-  }, []);
+    // Busca o nome do projeto (White Label)
+    const buscarConfiguracoes = async () => {
+      try {
+        const res = await fetch(GOOGLE_API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          body: JSON.stringify({ action: "buscar_configuracoes" }),
+        });
+        const data = await res.json();
+        if (data.status === "sucesso")
+          setNomeProjeto(
+            data.configuracoes.nomeProjeto || "Portal Educacional",
+          );
+      } catch (e) {}
+    };
+    if (GOOGLE_API_URL) buscarConfiguracoes();
+  }, [GOOGLE_API_URL]);
 
   useEffect(() => {
     if (montado && dadosSalvos === null) router.push("/portal/login");
@@ -147,6 +164,32 @@ export default function PortalDashboard() {
       if (ultimoCheckin === dataHoje) setCheckinRealizado(true);
     }
   }, [montado, aluno, carregarPortal, router, dadosSalvos]);
+
+  // ==========================================
+  // EFEITOS ESPECIAIS (CONFETES 🎉)
+  // ==========================================
+  useEffect(() => {
+    if (novasConquistas.length > 0) {
+      confetti({
+        particleCount: 200,
+        spread: 80,
+        origin: { y: 0.5 },
+        zIndex: 99999,
+      });
+    }
+  }, [novasConquistas.length]);
+
+  useEffect(() => {
+    if (modalPresenteAberto) {
+      confetti({
+        particleCount: 250,
+        spread: 100,
+        origin: { y: 0.4 },
+        zIndex: 99999,
+        colors: ["#f59e0b", "#fbbf24", "#fcd34d"],
+      });
+    }
+  }, [modalPresenteAberto]);
 
   // ==========================================
   // DETETOR MÁGICO DE CONQUISTAS (VIA BANCO)
@@ -166,7 +209,6 @@ export default function PortalDashboard() {
     const badgesAtuais = calcularBadges(dadosBadges);
     const badgesDesbloqueadas = badgesAtuais.filter((b) => b.desbloqueada);
 
-    // Filtra as desbloqueadas que não estão na lista de recibos do Banco de Dados
     const novas = badgesDesbloqueadas.filter(
       (b) => !badgesResgatadas.includes(b.id),
     );
@@ -208,8 +250,8 @@ export default function PortalDashboard() {
       });
       const data = await res.json();
       if (data.status === "sucesso") {
-        setNovasConquistas((prev) => prev.slice(1)); // Tira da fila e vê se tem a próxima
-        carregarPortal(); // Atualiza o XP na tela
+        setNovasConquistas((prev) => prev.slice(1));
+        carregarPortal();
       } else {
         alert("⚠️ " + data.mensagem);
         setNovasConquistas((prev) => prev.slice(1));
@@ -297,6 +339,14 @@ export default function PortalDashboard() {
       const data = await res.json();
       const dataHoje = new Date().toLocaleDateString("pt-BR");
       if (data.status === "sucesso") {
+        // Dispara os confetes verdes no sucesso do Check-in!
+        confetti({
+          particleCount: 100,
+          spread: 60,
+          origin: { y: 0.7 },
+          zIndex: 99999,
+          colors: ["#10b981", "#34d399", "#ffffff"],
+        });
         alert("🎉 " + data.mensagem);
         localStorage.setItem(`checkin_${aluno.matricula}`, dataHoje);
         setCheckinRealizado(true);
@@ -472,10 +522,12 @@ export default function PortalDashboard() {
         />
       )}
 
+      {/* AQUI PASSAMOS O NOME DO PROJETO PARA O HEADER */}
       <PortalHeader
         matricula={aluno.matricula}
         nomeAluno={aluno.nome}
         turma={aluno.turma}
+        nomeProjeto={nomeProjeto}
         notificacoes={notificacoes}
         onAbrirRanking={() => setRankingAberto(true)}
         onAbrirFrequencia={abrirMinhaFrequencia}

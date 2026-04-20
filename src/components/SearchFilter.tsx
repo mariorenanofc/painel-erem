@@ -78,13 +78,13 @@ export default function SearchFilter({
       <div className="flex flex-col sm:flex-row w-full xl:w-auto gap-3 shrink-0 mt-4 xl:mt-0">
         <button 
           onClick={exportarDados}
-          className="w-full sm:w-auto bg-white hover:bg-slate-50 text-slate-700 font-bold py-2.5 px-6 rounded-lg shadow-sm border border-slate-300 transition-colors flex items-center justify-center gap-2"
+          className="cursor-pointer w-full sm:w-auto bg-white hover:bg-slate-50 text-slate-700 font-bold py-2.5 px-6 rounded-lg shadow-sm border border-slate-300 transition-colors flex items-center justify-center gap-2"
         >
            Exportar/Baixar
         </button>
         <button 
           onClick={abrirModalNovoAluno}
-          className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-lg shadow transition-colors flex items-center justify-center gap-2"
+          className="cursor-pointer w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-2.5 px-6 rounded-lg shadow transition-colors flex items-center justify-center gap-2"
         >
           <span className="text-xl leading-none">+</span> Cadastrar
         </button>

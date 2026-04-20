@@ -93,7 +93,7 @@ export default function TrilhaFilters({
       <div className="w-full xl:w-auto shrink-0 mt-4 xl:mt-0">
         <button
           onClick={exportarListaFrequencia}
-          className="w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-6 rounded-lg shadow transition-colors flex items-center justify-center gap-2"
+          className="cursor-pointer w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2.5 px-6 rounded-lg shadow transition-colors flex items-center justify-center gap-2"
         >
           📄 Baixar Chamada
         </button>

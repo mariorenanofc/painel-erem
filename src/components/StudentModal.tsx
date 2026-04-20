@@ -81,8 +81,8 @@ export default function StudentModal({
       {/* Container Principal */}
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
         {/* Cabeçalho Fixo */}
-        <div className="bg-slate-50 px-4 md:px-6 py-4 border-b border-slate-200 flex justify-between items-center shrink-0">
-          <h2 className="text-lg md:text-xl font-bold text-slate-800 flex items-center gap-2">
+        <div className="bg-slate-800 px-4 md:px-6 py-4 border-b border-slate-200 flex justify-between items-center shrink-0">
+          <h2 className="text-lg md:text-xl font-bold text-white flex items-center gap-2">
             {!isEditing && "✨ Cadastrar Novo Aluno"}
             {isEditing && mostrarFormulario && "✏️ Editando Dados do Aluno"}
             {isEditing &&
@@ -91,7 +91,7 @@ export default function StudentModal({
           </h2>
           <button
             onClick={fecharEResetar}
-            className="text-slate-400 hover:text-red-500 transition-colors text-2xl leading-none p-1"
+            className="text-slate-400 hover:text-red-500 transition-colors text-2xl leading-none p-1 cursor-pointer"
           >
             &times;
           </button>
@@ -138,7 +138,7 @@ export default function StudentModal({
               {/* --- LÓGICA BLINDADA DO TRILHA TECH --- */}
               {formData.statusTrilha ? (
                 /* 1. SE O ALUNO JÁ TEM STATUS: Mostra o resumo */
-                <div className="md:col-span-2 bg-slate-50 p-4 rounded-lg border border-slate-200 mt-2">
+                <div className="md:col-span-2 bg-slate-200 p-4 rounded-lg border border-slate-200 mt-2">
                   <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
                     🚀 Participação no Projeto Trilha Tech
                   </h3>
@@ -365,20 +365,20 @@ export default function StudentModal({
         </div>
 
         {/* Rodapé Fixo */}
-        <div className="bg-slate-50 px-4 md:px-6 py-4 border-t border-slate-200 flex flex-col md:flex-row justify-end gap-3 shrink-0">
+        <div className="bg-slate-800 px-4 md:px-6 py-4 border-t border-slate-200 flex flex-col md:flex-row justify-end gap-3 shrink-0">
           {/* BOTÕES DO MODO VISUALIZAÇÃO */}
           {!mostrarFormulario && (
             <>
               <button
                 onClick={fecharEResetar}
-                className="w-full md:w-auto px-6 py-2.5 rounded-lg text-slate-600 font-bold hover:bg-slate-200 transition-colors"
+                className="cursor-pointer w-full md:w-auto px-6 py-2.5 rounded-lg bg-slate-100 text-slate-600 font-bold hover:bg-slate-300 transition-colors hover:-translate-y-0.5"
               >
                 Sair
               </button>
               {isEditing && (
                 <button
                   onClick={() => setModoEdicaoAtivo(true)}
-                  className="w-full md:w-auto px-8 py-2.5 rounded-lg text-white font-bold shadow-md bg-emerald-600 hover:bg-emerald-700 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
+                  className="cursor-pointer w-full md:w-auto px-8 py-2.5 rounded-lg text-white font-bold shadow-md bg-emerald-600 hover:bg-emerald-700 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
                 >
                   ✏️ Editar Dados
                 </button>
@@ -392,7 +392,7 @@ export default function StudentModal({
               {isEditing && (
                 <button
                   onClick={() => setModoEdicaoAtivo(false)}
-                  className="w-full md:w-auto px-6 py-2.5 rounded-lg text-slate-600 font-bold hover:bg-slate-200 transition-colors order-2 md:order-1"
+                  className="cursor-pointer w-full md:w-auto px-6 py-2.5 rounded-lg text-slate-600 font-bold hover:bg-slate-200 transition-colors order-2 md:order-1"
                   disabled={salvando}
                 >
                   Cancelar Edição
@@ -401,7 +401,7 @@ export default function StudentModal({
               {!isEditing && (
                 <button
                   onClick={fecharEResetar}
-                  className="w-full md:w-auto px-6 py-2.5 rounded-lg text-slate-600 font-bold hover:bg-slate-200 transition-colors order-2 md:order-1"
+                  className="cursor-pointer w-full md:w-auto px-6 py-2.5 rounded-lg bg-white hover:bg-slate-300 text-slate-600 font-bold transition-colors order-2 md:order-1"
                   disabled={salvando}
                 >
                   Cancelar
@@ -410,7 +410,7 @@ export default function StudentModal({
               <button
                 onClick={salvarAluno}
                 disabled={salvando}
-                className={`w-full md:w-auto px-8 py-2.5 rounded-lg text-white font-bold shadow-md transition-all order-1 md:order-2 ${salvando ? "bg-emerald-400 cursor-not-allowed flex items-center justify-center gap-2" : "bg-emerald-600 hover:bg-emerald-700 hover:-translate-y-0.5"}`}
+                className={`cursor-pointer w-full md:w-auto px-8 py-2.5 rounded-lg text-white font-bold shadow-md transition-all order-1 md:order-2 ${salvando ? "bg-emerald-400 cursor-not-allowed flex items-center justify-center gap-2" : "bg-emerald-600 hover:bg-emerald-700 hover:-translate-y-0.5"}`}
               >
                 {salvando ? "⏳ Salvando..." : "Confirmar e Salvar"}
               </button>

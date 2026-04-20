@@ -13,26 +13,23 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Portal Trilha Tech",
-  description:
-    "Verificação de dados e gestão de alunos da EREM Barão do Exu - Pernambuco",
-  metadataBase: new URL("https://painel-erem.vercel.app/"),
+  title: "Portal Educacional",
+  description: "Plataforma gamificada de gestão de alunos, acompanhamento de missões e ranking.",
+  metadataBase: new URL("https://painel-erem.vercel.app"),
 
-  //Configuração do Open Graph
+  // Configuração do Open Graph (Para WhatsApp, Facebook, Telegram, etc)
   openGraph: {
-    title: "Portal do Aluno - Trilha Tech",
-    description:
-      "Acesse suas missões, XP, ranking e muito mais. Entre para o Trilha Tech!",
+    title: "Portal do Aluno | Área Restrita",
+    description: "Acesse suas missões, XP, ranking e muito mais.",
     type: "website",
-    url: "/portal",
+    url: "https://painel-erem.vercel.app",
     images: [
       {
-        // A URL completa da imagem (deve ser um link público e acessível)
+        // ⚠️ USAR A URL ABSOLUTA RESOLVE 99% DOS BUGS DE COMPARTILHAMENTO
         url: "https://painel-erem.vercel.app/img-share.png",
-        // Largura e altura sugeridas para o preview (1200x630 é o padrão ideal)
         width: 1200,
         height: 630,
-        alt: "Imagem de visualização do Portal do Aluno Trilha Tech",
+        alt: "Imagem de visualização do Portal Educacional",
       },
     ],
   },

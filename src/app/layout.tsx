@@ -23,15 +23,6 @@ export const metadata: Metadata = {
     description: "Acesse suas missões, XP, ranking e muito mais.",
     type: "website",
     url: "https://painel-erem.vercel.app",
-    images: [
-      {
-        // ⚠️ USAR A URL ABSOLUTA RESOLVE 99% DOS BUGS DE COMPARTILHAMENTO
-        url: "https://painel-erem.vercel.app/img-share.png",
-        width: 1200,
-        height: 630,
-        alt: "Imagem de visualização do Portal Educacional",
-      },
-    ],
   },
 };
 

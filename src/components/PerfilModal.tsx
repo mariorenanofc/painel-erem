@@ -10,7 +10,6 @@ interface PerfilModalProps {
   onClose: () => void;
   onSalvar: (dadosAtualizados: PerfilAluno) => void;
   setDadosPerfil: (dados: PerfilAluno) => void;
-  // Dados extras para calcular as badges:
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   dadosBadges: any; 
 }
@@ -33,19 +32,21 @@ export default function PerfilModal({
             <div className="flex justify-center py-16"><div className="animate-spin rounded-full h-10 w-10 border-b-4 border-blue-600"></div></div>
           ) : dadosPerfil ? (
             <>
-              {/* Formulário de Dados */}
               <form onSubmit={(e) => { e.preventDefault(); onSalvar(dadosPerfil); }} className="space-y-4 bg-white">
                 <div className="bg-amber-50 text-amber-800 text-xs p-3 rounded-lg border border-amber-200 mb-4 leading-relaxed">
-                  <strong>Aviso de Segurança:</strong> Você tem permissão apenas para atualizar os seus números de telefone de contacto.
+                  <strong>Aviso de Segurança:</strong> Você tem permissão apenas para atualizar os seus números de telefone de contato.
                 </div>
                 
+                {/* DADOS NÃO EDITÁVEIS */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Nome Completo</label><input type="text" value={dadosPerfil.nome} disabled className="w-full bg-slate-50 border border-slate-200 text-slate-500 rounded-lg p-2.5 text-sm cursor-not-allowed" /></div>
                   <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Matrícula</label><input type="text" value={dadosPerfil.matricula} disabled className="w-full bg-slate-50 border border-slate-200 text-slate-500 rounded-lg p-2.5 text-sm cursor-not-allowed font-mono" /></div>
+                  <div className="md:col-span-2"><label className="block text-xs font-bold text-slate-500 uppercase mb-1">E-mail Institucional</label><input type="text" value={dadosPerfil.email} disabled className="w-full bg-slate-50 border border-slate-200 text-slate-500 rounded-lg p-2.5 text-sm cursor-not-allowed font-mono" /></div>
                   <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Data de Nasc.</label><input type="text" value={dadosPerfil.dataNasc} disabled className="w-full bg-slate-50 border border-slate-200 text-slate-500 rounded-lg p-2.5 text-sm cursor-not-allowed" /></div>
                   <div><label className="block text-xs font-bold text-slate-500 uppercase mb-1">Turma Atual</label><input type="text" value={dadosPerfil.turma} disabled className="w-full bg-slate-50 border border-slate-200 text-slate-500 rounded-lg p-2.5 text-sm cursor-not-allowed" /></div>
                 </div>
                 
+                {/* DADOS EDITÁVEIS */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
                   <div><label className="block text-xs font-bold text-blue-600 uppercase mb-1">Telefone (Seu)</label><input type="tel" value={dadosPerfil.telefoneAluno} onChange={(e) => setDadosPerfil({ ...dadosPerfil, telefoneAluno: e.target.value })} className="w-full bg-white border-2 border-blue-200 focus:border-blue-500 text-slate-800 rounded-lg p-2.5 text-sm outline-none transition-colors" placeholder="(87) 9XXXX-XXXX" /></div>
                   <div><label className="block text-xs font-bold text-blue-600 uppercase mb-1">Telefone (Responsável)</label><input type="tel" value={dadosPerfil.telefoneResponsavel} onChange={(e) => setDadosPerfil({ ...dadosPerfil, telefoneResponsavel: e.target.value })} className="w-full bg-white border-2 border-blue-200 focus:border-blue-500 text-slate-800 rounded-lg p-2.5 text-sm outline-none transition-colors" placeholder="(87) 9XXXX-XXXX" /></div>
@@ -58,7 +59,6 @@ export default function PerfilModal({
                 </div>
               </form>
 
-              {/* A NOSSA NOVA GALERIA DE TROFÉUS AQUI! */}
               {dadosBadges && <BadgesGallery dados={dadosBadges} />}
               
             </>

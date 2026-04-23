@@ -968,11 +968,11 @@ export default function PortalDashboard() {
             return false;
           };
           const prazoEncerrado = verificarPrazo(missaoAberta.dataLimite);
+          // O input agora fica desabilitado apenas se estiver enviando ou já tiver sido enviado.
           const inputDesabilitado =
             enviando ||
             missaoAberta.status === "Avaliador" ||
-            missaoAberta.status === "Avaliado" ||
-            prazoEncerrado;
+            missaoAberta.status === "Avaliado";
           return (
             <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -1071,15 +1071,15 @@ export default function PortalDashboard() {
                       <button
                         type="submit"
                         disabled={inputDesabilitado}
-                        className={`text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition-all ${prazoEncerrado ? "bg-red-500 hover:bg-red-600" : inputDesabilitado ? "bg-slate-400" : "bg-emerald-600 hover:bg-emerald-700"}`}
+                        className={`text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition-all ${inputDesabilitado ? "bg-slate-400" : prazoEncerrado ? "bg-amber-500 hover:bg-amber-600" : "bg-emerald-600 hover:bg-emerald-700"}`}
                       >
-                        {prazoEncerrado
-                          ? "Bloqueado pelo Prazo"
-                          : enviando
-                            ? "Enviando..."
-                            : missaoAberta.status === "Avaliador" ||
-                                missaoAberta.status === "Avaliado"
-                              ? "Já Enviado"
+                        {enviando
+                          ? "Enviando..."
+                          : missaoAberta.status === "Avaliador" ||
+                              missaoAberta.status === "Avaliado"
+                            ? "Já Enviado"
+                            : prazoEncerrado
+                              ? "Enviar com Atraso (Penalidade)"
                               : "Enviar Resposta"}
                       </button>
                     </div>

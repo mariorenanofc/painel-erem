@@ -26,6 +26,7 @@ import RankingModal from "@/src/components/RankingModal";
 import PortalHeader from "@/src/components/PortalHeader";
 import PerfilModal from "@/src/components/PerfilModal";
 import NovaConquistaModal from "@/src/components/NovaConquistaModal";
+import NovidadesModal from "@/src/components/NovidadesModal";
 
 const subscribe = (callback: () => void) => {
   if (typeof window !== "undefined") {
@@ -60,6 +61,7 @@ export default function PortalDashboard() {
   const [xpTotalSistema, setXpTotalSistema] = useState(0);
   const [nivelSistema, setNivelSistema] = useState("Iniciante");
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
+  const [taxaPresenca, setTaxaPresenca] = useState(100);
   const [estatisticas, setEstatisticas] = useState({
     xpDoado: 0,
     xpRecebido: 0,
@@ -104,6 +106,10 @@ export default function PortalDashboard() {
   const [modalPixAberto, setModalPixAberto] = useState(false);
   const [rankingAberto, setRankingAberto] = useState(false);
 
+  // === CONTROLE DA TELA DE NOVIDADES ===
+  const VERSAO_ATUALIZACAO = "1.1.0"; // Mude este número nas próximas atualizações!
+  const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
+
   const carregarPortal = useCallback(async () => {
     if (!aluno || !GOOGLE_API_URL) return;
     try {
@@ -124,6 +130,8 @@ export default function PortalDashboard() {
         setAtividades(data.atividades);
         setNotificacoes(data.notificacoes || []);
         setBadgesResgatadas(data.badgesResgatadas || []);
+        setBadgesResgatadas(data.badgesResgatadas || []);
+        if (data.taxaPresenca !== undefined) setTaxaPresenca(data.taxaPresenca);
         if (data.stats) setEstatisticas(data.stats);
         if (data.aniversario.isAniversario && !data.aniversario.jaResgatado)
           setModalPresenteAberto(true);
@@ -162,6 +170,12 @@ export default function PortalDashboard() {
       const dataHoje = new Date().toLocaleDateString("pt-BR");
       const ultimoCheckin = localStorage.getItem(`checkin_${aluno.matricula}`);
       if (ultimoCheckin === dataHoje) setCheckinRealizado(true);
+
+      // --- NOVO: CHECAGEM DA TELA DE NOVIDADES ---
+      const versaoLida = localStorage.getItem(`novidades_${aluno.matricula}`);
+      if (versaoLida !== VERSAO_ATUALIZACAO) {
+        setModalNovidadesAberto(true);
+      }
     }
   }, [montado, aluno, carregarPortal, router, dadosSalvos]);
 
@@ -522,6 +536,16 @@ export default function PortalDashboard() {
         />
       )}
 
+      {/* --- RENDERIZAÇÃO DA TELA DE NOVIDADES --- */}
+      {modalNovidadesAberto && (
+        <NovidadesModal 
+          onClose={() => {
+            if (aluno) localStorage.setItem(`novidades_${aluno.matricula}`, VERSAO_ATUALIZACAO);
+            setModalNovidadesAberto(false);
+          }} 
+        />
+      )}
+
       {/* AQUI PASSAMOS O NOME DO PROJETO PARA O HEADER */}
       <PortalHeader
         matricula={aluno.matricula}
@@ -611,8 +635,8 @@ export default function PortalDashboard() {
                   </>
                 ) : (
                   <>
-                    <span className="text-lg animate-pulse">📍</span>
-                    <span className="text-sm">Fazer Check-in (+10 XP)</span>
+                    <span className="text-lg">{taxaPresenca >= 90 ? "🔥" : taxaPresenca >= 75 ? "⚡" : "📍"}</span>
+                    <span className="text-sm">Fazer Check-in (+{taxaPresenca >= 90 ? 15 : taxaPresenca >= 75 ? 12 : 10} XP)</span>
                   </>
                 )}
               </button>

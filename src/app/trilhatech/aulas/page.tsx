@@ -58,11 +58,15 @@ export default function GestaoAulasPage() {
     cronograma: "#",
   });
 
-  // === NOVO ESTADO: MODO REPOSIÇÃO ===
+  // === ESTADOS DO MODO REPOSIÇÃO E SENHA ===
   const [modoReposicao, setModoReposicao] = useState(false);
   const [carregandoReposicao, setCarregandoReposicao] = useState(false);
+  const [senhaLousa, setSenhaLousa] = useState("");
+  const [salvandoSenha, setSalvandoSenha] = useState(false);
+  const [modalZapAberto, setModalZapAberto] = useState(false);
 
-  // === ESTADOS DO FORMULÁRIO (MISSÕES) ===
+  // === ESTADOS DO FORMULÁRIO (NOVA MISSÃO) ===
+  const [modalNovaMissaoAberto, setModalNovaMissaoAberto] = useState(false); // <-- NOVO CONTROLE DO MODAL
   const [idEditando, setIdEditando] = useState<string | null>(null);
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -82,10 +86,6 @@ export default function GestaoAulasPage() {
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [carregandoEntregas, setCarregandoEntregas] = useState(false);
   const [notasTemp, setNotasTemp] = useState<Record<string, number>>({});
-
-  const [senhaLousa, setSenhaLousa] = useState("");
-  const [salvandoSenha, setSalvandoSenha] = useState(false);
-  const [modalZapAberto, setModalZapAberto] = useState(false);
 
   const [modalRankingAberto, setModalRankingAberto] = useState(false);
   const [dadosRanking, setDadosRanking] = useState<AlunoRankingTutor[]>([]);
@@ -158,7 +158,6 @@ export default function GestaoAulasPage() {
             setTurmaDiario(data.configuracoes.turmas[0]);
           }
           setNomeProjeto(data.configuracoes.nomeProjeto || "Trilha Tech");
-
           setLinksGerais({
             planilha:
               data.configuracoes.linkPlanilha ||
@@ -170,8 +169,6 @@ export default function GestaoAulasPage() {
             ajuda: data.configuracoes.linkAjuda || "#",
             cronograma: data.configuracoes.linkCronograma || "#",
           });
-
-          // Puxa o estado atual do Modo Reposição
           setModoReposicao(data.configuracoes.modoReposicao === "LIGADO");
         }
       } catch (e) {
@@ -211,7 +208,7 @@ export default function GestaoAulasPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nomeUsuario, GOOGLE_API_URL]);
 
-  // === FUNÇÃO DO BOTÃO DE MODO REPOSIÇÃO ===
+  // === FUNÇÕES DA TELA ===
   const toggleModoReposicao = async () => {
     setCarregandoReposicao(true);
     const novoStatus = !modoReposicao ? "LIGADO" : "DESLIGADO";
@@ -225,13 +222,10 @@ export default function GestaoAulasPage() {
         }),
       });
       const data = await res.json();
-      if (data.status === "sucesso") {
-        setModoReposicao(!modoReposicao);
-      } else {
-        alert("Erro ao alterar modo: " + data.mensagem);
-      }
+      if (data.status === "sucesso") setModoReposicao(!modoReposicao);
+      else alert("Erro: " + data.mensagem);
     } catch (e) {
-      alert("Erro de conexão ao alterar o modo de reposição.");
+      alert("Erro de conexão.");
     } finally {
       setCarregandoReposicao(false);
     }
@@ -252,7 +246,7 @@ export default function GestaoAulasPage() {
       if (resData.status === "sucesso") setDadosRanking(resData.ranking);
       else alert("Erro: " + resData.mensagem);
     } catch {
-      alert("Erro ao buscar ranking.");
+      alert("Erro.");
     } finally {
       setCarregandoRanking(false);
     }
@@ -314,6 +308,7 @@ export default function GestaoAulasPage() {
     setOpcaoC("");
     setOpcaoD("");
     setRespostaCorreta("A");
+    setModalNovaMissaoAberto(false);
   };
 
   const preencherEdicao = (ativ: Atividade) => {
@@ -329,6 +324,7 @@ export default function GestaoAulasPage() {
     setOpcaoC(String(ativ.opcaoC || ""));
     setOpcaoD(String(ativ.opcaoD || ""));
     setRespostaCorreta(String(ativ.respostaCorreta || "A"));
+    setModalNovaMissaoAberto(true);
   };
 
   const excluirAtividade = async (id: string) => {
@@ -550,10 +546,11 @@ export default function GestaoAulasPage() {
   }, [dadosFreqHoje, filtroStatusHoje, ordenacaoFreq]);
 
   if (!montado || !nomeUsuario)
-    return <div className="min-h-screen bg-slate-100"></div>;
+    return <div className="min-h-screen bg-slate-50"></div>;
 
   return (
-    <main className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans">
+    <main className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans pb-24">
+      {/* MODAIS EXISTENTES */}
       <RankingTutorModal
         isOpen={modalRankingAberto}
         onClose={() => setModalRankingAberto(false)}
@@ -618,7 +615,7 @@ export default function GestaoAulasPage() {
               <button
                 type="button"
                 onClick={() => setModalZapAberto(false)}
-                className="px-6 py-2 bg-slate-200 hover:bg-slate-300 rounded font-bold text-slate-700 transition-colors"
+                className="cursor-pointer px-6 py-2 bg-slate-200 hover:bg-slate-300 rounded font-bold text-slate-700 transition-colors"
               >
                 Entendido, Fechar
               </button>
@@ -627,289 +624,137 @@ export default function GestaoAulasPage() {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto">
-        <Header
-          carregando={isLoading}
-          nomeUsuario={nomeUsuario}
-          onLogout={() => {
-            localStorage.removeItem("usuarioLogado");
-            window.location.href = "/";
-          }}
-        />
-
-        <div className="flex items-center gap-4 mb-6 mt-4">
-          <button
-            onClick={() => router.push("/trilhatech")}
-            className="text-slate-500 hover:text-slate-700 font-bold px-3 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm transition-colors"
-          >
-            ← Voltar
-          </button>
-          <h2 className="text-2xl font-black text-slate-800 border-l-4 border-blue-500 pl-3">
-            Gestão: {nomeProjeto}
-          </h2>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
-          <a
-            href={linksGerais.planilha}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-blue-50 hover:bg-blue-100 border border-blue-200 text-blue-800 rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all hover:-translate-y-0.5 text-center shadow-sm"
-          >
-            <span className="text-2xl leading-none">📊</span>
-            <span className="text-xs font-bold leading-tight">
-              Planilha do Sistema
-            </span>
-          </a>
-          <a
-            href={linksGerais.classroom}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all hover:-translate-y-0.5 text-center shadow-sm"
-          >
-            <span className="text-2xl leading-none">🏫</span>
-            <span className="text-xs font-bold leading-tight">
-              AVA (Classroom)
-            </span>
-          </a>
-          <a
-            href={linksGerais.matriz}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-800 rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all hover:-translate-y-0.5 text-center shadow-sm"
-          >
-            <span className="text-2xl leading-none">📑</span>
-            <span className="text-xs font-bold leading-tight">
-              Matriz Institucional
-            </span>
-          </a>
-          <a
-            href={linksGerais.ajuda}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-800 rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all hover:-translate-y-0.5 text-center shadow-sm"
-          >
-            <span className="text-2xl leading-none">🆘</span>
-            <span className="text-xs font-bold leading-tight">
-              Canal de Ajuda
-            </span>
-          </a>
-          <a
-            href={linksGerais.cronograma}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-800 rounded-xl p-3 flex flex-col items-center justify-center gap-2 transition-all hover:-translate-y-0.5 text-center shadow-sm"
-          >
-            <span className="text-2xl leading-none">🗓️</span>
-            <span className="text-xs font-bold leading-tight">
-              Cronograma Anual
-            </span>
-          </a>
-        </div>
-
-        {aniversariantes.length > 0 && (
-          <div className="bg-linear-to-r from-amber-100 to-orange-100 border border-amber-300 text-amber-900 px-5 py-4 rounded-xl shadow-sm mb-6 flex items-center gap-4 animate-in fade-in slide-in-from-bottom-2">
-            <span className="text-4xl animate-bounce drop-shadow-sm">🎂</span>
-            <div>
-              <h3 className="font-black text-sm md:text-base uppercase tracking-tight text-amber-700">
-                Aniversariantes de Hoje!
-              </h3>
-              <p className="text-xs md:text-sm font-medium mt-0.5">
-                Deixe um parabéns especial para:{" "}
-                <strong>
-                  {aniversariantes
-                    .map((a) => `${a.nome} (${a.turma})`)
-                    .join(", ")}
-                </strong>
-              </p>
-            </div>
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-1 space-y-6">
-            {/* NOVO CARD: MODO DE REPOSIÇÃO COM SWITCH */}
-            <div
-              className={`p-6 rounded-xl shadow-sm border transition-all duration-300 ${modoReposicao ? "bg-indigo-50 border-indigo-300 shadow-indigo-100" : "bg-white border-slate-200"}`}
-            >
-              <div className="flex justify-between items-center mb-2">
-                <h3
-                  className={`text-lg font-bold flex items-center gap-2 ${modoReposicao ? "text-indigo-900" : "text-slate-800"}`}
-                >
-                  <span className={modoReposicao ? "animate-spin-slow" : ""}>
-                    ⚙️
-                  </span>{" "}
-                  Modo Reposição
-                </h3>
-
-                {/* O SWITCH DE LIGAR/DESLIGAR */}
-                <button
-                  onClick={toggleModoReposicao}
-                  disabled={carregandoReposicao}
-                  className={`relative inline-flex h-7 w-12 items-center rounded-full transition-colors focus:outline-none ${modoReposicao ? "bg-indigo-600 hover:bg-indigo-700" : "bg-slate-300 hover:bg-slate-400"} ${carregandoReposicao ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
-                >
-                  <span
-                    className={`inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${modoReposicao ? "translate-x-6" : "translate-x-1"}`}
-                  />
-                </button>
-              </div>
-              <p
-                className={`text-xs ${modoReposicao ? "text-indigo-700 font-medium" : "text-slate-500"}`}
+      {/* NOVO MODAL: CRIAR MISSÃO (Flutuante e Focado) */}
+      {modalNovaMissaoAberto && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
+            <div className="bg-slate-800 p-4 flex justify-between items-center text-white shrink-0">
+              <h2 className="font-bold text-lg flex items-center gap-2">
+                <span>📝</span>{" "}
+                {idEditando
+                  ? `Editando Missão: ${idEditando}`
+                  : "Criar Nova Missão"}
+              </h2>
+              <button
+                onClick={limparFormulario}
+                className="text-2xl hover:text-red-400 transition-colors leading-none"
               >
-                {modoReposicao
-                  ? "Ativado! Os alunos podem fazer check-in de presença hoje, ignorando a trava dos dias da semana."
-                  : "Desativado. O check-in obedece rigorosamente aos dias letivos definidos para cada turma."}
-              </p>
+                &times;
+              </button>
             </div>
 
-            <button
-              onClick={() => setModalZapAberto(true)}
-              className="bg-blue-100 hover:bg-blue-200 text-blue-800 text-sm font-bold py-2.5 px-4 rounded-lg shadow-sm transition-all flex items-center gap-2 border border-blue-200"
-            >
-              <span>💬</span> Links WhatsApp
-            </button>
-
-            <div className="bg-slate-50 p-6 rounded-xl shadow-sm border border-slate-200">
-              <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2 mb-2">
-                <span>🔐</span> Senha do Check-in
-              </h3>
-              <p className="text-xs text-slate-500 mb-4">
-                Anote esta senha na lousa para o check-in de hoje.
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={senhaLousa}
-                  onChange={(e) => setSenhaLousa(e.target.value.toUpperCase())}
-                  placeholder="Ex: AULA01"
-                  className="w-full font-mono font-black text-center border-2 border-slate-300 rounded p-2 text-slate-800 uppercase focus:border-blue-500 outline-none"
-                />
-                <button
-                  onClick={salvarNovaSenha}
-                  disabled={salvandoSenha}
-                  className="bg-blue-600 hover:bg-blue-700 text-white font-bold px-4 rounded disabled:bg-slate-400 transition-colors"
-                >
-                  {salvandoSenha ? "..." : "Salvar"}
-                </button>
-              </div>
-            </div>
-
-            <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-200 sticky top-6">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-                  <span>📝</span>{" "}
-                  {idEditando ? `Editando ${idEditando}` : "Nova Missão"}
-                </h3>
-                {idEditando && (
-                  <button
-                    type="button"
-                    onClick={limparFormulario}
-                    className="text-xs text-red-500 hover:underline"
-                  >
-                    Cancelar Edição
-                  </button>
-                )}
-              </div>
-              <form onSubmit={salvarNovaAtividade} className="space-y-4">
-                <div className="bg-slate-50 p-3 rounded border border-slate-200">
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-2">
+            <div className="p-6 overflow-y-auto">
+              <form onSubmit={salvarNovaAtividade} className="space-y-5">
+                <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-3">
                     Tipo de Missão
                   </label>
-                  <div className="flex gap-4">
-                    <label className="flex items-center gap-2 cursor-pointer font-medium text-sm text-slate-700">
+                  <div className="flex gap-6">
+                    <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
                       <input
                         type="radio"
                         value="Projeto"
                         checked={tipo === "Projeto"}
                         onChange={() => setTipo("Projeto")}
-                        className="text-blue-600"
+                        className="w-4 h-4 text-blue-600 focus:ring-blue-500"
                       />{" "}
-                      Projeto
+                      Projeto (Envio de Link)
                     </label>
-                    <label className="flex items-center gap-2 cursor-pointer font-medium text-sm text-slate-700">
+                    <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
                       <input
                         type="radio"
                         value="Quiz"
                         checked={tipo === "Quiz"}
                         onChange={() => setTipo("Quiz")}
-                        className="text-amber-500"
+                        className="w-4 h-4 text-amber-500 focus:ring-amber-500"
                       />{" "}
-                      Quiz
+                      Quiz (Múltipla Escolha)
                     </label>
                   </div>
                 </div>
+
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                    Título
+                    Título da Missão
                   </label>
                   <input
                     type="text"
                     value={titulo}
                     onChange={(e) => setTitulo(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-2 focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="Ex: Desafio CSS 01"
+                    className="w-full bg-white border-2 border-slate-200 text-slate-800 rounded-lg p-3 focus:border-blue-500 outline-none transition-colors"
                   />
                 </div>
+
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                     {tipo === "Quiz"
-                      ? "Pergunta / Enunciado com Código"
-                      : "Instruções"}
+                      ? "Enunciado da Questão (Aceita código)"
+                      : "Instruções Detalhadas"}
                   </label>
                   <textarea
-                    rows={6}
+                    rows={5}
                     value={descricao}
                     onChange={(e) => setDescricao(e.target.value)}
-                    placeholder="Digite o enunciado..."
-                    className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-2 font-mono text-sm focus:ring-2 focus:ring-blue-500 outline-none"
+                    placeholder="Descreva o que o aluno deve fazer..."
+                    className="w-full bg-white border-2 border-slate-200 text-slate-800 rounded-lg p-3 font-mono text-sm focus:border-blue-500 outline-none transition-colors"
                   ></textarea>
                 </div>
+
                 {tipo === "Quiz" && (
-                  <div className="bg-amber-50 p-4 rounded border border-amber-200 space-y-4">
-                    {[
-                      { label: "A", val: opcaoA, set: setOpcaoA },
-                      { label: "B", val: opcaoB, set: setOpcaoB },
-                      { label: "C", val: opcaoC, set: setOpcaoC },
-                      { label: "D", val: opcaoD, set: setOpcaoD },
-                    ].map((alt) => (
-                      <div key={alt.label} className="flex flex-col gap-1">
-                        <span className="font-bold text-xs text-slate-500 uppercase">
-                          {alt.label})
-                        </span>
-                        <textarea
-                          rows={2}
-                          value={alt.val}
-                          onChange={(e) => alt.set(e.target.value)}
-                          className="w-full border border-amber-300 rounded p-2 text-xs text-slate-800 font-mono focus:ring-2 focus:ring-amber-500 outline-none bg-white"
-                        />
-                      </div>
-                    ))}
-                    <div className="pt-2 border-t border-amber-200">
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                        Resposta Correta
+                  <div className="bg-amber-50 p-5 rounded-xl border border-amber-200 space-y-4">
+                    <h3 className="font-bold text-amber-800 text-sm uppercase mb-2">
+                      Alternativas do Quiz
+                    </h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {[
+                        { label: "A", val: opcaoA, set: setOpcaoA },
+                        { label: "B", val: opcaoB, set: setOpcaoB },
+                        { label: "C", val: opcaoC, set: setOpcaoC },
+                        { label: "D", val: opcaoD, set: setOpcaoD },
+                      ].map((alt) => (
+                        <div key={alt.label} className="flex gap-2 items-start">
+                          <span className="font-black text-amber-600 mt-2">
+                            {alt.label})
+                          </span>
+                          <textarea
+                            rows={2}
+                            value={alt.val}
+                            onChange={(e) => alt.set(e.target.value)}
+                            placeholder={`Texto da opção ${alt.label}`}
+                            className="w-full border-2 border-amber-200 rounded-lg p-2 text-sm text-slate-800 font-mono focus:border-amber-500 outline-none bg-white"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                    <div className="pt-4 border-t border-amber-200 flex items-center gap-4">
+                      <label className="text-sm font-bold text-amber-800 uppercase">
+                        Resposta Correta:
                       </label>
                       <select
                         value={respostaCorreta}
                         onChange={(e) => setRespostaCorreta(e.target.value)}
-                        className="w-full border border-amber-300 rounded p-2 font-bold text-emerald-600 bg-white outline-none"
+                        className="border-2 border-amber-300 rounded-lg p-2 font-black text-emerald-600 bg-white outline-none cursor-pointer focus:border-emerald-500"
                       >
-                        <option value="A">A</option>
-                        <option value="B">B</option>
-                        <option value="C">C</option>
-                        <option value="D">D</option>
+                        <option value="A">Alternativa A</option>
+                        <option value="B">Alternativa B</option>
+                        <option value="C">Alternativa C</option>
+                        <option value="D">Alternativa D</option>
                       </select>
                     </div>
                   </div>
                 )}
-                <div className="grid grid-cols-2 gap-4">
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                      Data Limite (Prazo)
+                      Data Limite
                     </label>
                     <input
                       type="date"
                       value={dataLimite}
                       onChange={(e) => setDataLimite(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-2 outline-none"
+                      className="w-full bg-white border-2 border-slate-200 text-slate-800 rounded-lg p-3 outline-none focus:border-blue-500"
                     />
                   </div>
                   <div>
@@ -920,57 +765,294 @@ export default function GestaoAulasPage() {
                       type="number"
                       value={xp}
                       onChange={(e) => setXp(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-300 text-emerald-700 rounded p-2 font-bold outline-none"
+                      className="w-full bg-white border-2 border-slate-200 text-emerald-700 rounded-lg p-3 font-black outline-none focus:border-emerald-500"
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                      Turma Alvo
+                    </label>
+                    <select
+                      value={turmaAlvo}
+                      onChange={(e) => setTurmaAlvo(e.target.value)}
+                      className="w-full bg-white border-2 border-slate-200 text-slate-800 rounded-lg p-3 outline-none focus:border-blue-500"
+                    >
+                      <option value="Todas">Todas as Turmas</option>
+                      {turmasDisponiveis.map((turma) => (
+                        <option key={turma} value={turma}>
+                          {turma}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 </div>
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                    Turma Alvo
-                  </label>
-                  <select
-                    value={turmaAlvo}
-                    onChange={(e) => setTurmaAlvo(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-2 outline-none"
+
+                <div className="pt-4 flex gap-3 justify-end border-t border-slate-100">
+                  <button
+                    type="button"
+                    onClick={limparFormulario}
+                    className="px-6 py-3 rounded-xl font-bold text-slate-500 hover:bg-slate-100 transition-colors"
                   >
-                    <option value="Todas">Todas as Turmas</option>
-                    {turmasDisponiveis.map((turma) => (
-                      <option key={turma} value={turma}>
-                        {turma}
-                      </option>
-                    ))}
-                  </select>
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={salvando}
+                    className={`px-8 py-3 rounded-xl text-white font-black shadow-md transition-all active:scale-95 disabled:bg-slate-400 ${idEditando ? "bg-amber-500 hover:bg-amber-600" : "bg-blue-600 hover:bg-blue-700"}`}
+                  >
+                    {salvando
+                      ? "Processando..."
+                      : idEditando
+                        ? "Salvar Alterações"
+                        : "🚀 Publicar Missão"}
+                  </button>
                 </div>
-                <button
-                  type="submit"
-                  disabled={salvando}
-                  className={`w-full text-white font-bold py-3 rounded-lg shadow-md transition-all active:scale-95 disabled:bg-slate-400 ${idEditando ? "bg-amber-500 hover:bg-amber-600" : "bg-blue-600 hover:bg-blue-700"}`}
-                >
-                  {salvando
-                    ? "Processando..."
-                    : idEditando
-                      ? "Salvar Alterações"
-                      : "Publicar Missão"}
-                </button>
               </form>
             </div>
           </div>
+        </div>
+      )}
 
-          <div className="lg:col-span-2">
-            <MissoesList
-              atividades={atividades}
-              isLoading={isLoading}
-              turmasDisponiveis={turmasDisponiveis}
-              onEdit={preencherEdicao}
-              onDelete={excluirAtividade}
-              onViewEntregas={abrirModalEntregas}
-              onViewRanking={() => {
-                setModalRankingAberto(true);
-                carregarRankingTutor("geral");
-              }}
-              onViewFrequencia={abrirRelatorioFrequencia}
-              onNavigateAnalytics={() => router.push("/trilhatech/analytics")}
-            />
+      {/* CONTEÚDO PRINCIPAL DA PÁGINA */}
+      <div className="max-w-7xl mx-auto">
+        <Header
+          carregando={isLoading}
+          nomeUsuario={nomeUsuario}
+          onLogout={() => {
+            localStorage.removeItem("usuarioLogado");
+            window.location.href = "/";
+          }}
+        />
+
+        <div className="flex items-center gap-4 mb-4 mt-6">
+          <button
+            onClick={() => router.push("/trilhatech")}
+            className="text-slate-500 hover:text-slate-800 font-bold px-3 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm transition-colors"
+          >
+            ← Voltar
+          </button>
+          <h2 className="text-2xl font-black text-slate-800 border-l-4 border-blue-500 pl-3">
+            Gestão: {nomeProjeto}
+          </h2>
+        </div>
+
+        {/* 1. LINKS MINIMALISTAS (Pills) */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          <a
+            href={linksGerais.planilha}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-700 hover:border-blue-200 transition-colors flex items-center gap-2 shadow-sm"
+          >
+            <span>📊</span> Planilha (BD)
+          </a>
+          <a
+            href={linksGerais.classroom}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:bg-amber-50 hover:text-amber-700 hover:border-amber-200 transition-colors flex items-center gap-2 shadow-sm"
+          >
+            <span>🏫</span> AVA (Classroom)
+          </a>
+          <a
+            href={linksGerais.matriz}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-colors flex items-center gap-2 shadow-sm"
+          >
+            <span>📑</span> Matriz Curricular
+          </a>
+          <a
+            href={linksGerais.cronograma}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:bg-purple-50 hover:text-purple-700 hover:border-purple-200 transition-colors flex items-center gap-2 shadow-sm"
+          >
+            <span>🗓️</span> Cronograma
+          </a>
+          <a
+            href={linksGerais.ajuda}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-700 hover:border-rose-200 transition-colors flex items-center gap-2 shadow-sm"
+          >
+            <span>🆘</span> Ajuda
+          </a>
+        </div>
+
+        {/* GRID PRINCIPAL: 1/4 Cockpit Lateral | 3/4 Conteúdo */}
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          {/* 2. O "COCKPIT" (BARRA LATERAL DE CONTROLES DO DIA) */}
+          <div className="xl:col-span-1 space-y-4">
+            {aniversariantes.length > 0 && (
+              <div className="bg-gradient-to-br from-amber-100 to-orange-100 border border-amber-300 p-4 rounded-2xl shadow-sm text-center">
+                <div className="text-4xl animate-bounce mb-2">🎂</div>
+                <h3 className="font-black text-sm uppercase tracking-tight text-amber-800">
+                  Aniversariantes!
+                </h3>
+                <p className="text-xs font-medium text-amber-700 mt-1">
+                  Parabéns para:{" "}
+                  <strong>
+                    {aniversariantes.map((a) => `${a.nome}`).join(", ")}
+                  </strong>
+                </p>
+              </div>
+            )}
+
+            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+              <h3 className="font-black text-sm text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2 mb-4">
+                Controles da Aula
+              </h3>
+
+              <div className="mb-5">
+                <div className="flex justify-between items-center mb-1">
+                  <span
+                    className={`text-sm font-bold flex items-center gap-2 ${modoReposicao ? "text-indigo-600" : "text-slate-600"}`}
+                  >
+                    ⚙️ Modo Reposição
+                  </span>
+                  <button
+                    onClick={toggleModoReposicao}
+                    disabled={carregandoReposicao}
+                    className={`cursor-pointer relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${modoReposicao ? "bg-indigo-600" : "bg-slate-300"} ${carregandoReposicao ? "opacity-50" : ""}`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${modoReposicao ? "translate-x-6" : "translate-x-1"}`}
+                    />
+                  </button>
+                </div>
+                <p className="text-[10px] text-slate-400 leading-tight">
+                  Ignora o dia da semana para permitir check-ins atrasados.
+                </p>
+              </div>
+
+              <div>
+                <label className="text-sm font-bold text-slate-600 flex items-center gap-2 mb-2">
+                  <span>🔐</span> Senha da Lousa
+                </label>
+                <div className="flex flex-col gap-2">
+                  <input
+                    type="text"
+                    value={senhaLousa}
+                    onChange={(e) =>
+                      setSenhaLousa(e.target.value.toUpperCase())
+                    }
+                    placeholder="AULA01"
+                    className="w-full font-mono font-black text-center border-2 border-slate-200 rounded-lg p-2 text-slate-800 uppercase focus:border-blue-500 outline-none bg-slate-50"
+                  />
+                  <button
+                    onClick={salvarNovaSenha}
+                    disabled={salvandoSenha}
+                    className="cursor-pointer w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-lg transition-colors text-sm"
+                  >
+                    {salvandoSenha ? "..." : "Atualizar Senha"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setModalZapAberto(true)}
+              className="cursor-pointer w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-sm font-bold py-3 px-4 rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 border border-emerald-200"
+            >
+              <span>💬</span> Configurar WhatsApp
+            </button>
+          </div>
+
+          {/* 3. ÁREA PRINCIPAL (Métricas e Missões) */}
+          <div className="xl:col-span-3">
+            {/* 3.1 VISÃO GERAL DA TURMA (MÉTRICAS) */}
+            <div className="grid grid-cols-3 gap-3 md:gap-4 mb-8">
+              <button
+                onClick={() => {
+                  setModalRankingAberto(true);
+                  carregarRankingTutor("geral");
+                }}
+                className="bg-gradient-to-br from-amber-500 to-orange-500 p-4 md:p-5 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all text-left flex flex-col items-start gap-2 group"
+              >
+                <div className="bg-white/20 p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
+                  🏆
+                </div>
+                <div>
+                  <h3 className="text-white font-black text-sm md:text-base leading-tight">
+                    Ranking Escolar
+                  </h3>
+                  <p className="text-amber-100 text-[10px] md:text-xs">
+                    Ver Líderes e XP
+                  </p>
+                </div>
+              </button>
+
+              <button
+                onClick={abrirRelatorioFrequencia}
+                className="bg-gradient-to-br from-emerald-500 to-teal-500 p-4 md:p-5 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all text-left flex flex-col items-start gap-2 group"
+              >
+                <div className="bg-white/20 p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
+                  📍
+                </div>
+                <div>
+                  <h3 className="text-white font-black text-sm md:text-base leading-tight">
+                    Frequência
+                  </h3>
+                  <p className="text-emerald-100 text-[10px] md:text-xs">
+                    Diário de Classe
+                  </p>
+                </div>
+              </button>
+
+              <button
+                onClick={() => router.push("/trilhatech/analytics")}
+                className="bg-gradient-to-br from-indigo-600 to-blue-600 p-4 md:p-5 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all text-left flex flex-col items-start gap-2 group"
+              >
+                <div className="bg-white/20 p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
+                  📈
+                </div>
+                <div>
+                  <h3 className="text-white font-black text-sm md:text-base leading-tight">
+                    Analytics
+                  </h3>
+                  <p className="text-indigo-100 text-[10px] md:text-xs">
+                    Radar e Relatórios
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            {/* 3.2 ÁREA DE MISSÕES (Cabeçalho + Lista) */}
+            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-1">
+              <div className="p-4 md:p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                  <h2 className="text-xl font-black text-slate-800">
+                    Missões Publicadas
+                  </h2>
+                  <p className="text-sm text-slate-500">
+                    Gerencie as atividades, prazos e notas dos alunos.
+                  </p>
+                </div>
+                <button
+                  onClick={() => {
+                    limparFormulario();
+                    setModalNovaMissaoAberto(true);
+                  }}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-black shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-2 w-full md:w-auto justify-center"
+                >
+                  <span className="text-lg leading-none">+</span> Criar Nova
+                  Missão
+                </button>
+              </div>
+
+              {/* O COMPONENTE MISSOES LIST VEM AQUI */}
+              <div className="p-4 md:p-6 bg-slate-50/50 rounded-b-2xl">
+                <MissoesList
+                  atividades={atividades}
+                  isLoading={isLoading}
+                  turmasDisponiveis={turmasDisponiveis}
+                  onEdit={preencherEdicao}
+                  onDelete={excluirAtividade}
+                  onViewEntregas={abrirModalEntregas}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>

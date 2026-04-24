@@ -25,13 +25,13 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-center relative overflow-hidden">
           <div className="absolute -top-10 -right-10 text-9xl opacity-10 rotate-12">🚀</div>
           <span className="bg-white/20 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest backdrop-blur-sm border border-white/30">
-            Atualização Versão 1.1.0
+            Atualização Versão 1.2.0
           </span>
           <h2 className="text-2xl font-black text-white mt-4 leading-tight relative z-10">
             Grandes Novidades no Portal!
           </h2>
           <p className="text-blue-100 text-sm mt-2 relative z-10 font-medium">
-            O sistema evoluiu e trouxe novas regras e ferramentas para você.
+            O sistema evoluiu e trouxe novos recursos para turbinar a sua jornada.
           </p>
         </div>
 
@@ -39,46 +39,46 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
         <div className="p-6 overflow-y-auto max-h-[60vh] bg-slate-50">
           <div className="space-y-4">
             
-            {/* Novidade 1 */}
+            {/* Novidade 1: Barra de Progresso (A mais nova!) */}
+            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
+              <div className="text-3xl shrink-0">📊</div>
+              <div>
+                <h3 className="font-bold text-slate-800">Barra de Progresso de Nível</h3>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
+                  Agora você pode acompanhar visualmente o quanto de XP falta para você subir de nível (Bronze, Prata, Ouro...). Acompanhe a barra e chegue ao topo!
+                </p>
+              </div>
+            </div>
+
+            {/* Novidade 2: Ofensiva */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
               <div className="text-3xl shrink-0">🔥</div>
               <div>
                 <h3 className="font-bold text-slate-800">Ofensiva de Check-in</h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Não falte às aulas! Se a sua assiduidade for superior a 90%, o seu check-in diário passa a valer <strong>15 XP</strong> (Em Chamas). Se cair, volta para os 10 XP padrão.
+                  Não falte às aulas! Se a sua assiduidade for superior a 90%, o seu check-in diário passa a valer <strong>15 XP</strong> (Em Chamas). Se cair muito, volta para os 10 XP padrão.
                 </p>
               </div>
             </div>
 
-            {/* Novidade 2 */}
+            {/* Novidade 3: Extrato de Pix */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
               <div className="text-3xl shrink-0">🏦</div>
               <div>
-                <h3 className="font-bold text-slate-800">Extrato de Pix</h3>
+                <h3 className="font-bold text-slate-800">Extrato Bancário do Pix</h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Agora você tem um &quot;Extrato Bancário&nbsp; no modal de Pix! Acompanhe exatamente de quem você recebeu e para quem você enviou seus preciosos XP.
+                  Adicionamos um &quot;Extrato&quot; na sua tela de Pix! Acompanhe o histórico exato de quem você recebeu e para quem você enviou os seus preciosos XP.
                 </p>
               </div>
             </div>
 
-            {/* Novidade 3 */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
-              <div className="text-3xl shrink-0">🛡️</div>
-              <div>
-                <h3 className="font-bold text-slate-800">Anti-Fraude e Limites</h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  O jogo ficou mais justo! Você só pode receber 50 XP por dia. Se tentar transferir mais de 100 XP por semana para a mesma pessoa, você toma um <strong>bloqueio de 7 dias</strong>.
-                </p>
-              </div>
-            </div>
-
-            {/* Novidade 4 */}
+            {/* Novidade 4: Missões Atrasadas */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
               <div className="text-3xl shrink-0">⏳</div>
               <div>
-                <h3 className="font-bold text-slate-800">Missões Atrasadas</h3>
+                <h3 className="font-bold text-slate-800">Entregas Atrasadas</h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Perdeu o prazo? Agora você pode enviar missões atrasadas! Mas atenção: você <strong>perde -1 XP por cada dia de atraso</strong>.
+                  Perdeu o prazo? Agora você pode enviar missões atrasadas para não ficar com zero! Mas atenção: o sistema desconta automaticamente <strong>-1 XP por cada dia de atraso</strong>.
                 </p>
               </div>
             </div>

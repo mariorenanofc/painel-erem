@@ -54,6 +54,13 @@ export default function PortalDashboard() {
     return dadosSalvos ? JSON.parse(dadosSalvos) : null;
   }, [dadosSalvos]);
 
+  const [progressoNivel, setProgressoNivel] = useState({
+    porcentagem: 0,
+    faltam: 0,
+    nomeProximo: "Bronze",
+    isMaximo: false,
+  });
+
   // ESTADOS GLOBAIS DE ALTA PERFORMANCE
   const [nomeProjeto, setNomeProjeto] = useState("Portal Educacional"); // <-- WHITE LABEL
   const [carregandoPortal, setCarregandoPortal] = useState(true);
@@ -107,7 +114,7 @@ export default function PortalDashboard() {
   const [rankingAberto, setRankingAberto] = useState(false);
 
   // === CONTROLE DA TELA DE NOVIDADES ===
-  const VERSAO_ATUALIZACAO = "1.1.0"; // Mude este número nas próximas atualizações!
+  const VERSAO_ATUALIZACAO = "1.2.0"; // Mude este número nas próximas atualizações!
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
   const carregarPortal = useCallback(async () => {
@@ -124,6 +131,7 @@ export default function PortalDashboard() {
       const data = await res.json();
       if (data.status === "sucesso") {
         setXpTotalSistema(data.xpTotal);
+        if (data.progressoNivel) setProgressoNivel(data.progressoNivel);
         setNivelSistema(data.nivel);
         setZapConfirmado(data.whatsapp.confirmado);
         setZapLink(data.whatsapp.link);
@@ -538,11 +546,15 @@ export default function PortalDashboard() {
 
       {/* --- RENDERIZAÇÃO DA TELA DE NOVIDADES --- */}
       {modalNovidadesAberto && (
-        <NovidadesModal 
+        <NovidadesModal
           onClose={() => {
-            if (aluno) localStorage.setItem(`novidades_${aluno.matricula}`, VERSAO_ATUALIZACAO);
+            if (aluno)
+              localStorage.setItem(
+                `novidades_${aluno.matricula}`,
+                VERSAO_ATUALIZACAO,
+              );
             setModalNovidadesAberto(false);
-          }} 
+          }}
         />
       )}
 
@@ -594,8 +606,10 @@ export default function PortalDashboard() {
       )}
 
       <div className="bg-white border-b border-slate-200">
-        <div className="max-w-5xl mx-auto p-4 md:p-8 flex flex-col lg:flex-row justify-between items-center gap-6">
-          <div className="flex flex-col items-center lg:items-start text-center lg:text-left w-full lg:w-auto">
+        <div className="max-w-6xl mx-auto p-4 md:p-8 flex flex-col lg:flex-row justify-between items-start gap-8">
+          
+          {/* LADO ESQUERDO: Saudação, Avisos e Botões Rápido */}
+          <div className="flex flex-col items-center lg:items-start text-center lg:text-left w-full lg:flex-1">
             <h2 className="text-2xl md:text-3xl font-black text-slate-800">
               Bem-vindo, {aluno.nome.split(" ")[0]}!
             </h2>
@@ -606,19 +620,21 @@ export default function PortalDashboard() {
               </strong>
               .
             </p>
+            
+            {/* Botões com fluxo natural e sem espremer */}
             <div className="mt-6 flex flex-wrap justify-center lg:justify-start gap-3 w-full">
               <a
                 href="https://classroom.google.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5"
+                className="inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 whitespace-nowrap"
               >
                 <span className="text-lg">🏫</span>{" "}
                 <span className="text-sm">Classroom</span>
               </a>
               <button
                 onClick={() => setModalPixAberto(true)}
-                className="flex-1 lg:flex-none inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-emerald-400"
+                className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-emerald-400 whitespace-nowrap"
               >
                 <span className="text-lg">💸</span>{" "}
                 <span className="text-sm">Pix de XP</span>
@@ -626,7 +642,7 @@ export default function PortalDashboard() {
               <button
                 onClick={() => setModalSenhaAberto(true)}
                 disabled={checkinRealizado}
-                className={`w-full lg:w-auto inline-flex items-center justify-center gap-2 font-bold py-3 px-5 rounded-xl shadow-sm transition-all ${checkinRealizado ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200" : "bg-blue-600 hover:bg-blue-700 text-white hover:-translate-y-0.5"}`}
+                className={`inline-flex items-center justify-center gap-2 font-bold py-3 px-5 rounded-xl shadow-sm transition-all whitespace-nowrap ${checkinRealizado ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200" : taxaPresenca >= 90 ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white border-none animate-pulse shadow-orange-200" : "bg-blue-600 hover:bg-blue-700 text-white hover:-translate-y-0.5"}`}
               >
                 {checkinRealizado ? (
                   <>
@@ -635,37 +651,90 @@ export default function PortalDashboard() {
                   </>
                 ) : (
                   <>
-                    <span className="text-lg">{taxaPresenca >= 90 ? "🔥" : taxaPresenca >= 75 ? "⚡" : "📍"}</span>
-                    <span className="text-sm">Fazer Check-in (+{taxaPresenca >= 90 ? 15 : taxaPresenca >= 75 ? 12 : 10} XP)</span>
+                    <span className="text-lg">
+                      {taxaPresenca >= 90
+                        ? "🔥"
+                        : taxaPresenca >= 75
+                          ? "⚡"
+                          : "📍"}
+                    </span>
+                    <span className="text-sm">
+                      Fazer Check-in (+
+                      {taxaPresenca >= 90 ? 15 : taxaPresenca >= 75 ? 12 : 10}{" "}
+                      XP)
+                    </span>
                   </>
                 )}
               </button>
             </div>
           </div>
-          <div className="flex flex-row gap-4 w-full lg:w-auto justify-center mt-4 lg:mt-0">
-            <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex items-center gap-3 w-1/2 lg:w-auto">
-              <div className="bg-blue-100 p-3 rounded-full text-2xl">🎓</div>
-              <div>
-                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                  Nível Atual
-                </p>
-                <p className="text-xl font-black text-blue-700 leading-none">
-                  {nivelSistema}
-                </p>
+
+          {/* LADO DIREITO: Cartões de Status e Barra de Progresso */}
+          <div className="flex flex-col w-full lg:w-[420px] shrink-0 mt-6 lg:mt-0 gap-4">
+            {/* Os Dois Cartões (Nível e XP) lado a lado */}
+            <div className="flex flex-row gap-3 w-full justify-center lg:justify-end">
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex items-center gap-3 w-1/2 shadow-sm">
+                <div className="bg-blue-100 p-2.5 rounded-full text-xl shrink-0">
+                  🎓
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    Nível Atual
+                  </p>
+                  <p className="text-lg font-black text-blue-700 leading-none">
+                    {nivelSistema}
+                  </p>
+                </div>
+              </div>
+
+              <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex items-center gap-3 w-1/2 shadow-sm">
+                <div className="bg-emerald-200/50 p-2.5 rounded-full text-xl shrink-0">
+                  ⭐
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">
+                    Seu XP Total
+                  </p>
+                  <p className="text-lg font-black text-emerald-600 leading-none">
+                    {xpTotalSistema} XP
+                  </p>
+                </div>
               </div>
             </div>
-            <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex items-center gap-3 w-1/2 lg:w-auto shadow-sm">
-              <div className="bg-emerald-200/50 p-3 rounded-full text-2xl">
-                ⭐
+
+            {/* A NOVA BARRA DE PROGRESSO AQUI */}
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm w-full">
+              <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2.5">
+                <span>Progresso</span>
+                <span className="text-blue-600">
+                  {progressoNivel.isMaximo
+                    ? "Nível Máximo!"
+                    : `Rumo ao ${progressoNivel.nomeProximo}`}
+                </span>
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">
-                  Seu XP Total
-                </p>
-                <p className="text-xl font-black text-emerald-600 leading-none">
-                  {xpTotalSistema} XP
-                </p>
+
+              <div className="w-full bg-slate-200/70 rounded-full h-3 mb-2.5 overflow-hidden shadow-inner">
+                <div
+                  className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-1000 ease-out relative"
+                  style={{ width: `${progressoNivel.porcentagem}%` }}
+                >
+                  <div className="absolute top-0 left-0 w-full h-full bg-white/20 animate-pulse"></div>
+                </div>
               </div>
+
+              <p className="text-xs font-bold text-slate-500 text-center">
+                {progressoNivel.isMaximo ? (
+                  "🏆 Você alcançou o topo do Trilha Tech!"
+                ) : (
+                  <>
+                    Faltam{" "}
+                    <strong className="text-indigo-600 font-black">
+                      {progressoNivel.faltam} XP
+                    </strong>{" "}
+                    para subir de nível! 🚀
+                  </>
+                )}
+              </p>
             </div>
           </div>
         </div>

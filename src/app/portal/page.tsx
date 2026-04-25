@@ -67,6 +67,9 @@ export default function PortalDashboard() {
   const [atividades, setAtividades] = useState<Atividade[]>([]);
   const [xpTotalSistema, setXpTotalSistema] = useState(0);
   const [nivelSistema, setNivelSistema] = useState("Iniciante");
+  const [avatarSistema, setAvatarSistema] = useState("avatar-padrao");
+  const [curtidasSistema, setCurtidasSistema] = useState(0);
+  const [ofensivaDias, setOfensivaDias] = useState(0);
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
   const [taxaPresenca, setTaxaPresenca] = useState(100);
   const [estatisticas, setEstatisticas] = useState({
@@ -114,7 +117,7 @@ export default function PortalDashboard() {
   const [rankingAberto, setRankingAberto] = useState(false);
 
   // === CONTROLE DA TELA DE NOVIDADES ===
-  const VERSAO_ATUALIZACAO = "1.2.0"; // Mude este número nas próximas atualizações!
+  const VERSAO_ATUALIZACAO = "1.3.0"; // Mude este número nas próximas atualizações!
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
   const carregarPortal = useCallback(async () => {
@@ -133,6 +136,9 @@ export default function PortalDashboard() {
         setXpTotalSistema(data.xpTotal);
         if (data.progressoNivel) setProgressoNivel(data.progressoNivel);
         setNivelSistema(data.nivel);
+        if (data.avatar) setAvatarSistema(data.avatar);
+        if (data.totalCurtidas) setCurtidasSistema(data.totalCurtidas);
+        if (data.ofensivaDias !== undefined) setOfensivaDias(data.ofensivaDias);
         setZapConfirmado(data.whatsapp.confirmado);
         setZapLink(data.whatsapp.link);
         setAtividades(data.atividades);
@@ -227,6 +233,7 @@ export default function PortalDashboard() {
       totalCheckins: estatisticas.totalCheckins,
       whatsappConfirmado: zapConfirmado,
       aniversarioResgatado: false,
+      totalCurtidas: curtidasSistema,
     };
     const badgesAtuais = calcularBadges(dadosBadges);
     const badgesDesbloqueadas = badgesAtuais.filter((b) => b.desbloqueada);
@@ -253,6 +260,7 @@ export default function PortalDashboard() {
     estatisticas,
     zapConfirmado,
     badgesResgatadas,
+    curtidasSistema,
   ]);
 
   const resgatarRecompensaBadge = async (badge: Badge) => {
@@ -518,6 +526,22 @@ export default function PortalDashboard() {
     return true;
   });
 
+  const salvarNovoAvatar = async (emoji: string) => {
+    if (!aluno) return;
+    setAvatarSistema(emoji); // Atualiza na hora visualmente
+    try {
+      await fetch(GOOGLE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        body: JSON.stringify({
+          action: "salvar_avatar",
+          matricula: aluno.matricula,
+          avatarId: emoji,
+        }),
+      });
+    } catch {}
+  };
+
   return (
     <main
       className="min-h-screen bg-slate-50 font-sans pb-12 select-none"
@@ -607,20 +631,26 @@ export default function PortalDashboard() {
 
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-6xl mx-auto p-4 md:p-8 flex flex-col lg:flex-row justify-between items-start gap-8">
-          
           {/* LADO ESQUERDO: Saudação, Avisos e Botões Rápido */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left w-full lg:flex-1">
             <h2 className="text-2xl md:text-3xl font-black text-slate-800">
               Bem-vindo, {aluno.nome.split(" ")[0]}!
             </h2>
-            <p className="text-slate-500 mt-1">
-              Você tem{" "}
-              <strong className="text-amber-600">
-                {missoesPendentes} missões pendentes
-              </strong>
-              .
+            <p className="text-slate-500 mt-1 flex flex-wrap items-center gap-2 lg:justify-start justify-center">
+              <span>
+                Você tem{" "}
+                <strong className="text-amber-600">
+                  {missoesPendentes} missões pendentes
+                </strong>
+                .
+              </span>
+              {ofensivaDias > 0 && (
+                <span className="bg-orange-100 text-orange-700 text-[10px] uppercase tracking-widest font-black px-2.5 py-1 rounded-lg border border-orange-200 flex items-center gap-1 shadow-sm">
+                  🔥 {ofensivaDias} Dias de Ofensiva
+                </span>
+              )}
             </p>
-            
+
             {/* Botões com fluxo natural e sem espremer */}
             <div className="mt-6 flex flex-wrap justify-center lg:justify-start gap-3 w-full">
               <a
@@ -660,7 +690,11 @@ export default function PortalDashboard() {
                     </span>
                     <span className="text-sm">
                       Fazer Check-in (+
-                      {taxaPresenca >= 90 ? 15 : taxaPresenca >= 75 ? 12 : 10}{" "}
+                      {taxaPresenca >= 90
+                        ? 15
+                        : taxaPresenca >= 75
+                          ? 12
+                          : 10}{" "}
                       XP)
                     </span>
                   </>
@@ -831,11 +865,15 @@ export default function PortalDashboard() {
       {perfilAberto && (
         <PerfilModal
           dadosPerfil={dadosPerfil}
+          ofensivaDias={ofensivaDias}
           carregando={carregandoPerfil}
           salvando={salvandoPerfil}
           onClose={() => setPerfilAberto(false)}
           setDadosPerfil={setDadosPerfil}
           onSalvar={salvarPerfil}
+          avatarAtual={avatarSistema}
+          totalCurtidas={curtidasSistema}
+          onSalvarAvatar={salvarNovoAvatar}
           dadosBadges={{
             atividades: atividades,
             xpTotal: xpTotalSistema,
@@ -844,6 +882,7 @@ export default function PortalDashboard() {
             totalCheckins: estatisticas.totalCheckins,
             whatsappConfirmado: zapConfirmado,
             aniversarioResgatado: false,
+            totalCurtidas: curtidasSistema,
           }}
         />
       )}

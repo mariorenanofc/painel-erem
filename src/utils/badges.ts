@@ -8,7 +8,7 @@ export interface Badge {
   desbloqueada: boolean;
   progresso: number;
   meta: number;
-  recompensa: number; // NOVO: Quantidade de XP que a medalha dá
+  recompensa: number;
   categoria:
     | "Missoes"
     | "Acertos"
@@ -27,6 +27,7 @@ export interface DadosParaBadges {
   totalCheckins: number;
   whatsappConfirmado: boolean;
   aniversarioResgatado: boolean;
+  totalCurtidas: number; // <--- NOVA VARIÁVEL
 }
 
 export const calcularBadges = (dados: DadosParaBadges): Badge[] => {
@@ -38,6 +39,7 @@ export const calcularBadges = (dados: DadosParaBadges): Badge[] => {
     totalCheckins,
     whatsappConfirmado,
     aniversarioResgatado,
+    totalCurtidas, // <--- RECEBENDO A VARIÁVEL
   } = dados;
 
   const missoesConcluidas = atividades.filter(
@@ -46,7 +48,6 @@ export const calcularBadges = (dados: DadosParaBadges): Badge[] => {
   const missoesNoPrazo = atividades.filter(
     (a) => a.status !== "Pendente" && a.statusPrazo !== "Atrasada",
   ).length;
-  // NOVO: Calcula quantas missões ele "Acertou" (Ganhou algum XP na correção ou no quiz)
   const missoesAcertadas = atividades.filter(
     (a) => Number(a.xpGanho) > 0,
   ).length;
@@ -190,7 +191,7 @@ export const calcularBadges = (dados: DadosParaBadges): Badge[] => {
       categoria: "Disciplina",
     },
 
-    // === EIXO 4: O INABALÁVEL (Check-ins / Frequência - Meta mais difícil) ===
+    // === EIXO 4: O INABALÁVEL (Check-ins / Frequência) ===
     {
       id: "freq_1",
       nome: "Marcando Presença",
@@ -271,7 +272,7 @@ export const calcularBadges = (dados: DadosParaBadges): Badge[] => {
       categoria: "XP",
     },
 
-    // === EIXO 6: COMUNIDADE (Pix de XP) ===
+    // === EIXO 6: COMUNIDADE (Pix de XP e Influência) ===
     {
       id: "soc_1",
       nome: "Quebrando o Gelo",
@@ -314,6 +315,63 @@ export const calcularBadges = (dados: DadosParaBadges): Badge[] => {
       progresso: Math.min(xpRecebido, 300),
       meta: 300,
       recompensa: 50,
+      categoria: "Social",
+    },
+
+    // AS NOVAS BADGES DE INFLUENCIADOR 🔥
+    {
+      id: "inf_1",
+      nome: "Influenciador",
+      icone: "👍",
+      descricao: "Recebeu 100 curtidas no perfil.",
+      desbloqueada: totalCurtidas >= 100,
+      progresso: Math.min(totalCurtidas, 100),
+      meta: 100,
+      recompensa: 10,
+      categoria: "Social",
+    },
+    {
+      id: "inf_2",
+      nome: "Estrela da Turma",
+      icone: "⭐",
+      descricao: "Recebeu 500 curtidas no perfil.",
+      desbloqueada: totalCurtidas >= 500,
+      progresso: Math.min(totalCurtidas, 500),
+      meta: 500,
+      recompensa: 20,
+      categoria: "Social",
+    },
+    {
+      id: "inf_3",
+      nome: "Ícone Tech",
+      icone: "💎",
+      descricao: "Recebeu 1.000 curtidas no perfil.",
+      desbloqueada: totalCurtidas >= 1000,
+      progresso: Math.min(totalCurtidas, 1000),
+      meta: 1000,
+      recompensa: 50,
+      categoria: "Social",
+    },
+    {
+      id: "inf_4",
+      nome: "Celebridade",
+      icone: "📸",
+      descricao: "Recebeu 5.000 curtidas no perfil.",
+      desbloqueada: totalCurtidas >= 5000,
+      progresso: Math.min(totalCurtidas, 5000),
+      meta: 5000,
+      recompensa: 100,
+      categoria: "Social",
+    },
+    {
+      id: "inf_5",
+      nome: "Lenda Aclamada",
+      icone: "👑",
+      descricao: "Alcançou 20.000 curtidas!",
+      desbloqueada: totalCurtidas >= 20000,
+      progresso: Math.min(totalCurtidas, 20000),
+      meta: 20000,
+      recompensa: 150,
       categoria: "Social",
     },
 

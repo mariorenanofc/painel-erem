@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -28,6 +29,8 @@ export default function PortalHeader({
 }: PortalHeaderProps) {
   const [menuAberto, setMenuAberto] = useState(false);
   const [notificacoesAbertas, setNotificacoesAbertas] = useState(false);
+  const [ultimoVisto, setUltimoVisto] = useState<number>(0); // <--- ESTADO DO SININHO
+
   const menuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
 
@@ -42,8 +45,31 @@ export default function PortalHeader({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  // CARREGA A ÚLTIMA VEZ QUE O ALUNO ABRIU O SININHO
+  useEffect(() => {
+    const salvo = localStorage.getItem(`notif_vistas_${matricula}`);
+    if (salvo) setUltimoVisto(Number(salvo));
+  }, [matricula]);
+
   const primeiroNome = nomeAluno.split(" ")[0];
-  const totalNotificacoes = notificacoes.length;
+
+  // A MÁGICA: Só mostra o número das notificações que chegaram DEPOIS da última visualização
+  const notificacoesNaoLidas = notificacoes.filter(
+    (n) => n.tempo > ultimoVisto,
+  ).length;
+
+  const toggleNotificacoes = () => {
+    const abrindo = !notificacoesAbertas;
+    setNotificacoesAbertas(abrindo);
+    setMenuAberto(false);
+
+    // Quando ele ABRIR o sininho, marcamos todas como "Lidas" guardando o tempo da mais nova
+    if (abrindo && notificacoes.length > 0) {
+      const maisRecente = notificacoes[0].tempo;
+      setUltimoVisto(maisRecente);
+      localStorage.setItem(`notif_vistas_${matricula}`, maisRecente.toString());
+    }
+  };
 
   return (
     <header className="bg-blue-900 text-white p-4 shadow-md sticky top-0 z-40">
@@ -51,7 +77,6 @@ export default function PortalHeader({
         <div className="flex items-center gap-3">
           <span className="text-2xl drop-shadow-md">🚀</span>
           <div>
-            {/* O NOME DO PROJETO AGORA É DINÂMICO AQUI */}
             <h1 className="font-black text-lg leading-tight tracking-tight">
               {nomeProjeto}
             </h1>
@@ -63,19 +88,17 @@ export default function PortalHeader({
 
         <div className="flex items-center gap-4">
           <div className="relative" ref={notifRef}>
+            {/* O BOTÃO DO SININHO */}
             <button
-              onClick={() => {
-                setNotificacoesAbertas(!notificacoesAbertas);
-                setMenuAberto(false);
-              }}
+              onClick={toggleNotificacoes}
               className="relative p-2 text-blue-200 hover:text-white transition-colors"
             >
               <span className="text-2xl">🔔</span>
-              {totalNotificacoes > 0 && (
+              {notificacoesNaoLidas > 0 && (
                 <span className="absolute top-1 right-1 flex h-4 w-4">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-4 w-4 bg-red-500 text-[9px] font-black items-center justify-center text-white border-2 border-blue-900">
-                    {totalNotificacoes > 9 ? "9+" : totalNotificacoes}
+                    {notificacoesNaoLidas > 9 ? "9+" : notificacoesNaoLidas}
                   </span>
                 </span>
               )}
@@ -88,34 +111,43 @@ export default function PortalHeader({
                     Notificações
                   </h3>
                   <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    {totalNotificacoes} novas
+                    Últimas {notificacoes.length}
                   </span>
                 </div>
                 <div className="max-h-64 overflow-y-auto">
-                  {totalNotificacoes === 0 ? (
+                  {notificacoes.length === 0 ? (
                     <p className="text-center text-slate-400 text-sm py-6">
                       Nenhuma novidade por aqui.
                     </p>
                   ) : (
                     <div className="divide-y divide-slate-100">
-                      {notificacoes.map((notif) => (
-                        <div
-                          key={notif.id}
-                          className="p-3 hover:bg-slate-50 transition-colors flex gap-3 items-start"
-                        >
-                          <div className="bg-emerald-100 p-2 rounded-full text-emerald-600 shrink-0 text-sm">
-                            💸
+                      {notificacoes.map((notif) => {
+                        // LÓGICA DE ESTILIZAÇÃO DO ÍCONE DA NOTIFICAÇÃO
+                        const isLike = notif.tipo === "LIKE";
+
+                        return (
+                          <div
+                            key={notif.id}
+                            className="p-3 hover:bg-slate-50 transition-colors flex gap-3 items-start"
+                          >
+                            <div
+                              className={`p-2 rounded-full shrink-0 text-sm ${isLike ? "bg-pink-100 text-pink-600" : "bg-emerald-100 text-emerald-600"}`}
+                            >
+                              {isLike ? "❤️" : "💸"}
+                            </div>
+                            <div>
+                              <p className="text-xs text-slate-700 leading-tight">
+                                {notif.mensagem}
+                              </p>
+                              {notif.xp > 0 && (
+                                <p className="text-[10px] text-slate-400 mt-1 font-bold">
+                                  +{notif.xp} XP creditados
+                                </p>
+                              )}
+                            </div>
                           </div>
-                          <div>
-                            <p className="text-xs text-slate-700 leading-tight">
-                              {notif.mensagem}
-                            </p>
-                            <p className="text-[10px] text-slate-400 mt-1 font-bold">
-                              +{notif.xp} XP creditados
-                            </p>
-                          </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

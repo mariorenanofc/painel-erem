@@ -1,14 +1,19 @@
 "use client";
 
-import { useMemo, useState } from "react"; // <--- NOVO IMPORT
+import { useMemo, useState } from "react";
 import { AlunoRankingTutor } from "../types";
-import PerfilPublicoModal from "./PerfilPublicoModal"; // <--- NOVO IMPORT
+import PerfilPublicoModal from "./PerfilPublicoModal";
+
+// Atualização da tipagem local
+interface AlunoRankingComAvatar extends AlunoRankingTutor {
+  avatar?: string;
+}
 
 interface RankingTutorModalProps {
   isOpen: boolean;
   onClose: () => void;
   carregando: boolean;
-  dadosRanking: AlunoRankingTutor[];
+  dadosRanking: AlunoRankingComAvatar[];
   filtroTempo: "geral" | "mensal" | "semanal";
   filtroTurma: string;
   setFiltroTurma: (val: string) => void;
@@ -27,7 +32,6 @@ export default function RankingTutorModal({
   onMudarFiltroTempo,
   onExportarCSV,
 }: RankingTutorModalProps) {
-  // <--- NOVO ESTADO
   const [perfilAlvo, setPerfilAlvo] = useState<string | null>(null);
 
   const turmasRanking = useMemo(() => {
@@ -43,6 +47,9 @@ export default function RankingTutorModal({
   }, [dadosRanking, filtroTurma]);
 
   const podio = rankingFiltrado.slice(0, 3);
+
+  const getAvatar = (avatarStr?: string) =>
+    avatarStr && avatarStr !== "avatar-padrao" ? avatarStr : "👨‍💻";
 
   if (!isOpen) return null;
 
@@ -119,7 +126,7 @@ export default function RankingTutorModal({
           </div>
         ) : (
           <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 items-start">
-            {/* PÓDIO VERTICAL (AGORA CLICÁVEL) */}
+            {/* O NOVO PÓDIO VISUAL DO TUTOR COM AVATARES */}
             <div className="xl:col-span-1 bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl p-6 shadow-xl text-white relative">
               <h3 className="font-black text-lg mb-6 text-center text-slate-200 uppercase tracking-widest">
                 Pódio Atual
@@ -130,10 +137,13 @@ export default function RankingTutorModal({
                     onClick={() => setPerfilAlvo(podio[1].matricula)}
                     className="w-1/3 flex flex-col items-center cursor-pointer group hover:-translate-y-2 transition-transform"
                   >
-                    <div className="bg-slate-300 w-10 h-10 rounded-full flex items-center justify-center text-lg font-black text-slate-700 shadow-lg z-10 -mb-5 border-2 border-slate-400">
-                      2
+                    <div className="bg-white w-12 h-12 rounded-full flex items-center justify-center text-3xl shadow-lg z-10 -mb-6 border-4 border-slate-400 relative">
+                      {getAvatar(podio[1].avatar)}
+                      <div className="absolute -bottom-1 -right-1 bg-slate-500 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-800">
+                        2
+                      </div>
                     </div>
-                    <div className="bg-slate-700/80 w-full h-28 rounded-t-lg border border-slate-600/50 flex flex-col items-center pt-6 px-1 text-center group-hover:bg-slate-600/80">
+                    <div className="bg-slate-700/80 w-full h-28 rounded-t-lg border border-slate-600/50 flex flex-col items-center pt-8 px-1 text-center group-hover:bg-slate-600/80">
                       <p className="font-bold text-[10px] line-clamp-2">
                         {podio[1].nome}
                       </p>
@@ -151,10 +161,13 @@ export default function RankingTutorModal({
                     <div className="text-3xl mb-1 filter drop-shadow-md animate-bounce group-hover:scale-125 transition-transform">
                       👑
                     </div>
-                    <div className="bg-amber-400 w-14 h-14 rounded-full flex items-center justify-center text-xl font-black text-amber-900 shadow-xl z-10 -mb-7 border-2 border-amber-200">
-                      1
+                    <div className="bg-white w-14 h-14 rounded-full flex items-center justify-center text-4xl shadow-xl z-10 -mb-7 border-4 border-amber-400 relative">
+                      {getAvatar(podio[0].avatar)}
+                      <div className="absolute -bottom-1 -right-1 bg-amber-500 text-amber-950 text-xs font-black w-6 h-6 rounded-full flex items-center justify-center border-2 border-slate-800">
+                        1
+                      </div>
                     </div>
-                    <div className="bg-blue-600 w-full h-40 rounded-t-lg shadow-2xl border border-blue-500 flex flex-col items-center pt-9 px-1 text-center group-hover:bg-blue-500">
+                    <div className="bg-blue-600 w-full h-40 rounded-t-lg shadow-2xl border border-blue-500 flex flex-col items-center pt-10 px-1 text-center group-hover:bg-blue-500">
                       <p className="font-bold text-xs line-clamp-2 text-white">
                         {podio[0].nome}
                       </p>
@@ -169,10 +182,13 @@ export default function RankingTutorModal({
                     onClick={() => setPerfilAlvo(podio[2].matricula)}
                     className="w-1/3 flex flex-col items-center cursor-pointer group hover:-translate-y-2 transition-transform"
                   >
-                    <div className="bg-orange-400 w-10 h-10 rounded-full flex items-center justify-center text-lg font-black text-orange-950 shadow-lg z-10 -mb-5 border-2 border-orange-300">
-                      3
+                    <div className="bg-white w-12 h-12 rounded-full flex items-center justify-center text-3xl shadow-lg z-10 -mb-6 border-4 border-orange-300 relative">
+                      {getAvatar(podio[2].avatar)}
+                      <div className="absolute -bottom-1 -right-1 bg-orange-400 text-orange-950 text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-slate-800">
+                        3
+                      </div>
                     </div>
-                    <div className="bg-slate-700/60 w-full h-24 rounded-t-lg border border-slate-600/30 flex flex-col items-center pt-6 px-1 text-center group-hover:bg-slate-600/60">
+                    <div className="bg-slate-700/60 w-full h-24 rounded-t-lg border border-slate-600/30 flex flex-col items-center pt-8 px-1 text-center group-hover:bg-slate-600/60">
                       <p className="font-bold text-[10px] line-clamp-2 text-slate-300">
                         {podio[2].nome}
                       </p>
@@ -185,7 +201,7 @@ export default function RankingTutorModal({
               </div>
             </div>
 
-            {/* TABELA COMPLETA (AGORA CLICÁVEL) */}
+            {/* TABELA COMPLETA COM AVATARES */}
             <div className="xl:col-span-2 bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden">
               <div className="bg-slate-50 p-3 border-b border-slate-200 flex justify-between items-center">
                 <h3 className="font-bold text-slate-700 text-sm">
@@ -199,7 +215,7 @@ export default function RankingTutorModal({
                 <table className="w-full text-left border-collapse text-sm">
                   <thead className="bg-slate-100 sticky top-0 z-10">
                     <tr className="text-slate-500 text-xs uppercase">
-                      <th className="p-3 font-bold border-b border-slate-200 text-center">
+                      <th className="p-3 font-bold border-b border-slate-200 text-center w-16">
                         Pos
                       </th>
                       <th className="p-3 font-bold border-b border-slate-200">
@@ -220,19 +236,27 @@ export default function RankingTutorModal({
                     {rankingFiltrado.map((aluno) => (
                       <tr
                         key={aluno.matricula}
-                        onClick={() => setPerfilAlvo(aluno.matricula)} // <--- CLIQUE MÁGICO
+                        onClick={() => setPerfilAlvo(aluno.matricula)}
                         className={`cursor-pointer hover:bg-blue-50 transition-colors ${aluno.posicao && aluno.posicao <= 3 ? "bg-amber-50/20" : ""}`}
                       >
                         <td className="p-3 text-center font-black text-slate-400">
                           {aluno.posicao}º
                         </td>
                         <td className="p-3">
-                          <p className="font-bold text-slate-800">
-                            {aluno.nome}
-                          </p>
-                          <p className="text-[10px] text-slate-400 font-mono">
-                            {aluno.matricula}
-                          </p>
+                          {/* AVATAR + NOME NA TABELA */}
+                          <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-white border border-slate-200 shadow-sm flex items-center justify-center text-lg shrink-0">
+                              {getAvatar(aluno.avatar)}
+                            </div>
+                            <div>
+                              <p className="font-bold text-slate-800">
+                                {aluno.nome}
+                              </p>
+                              <p className="text-[10px] text-slate-400 font-mono">
+                                {aluno.matricula}
+                              </p>
+                            </div>
+                          </div>
                         </td>
                         <td className="p-3 text-slate-600 text-xs">
                           {aluno.turma}
@@ -258,11 +282,10 @@ export default function RankingTutorModal({
         )}
       </div>
 
-      {/* RENDERIZADOR DO PERFIL PÚBLICO */}
       {perfilAlvo && (
         <PerfilPublicoModal
           matriculaAlvo={perfilAlvo}
-          matriculaVisualizador={"1234567"} // CONTA DO MESTRE PARA INTERAÇÕES DE CURTIDA
+          matriculaVisualizador={"1234567"}
           onClose={() => setPerfilAlvo(null)}
         />
       )}

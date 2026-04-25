@@ -2,9 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { DadosAluno, AlunoRanking } from "../types";
-import PerfilPublicoModal from "./PerfilPublicoModal"; // <--- NOVO IMPORT
+import PerfilPublicoModal from "./PerfilPublicoModal";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
+
+// Atualização rápida da tipagem para aceitar o avatar
+interface AlunoRankingComAvatar extends AlunoRanking {
+  avatar?: string;
+}
 
 interface RankingModalProps {
   aluno: DadosAluno;
@@ -12,14 +17,13 @@ interface RankingModalProps {
 }
 
 export default function RankingModal({ aluno, onClose }: RankingModalProps) {
-  const [dadosRanking, setDadosRanking] = useState<AlunoRanking[]>([]);
+  const [dadosRanking, setDadosRanking] = useState<AlunoRankingComAvatar[]>([]);
   const [carregandoRanking, setCarregandoRanking] = useState(false);
   const [abaRanking, setAbaRanking] = useState<"Geral" | "Turma">("Geral");
   const [filtroTempo, setFiltroTempo] = useState<
     "geral" | "semanal" | "mensal"
   >("geral");
 
-  // <--- NOVO ESTADO PARA CONTROLAR QUEM ESTÁ SENDO VISTO
   const [perfilAlvo, setPerfilAlvo] = useState<string | null>(null);
 
   const carregarRanking = async (tempoSelecionado: string) => {
@@ -56,7 +60,7 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
   return (
     <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4 animate-in fade-in">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[95vh]">
-        <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-4 md:p-5 border-b flex justify-between items-center text-white">
+        <div className="bg-gradient-to-r from-amber-500 to-amber-600 p-4 md:p-5 border-b flex justify-between items-center text-white shrink-0">
           <div>
             <h2 className="font-black text-lg md:text-xl flex items-center gap-2">
               <span>🏆</span> Leaderboard
@@ -73,7 +77,7 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
           </button>
         </div>
 
-        <div className="flex bg-slate-100 border-b border-slate-200">
+        <div className="flex bg-slate-100 border-b border-slate-200 shrink-0">
           <button
             onClick={() => setAbaRanking("Geral")}
             className={`flex-1 py-3 text-xs md:text-sm font-bold transition-colors ${abaRanking === "Geral" ? "bg-white text-amber-600 border-b-2 border-amber-500" : "text-slate-500 hover:bg-slate-200"}`}
@@ -88,7 +92,7 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
           </button>
         </div>
 
-        <div className="bg-white px-4 py-3 flex justify-center gap-2 border-b border-slate-100 shadow-sm z-10">
+        <div className="bg-white px-4 py-3 flex justify-center gap-2 border-b border-slate-100 shadow-sm z-10 shrink-0">
           <button
             onClick={() => mudarFiltroTempo("geral")}
             className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${filtroTempo === "geral" ? "bg-amber-100 text-amber-700 border border-amber-300 shadow-sm" : "bg-slate-100 text-slate-500 hover:bg-slate-200 border border-transparent"}`}
@@ -173,15 +177,27 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
                     destaqueNome = "text-blue-800";
                   }
 
+                  const avatarExibicao =
+                    userRank.avatar && userRank.avatar !== "avatar-padrao"
+                      ? userRank.avatar
+                      : "👨‍💻";
+
                   return (
                     <div
                       key={userRank.matricula}
-                      onClick={() => setPerfilAlvo(userRank.matricula)} // <--- CLIQUE MÁGICO
-                      className={`flex items-center gap-3 md:gap-4 p-3 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] hover:shadow-md ${corFundo}`}
+                      onClick={() => setPerfilAlvo(userRank.matricula)}
+                      className={`flex items-center gap-2 md:gap-4 p-2 md:p-3 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] hover:shadow-md ${corFundo}`}
                     >
-                      <div className="w-8 md:w-10 text-center font-black text-slate-600 text-base md:text-lg">
-                        {medalha || `${userRank.posicao}º`}
+                      {/* O NOVO BLOCO VISUAL DA POSIÇÃO + AVATAR */}
+                      <div className="flex items-center justify-center gap-2 shrink-0 w-16 md:w-20">
+                        <div className="w-5 text-center font-black text-slate-500 text-sm md:text-base">
+                          {medalha || `${userRank.posicao}º`}
+                        </div>
+                        <div className="w-10 h-10 md:w-12 md:h-12 bg-white/70 border border-slate-200 rounded-full flex items-center justify-center text-2xl shadow-sm">
+                          {avatarExibicao}
+                        </div>
                       </div>
+
                       <div className="flex-1 min-w-0">
                         <h4
                           className={`font-bold text-sm md:text-base truncate ${destaqueNome}`}
@@ -197,7 +213,8 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
                           {userRank.turma} • {userRank.nivel}
                         </p>
                       </div>
-                      <div className="text-right bg-white/60 px-2 md:px-3 py-1 md:py-1.5 rounded-lg border border-white/50 whitespace-nowrap">
+
+                      <div className="text-right bg-white/60 px-2 md:px-3 py-1 md:py-1.5 rounded-lg border border-white/50 whitespace-nowrap shrink-0">
                         <span className="font-black text-amber-600 text-base md:text-lg">
                           {userRank.xp}
                         </span>
@@ -214,7 +231,6 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
         </div>
       </div>
 
-      {/* RENDERIZADOR DO PERFIL PÚBLICO */}
       {perfilAlvo && (
         <PerfilPublicoModal
           matriculaAlvo={perfilAlvo}

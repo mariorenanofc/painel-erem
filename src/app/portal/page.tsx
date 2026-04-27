@@ -278,7 +278,7 @@ export default function PortalDashboard() {
     setClassroomAberto(true);
     // Só inicia o tempo se a caixa ainda não foi marcada
     if (!checkboxHonestidade && timerClassroom === 0) {
-      setTimerClassroom(60);
+      setTimerClassroom(20);
     }
   };
 

@@ -88,9 +88,15 @@ export default function PortalDashboard() {
   const [checkinRealizado, setCheckinRealizado] = useState(false);
   const [modalSenhaAberto, setModalSenhaAberto] = useState(false);
   const [senhaDigitada, setSenhaDigitada] = useState("");
+
   const [missaoAberta, setMissaoAberta] = useState<Atividade | null>(null);
   const [resposta, setResposta] = useState("");
   const [enviando, setEnviando] = useState(false);
+
+  // === ESTADOS DA TRAVA DO CLASSROOM ===
+  const [timerClassroom, setTimerClassroom] = useState(0);
+  const [classroomAberto, setClassroomAberto] = useState(false);
+  const [checkboxHonestidade, setCheckboxHonestidade] = useState(false);
 
   const [zapConfirmado, setZapConfirmado] = useState(true);
   const [zapLink, setZapLink] = useState("");
@@ -247,6 +253,34 @@ export default function PortalDashboard() {
     badgesResgatadas,
     curtidasSistema,
   ]);
+
+  // === LÓGICA DO TEMPORIZADOR CLASSROOM ===
+  useEffect(() => {
+    if (!missaoAberta) {
+      setTimerClassroom(0);
+      setClassroomAberto(false);
+      setCheckboxHonestidade(false);
+    }
+  }, [missaoAberta]);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (classroomAberto && timerClassroom > 0) {
+      interval = setInterval(() => {
+        setTimerClassroom((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [classroomAberto, timerClassroom]);
+
+  const dispararIdaAoClassroom = (link: string) => {
+    window.open(link, "_blank");
+    setClassroomAberto(true);
+    // Só inicia o tempo se a caixa ainda não foi marcada
+    if (!checkboxHonestidade && timerClassroom === 0) {
+      setTimerClassroom(60);
+    }
+  };
 
   const resgatarRecompensaBadge = async (badge: Badge) => {
     if (!aluno) return;
@@ -688,7 +722,11 @@ export default function PortalDashboard() {
                     </span>
                     <span className="text-sm">
                       Fazer Check-in (+
-                      {taxaPresenca >= 90 ? 15 : taxaPresenca >= 75 ? 12 : 10}{" "}
+                      {taxaPresenca >= 90
+                        ? 15
+                        : taxaPresenca >= 75
+                          ? 12
+                          : 10}{" "}
                       XP)
                     </span>
                   </>
@@ -808,7 +846,6 @@ export default function PortalDashboard() {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {atividadesFiltradas.map((ativ) => {
-              // MÁGICA 3: BLINDAGEM DA COR DO STATUS (Ignora maiúsculas e espaços)
               const statusNormalizado =
                 ativ.status?.toLowerCase().trim() || "pendente";
 
@@ -1096,12 +1133,19 @@ export default function PortalDashboard() {
           };
           const prazoEncerrado = verificarPrazo(missaoAberta.dataLimite);
 
-          // MÁGICA 4: BLINDAGEM DA CAIXA DE TEXTO E DO BOTÃO DE "JÁ ENVIADO"
           const statusAtual =
             missaoAberta.status?.toLowerCase().trim() || "pendente";
+
+          // MÁGICA: O BLOQUEIO DE HONESTIDADE AQUI
+          let bloqueioClassroom = false;
+          if (missaoAberta.linkClassroom && !checkboxHonestidade) {
+            bloqueioClassroom = true;
+          }
+
           const inputDesabilitado =
             enviando ||
-            (statusAtual !== "pendente" && statusAtual !== "devolvida");
+            (statusAtual !== "pendente" && statusAtual !== "devolvida") ||
+            bloqueioClassroom;
 
           return (
             <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
@@ -1140,7 +1184,6 @@ export default function PortalDashboard() {
                     onSubmit={enviarMissao}
                     className="border-t border-slate-200 pt-6"
                   >
-                    {/* AVISO DE MISSÃO DEVOLVIDA CORRIGIDO AQUI */}
                     {statusAtual === "devolvida" && (
                       <div className="bg-red-50 border-2 border-red-200 p-4 rounded-xl mb-4 animate-in slide-in-from-top-2 shadow-sm">
                         <h3 className="text-red-700 font-black text-sm flex items-center gap-2 mb-1">
@@ -1153,7 +1196,6 @@ export default function PortalDashboard() {
                       </div>
                     )}
 
-                    {/* AVISO DE FEEDBACK (Aprovado com elogio) CORRIGIDO AQUI */}
                     {(statusAtual === "avaliado" ||
                       statusAtual === "avaliada") &&
                       missaoAberta.feedback && (
@@ -1164,6 +1206,62 @@ export default function PortalDashboard() {
                           <p className="text-emerald-600 text-xs font-medium">
                             {missaoAberta.feedback}
                           </p>
+                        </div>
+                      )}
+
+                    {/* A TRAVA DE HONESTIDADE DO CLASSROOM INJETADA AQUI */}
+                    {missaoAberta.linkClassroom &&
+                      (statusAtual === "pendente" ||
+                        statusAtual === "devolvida") && (
+                        <div className="bg-amber-50 border-2 border-amber-300 p-5 rounded-xl mb-6 shadow-sm">
+                          <h3 className="text-amber-800 font-black text-sm flex items-center gap-2 mb-2">
+                            <span>🏫</span> Entrega Obrigatória no Classroom!
+                          </h3>
+                          <p className="text-amber-700 text-xs font-medium mb-4 leading-relaxed">
+                            Para ganhar o XP desta missão, você precisa primeiro
+                            registrar a sua entrega oficial no Ambiente Virtual
+                            de Aprendizagem (Classroom).
+                          </p>
+
+                          <div className="flex flex-col gap-3">
+                            <button
+                              type="button"
+                              onClick={() =>
+                                dispararIdaAoClassroom(
+                                  missaoAberta.linkClassroom!,
+                                )
+                              }
+                              className="bg-amber-500 hover:bg-amber-600 text-white font-black py-3 rounded-lg shadow transition-colors flex items-center justify-center gap-2"
+                            >
+                              1. ABRIR O GOOGLE CLASSROOM 🔗
+                            </button>
+
+                            {classroomAberto && timerClassroom > 0 && (
+                              <div className="text-center p-3 bg-amber-100 text-amber-700 font-bold text-xs rounded-lg animate-pulse">
+                                ⏳ Validando o seu acesso... aguarde{" "}
+                                {timerClassroom} segundos.
+                              </div>
+                            )}
+
+                            {classroomAberto && timerClassroom === 0 && (
+                              <label className="flex items-start gap-3 p-3 bg-white border-2 border-emerald-200 rounded-lg cursor-pointer hover:bg-emerald-50 transition-colors mt-2 animate-in fade-in">
+                                <input
+                                  type="checkbox"
+                                  required
+                                  checked={checkboxHonestidade}
+                                  onChange={(e) =>
+                                    setCheckboxHonestidade(e.target.checked)
+                                  }
+                                  className="mt-1 w-5 h-5 text-emerald-600 focus:ring-emerald-500 shrink-0 cursor-pointer"
+                                />
+                                <span className="text-xs text-slate-700 font-bold leading-snug">
+                                  2. Confirmo por minha honra que já anexei e
+                                  enviei o meu material no Google Classroom
+                                  oficial.
+                                </span>
+                              </label>
+                            )}
+                          </div>
                         </div>
                       )}
 

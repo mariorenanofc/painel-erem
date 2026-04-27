@@ -79,6 +79,10 @@ export default function GestaoAulasPage() {
   const [opcaoC, setOpcaoC] = useState("");
   const [opcaoD, setOpcaoD] = useState("");
   const [respostaCorreta, setRespostaCorreta] = useState("A");
+
+  // NOVOS ESTADOS: RASCUNHO E CLASSROOM
+  const [linkClassroom, setLinkClassroom] = useState("");
+  const [statusPublicacao, setStatusPublicacao] = useState("Publicada");
   const [salvando, setSalvando] = useState(false);
 
   // === ESTADOS DOS MODAIS ===
@@ -306,6 +310,8 @@ export default function GestaoAulasPage() {
     setOpcaoC("");
     setOpcaoD("");
     setRespostaCorreta("A");
+    setLinkClassroom("");
+    setStatusPublicacao("Publicada");
     setModalNovaMissaoAberto(false);
   };
 
@@ -322,6 +328,8 @@ export default function GestaoAulasPage() {
     setOpcaoC(String(ativ.opcaoC || ""));
     setOpcaoD(String(ativ.opcaoD || ""));
     setRespostaCorreta(String(ativ.respostaCorreta || "A"));
+    setLinkClassroom(String(ativ.linkClassroom || ""));
+    setStatusPublicacao(String(ativ.statusPublicacao || "Publicada"));
     setModalNovaMissaoAberto(true);
   };
 
@@ -339,7 +347,10 @@ export default function GestaoAulasPage() {
     }
   };
 
-  const salvarNovaAtividade = async (e: React.FormEvent) => {
+  const salvarNovaAtividade = async (
+    e: React.FormEvent | React.MouseEvent,
+    statusAcao: string,
+  ) => {
     e.preventDefault();
     if (!titulo || !descricao || !dataLimite || !xp)
       return alert("Preencha os campos obrigatórios!");
@@ -362,6 +373,8 @@ export default function GestaoAulasPage() {
           opcaoC,
           opcaoD,
           respostaCorreta,
+          linkClassroom,
+          statusPublicacao: statusAcao, // Passa o status do botão clicado
         }),
       });
       limparFormulario();
@@ -403,7 +416,6 @@ export default function GestaoAulasPage() {
     }
   };
 
-  // NOVA LÓGICA DE AVALIAÇÃO COM DEVOLUTIVA
   const avaliarAluno = async (
     entrega: Entrega,
     statusAvaliacao: "Avaliado" | "Devolvida",
@@ -561,7 +573,6 @@ export default function GestaoAulasPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans pb-24">
-      {/* MODAIS EXISTENTES */}
       <RankingTutorModal
         isOpen={modalRankingAberto}
         onClose={() => setModalRankingAberto(false)}
@@ -635,7 +646,6 @@ export default function GestaoAulasPage() {
         </div>
       )}
 
-      {/* NOVO MODAL: CRIAR MISSÃO (Flutuante e Focado) */}
       {modalNovaMissaoAberto && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -655,7 +665,7 @@ export default function GestaoAulasPage() {
             </div>
 
             <div className="p-6 overflow-y-auto">
-              <form onSubmit={salvarNovaAtividade} className="space-y-5">
+              <form className="space-y-5">
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-3">
                     Tipo de Missão
@@ -756,6 +766,24 @@ export default function GestaoAulasPage() {
                   </div>
                 )}
 
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2">
+                    <span>🏫</span> Link da Atividade no Classroom (Opcional)
+                  </label>
+                  <input
+                    type="url"
+                    value={linkClassroom}
+                    onChange={(e) => setLinkClassroom(e.target.value)}
+                    placeholder="https://classroom.google.com/..."
+                    className="w-full bg-white border-2 border-slate-200 text-slate-800 rounded-lg p-3 focus:border-blue-500 outline-none transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                    Se preenchido, os alunos serão obrigados a clicar neste link
+                    e aguardar 60 segundos no portal antes de poderem enviar a
+                    resposta.
+                  </p>
+                </div>
+
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div>
                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
@@ -798,7 +826,7 @@ export default function GestaoAulasPage() {
                   </div>
                 </div>
 
-                <div className="pt-4 flex gap-3 justify-end border-t border-slate-100">
+                <div className="pt-4 flex flex-wrap gap-3 justify-end border-t border-slate-100">
                   <button
                     type="button"
                     onClick={limparFormulario}
@@ -807,14 +835,23 @@ export default function GestaoAulasPage() {
                     Cancelar
                   </button>
                   <button
-                    type="submit"
+                    type="button"
+                    onClick={(e) => salvarNovaAtividade(e, "Rascunho")}
+                    disabled={salvando}
+                    className="px-6 py-3 rounded-xl font-bold bg-slate-200 hover:bg-slate-300 text-slate-700 transition-colors shadow-sm"
+                  >
+                    📝 Salvar como Rascunho
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => salvarNovaAtividade(e, "Publicada")}
                     disabled={salvando}
                     className={`px-8 py-3 rounded-xl text-white font-black shadow-md transition-all active:scale-95 disabled:bg-slate-400 ${idEditando ? "bg-amber-500 hover:bg-amber-600" : "bg-blue-600 hover:bg-blue-700"}`}
                   >
                     {salvando
                       ? "Processando..."
                       : idEditando
-                        ? "Salvar Alterações"
+                        ? "Atualizar Missão"
                         : "🚀 Publicar Missão"}
                   </button>
                 </div>

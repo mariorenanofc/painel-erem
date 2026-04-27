@@ -8,7 +8,6 @@ interface MissoesListProps {
   onEdit: (ativ: Atividade) => void;
   onDelete: (id: string) => void;
   onViewEntregas: (ativ: Atividade) => void;
-  // Nota: Removemos as props antigas de Ranking, Frequencia e Analytics daqui!
 }
 
 export default function MissoesList({
@@ -19,16 +18,14 @@ export default function MissoesList({
   onDelete,
   onViewEntregas,
 }: MissoesListProps) {
-  // Estados Locais dos Filtros
   const [busca, setBusca] = useState("");
   const [filtroTurma, setFiltroTurma] = useState("Todas");
   const [filtroTipo, setFiltroTipo] = useState("Todos");
   const [filtroPrazo, setFiltroPrazo] = useState("Todas");
+  const [filtroStatusPub, setFiltroStatusPub] = useState("Todos"); // <--- NOVO FILTRO RASCUNHO/PUBLICADA
 
-  // Estado para o Modal de "Ver como Aluno"
   const [missaoPreview, setMissaoPreview] = useState<Atividade | null>(null);
 
-  // Lógica inteligente de filtragem (Executada localmente para ser ultra rápida)
   const atividadesFiltradas = useMemo(() => {
     const hoje = new Date();
     const hojeTime = new Date(
@@ -37,7 +34,6 @@ export default function MissoesList({
       hoje.getDate(),
     ).getTime();
 
-    // Fim da semana (Domingo)
     const diaDaSemana = hoje.getDay();
     const diasAteDomingo = diaDaSemana === 0 ? 0 : 7 - diaDaSemana;
     const fimDaSemana = new Date(hojeTime);
@@ -48,24 +44,26 @@ export default function MissoesList({
     const anoAtual = hoje.getFullYear();
 
     return atividades.filter((ativ) => {
-      // 1. Filtro de Busca
       const matchBusca = ativ.titulo
         .toLowerCase()
         .includes(busca.toLowerCase());
       if (!matchBusca) return false;
 
-      // 2. Filtro de Turma
       const matchTurma =
         filtroTurma === "Todas" ||
         ativ.turmaAlvo === "Todas" ||
         ativ.turmaAlvo === filtroTurma;
       if (!matchTurma) return false;
 
-      // 3. Filtro de Tipo
       const matchTipo = filtroTipo === "Todos" || ativ.tipo === filtroTipo;
       if (!matchTipo) return false;
 
-      // 4. Filtro de Prazo (Data Limite)
+      // Filtro de Rascunho / Publicada
+      const statusPub = ativ.statusPublicacao || "Publicada";
+      const matchStatusPub =
+        filtroStatusPub === "Todos" || statusPub === filtroStatusPub;
+      if (!matchStatusPub) return false;
+
       if (filtroPrazo !== "Todas") {
         if (!ativ.dataLimite) return false;
 
@@ -90,13 +88,18 @@ export default function MissoesList({
 
       return true;
     });
-  }, [atividades, busca, filtroTurma, filtroTipo, filtroPrazo]);
+  }, [
+    atividades,
+    busca,
+    filtroTurma,
+    filtroTipo,
+    filtroPrazo,
+    filtroStatusPub,
+  ]);
 
   return (
     <div className="flex flex-col h-full">
-      {/* CABEÇALHO LIMPO (Apenas Filtros) */}
       <div className="p-0 mb-4 bg-transparent flex flex-col gap-4">
-        {/* ÁREA DE FILTROS */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="flex-1 min-w-[200px]">
             <input
@@ -106,6 +109,19 @@ export default function MissoesList({
               onChange={(e) => setBusca(e.target.value)}
               className="w-full border text-slate-800 border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
             />
+          </div>
+
+          {/* NOVO SELECT DE STATUS DE PUBLICAÇÃO */}
+          <div className="w-full sm:w-auto shrink-0">
+            <select
+              value={filtroStatusPub}
+              onChange={(e) => setFiltroStatusPub(e.target.value)}
+              className="w-full border text-slate-800 border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white transition-all font-bold shadow-sm"
+            >
+              <option value="Todos">👁️ Todos os Status</option>
+              <option value="Publicada">🚀 Publicadas</option>
+              <option value="Rascunho">📝 Rascunhos</option>
+            </select>
           </div>
 
           <div className="w-full sm:w-auto shrink-0">
@@ -151,7 +167,6 @@ export default function MissoesList({
         </div>
       </div>
 
-      {/* LISTAGEM DE ATIVIDADES */}
       <div className="h-[600px] overflow-y-auto pr-2 custom-scrollbar">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3">
@@ -172,87 +187,100 @@ export default function MissoesList({
           </div>
         ) : (
           <div className="space-y-4">
-            {atividadesFiltradas.map((ativ) => (
-              <div
-                key={ativ.id}
-                className="bg-white border border-slate-200 rounded-2xl p-5 hover:shadow-md transition-all flex flex-col md:flex-row justify-between gap-6 group"
-              >
-                <div className="flex-1">
-                  <div className="flex items-center flex-wrap gap-2 mb-3">
-                    <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
-                      {ativ.id}
-                    </span>
-                    <span
-                      className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border ${ativ.tipo === "Quiz" ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-blue-50 text-blue-700 border-blue-200"}`}
-                    >
-                      {ativ.tipo}
-                    </span>
-                    <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-md border border-emerald-200 tracking-wider">
-                      ⭐ {ativ.xp} XP
-                    </span>
-                    <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider text-slate-500 bg-slate-50 border border-slate-200">
-                      📅 Prazo:{" "}
-                      {ativ.dataLimite
-                        ? ativ.dataLimite.split("-").reverse().join("/")
-                        : "Sem prazo"}
-                    </span>
-                  </div>
-                  <h4 className="font-bold text-slate-800 text-lg leading-tight">
-                    {ativ.titulo}
-                  </h4>
-                  <p className="text-sm text-slate-500 line-clamp-2 mt-2 leading-relaxed">
-                    {ativ.descricao}
-                  </p>
-                </div>
+            {atividadesFiltradas.map((ativ) => {
+              const isRascunho = ativ.statusPublicacao === "Rascunho";
 
-                <div className="flex flex-col items-end justify-between min-w-[160px] gap-4 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6">
-                  {/* Ícones de Ação Rápidas (Aparecem no hover no desktop) */}
-                  <div className="flex gap-2 w-full justify-end opacity-100 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity">
-                    <button
-                      onClick={() => onEdit(ativ)}
-                      className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
-                      title="Editar Missão"
+              return (
+                <div
+                  key={ativ.id}
+                  className={`bg-white border ${isRascunho ? "border-yellow-200" : "border-slate-200"} rounded-2xl p-5 hover:shadow-md transition-all flex flex-col md:flex-row justify-between gap-6 group`}
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center flex-wrap gap-2 mb-3">
+                      <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
+                        {ativ.id}
+                      </span>
+
+                      {/* BADGES DE STATUS DE PUBLICAÇÃO */}
+                      {isRascunho ? (
+                        <span className="bg-yellow-100 text-yellow-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-yellow-300 shadow-sm animate-pulse">
+                          📝 Rascunho
+                        </span>
+                      ) : (
+                        <span className="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-blue-300 shadow-sm">
+                          🚀 Publicada
+                        </span>
+                      )}
+
+                      <span
+                        className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border ${ativ.tipo === "Quiz" ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-indigo-50 text-indigo-700 border-indigo-200"}`}
+                      >
+                        {ativ.tipo}
+                      </span>
+                      <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-md border border-emerald-200 tracking-wider">
+                        ⭐ {ativ.xp} XP
+                      </span>
+                      <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider text-slate-500 bg-slate-50 border border-slate-200">
+                        📅 Prazo:{" "}
+                        {ativ.dataLimite
+                          ? ativ.dataLimite.split("-").reverse().join("/")
+                          : "Sem prazo"}
+                      </span>
+                    </div>
+                    <h4
+                      className={`font-bold text-lg leading-tight ${isRascunho ? "text-slate-400" : "text-slate-800"}`}
                     >
-                      ✏️
-                    </button>
-                    <button
-                      onClick={() => onDelete(ativ.id)}
-                      className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                      title="Excluir Missão"
-                    >
-                      🗑️
-                    </button>
+                      {ativ.titulo}
+                    </h4>
+                    <p className="text-sm text-slate-500 line-clamp-2 mt-2 leading-relaxed">
+                      {ativ.descricao}
+                    </p>
                   </div>
 
-                  {/* Botões Principais */}
-                  <div className="flex flex-col gap-2 w-full">
-                    <button
-                      onClick={() => setMissaoPreview(ativ)}
-                      className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold py-2 px-3 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2"
-                    >
-                      👀 Ver como Aluno
-                    </button>
-                    <button
-                      onClick={() => onViewEntregas(ativ)}
-                      className="cursor-pointer w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold py-2.5 px-3 rounded-lg shadow-md transition-all active:scale-95 flex justify-center items-center gap-2"
-                    >
-                      Ver Entregas
-                    </button>
+                  <div className="flex flex-col items-end justify-between min-w-[160px] gap-4 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6">
+                    <div className="flex gap-2 w-full justify-end opacity-100 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => onEdit(ativ)}
+                        className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
+                        title="Editar Missão"
+                      >
+                        ✏️
+                      </button>
+                      <button
+                        onClick={() => onDelete(ativ.id)}
+                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        title="Excluir Missão"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+
+                    <div className="flex flex-col gap-2 w-full">
+                      <button
+                        onClick={() => setMissaoPreview(ativ)}
+                        className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold py-2 px-3 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2"
+                      >
+                        👀 Ver como Aluno
+                      </button>
+                      <button
+                        onClick={() => onViewEntregas(ativ)}
+                        className="cursor-pointer w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold py-2.5 px-3 rounded-lg shadow-md transition-all active:scale-95 flex justify-center items-center gap-2"
+                      >
+                        Ver Entregas
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* ========================================================= */}
-      {/* MODAL DE PREVIEW DA VISÃO DO ALUNO */}
-      {/* ========================================================= */}
+      {/* MODAL DE PREVIEW */}
       {missaoPreview && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            {/* Aviso de Preview */}
             <div className="bg-amber-400 text-amber-900 text-[10px] font-black uppercase tracking-widest text-center py-1">
               Modo de Visualização do Aluno
             </div>

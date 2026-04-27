@@ -44,6 +44,8 @@ export interface Atividade {
   turmaAlvo?: string;
   respostaCorreta?: string;
   feedback?: string;
+  linkClassroom?: string;
+  statusPublicacao?: string;
 }
 
 export interface PerfilAluno {

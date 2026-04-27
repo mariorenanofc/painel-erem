@@ -123,7 +123,23 @@ export default function PortalHeader({
                     <div className="divide-y divide-slate-100">
                       {notificacoes.map((notif) => {
                         // LÓGICA DE ESTILIZAÇÃO DO ÍCONE DA NOTIFICAÇÃO
-                        const isLike = notif.tipo === "LIKE";
+                        let iconeNotif = "💸";
+                        let corBg = "bg-emerald-100";
+                        let corTexto = "text-emerald-600";
+
+                        if (notif.tipo === "LIKE") {
+                          iconeNotif = "❤️";
+                          corBg = "bg-pink-100";
+                          corTexto = "text-pink-600";
+                        } else if (notif.tipo === "DEVOLVIDA") {
+                          iconeNotif = "⚠️";
+                          corBg = "bg-red-100";
+                          corTexto = "text-red-600";
+                        } else if (notif.tipo === "AVALIADA") {
+                          iconeNotif = "⭐";
+                          corBg = "bg-amber-100";
+                          corTexto = "text-amber-600";
+                        }
 
                         return (
                           <div
@@ -131,9 +147,9 @@ export default function PortalHeader({
                             className="p-3 hover:bg-slate-50 transition-colors flex gap-3 items-start"
                           >
                             <div
-                              className={`p-2 rounded-full shrink-0 text-sm ${isLike ? "bg-pink-100 text-pink-600" : "bg-emerald-100 text-emerald-600"}`}
+                              className={`${corBg} p-2 rounded-full shrink-0 text-sm ${corTexto}`}
                             >
-                              {isLike ? "❤️" : "💸"}
+                              {iconeNotif}
                             </div>
                             <div>
                               <p className="text-xs text-slate-700 leading-tight">

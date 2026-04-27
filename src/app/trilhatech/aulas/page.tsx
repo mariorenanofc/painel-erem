@@ -66,7 +66,7 @@ export default function GestaoAulasPage() {
   const [modalZapAberto, setModalZapAberto] = useState(false);
 
   // === ESTADOS DO FORMULÁRIO (NOVA MISSÃO) ===
-  const [modalNovaMissaoAberto, setModalNovaMissaoAberto] = useState(false); // <-- NOVO CONTROLE DO MODAL
+  const [modalNovaMissaoAberto, setModalNovaMissaoAberto] = useState(false);
   const [idEditando, setIdEditando] = useState<string | null>(null);
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -127,7 +127,6 @@ export default function GestaoAulasPage() {
     "alfabetica" | "mais_faltas"
   >("mais_faltas");
 
-  // === DADOS GERAIS VIA SWR ===
   const { data, isLoading, mutate } = useSWR(
     nomeUsuario && GOOGLE_API_URL ? GOOGLE_API_URL : null,
     fetcherAtividades,
@@ -208,7 +207,6 @@ export default function GestaoAulasPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nomeUsuario, GOOGLE_API_URL]);
 
-  // === FUNÇÕES DA TELA ===
   const toggleModoReposicao = async () => {
     setCarregandoReposicao(true);
     const novoStatus = !modoReposicao ? "LIGADO" : "DESLIGADO";
@@ -405,8 +403,14 @@ export default function GestaoAulasPage() {
     }
   };
 
-  const avaliarAluno = async (entrega: Entrega) => {
-    const nota = notasTemp[entrega.idEntrega] || 0;
+  // NOVA LÓGICA DE AVALIAÇÃO COM DEVOLUTIVA
+  const avaliarAluno = async (
+    entrega: Entrega,
+    statusAvaliacao: "Avaliado" | "Devolvida",
+    feedbackTutor: string = "",
+  ) => {
+    const nota =
+      statusAvaliacao === "Devolvida" ? 0 : notasTemp[entrega.idEntrega] || 0;
     try {
       const res = await fetch(GOOGLE_API_URL, {
         method: "POST",
@@ -416,16 +420,22 @@ export default function GestaoAulasPage() {
           idEntrega: entrega.idEntrega,
           matricula: entrega.matricula,
           xpGanho: nota,
-          novoStatus: "Avaliado",
+          novoStatus: statusAvaliacao,
+          feedback: feedbackTutor,
         }),
       });
       const data = await res.json();
       if (data.status === "sucesso") {
-        alert("✅ Avaliado com sucesso!");
+        alert("✅ " + data.mensagem);
         setEntregas(
           entregas.map((e) =>
             e.idEntrega === entrega.idEntrega
-              ? { ...e, status: "Avaliado", xpGanho: nota }
+              ? {
+                  ...e,
+                  status: statusAvaliacao,
+                  xpGanho: nota,
+                  feedback: feedbackTutor,
+                }
               : e,
           ),
         );
@@ -500,6 +510,7 @@ export default function GestaoAulasPage() {
       buscarDiarioClasse(turmaDiario, mesDiario, anoDiario);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [turmaDiario, mesDiario, anoDiario]);
+
   useEffect(() => {
     if (modalFreqAberto && turmaDiario) buscarFrequenciaHoje(turmaDiario);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -813,7 +824,6 @@ export default function GestaoAulasPage() {
         </div>
       )}
 
-      {/* CONTEÚDO PRINCIPAL DA PÁGINA */}
       <div className="max-w-7xl mx-auto">
         <Header
           carregando={isLoading}
@@ -836,7 +846,6 @@ export default function GestaoAulasPage() {
           </h2>
         </div>
 
-        {/* 1. LINKS MINIMALISTAS (Pills) */}
         <div className="flex flex-wrap gap-2 mb-8">
           <a
             href={linksGerais.planilha}
@@ -880,9 +889,7 @@ export default function GestaoAulasPage() {
           </a>
         </div>
 
-        {/* GRID PRINCIPAL: 1/4 Cockpit Lateral | 3/4 Conteúdo */}
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          {/* 2. O "COCKPIT" (BARRA LATERAL DE CONTROLES DO DIA) */}
           <div className="xl:col-span-1 space-y-4">
             {aniversariantes.length > 0 && (
               <div className="bg-gradient-to-br from-amber-100 to-orange-100 border border-amber-300 p-4 rounded-2xl shadow-sm text-center">
@@ -959,9 +966,7 @@ export default function GestaoAulasPage() {
             </button>
           </div>
 
-          {/* 3. ÁREA PRINCIPAL (Métricas e Missões) */}
           <div className="xl:col-span-3">
-            {/* 3.1 VISÃO GERAL DA TURMA (MÉTRICAS) */}
             <div className="grid grid-cols-3 gap-3 md:gap-4 mb-8">
               <button
                 onClick={() => {
@@ -1018,7 +1023,6 @@ export default function GestaoAulasPage() {
               </button>
             </div>
 
-            {/* 3.2 ÁREA DE MISSÕES (Cabeçalho + Lista) */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-1">
               <div className="p-4 md:p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                 <div>
@@ -1041,7 +1045,6 @@ export default function GestaoAulasPage() {
                 </button>
               </div>
 
-              {/* O COMPONENTE MISSOES LIST VEM AQUI */}
               <div className="p-4 md:p-6 bg-slate-50/50 rounded-b-2xl">
                 <MissoesList
                   atividades={atividades}

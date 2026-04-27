@@ -43,6 +43,7 @@ export interface Atividade {
   statusPrazo?: string;
   turmaAlvo?: string;
   respostaCorreta?: string;
+  feedback?: string;
 }
 
 export interface PerfilAluno {
@@ -158,6 +159,7 @@ export interface Notificacao {
 // 4. MODELOS DO PAINEL DE GESTÃO (TUTOR)
 // ==========================================
 export interface Entrega {
+  feedback: string;
   idEntrega: string;
   matricula: string;
   nomeAluno: string;

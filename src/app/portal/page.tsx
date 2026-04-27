@@ -9,7 +9,7 @@ import {
   useMemo,
 } from "react";
 import { useRouter } from "next/navigation";
-import confetti from "canvas-confetti"; // <--- A MÁGICA DOS CONFETES ESTÁ AQUI
+import confetti from "canvas-confetti";
 import {
   DadosAluno,
   Atividade,
@@ -19,7 +19,6 @@ import {
   Notificacao,
 } from "@/src/types";
 
-// Importação das Lógicas e Modais
 import { calcularBadges, Badge } from "@/src/utils/badges";
 import PixModal from "@/src/components/PixModal";
 import RankingModal from "@/src/components/RankingModal";
@@ -60,9 +59,7 @@ export default function PortalDashboard() {
     nomeProximo: "Bronze",
     isMaximo: false,
   });
-
-  // ESTADOS GLOBAIS DE ALTA PERFORMANCE
-  const [nomeProjeto, setNomeProjeto] = useState("Portal Educacional"); // <-- WHITE LABEL
+  const [nomeProjeto, setNomeProjeto] = useState("Portal Educacional");
   const [carregandoPortal, setCarregandoPortal] = useState(true);
   const [atividades, setAtividades] = useState<Atividade[]>([]);
   const [xpTotalSistema, setXpTotalSistema] = useState(0);
@@ -78,7 +75,6 @@ export default function PortalDashboard() {
     totalCheckins: 0,
   });
 
-  // SISTEMA DE CONQUISTAS (BADGES SEGURAS VIA BACKEND)
   const [badgesResgatadas, setBadgesResgatadas] = useState<string[]>([]);
   const [novasConquistas, setNovasConquistas] = useState<Badge[]>([]);
   const [resgatandoBadge, setResgatandoBadge] = useState(false);
@@ -116,8 +112,7 @@ export default function PortalDashboard() {
   const [modalPixAberto, setModalPixAberto] = useState(false);
   const [rankingAberto, setRankingAberto] = useState(false);
 
-  // === CONTROLE DA TELA DE NOVIDADES ===
-  const VERSAO_ATUALIZACAO = "1.3.0"; // Mude este número nas próximas atualizações!
+  const VERSAO_ATUALIZACAO = "1.3.0";
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
   const carregarPortal = useCallback(async () => {
@@ -137,13 +132,13 @@ export default function PortalDashboard() {
         if (data.progressoNivel) setProgressoNivel(data.progressoNivel);
         setNivelSistema(data.nivel);
         if (data.avatar) setAvatarSistema(data.avatar);
-        if (data.totalCurtidas) setCurtidasSistema(data.totalCurtidas);
+        if (data.totalCurtidas !== undefined)
+          setCurtidasSistema(data.totalCurtidas);
         if (data.ofensivaDias !== undefined) setOfensivaDias(data.ofensivaDias);
         setZapConfirmado(data.whatsapp.confirmado);
         setZapLink(data.whatsapp.link);
         setAtividades(data.atividades);
         setNotificacoes(data.notificacoes || []);
-        setBadgesResgatadas(data.badgesResgatadas || []);
         setBadgesResgatadas(data.badgesResgatadas || []);
         if (data.taxaPresenca !== undefined) setTaxaPresenca(data.taxaPresenca);
         if (data.stats) setEstatisticas(data.stats);
@@ -159,7 +154,6 @@ export default function PortalDashboard() {
 
   useEffect(() => {
     setMontado(true);
-    // Busca o nome do projeto (White Label)
     const buscarConfiguracoes = async () => {
       try {
         const res = await fetch(GOOGLE_API_URL, {
@@ -185,7 +179,6 @@ export default function PortalDashboard() {
       const ultimoCheckin = localStorage.getItem(`checkin_${aluno.matricula}`);
       if (ultimoCheckin === dataHoje) setCheckinRealizado(true);
 
-      // --- NOVO: CHECAGEM DA TELA DE NOVIDADES ---
       const versaoLida = localStorage.getItem(`novidades_${aluno.matricula}`);
       if (versaoLida !== VERSAO_ATUALIZACAO) {
         setModalNovidadesAberto(true);
@@ -193,22 +186,18 @@ export default function PortalDashboard() {
     }
   }, [montado, aluno, carregarPortal, router, dadosSalvos]);
 
-  // ==========================================
-  // EFEITOS ESPECIAIS (CONFETES 🎉)
-  // ==========================================
   useEffect(() => {
-    if (novasConquistas.length > 0) {
+    if (novasConquistas.length > 0)
       confetti({
         particleCount: 200,
         spread: 80,
         origin: { y: 0.5 },
         zIndex: 99999,
       });
-    }
   }, [novasConquistas.length]);
 
   useEffect(() => {
-    if (modalPresenteAberto) {
+    if (modalPresenteAberto)
       confetti({
         particleCount: 250,
         spread: 100,
@@ -216,12 +205,8 @@ export default function PortalDashboard() {
         zIndex: 99999,
         colors: ["#f59e0b", "#fbbf24", "#fcd34d"],
       });
-    }
   }, [modalPresenteAberto]);
 
-  // ==========================================
-  // DETETOR MÁGICO DE CONQUISTAS (VIA BANCO)
-  // ==========================================
   useEffect(() => {
     if (!montado || !aluno || carregandoPortal) return;
 
@@ -369,7 +354,6 @@ export default function PortalDashboard() {
       const data = await res.json();
       const dataHoje = new Date().toLocaleDateString("pt-BR");
       if (data.status === "sucesso") {
-        // Dispara os confetes verdes no sucesso do Check-in!
         confetti({
           particleCount: 100,
           spread: 60,
@@ -500,35 +484,55 @@ export default function PortalDashboard() {
       </div>
     );
 
-  const missoesPendentes = atividades.filter(
-    (a) => a.status === "Pendente",
-  ).length;
-  const qtdPendentes = atividades.filter(
-    (a) => a.status === "Pendente" && a.statusPrazo !== "Atrasada",
-  ).length;
-  const qtdAtrasadas = atividades.filter(
-    (a) => a.status === "Pendente" && a.statusPrazo === "Atrasada",
-  ).length;
-  const qtdConcluidas = atividades.filter(
-    (a) => a.status !== "Pendente",
-  ).length;
+  const missoesPendentes = atividades.filter((a) => {
+    const st = a.status?.toLowerCase().trim() || "pendente";
+    return st === "pendente" || st === "devolvida";
+  }).length;
+
+  const qtdPendentes = atividades.filter((a) => {
+    const st = a.status?.toLowerCase().trim() || "pendente";
+    return (
+      (st === "pendente" || st === "devolvida") && a.statusPrazo !== "Atrasada"
+    );
+  }).length;
+
+  const qtdAtrasadas = atividades.filter((a) => {
+    const st = a.status?.toLowerCase().trim() || "pendente";
+    return (
+      (st === "pendente" || st === "devolvida") && a.statusPrazo === "Atrasada"
+    );
+  }).length;
+
+  const qtdConcluidas = atividades.filter((a) => {
+    const st = a.status?.toLowerCase().trim() || "pendente";
+    return st !== "pendente" && st !== "devolvida";
+  }).length;
 
   const atividadesFiltradas = atividades.filter((a) => {
     const matchBusca = a.titulo
       .toLowerCase()
       .includes(buscaAtividade.toLowerCase());
     if (!matchBusca) return false;
+
+    const st = a.status?.toLowerCase().trim() || "pendente";
     if (abaAtividade === "Pendentes")
-      return a.status === "Pendente" && a.statusPrazo !== "Atrasada";
+      return (
+        (st === "pendente" || st === "devolvida") &&
+        a.statusPrazo !== "Atrasada"
+      );
     if (abaAtividade === "Atrasadas")
-      return a.status === "Pendente" && a.statusPrazo === "Atrasada";
-    if (abaAtividade === "Concluidas") return a.status !== "Pendente";
+      return (
+        (st === "pendente" || st === "devolvida") &&
+        a.statusPrazo === "Atrasada"
+      );
+    if (abaAtividade === "Concluidas")
+      return st !== "pendente" && st !== "devolvida";
     return true;
   });
 
   const salvarNovoAvatar = async (emoji: string) => {
     if (!aluno) return;
-    setAvatarSistema(emoji); // Atualiza na hora visualmente
+    setAvatarSistema(emoji);
     try {
       await fetch(GOOGLE_API_URL, {
         method: "POST",
@@ -559,7 +563,6 @@ export default function PortalDashboard() {
       {rankingAberto && (
         <RankingModal aluno={aluno} onClose={() => setRankingAberto(false)} />
       )}
-
       {novasConquistas.length > 0 && (
         <NovaConquistaModal
           badge={novasConquistas[0]}
@@ -567,8 +570,6 @@ export default function PortalDashboard() {
           onResgatar={resgatarRecompensaBadge}
         />
       )}
-
-      {/* --- RENDERIZAÇÃO DA TELA DE NOVIDADES --- */}
       {modalNovidadesAberto && (
         <NovidadesModal
           onClose={() => {
@@ -582,7 +583,6 @@ export default function PortalDashboard() {
         />
       )}
 
-      {/* AQUI PASSAMOS O NOME DO PROJETO PARA O HEADER */}
       <PortalHeader
         matricula={aluno.matricula}
         nomeAluno={aluno.nome}
@@ -631,7 +631,6 @@ export default function PortalDashboard() {
 
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-6xl mx-auto p-4 md:p-8 flex flex-col lg:flex-row justify-between items-start gap-8">
-          {/* LADO ESQUERDO: Saudação, Avisos e Botões Rápido */}
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left w-full lg:flex-1">
             <h2 className="text-2xl md:text-3xl font-black text-slate-800">
               Bem-vindo, {aluno.nome.split(" ")[0]}!
@@ -651,7 +650,6 @@ export default function PortalDashboard() {
               )}
             </p>
 
-            {/* Botões com fluxo natural e sem espremer */}
             <div className="mt-6 flex flex-wrap justify-center lg:justify-start gap-3 w-full">
               <a
                 href="https://classroom.google.com/"
@@ -690,11 +688,7 @@ export default function PortalDashboard() {
                     </span>
                     <span className="text-sm">
                       Fazer Check-in (+
-                      {taxaPresenca >= 90
-                        ? 15
-                        : taxaPresenca >= 75
-                          ? 12
-                          : 10}{" "}
+                      {taxaPresenca >= 90 ? 15 : taxaPresenca >= 75 ? 12 : 10}{" "}
                       XP)
                     </span>
                   </>
@@ -703,9 +697,7 @@ export default function PortalDashboard() {
             </div>
           </div>
 
-          {/* LADO DIREITO: Cartões de Status e Barra de Progresso */}
           <div className="flex flex-col w-full lg:w-[420px] shrink-0 mt-6 lg:mt-0 gap-4">
-            {/* Os Dois Cartões (Nível e XP) lado a lado */}
             <div className="flex flex-row gap-3 w-full justify-center lg:justify-end">
               <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex items-center gap-3 w-1/2 shadow-sm">
                 <div className="bg-blue-100 p-2.5 rounded-full text-xl shrink-0">
@@ -720,7 +712,6 @@ export default function PortalDashboard() {
                   </p>
                 </div>
               </div>
-
               <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex items-center gap-3 w-1/2 shadow-sm">
                 <div className="bg-emerald-200/50 p-2.5 rounded-full text-xl shrink-0">
                   ⭐
@@ -736,7 +727,6 @@ export default function PortalDashboard() {
               </div>
             </div>
 
-            {/* A NOVA BARRA DE PROGRESSO AQUI */}
             <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm w-full">
               <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2.5">
                 <span>Progresso</span>
@@ -746,7 +736,6 @@ export default function PortalDashboard() {
                     : `Rumo ao ${progressoNivel.nomeProximo}`}
                 </span>
               </div>
-
               <div className="w-full bg-slate-200/70 rounded-full h-3 mb-2.5 overflow-hidden shadow-inner">
                 <div
                   className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-1000 ease-out relative"
@@ -755,7 +744,6 @@ export default function PortalDashboard() {
                   <div className="absolute top-0 left-0 w-full h-full bg-white/20 animate-pulse"></div>
                 </div>
               </div>
-
               <p className="text-xs font-bold text-slate-500 text-center">
                 {progressoNivel.isMaximo ? (
                   "🏆 Você alcançou o topo do Trilha Tech!"
@@ -809,6 +797,7 @@ export default function PortalDashboard() {
             ✅ Concluídas ({qtdConcluidas})
           </button>
         </div>
+
         {atividadesFiltradas.length === 0 ? (
           <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-500 shadow-sm flex flex-col items-center">
             <div className="text-5xl opacity-50 mb-3">📭</div>
@@ -818,46 +807,52 @@ export default function PortalDashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {atividadesFiltradas.map((ativ) => (
-              <div
-                key={ativ.id}
-                onClick={() => {
-                  setMissaoAberta(ativ);
-                  setResposta(ativ.respostaEnviada || "");
-                }}
-                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all flex flex-col overflow-hidden cursor-pointer group"
-              >
+            {atividadesFiltradas.map((ativ) => {
+              // MÁGICA 3: BLINDAGEM DA COR DO STATUS (Ignora maiúsculas e espaços)
+              const statusNormalizado =
+                ativ.status?.toLowerCase().trim() || "pendente";
+
+              return (
                 <div
-                  className={`h-1.5 w-full ${ativ.status === "Pendente" ? "bg-amber-400" : ativ.status === "Aguardando Correção" ? "bg-blue-400" : "bg-emerald-500"}`}
-                ></div>
-                <div className="p-5 flex-1 flex flex-col">
-                  <div className="flex justify-between items-start mb-3">
-                    <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border border-slate-200">
-                      {ativ.tipo}
-                    </span>
-                    <span className="text-xs font-black flex items-center gap-1 text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full shadow-sm">
-                      ⭐ {ativ.xp} XP
-                    </span>
-                  </div>
-                  <h4 className="font-bold text-slate-800 text-lg mb-2 leading-tight group-hover:text-blue-600 transition-colors">
-                    {ativ.titulo}
-                  </h4>
-                  <p className="text-slate-500 text-sm mb-4 flex-1 line-clamp-2">
-                    {ativ.descricao}
-                  </p>
-                  <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
-                    <div className="text-xs text-slate-500 font-bold flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-200">
-                      📅 {ativ.dataLimite}
+                  key={ativ.id}
+                  onClick={() => {
+                    setMissaoAberta(ativ);
+                    setResposta(ativ.respostaEnviada || "");
+                  }}
+                  className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all flex flex-col overflow-hidden cursor-pointer group"
+                >
+                  <div
+                    className={`h-1.5 w-full ${statusNormalizado === "pendente" ? "bg-amber-400" : statusNormalizado === "devolvida" ? "bg-red-500" : statusNormalizado === "aguardando correção" ? "bg-blue-400" : "bg-emerald-500"}`}
+                  ></div>
+                  <div className="p-5 flex-1 flex flex-col">
+                    <div className="flex justify-between items-start mb-3">
+                      <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border border-slate-200">
+                        {ativ.tipo}
+                      </span>
+                      <span className="text-xs font-black flex items-center gap-1 text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full shadow-sm">
+                        ⭐ {ativ.xp} XP
+                      </span>
                     </div>
-                    <span
-                      className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${ativ.status === "Pendente" ? "text-amber-600 bg-amber-50" : ativ.status === "Aguardando Correção" ? "text-blue-600 bg-blue-50" : "text-emerald-600 bg-emerald-50"}`}
-                    >
-                      {ativ.status}
-                    </span>
+                    <h4 className="font-bold text-slate-800 text-lg mb-2 leading-tight group-hover:text-blue-600 transition-colors">
+                      {ativ.titulo}
+                    </h4>
+                    <p className="text-slate-500 text-sm mb-4 flex-1 line-clamp-2">
+                      {ativ.descricao}
+                    </p>
+                    <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                      <div className="text-xs text-slate-500 font-bold flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-200">
+                        📅 {ativ.dataLimite}
+                      </div>
+                      <span
+                        className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${statusNormalizado === "pendente" ? "text-amber-600 bg-amber-50" : statusNormalizado === "devolvida" ? "text-red-600 bg-red-50" : statusNormalizado === "aguardando correção" ? "text-blue-600 bg-blue-50" : "text-emerald-600 bg-emerald-50"}`}
+                      >
+                        {ativ.status}
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -1088,23 +1083,26 @@ export default function PortalDashboard() {
             if (!dataStr) return false;
             const hoje = new Date();
             hoje.setHours(0, 0, 0, 0);
-            const partes = dataStr.split("-");
+            const partes = dataStr.split("/");
             if (partes.length === 3) {
               const limite = new Date(
-                Number(partes[0]),
-                Number(partes[1]) - 1,
                 Number(partes[2]),
+                Number(partes[1]) - 1,
+                Number(partes[0]),
               );
               return hoje > limite;
             }
             return false;
           };
           const prazoEncerrado = verificarPrazo(missaoAberta.dataLimite);
-          // O input agora fica desabilitado apenas se estiver enviando ou já tiver sido enviado.
+
+          // MÁGICA 4: BLINDAGEM DA CAIXA DE TEXTO E DO BOTÃO DE "JÁ ENVIADO"
+          const statusAtual =
+            missaoAberta.status?.toLowerCase().trim() || "pendente";
           const inputDesabilitado =
             enviando ||
-            missaoAberta.status === "Avaliador" ||
-            missaoAberta.status === "Avaliado";
+            (statusAtual !== "pendente" && statusAtual !== "devolvida");
+
           return (
             <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
               <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
@@ -1142,6 +1140,33 @@ export default function PortalDashboard() {
                     onSubmit={enviarMissao}
                     className="border-t border-slate-200 pt-6"
                   >
+                    {/* AVISO DE MISSÃO DEVOLVIDA CORRIGIDO AQUI */}
+                    {statusAtual === "devolvida" && (
+                      <div className="bg-red-50 border-2 border-red-200 p-4 rounded-xl mb-4 animate-in slide-in-from-top-2 shadow-sm">
+                        <h3 className="text-red-700 font-black text-sm flex items-center gap-2 mb-1">
+                          <span>⚠️</span> Missão Devolvida pelo Tutor!
+                        </h3>
+                        <p className="text-red-600 text-xs font-medium">
+                          {missaoAberta.feedback ||
+                            "A sua missão foi devolvida para correção. Por favor, revise as instruções e envie novamente."}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* AVISO DE FEEDBACK (Aprovado com elogio) CORRIGIDO AQUI */}
+                    {(statusAtual === "avaliado" ||
+                      statusAtual === "avaliada") &&
+                      missaoAberta.feedback && (
+                        <div className="bg-emerald-50 border-2 border-emerald-200 p-4 rounded-xl mb-4 animate-in slide-in-from-top-2 shadow-sm">
+                          <h3 className="text-emerald-700 font-black text-sm flex items-center gap-2 mb-1">
+                            <span>💬</span> Feedback do Tutor
+                          </h3>
+                          <p className="text-emerald-600 text-xs font-medium">
+                            {missaoAberta.feedback}
+                          </p>
+                        </div>
+                      )}
+
                     <h3 className="font-bold text-slate-800 mb-3 uppercase text-sm">
                       Sua Resposta:
                     </h3>
@@ -1207,12 +1232,16 @@ export default function PortalDashboard() {
                       >
                         {enviando
                           ? "Enviando..."
-                          : missaoAberta.status === "Avaliador" ||
-                              missaoAberta.status === "Avaliado"
+                          : statusAtual === "aguardando correção" ||
+                              statusAtual === "avaliador" ||
+                              statusAtual === "avaliado" ||
+                              statusAtual === "avaliada"
                             ? "Já Enviado"
-                            : prazoEncerrado
-                              ? "Enviar com Atraso (Penalidade)"
-                              : "Enviar Resposta"}
+                            : statusAtual === "devolvida"
+                              ? "Reenviar Missão"
+                              : prazoEncerrado
+                                ? "Enviar com Atraso (Penalidade)"
+                                : "Enviar Resposta"}
                       </button>
                     </div>
                   </form>

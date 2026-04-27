@@ -628,128 +628,255 @@ const idAtiv = String(dadosApp.idAtividade).trim();
 const abaEntregas = planilha.getSheetByName("entregas");
 const planBase = planilha.getSheetByName("basededados");
 
-      let alunosMap = {}; // Dicionário para buscar o Nome pela Matrícula
-      if (planBase) {
-        const dadosBase = planBase.getDataRange().getValues();
-        for (let i = 1; i < dadosBase.length; i++) {
-          alunosMap[String(dadosBase[i][2]).trim()] = String(dadosBase[i][0]);
-        }
-      }
-
-      let entregas = [];
-      if (abaEntregas) {
-        const dadosEntregas = abaEntregas.getDataRange().getValues();
-        for (let i = 1; i < dadosEntregas.length; i++) {
-          if (String(dadosEntregas[i][2]).trim() === idAtiv) {
-            entregas.push({
-              idEntrega: String(dadosEntregas[i][0]),
-              matricula: String(dadosEntregas[i][1]),
-              nomeAluno: alunosMap[String(dadosEntregas[i][1])] || "Nome não encontrado",
-              resposta: String(dadosEntregas[i][3]),
-              status: String(dadosEntregas[i][4]),
-              xpGanho: dadosEntregas[i][5] || 0
-            });
+        let alunosMap = {};
+        if (planBase) {
+          const dadosBase = planBase.getDataRange().getValues();
+          for (let i = 1; i < dadosBase.length; i++) {
+            alunosMap[String(dadosBase[i][2]).trim()] = String(dadosBase[i][0]);
           }
         }
-      }
-      return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", entregas: entregas })).setMimeType(ContentService.MimeType.JSON);
-    }
 
-    if (action === "avaliar_entrega") {
-      const idEntrega = String(dadosApp.idEntrega).trim();
-      const matricula = String(dadosApp.matricula).trim();
-      let xpGanhoTutor = Number(dadosApp.xpGanho) || 0;
-      const novoStatus = dadosApp.novoStatus || "Avaliado";
-
-      const abaEntregas = planilha.getSheetByName("entregas");
-      const abaAtividades = planilha.getSheetByName("atividades");
-      let xpAnterior = 0;
-      let linhaEntrega = -1;
-      let idAtiv = "";
-      let dataEnvioTime = 0;
-
-      if (abaEntregas) {
-        const dadosEntregas = abaEntregas.getDataRange().getValues();
-        for (let i = 1; i < dadosEntregas.length; i++) {
-          if (String(dadosEntregas[i][0]).trim() === idEntrega) {
-            linhaEntrega = i + 1;
-            idAtiv = String(dadosEntregas[i][2]).trim();
-            xpAnterior = Number(dadosEntregas[i][5]) || 0;
-            dataEnvioTime = Number(dadosEntregas[i][6]) || new Date().getTime();
-            break;
+        let entregas = [];
+        if (abaEntregas) {
+          const dadosEntregas = abaEntregas.getDataRange().getValues();
+          for (let i = 1; i < dadosEntregas.length; i++) {
+            if (String(dadosEntregas[i][2]).trim() === idAtiv) {
+              entregas.push({
+                idEntrega: String(dadosEntregas[i][0]),
+                matricula: String(dadosEntregas[i][1]),
+                nomeAluno: alunosMap[String(dadosEntregas[i][1])] || "Nome não encontrado",
+                resposta: String(dadosEntregas[i][3]),
+                status: String(dadosEntregas[i][4]),
+                xpGanho: dadosEntregas[i][5] || 0,
+                feedback: String(dadosEntregas[i][7] || "") // <--- NOVO: LÊ A COLUNA H
+              });
+            }
           }
         }
+        return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", entregas: entregas })).setMimeType(ContentService.MimeType.JSON);
       }
 
-      // NOVO CÁLCULO DE DESCONTO POR ATRASO PARA CORREÇÃO MANUAL (BLINDADO)
-      let atrasoDias = 0;
-      if (abaAtividades && idAtiv) {
-          const dadosAtiv = abaAtividades.getDataRange().getValues();
-          for (let i = 1; i < dadosAtiv.length; i++) {
-              if (String(dadosAtiv[i][0]).trim() === idAtiv) {
-                  let dataLimObj = null;
-                  let rawDate = dadosAtiv[i][3];
+      if (action === "avaliar_entrega") {
+        const idEntrega = String(dadosApp.idEntrega).trim();
+        const matricula = String(dadosApp.matricula).trim();
+        let xpGanhoTutor = Number(dadosApp.xpGanho) || 0;
+        const novoStatus = dadosApp.novoStatus || "Avaliado"; // Pode ser "Avaliado" ou "Devolvida"
+        const feedbackTutor = String(dadosApp.feedback || "").trim(); // <--- NOVO: RECEBE O FEEDBACK
 
-                  // Tradutor Universal de Data
-                  if (rawDate instanceof Date) {
-                      dataLimObj = new Date(rawDate.getFullYear(), rawDate.getMonth(), rawDate.getDate());
-                  } else if (typeof rawDate === "string") {
-                      let strDate = rawDate.trim();
-                      if (strDate.includes("-")) {
-                          let p = strDate.split("-");
-                          if (p.length === 3) dataLimObj = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
-                      } else if (strDate.includes("/")) {
-                          let p = strDate.split("/");
-                          if (p.length === 3) dataLimObj = new Date(Number(p[2]), Number(p[1])-1, Number(p[0]));
-                      }
-                  }
+        // Se for devolvida, o XP tem que ser 0 obrigatoriamente
+        if (novoStatus === "Devolvida") xpGanhoTutor = 0;
 
-                  if (dataLimObj) {
-                      dataLimObj.setHours(0,0,0,0);
-                      let dataEnvio = new Date(dataEnvioTime);
-                      dataEnvio.setHours(0,0,0,0);
+        const abaEntregas = planilha.getSheetByName("entregas");
+        const abaAtividades = planilha.getSheetByName("atividades");
+        let xpAnterior = 0;
+        let linhaEntrega = -1;
+        let idAtiv = "";
+        let dataEnvioTime = 0;
 
-                      // Verifica se entregou atrasado
-                      if (dataEnvio > dataLimObj) {
-                          let diffTime = Math.abs(dataEnvio - dataLimObj);
-                          atrasoDias = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                      }
-                  }
-                  break;
-              }
-          }
-      }
-
-      let xpGanhoFinal = xpGanhoTutor;
-      let msgDesconto = "";
-      if (atrasoDias > 0 && xpGanhoTutor > 0) {
-          let teto = Math.floor(xpGanhoTutor / 2);
-          let desconto = atrasoDias; // 1 XP perdido por dia de atraso
-          if (desconto > teto) desconto = teto;
-          xpGanhoFinal = xpGanhoTutor - desconto;
-          if (desconto > 0) msgDesconto = ` (Desconto automático de -${desconto} XP aplicado pelo atraso de ${atrasoDias} dias)`;
-      }
-
-      if (linhaEntrega > -1) {
-          abaEntregas.getRange(linhaEntrega, 5).setValue(novoStatus);
-          abaEntregas.getRange(linhaEntrega, 6).setValue(xpGanhoFinal);
-      }
-
-      // Adiciona o XP na aba TrilhaTech (Cobrindo as diferenças)
-      const abaTrilha = planilha.getSheetByName("trilhatech");
-      if (abaTrilha) {
-        const dadosTrilha = abaTrilha.getDataRange().getValues();
-        for (let i = 1; i < dadosTrilha.length; i++) {
-          if (String(dadosTrilha[i][0]).trim() === matricula) {
-            let xpTotalAtual = Number(dadosTrilha[i][4]) || 0;
-            let novoXpTotal = xpTotalAtual - xpAnterior + xpGanhoFinal;
-            abaTrilha.getRange(i + 1, 5).setValue(novoXpTotal);
-            break;
+        if (abaEntregas) {
+          const dadosEntregas = abaEntregas.getDataRange().getValues();
+          for (let i = 1; i < dadosEntregas.length; i++) {
+            if (String(dadosEntregas[i][0]).trim() === idEntrega) {
+              linhaEntrega = i + 1;
+              idAtiv = String(dadosEntregas[i][2]).trim();
+              xpAnterior = Number(dadosEntregas[i][5]) || 0;
+              dataEnvioTime = Number(dadosEntregas[i][6]) || new Date().getTime();
+              break;
+            }
           }
         }
+
+        let atrasoDias = 0;
+        if (abaAtividades && idAtiv) {
+            const dadosAtiv = abaAtividades.getDataRange().getValues();
+            for (let i = 1; i < dadosAtiv.length; i++) {
+                if (String(dadosAtiv[i][0]).trim() === idAtiv) {
+                    let dataLimObj = null;
+                    let rawDate = dadosAtiv[i][3];
+                    if (rawDate instanceof Date) {
+                        dataLimObj = new Date(rawDate.getFullYear(), rawDate.getMonth(), rawDate.getDate());
+                    } else if (typeof rawDate === "string") {
+                        let strDate = rawDate.trim();
+                        if (strDate.includes("-")) {
+                            let p = strDate.split("-");
+                            if (p.length === 3) dataLimObj = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+                        } else if (strDate.includes("/")) {
+                            let p = strDate.split("/");
+                            if (p.length === 3) dataLimObj = new Date(Number(p[2]), Number(p[1])-1, Number(p[0]));
+                        }
+                    }
+                    if (dataLimObj) {
+                        dataLimObj.setHours(0,0,0,0);
+                        let dataEnvio = new Date(dataEnvioTime);
+                        dataEnvio.setHours(0,0,0,0);
+                        if (dataEnvio > dataLimObj) {
+                            let diffTime = Math.abs(dataEnvio - dataLimObj);
+                            atrasoDias = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        let xpGanhoFinal = xpGanhoTutor;
+        let msgDesconto = "";
+        if (atrasoDias > 0 && xpGanhoTutor > 0) {
+            let teto = Math.floor(xpGanhoTutor / 2);
+            let desconto = atrasoDias;
+            if (desconto > teto) desconto = teto;
+            xpGanhoFinal = xpGanhoTutor - desconto;
+            if (desconto > 0) msgDesconto = ` (Desconto automático de -${desconto} XP pelo atraso)`;
+        }
+
+        if (linhaEntrega > -1) {
+            abaEntregas.getRange(linhaEntrega, 5).setValue(novoStatus);
+            abaEntregas.getRange(linhaEntrega, 6).setValue(xpGanhoFinal);
+            abaEntregas.getRange(linhaEntrega, 8).setValue(feedbackTutor); // <--- NOVO: SALVA NA COLUNA H
+        }
+
+        const abaTrilha = planilha.getSheetByName("trilhatech");
+        if (abaTrilha) {
+          const dadosTrilha = abaTrilha.getDataRange().getValues();
+          for (let i = 1; i < dadosTrilha.length; i++) {
+            if (String(dadosTrilha[i][0]).trim() === matricula) {
+              let xpTotalAtual = Number(dadosTrilha[i][4]) || 0;
+              // Se foi devolvida, xpGanhoFinal é 0. Vai subtrair o xpAnterior que ele tinha ganho (se for uma re-avaliação)
+              let novoXpTotal = xpTotalAtual - xpAnterior + xpGanhoFinal;
+              abaTrilha.getRange(i + 1, 5).setValue(novoXpTotal);
+              break;
+            }
+          }
+        }
+        return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: (novoStatus === "Devolvida" ? "Missão devolvida para refazer!" : "Avaliação salva!") + msgDesconto })).setMimeType(ContentService.MimeType.JSON);
       }
-      return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Avaliação salva!" + msgDesconto })).setMimeType(ContentService.MimeType.JSON);
-    }
+      if (action === "buscar_entregas_atividade") {
+        const idAtiv = String(dadosApp.idAtividade).trim();
+        const abaEntregas = planilha.getSheetByName("entregas");
+        const planBase = planilha.getSheetByName("basededados");
+
+        let alunosMap = {}; // Dicionário para buscar o Nome pela Matrícula
+        if (planBase) {
+          const dadosBase = planBase.getDataRange().getValues();
+          for (let i = 1; i < dadosBase.length; i++) {
+            alunosMap[String(dadosBase[i][2]).trim()] = String(dadosBase[i][0]);
+          }
+        }
+
+        let entregas = [];
+        if (abaEntregas) {
+          const dadosEntregas = abaEntregas.getDataRange().getValues();
+          for (let i = 1; i < dadosEntregas.length; i++) {
+            if (String(dadosEntregas[i][2]).trim() === idAtiv) {
+              entregas.push({
+                idEntrega: String(dadosEntregas[i][0]),
+                matricula: String(dadosEntregas[i][1]),
+                nomeAluno: alunosMap[String(dadosEntregas[i][1])] || "Nome não encontrado",
+                resposta: String(dadosEntregas[i][3]),
+                status: String(dadosEntregas[i][4]),
+                xpGanho: dadosEntregas[i][5] || 0
+              });
+            }
+          }
+        }
+        return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", entregas: entregas })).setMimeType(ContentService.MimeType.JSON);
+      }
+
+      if (action === "avaliar_entrega") {
+        const idEntrega = String(dadosApp.idEntrega).trim();
+        const matricula = String(dadosApp.matricula).trim();
+        let xpGanhoTutor = Number(dadosApp.xpGanho) || 0;
+        const novoStatus = dadosApp.novoStatus || "Avaliado";
+
+        const abaEntregas = planilha.getSheetByName("entregas");
+        const abaAtividades = planilha.getSheetByName("atividades");
+        let xpAnterior = 0;
+        let linhaEntrega = -1;
+        let idAtiv = "";
+        let dataEnvioTime = 0;
+
+        if (abaEntregas) {
+          const dadosEntregas = abaEntregas.getDataRange().getValues();
+          for (let i = 1; i < dadosEntregas.length; i++) {
+            if (String(dadosEntregas[i][0]).trim() === idEntrega) {
+              linhaEntrega = i + 1;
+              idAtiv = String(dadosEntregas[i][2]).trim();
+              xpAnterior = Number(dadosEntregas[i][5]) || 0;
+              dataEnvioTime = Number(dadosEntregas[i][6]) || new Date().getTime();
+              break;
+            }
+          }
+        }
+
+        // NOVO CÁLCULO DE DESCONTO POR ATRASO PARA CORREÇÃO MANUAL (BLINDADO)
+        let atrasoDias = 0;
+        if (abaAtividades && idAtiv) {
+            const dadosAtiv = abaAtividades.getDataRange().getValues();
+            for (let i = 1; i < dadosAtiv.length; i++) {
+                if (String(dadosAtiv[i][0]).trim() === idAtiv) {
+                    let dataLimObj = null;
+                    let rawDate = dadosAtiv[i][3];
+
+                    // Tradutor Universal de Data
+                    if (rawDate instanceof Date) {
+                        dataLimObj = new Date(rawDate.getFullYear(), rawDate.getMonth(), rawDate.getDate());
+                    } else if (typeof rawDate === "string") {
+                        let strDate = rawDate.trim();
+                        if (strDate.includes("-")) {
+                            let p = strDate.split("-");
+                            if (p.length === 3) dataLimObj = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+                        } else if (strDate.includes("/")) {
+                            let p = strDate.split("/");
+                            if (p.length === 3) dataLimObj = new Date(Number(p[2]), Number(p[1])-1, Number(p[0]));
+                        }
+                    }
+
+                    if (dataLimObj) {
+                        dataLimObj.setHours(0,0,0,0);
+                        let dataEnvio = new Date(dataEnvioTime);
+                        dataEnvio.setHours(0,0,0,0);
+
+                        // Verifica se entregou atrasado
+                        if (dataEnvio > dataLimObj) {
+                            let diffTime = Math.abs(dataEnvio - dataLimObj);
+                            atrasoDias = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+
+        let xpGanhoFinal = xpGanhoTutor;
+        let msgDesconto = "";
+        if (atrasoDias > 0 && xpGanhoTutor > 0) {
+            let teto = Math.floor(xpGanhoTutor / 2);
+            let desconto = atrasoDias; // 1 XP perdido por dia de atraso
+            if (desconto > teto) desconto = teto;
+            xpGanhoFinal = xpGanhoTutor - desconto;
+            if (desconto > 0) msgDesconto = ` (Desconto automático de -${desconto} XP aplicado pelo atraso de ${atrasoDias} dias)`;
+        }
+
+        if (linhaEntrega > -1) {
+            abaEntregas.getRange(linhaEntrega, 5).setValue(novoStatus);
+            abaEntregas.getRange(linhaEntrega, 6).setValue(xpGanhoFinal);
+        }
+
+        // Adiciona o XP na aba TrilhaTech (Cobrindo as diferenças)
+        const abaTrilha = planilha.getSheetByName("trilhatech");
+        if (abaTrilha) {
+          const dadosTrilha = abaTrilha.getDataRange().getValues();
+          for (let i = 1; i < dadosTrilha.length; i++) {
+            if (String(dadosTrilha[i][0]).trim() === matricula) {
+              let xpTotalAtual = Number(dadosTrilha[i][4]) || 0;
+              let novoXpTotal = xpTotalAtual - xpAnterior + xpGanhoFinal;
+              abaTrilha.getRange(i + 1, 5).setValue(novoXpTotal);
+              break;
+            }
+          }
+        }
+        return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Avaliação salva!" + msgDesconto })).setMimeType(ContentService.MimeType.JSON);
+      }
 
 // ==========================================
 // ROTA 12: BUSCAR PERFIL DO ALUNO (Visualização Completa)
@@ -896,7 +1023,7 @@ const senhaInformada = String(dadosApp.senha).trim();
       // CALCULADOR DE OFENSIVA (FOGUINHO 🔥)
       let alunosDaMesmaTurma = new Set();
       for (let i = 1; i < dadosTrilha.length; i++) {
-          if (String(dadosTrilha[i][1]).trim() === turmaDoAluno && String(dadosTrilha[i][3]).trim().toLowerCase() !== "desclassificado") {
+          if (String(dadosTrilha[i][1]).trim() === turmaDoAluno && String(dadosTrilha[i][2]).trim().toLowerCase() === "ativo") {
               alunosDaMesmaTurma.add(String(dadosTrilha[i][0]).trim());
           }
       }
@@ -1136,12 +1263,16 @@ const abaFrequencia = planilha.getSheetByName("frequencia");
         let mat = String(dadosTrilha[i][0]).trim();
         let status = String(dadosTrilha[i][2]).trim().toLowerCase(); // CORRIGIDO PARA [2] E TOLOWERCASE
         let xpTotalFolha = Number(dadosTrilha[i][4]) || 0;
+        let avatarSheet = String(dadosTrilha[i][8]).trim() || "avatar-padrao";
 
         // A MÁGICA: Ignora Reservas, Desistentes e a conta Mestre
         if (mat && status === "ativo" && mat !== CONTA_MESTRE) { // CORRIGIDO PARA "ativo"
            alunosRankMap[mat] = {
              matricula: mat, nome: nomesMap[mat] || "Aluno " + mat, turma: String(dadosTrilha[i][1]).trim(),
-             nivel: String(dadosTrilha[i][5]) || "Iniciante", xpCalculado: filtroTempo === "geral" ? xpTotalFolha : 0
+             nivel: String(dadosTrilha[i][5]) || "Iniciante", xpCalculado: filtroTempo === "geral" ? xpTotalFolha : 0,
+             turma: String(dadosTrilha[i][1]).trim(),
+             avatar: avatarSheet, // <--- ADICIONA NO RANKING
+             xpCalculado: filtroTempo === "geral" ? xpTotalFolha : 0
            };
         }
       }
@@ -1473,7 +1604,7 @@ const abaFrequencia = planilha.getSheetByName("frequencia");
       // 2. Mapear colegas para descobrir dias que tiveram aula
       let alunosDaTurma = new Set();
       for (let i = 1; i < dadosTrilha.length; i++) {
-        if (String(dadosTrilha[i][1]).trim() === minhaTurma && String(dadosTrilha[i][3]).trim().toLowerCase() !== "desclassificado") {
+        if (String(dadosTrilha[i][1]).trim() === minhaTurma && String(dadosTrilha[i][2]).trim().toLowerCase() === "ativo") {
           alunosDaTurma.add(String(dadosTrilha[i][0]).trim());
         }
       }
@@ -1874,7 +2005,7 @@ const dataNascDigitada = String(dadosApp.dataNasc || "").trim(); // O Front envi
       for(let i=1; i<dadosTrilha.length; i++) {
         let mat = String(dadosTrilha[i][0]).trim();
         let t = String(dadosTrilha[i][1]).trim();
-        let status = String(dadosTrilha[i][3]).trim().toLowerCase();
+        let status = String(dadosTrilha[i][2]).trim().toLowerCase();
 
         // REGRA DO MESTRE: Ignora a restrição de turma
         let ehDaMesmaTurmaOuMestre = ehMestre ? true : (t === minhaTurma);
@@ -2041,241 +2172,274 @@ const dataNascDigitada = String(dadosApp.dataNasc || "").trim(); // O Front envi
     }
 
 // ==========================================
-// ROTA 28: CARREGAR PORTAL DO ALUNO (SUPER ROTA DE PERFORMANCE + EXTRATO + OFENSIVA)
+// ROTA 28: CARREGAR PORTAL DO ALUNO (SUPER ROTA LIMPA E ATUALIZADA)
 // ==========================================
 if (action === "carregar_portal_aluno") {
 const matricula = String(dadosApp.matricula).trim();
 
-        const abaTrilha = planilha.getSheetByName("trilhatech");
-        const planBase = planilha.getSheetByName("basededados");
-        const abaEntregas = planilha.getSheetByName("entregas");
-        const abaAtividades = planilha.getSheetByName("atividades");
-        const abaConfig = planilha.getSheetByName("configuracoes");
-        const abaFrequencia = planilha.getSheetByName("frequencia");
+      const abaTrilha = planilha.getSheetByName("trilhatech");
+      const planBase = planilha.getSheetByName("basededados");
+      const abaEntregas = planilha.getSheetByName("entregas");
+      const abaAtividades = planilha.getSheetByName("atividades");
+      const abaConfig = planilha.getSheetByName("configuracoes");
+      const abaFrequencia = planilha.getSheetByName("frequencia");
+      const abaCurtidas = planilha.getSheetByName("curtidas");
 
-        let dadosRetorno = {
-          status: "sucesso",
-          xpTotal: 0,
-          nivel: "Iniciante",
-          whatsapp: { confirmado: true, link: "" },
-          aniversario: { isAniversario: false, jaResgatado: false },
-          atividades: [],
-          notificacoes: [],
-          extratoPix: [], // <--- NOVO: O EXTRATO BANCÁRIO VAI AQUI
-          badgesResgatadas: [],
-          taxaPresenca: 100, // <--- NOVO: A OFENSIVA VAI AQUI
-          stats: { xpDoado: 0, xpRecebido: 0, totalCheckins: 0 }
-        };
+      let dadosRetorno = {
+        status: "sucesso",
+        xpTotal: 0,
+        nivel: "Iniciante",
+        avatar: "avatar-padrao",
+        totalCurtidas: 0,
+        ofensivaDias: 0,
+        whatsapp: { confirmado: true, link: "" },
+        aniversario: { isAniversario: false, jaResgatado: false },
+        atividades: [],
+        notificacoes: [],
+        extratoPix: [],
+        badgesResgatadas: [],
+        taxaPresenca: 100,
+        stats: { xpDoado: 0, xpRecebido: 0, totalCheckins: 0 }
+      };
 
       let turmaDoAlunoNoProjeto = "";
 
-        // TABELA DE NÍVEIS (Pode ajustar os valores como quiser!)
-        const niveisGamificacao = [
-          { nome: "Iniciante", min: 0, max: 599 },
-          { nome: "Bug Hunter", min: 600, max: 1999 },
-          { nome: "Coder Ninja", min: 2000, max: 4999 },
-          { nome: "Tech Hacker", min: 5000, max: 11999 },
-          { nome: "Dev Supremo", min: 12000, max: 28999 },
-          { nome: "Lenda Binária", min: 29000, max: 999999 } // Nível Máximo
-        ];
+      const niveisGamificacao = [
+        { nome: "Hello World", min: 0, max: 499 },
+        { nome: "Bug Hunter", min: 500, max: 1499 },
+        { nome: "Coder Ninja", min: 1500, max: 2999 },
+        { nome: "Tech Hacker", min: 3000, max: 4999 },
+        { nome: "Dev Supremo", min: 5000, max: 7499 },
+        { nome: "Lenda Binária", min: 7500, max: 999999 }
+      ];
 
-        if (abaTrilha) {
-          const dadosTrilha = abaTrilha.getDataRange().getValues();
-          for (let t = 1; t < dadosTrilha.length; t++) {
-            if (String(dadosTrilha[t][0]).trim() === matricula) {
-              turmaDoAlunoNoProjeto = String(dadosTrilha[t][1]).trim();
+      if (abaTrilha) {
+        const dadosTrilha = abaTrilha.getDataRange().getValues();
+        for (let t = 1; t < dadosTrilha.length; t++) {
+          if (String(dadosTrilha[t][0]).trim() === matricula) {
+            turmaDoAlunoNoProjeto = String(dadosTrilha[t][1]).trim();
+            let xpTotalAtual = Number(dadosTrilha[t][4]) || 0;
+            let nivelAtualSheet = String(dadosTrilha[t][5]).trim();
 
-              let xpTotalAtual = Number(dadosTrilha[t][4]) || 0;
-              let nivelAtualSheet = String(dadosTrilha[t][5]).trim();
+            dadosRetorno.avatar = String(dadosTrilha[t][8]).trim() || "avatar-padrao";
+            dadosRetorno.totalCurtidas = Number(dadosTrilha[t][9]) || 0;
 
-              // 1. Descobre qual é o nível verdadeiro do aluno baseado no XP
-              let nivelCalculado = niveisGamificacao[0];
-              let proximoNivel = niveisGamificacao[1];
-
-              for (let n = 0; n < niveisGamificacao.length; n++) {
-                if (xpTotalAtual >= niveisGamificacao[n].min && xpTotalAtual <= niveisGamificacao[n].max) {
-                  nivelCalculado = niveisGamificacao[n];
-                  proximoNivel = niveisGamificacao[n+1] || niveisGamificacao[n]; // Se for Mestre, trava no topo
-                  break;
-                }
+            let nivelCalculado = niveisGamificacao[0];
+            let proximoNivel = niveisGamificacao[1];
+            for (let n = 0; n < niveisGamificacao.length; n++) {
+              if (xpTotalAtual >= niveisGamificacao[n].min && xpTotalAtual <= niveisGamificacao[n].max) {
+                nivelCalculado = niveisGamificacao[n];
+                proximoNivel = niveisGamificacao[n+1] || niveisGamificacao[n];
+                break;
               }
+            }
 
-              // 2. Se o aluno subiu de nível, atualiza a planilha automaticamente (Coluna F = 6)
-              if (nivelCalculado.nome !== nivelAtualSheet) {
-                 abaTrilha.getRange(t + 1, 6).setValue(nivelCalculado.nome);
-              }
+            if (nivelCalculado.nome !== nivelAtualSheet) {
+                abaTrilha.getRange(t + 1, 6).setValue(nivelCalculado.nome);
+            }
 
-              // 3. Calcula a Matemática da Barra de Progresso
-              let xpBaseNivel = nivelCalculado.min;
-              let xpParaProximo = proximoNivel.min;
-              let progressoAtual = xpTotalAtual - xpBaseNivel;
-              let totalDoNivel = xpParaProximo - xpBaseNivel;
+            let xpBaseNivel = nivelCalculado.min;
+            let xpParaProximo = proximoNivel.min;
+            let progressoAtual = xpTotalAtual - xpBaseNivel;
+            let totalDoNivel = xpParaProximo - xpBaseNivel;
+            let porcentagemProgresso = totalDoNivel === 0 ? 100 : Math.floor((progressoAtual / totalDoNivel) * 100);
+            let xpFaltante = xpParaProximo - xpTotalAtual > 0 ? xpParaProximo - xpTotalAtual : 0;
 
-              let porcentagemProgresso = totalDoNivel === 0 ? 100 : Math.floor((progressoAtual / totalDoNivel) * 100);
-              let xpFaltante = xpParaProximo - xpTotalAtual > 0 ? xpParaProximo - xpTotalAtual : 0;
+            dadosRetorno.xpTotal = xpTotalAtual;
+            dadosRetorno.nivel = nivelCalculado.nome;
+            dadosRetorno.progressoNivel = { porcentagem: porcentagemProgresso, faltam: xpFaltante, nomeProximo: proximoNivel.nome, isMaximo: totalDoNivel === 0 };
+            dadosRetorno.whatsapp.confirmado = String(dadosTrilha[t][6]).trim() === "SIM";
+            break;
+          }
+        }
+      }
 
-              // 4. Salva no retorno do Portal
-              dadosRetorno.xpTotal = xpTotalAtual;
-              dadosRetorno.nivel = nivelCalculado.nome;
-              dadosRetorno.progressoNivel = {
-                 porcentagem: porcentagemProgresso,
-                 faltam: xpFaltante,
-                 nomeProximo: proximoNivel.nome,
-                 isMaximo: totalDoNivel === 0
+      if (abaConfig) {
+        let dadosConf = abaConfig.getDataRange().getValues();
+        for(let i = 1; i < dadosConf.length; i++) {
+          if(turmaDoAlunoNoProjeto.includes("1º") && dadosConf[i][0] === "WHATSAPP_1ANO") dadosRetorno.whatsapp.link = dadosConf[i][1];
+          if(turmaDoAlunoNoProjeto.includes("2º") && dadosConf[i][0] === "WHATSAPP_2ANO") dadosRetorno.whatsapp.link = dadosConf[i][1];
+        }
+      }
+
+      const timezone = Session.getScriptTimeZone();
+      const dataHoje = new Date();
+      const diaHoje = Utilities.formatDate(dataHoje, timezone, "dd");
+      const mesHoje = Utilities.formatDate(dataHoje, timezone, "MM");
+      const anoHoje = Utilities.formatDate(dataHoje, timezone, "yyyy");
+      const idNiver = "BDAY-" + anoHoje + "-" + matricula;
+
+      let nomesMap = {};
+      if (planBase) {
+        const dadosBase = planBase.getDataRange().getValues();
+        for (let i = 1; i < dadosBase.length; i++) {
+          let mat = String(dadosBase[i][2]).trim();
+          nomesMap[mat] = String(dadosBase[i][0]).trim();
+          if (mat === matricula) {
+            let celulaDataNasc = dadosBase[i][1];
+            let diaNasc = ""; let mesNasc = "";
+            if (celulaDataNasc instanceof Date) {
+              diaNasc = Utilities.formatDate(celulaDataNasc, timezone, "dd");
+              mesNasc = Utilities.formatDate(celulaDataNasc, timezone, "MM");
+            } else {
+              let partesNasc = String(celulaDataNasc).trim().split("/");
+              if (partesNasc.length === 3) { diaNasc = partesNasc[0].padStart(2, '0'); mesNasc = partesNasc[1].padStart(2, '0'); }
+            }
+            if (diaNasc === diaHoje && mesNasc === mesHoje) dadosRetorno.aniversario.isAniversario = true;
+          }
+        }
+      }
+
+      let entregasMap = {};
+      if (abaEntregas) {
+        const dadosEntregas = abaEntregas.getDataRange().getValues();
+        for (let i = 1; i < dadosEntregas.length; i++) {
+          let idEntrega = String(dadosEntregas[i][0]).trim();
+          let mat = String(dadosEntregas[i][1]).trim();
+
+          if (mat === matricula) {
+            if (!idEntrega.startsWith("BDAY") && !idEntrega.startsWith("PIX") && !idEntrega.startsWith("BADGE") && !idEntrega.startsWith("BLOCK")) {
+              let idAtividade = String(dadosEntregas[i][2]).trim();
+              entregasMap[idAtividade] = {
+                resposta: String(dadosEntregas[i][3]).trim(),
+                status: String(dadosEntregas[i][4]).trim() || "Aguardando Correção",
+                xpGanho: dadosEntregas[i][5] || 0,
+                feedback: String(dadosEntregas[i][7] || "").trim() // <--- LEITURA DO FEEDBACK (COLUNA H)
               };
-
-              dadosRetorno.whatsapp.confirmado = String(dadosTrilha[t][6]).trim() === "SIM";
-              break;
+            }
+            if (idEntrega.includes("PIX") && idEntrega.includes("-RECEBEU")) {
+                dadosRetorno.stats.xpRecebido += Number(dadosEntregas[i][5]) || 0;
+                let timestampEnvio = Number(dadosEntregas[i][6]) || 0;
+                dadosRetorno.extratoPix.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: Number(dadosEntregas[i][5]), tempo: timestampEnvio, tipo: "RECEBEU" });
+                dadosRetorno.notificacoes.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: Number(dadosEntregas[i][5]), tempo: timestampEnvio, tipo: "PIX" });
+            }
+            if (idEntrega.includes("PIX") && idEntrega.includes("-ENVIOU")) {
+                let xpD = Math.abs(Number(dadosEntregas[i][5]) || 0);
+                dadosRetorno.stats.xpDoado += xpD;
+                let timestampEnvio = Number(dadosEntregas[i][6]) || 0;
+                dadosRetorno.extratoPix.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: -xpD, tempo: timestampEnvio, tipo: "ENVIOU" });
+            }
+            if (idEntrega === idNiver) dadosRetorno.aniversario.jaResgatado = true;
+            if (idEntrega.startsWith("BADGE-")){
+              let badgeId = idEntrega.replace("BADGE-", "").replace("-" + matricula, "");
+              dadosRetorno.badgesResgatadas.push(badgeId);
             }
           }
         }
+      }
 
-        if (abaConfig) {
-          let dadosConf = abaConfig.getDataRange().getValues();
-          for(let i = 1; i < dadosConf.length; i++) {
-            if(turmaDoAlunoNoProjeto.includes("1º") && dadosConf[i][0] === "WHATSAPP_1ANO") dadosRetorno.whatsapp.link = dadosConf[i][1];
-            if(turmaDoAlunoNoProjeto.includes("2º") && dadosConf[i][0] === "WHATSAPP_2ANO") dadosRetorno.whatsapp.link = dadosConf[i][1];
-          }
-        }
+      if (abaCurtidas) {
+        const dadosCurt = abaCurtidas.getDataRange().getValues();
+        for (let i = 1; i < dadosCurt.length; i++) {
+            if (String(dadosCurt[i][2]).trim() === matricula) {
+                let idLike = String(dadosCurt[i][0]).trim();
+                let remetente = String(dadosCurt[i][1]).trim();
+                let nomeCurto = nomesMap[remetente] ? nomesMap[remetente].split(" ")[0] : "Um colega";
+                let tstamp = Number(idLike.split("-")[1]) || new Date().getTime();
 
-        const timezone = Session.getScriptTimeZone();
-        const dataHoje = new Date();
-        const diaHoje = Utilities.formatDate(dataHoje, timezone, "dd");
-        const mesHoje = Utilities.formatDate(dataHoje, timezone, "MM");
-        const anoHoje = Utilities.formatDate(dataHoje, timezone, "yyyy");
-        const idNiver = "BDAY-" + anoHoje + "-" + matricula;
-
-        if (planBase) {
-          const dadosBase = planBase.getDataRange().getValues();
-          for (let i = 1; i < dadosBase.length; i++) {
-            if (String(dadosBase[i][2]).trim() === matricula) {
-              let celulaDataNasc = dadosBase[i][1];
-              let diaNasc = ""; let mesNasc = "";
-              if (celulaDataNasc instanceof Date) {
-                diaNasc = Utilities.formatDate(celulaDataNasc, timezone, "dd");
-                mesNasc = Utilities.formatDate(celulaDataNasc, timezone, "MM");
-              } else {
-                let partesNasc = String(celulaDataNasc).trim().split("/");
-                if (partesNasc.length === 3) { diaNasc = partesNasc[0].padStart(2, '0'); mesNasc = partesNasc[1].padStart(2, '0'); }
-              }
-              if (diaNasc === diaHoje && mesNasc === mesHoje) dadosRetorno.aniversario.isAniversario = true;
-              break;
+                dadosRetorno.notificacoes.push({
+                    id: idLike,
+                    mensagem: `${nomeCurto} curtiu o seu perfil! ❤️`,
+                    xp: 0,
+                    tempo: tstamp,
+                    tipo: "LIKE"
+                });
             }
-          }
         }
+      }
 
-        let entregasMap = {};
-        if (abaEntregas) {
-          const dadosEntregas = abaEntregas.getDataRange().getValues();
-          for (let i = 1; i < dadosEntregas.length; i++) {
-            let idEntrega = String(dadosEntregas[i][0]).trim();
-            let mat = String(dadosEntregas[i][1]).trim();
+      dadosRetorno.notificacoes.sort((a, b) => b.tempo - a.tempo);
+      dadosRetorno.notificacoes = dadosRetorno.notificacoes.slice(0, 10);
 
-            if (mat === matricula) {
-              if (!idEntrega.startsWith("BDAY") && !idEntrega.startsWith("PIX")) {
-                let idAtividade = String(dadosEntregas[i][2]).trim();
-                entregasMap[idAtividade] = {
-                  resposta: String(dadosEntregas[i][3]).trim(), status: String(dadosEntregas[i][4]).trim() || "Aguardando Correção", xpGanho: dadosEntregas[i][5] || 0
-                };
-              }
-              if (idEntrega.includes("PIX") && idEntrega.includes("-RECEBEU")) {
-                  dadosRetorno.stats.xpRecebido += Number(dadosEntregas[i][5]) || 0;
-                  let timestampEnvio = Number(dadosEntregas[i][6]) || 0;
-                  // Adiciona no Extrato e nas Notificações
-                  dadosRetorno.extratoPix.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: Number(dadosEntregas[i][5]), tempo: timestampEnvio, tipo: "RECEBEU" });
-                  dadosRetorno.notificacoes.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: Number(dadosEntregas[i][5]), tempo: timestampEnvio, tipo: "PIX" });
-              }
-              if (idEntrega.includes("PIX") && idEntrega.includes("-ENVIOU")) {
-                  let xpD = Math.abs(Number(dadosEntregas[i][5]) || 0);
-                  dadosRetorno.stats.xpDoado += xpD;
-                  let timestampEnvio = Number(dadosEntregas[i][6]) || 0;
-                  // Adiciona SÓ no Extrato
-                  dadosRetorno.extratoPix.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: -xpD, tempo: timestampEnvio, tipo: "ENVIOU" });
-              }
-              if (idEntrega === idNiver) dadosRetorno.aniversario.jaResgatado = true;
+      dadosRetorno.extratoPix.sort((a, b) => b.tempo - a.tempo);
+      dadosRetorno.extratoPix = dadosRetorno.extratoPix.slice(0, 20);
 
-              if(idEntrega.startsWith("BADGE-")){
-                let badgeId = idEntrega.replace("BADGE-", "").replace("-" + matricula, "");
-                dadosRetorno.badgesResgatadas.push(badgeId);
-              }
-            }
-          }
-        }
-
-        dadosRetorno.notificacoes.sort((a, b) => b.tempo - a.tempo);
-        dadosRetorno.notificacoes = dadosRetorno.notificacoes.slice(0, 10);
-
-        // Ordena o Extrato Bancário do mais recente para o mais antigo (Mostra os 20 últimos)
-        dadosRetorno.extratoPix.sort((a, b) => b.tempo - a.tempo);
-        dadosRetorno.extratoPix = dadosRetorno.extratoPix.slice(0, 20);
-
-        // CÁLCULO DE OFENSIVA DE ASSIDUIDADE
-        if (abaFrequencia && turmaDoAlunoNoProjeto) {
-            let alunosDaMesmaTurma = new Set();
-            if(abaTrilha) {
-                const dTrilha = abaTrilha.getDataRange().getValues();
-                for (let i = 1; i < dTrilha.length; i++) {
-                    if (String(dTrilha[i][1]).trim() === turmaDoAlunoNoProjeto && String(dTrilha[i][3]).trim().toLowerCase() === "ativo") alunosDaMesmaTurma.add(String(dTrilha[i][0]).trim());
-                }
-            }
-
-            let diasComAulaSet = new Set();
-            let presencasAluno = 0;
-            const dadosFreq = abaFrequencia.getDataRange().getValues();
-            for (let i = 1; i < dadosFreq.length; i++) {
-              let idCheckin = String(dadosFreq[i][0]).trim();
-              let matFreq = String(dadosFreq[i][1]).trim();
-              let dataBruta = dadosFreq[i][3];
-              let hora = String(dadosFreq[i][4]).trim();
-
-              if (idCheckin.startsWith("BDAY")) continue;
-              let dataFormatada = dataBruta instanceof Date ? Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy") : String(dataBruta).trim();
-
-              if (alunosDaMesmaTurma.has(matFreq)) diasComAulaSet.add(dataFormatada);
-              if (matFreq === matricula && hora !== "00:00:00" && hora !== "00:00" && hora !== "") {
-                  presencasAluno++;
-                  dadosRetorno.stats.totalCheckins++;
-              }
-            }
-            let totalAulas = diasComAulaSet.size;
-            dadosRetorno.taxaPresenca = totalAulas === 0 ? 100 : Math.round((presencasAluno / totalAulas) * 100);
-        }
-
-        if (abaAtividades) {
-          const dadosAtiv = abaAtividades.getDataRange().getValues();
-          let hojeTime = new Date(); hojeTime.setHours(0,0,0,0);
-
-          for (let i = 1; i < dadosAtiv.length; i++) {
-            let turmaAlvo = String(dadosAtiv[i][5]).trim();
-            if (turmaAlvo.toLowerCase() === "todas" || turmaAlvo === turmaDoAlunoNoProjeto) {
-              let idAtiv = String(dadosAtiv[i][0]).trim();
-              let entregaAluno = entregasMap[idAtiv];
-
-              let dataLimiteBruta = dadosAtiv[i][3];
-              let dataLimiteStr = dataLimiteBruta instanceof Date ? Utilities.formatDate(dataLimiteBruta, timezone, "dd/MM/yyyy") : String(dataLimiteBruta);
-
-              let statusPrazo = "No Prazo";
-              if (!entregaAluno && dataLimiteStr) {
-                  let partesData = dataLimiteStr.split('/');
-                  if (partesData.length === 3) {
-                    let dataLim = new Date(Number(partesData[2]), Number(partesData[1])-1, Number(partesData[0]));
-                    if (hojeTime > dataLim) statusPrazo = "Atrasada";
+      if (abaFrequencia && turmaDoAlunoNoProjeto) {
+          let alunosDaMesmaTurma = new Set();
+          if(abaTrilha) {
+              const dTrilha = abaTrilha.getDataRange().getValues();
+              for (let i = 1; i < dTrilha.length; i++) {
+                  if (String(dTrilha[i][1]).trim() === turmaDoAlunoNoProjeto && String(dTrilha[i][2]).trim().toLowerCase() === "ativo") {
+                      alunosDaMesmaTurma.add(String(dTrilha[i][0]).trim());
                   }
               }
+          }
 
-              dadosRetorno.atividades.push({
-                id: idAtiv, titulo: String(dadosAtiv[i][1]), descricao: String(dadosAtiv[i][2]), dataLimite: dataLimiteStr,
-                xp: dadosAtiv[i][4], tipo: String(dadosAtiv[i][6] || "Projeto"),
-                opcaoA: String(dadosAtiv[i][7] || ""), opcaoB: String(dadosAtiv[i][8] || ""), opcaoC: String(dadosAtiv[i][9] || ""), opcaoD: String(dadosAtiv[i][10] || ""),
-                status: entregaAluno ? entregaAluno.status : "Pendente", respostaEnviada: entregaAluno ? entregaAluno.resposta : "",
-                xpGanho: entregaAluno ? entregaAluno.xpGanho : 0, statusPrazo: statusPrazo
-              });
+          let diasComAulaSet = new Set();
+          let checkinsMap = {};
+          let presencasAluno = 0;
+          const dadosFreq = abaFrequencia.getDataRange().getValues();
+          for (let i = 1; i < dadosFreq.length; i++) {
+            let idCheckin = String(dadosFreq[i][0]).trim();
+            let matFreq = String(dadosFreq[i][1]).trim();
+            let dataBruta = dadosFreq[i][3];
+            let hora = String(dadosFreq[i][4]).trim();
+
+            if (idCheckin.startsWith("BDAY")) continue;
+            let dataFormatada = dataBruta instanceof Date ? Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy") : String(dataBruta).trim();
+
+            if (alunosDaMesmaTurma.has(matFreq)) diasComAulaSet.add(dataFormatada);
+            if (matFreq === matricula && hora !== "00:00:00" && hora !== "00:00" && hora !== "") {
+                presencasAluno++;
+                dadosRetorno.stats.totalCheckins++;
+                checkinsMap[dataFormatada] = true;
             }
           }
-        }
+          let totalAulas = diasComAulaSet.size;
+          dadosRetorno.taxaPresenca = totalAulas === 0 ? 100 : Math.round((presencasAluno / totalAulas) * 100);
 
-        return ContentService.createTextOutput(JSON.stringify(dadosRetorno)).setMimeType(ContentService.MimeType.JSON);
+          let diasOrdenados = Array.from(diasComAulaSet).sort((a, b) => {
+              let pA = String(a).split('/'); let pB = String(b).split('/');
+              return new Date(pB[2], pB[1]-1, pB[0]).getTime() - new Date(pA[2], pA[1]-1, pA[0]).getTime();
+          });
+          let streak = 0;
+          const dataHojeStr = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
+          for (let dia of diasOrdenados) {
+              if (dia === dataHojeStr && !checkinsMap[dia]) continue;
+              if (checkinsMap[dia]) streak++;
+              else break;
+          }
+          dadosRetorno.ofensivaDias = streak;
       }
+
+      if (abaAtividades) {
+        const dadosAtiv = abaAtividades.getDataRange().getValues();
+        let hojeTime = new Date(); hojeTime.setHours(0,0,0,0);
+
+        for (let i = 1; i < dadosAtiv.length; i++) {
+          let turmaAlvo = String(dadosAtiv[i][5]).trim();
+          if (turmaAlvo.toLowerCase() === "todas" || turmaAlvo === turmaDoAlunoNoProjeto) {
+            let idAtiv = String(dadosAtiv[i][0]).trim();
+            let entregaAluno = entregasMap[idAtiv];
+
+            let dataLimiteBruta = dadosAtiv[i][3];
+            let dataLimiteStr = dataLimiteBruta instanceof Date ? Utilities.formatDate(dataLimiteBruta, timezone, "dd/MM/yyyy") : String(dataLimiteBruta);
+
+            let statusPrazo = "No Prazo";
+            if (!entregaAluno && dataLimiteStr) {
+                let partesData = dataLimiteStr.split('/');
+                if (partesData.length === 3) {
+                  let dataLim = new Date(Number(partesData[2]), Number(partesData[1])-1, Number(partesData[0]));
+                  if (hojeTime > dataLim) statusPrazo = "Atrasada";
+                }
+            }
+
+            dadosRetorno.atividades.push({
+              id: idAtiv, titulo: String(dadosAtiv[i][1]), descricao: String(dadosAtiv[i][2]), dataLimite: dataLimiteStr,
+              xp: dadosAtiv[i][4], tipo: String(dadosAtiv[i][6] || "Projeto"),
+              opcaoA: String(dadosAtiv[i][7] || ""), opcaoB: String(dadosAtiv[i][8] || ""), opcaoC: String(dadosAtiv[i][9] || ""), opcaoD: String(dadosAtiv[i][10] || ""),
+              status: entregaAluno ? entregaAluno.status : "Pendente",
+              respostaEnviada: entregaAluno ? entregaAluno.resposta : "",
+              xpGanho: entregaAluno ? entregaAluno.xpGanho : 0,
+              statusPrazo: statusPrazo,
+              feedback: entregaAluno ? entregaAluno.feedback : "" // <--- FEEDBACK INJETADO AQUI PARA O FRONTEND
+            });
+          }
+        }
+      }
+
+      return ContentService.createTextOutput(JSON.stringify(dadosRetorno)).setMimeType(ContentService.MimeType.JSON);
+    }
 
 // ==========================================
 // ROTA 29: RESGATAR RECOMPENSA DE CONQUISTA (BADGE)
@@ -2638,6 +2802,209 @@ const novoStatus = String(dadosApp.status).toUpperCase(); // "LIGADO" ou "DESLIG
         status: "erro",
         mensagem: "Aba de configurações não encontrada."
       })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+// ==========================================
+// ROTA 34: SALVAR AVATAR DO ALUNO
+// ==========================================
+if (action === "salvar_avatar") {
+const matricula = String(dadosApp.matricula).trim();
+const avatarId = String(dadosApp.avatarId).trim();
+const abaTrilha = planilha.getSheetByName("trilhatech");
+
+      if (abaTrilha) {
+        const dadosTrilha = abaTrilha.getDataRange().getValues();
+        for (let i = 1; i < dadosTrilha.length; i++) {
+          if (String(dadosTrilha[i][0]).trim() === matricula) {
+            // Salva o ID do Avatar na Coluna I (índice 9)
+            abaTrilha.getRange(i + 1, 9).setValue(avatarId);
+            return ContentService.createTextOutput(JSON.stringify({ status: "sucesso" })).setMimeType(ContentService.MimeType.JSON);
+          }
+        }
+      }
+      return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aluno não encontrado." })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+// ==========================================
+// ROTA 35: CURTIR PERFIL DO COLEGA (1x ao dia)
+// ==========================================
+if (action === "curtir_perfil") {
+const matriculaRemetente = String(dadosApp.matriculaRemetente).trim();
+const matriculaDestinatario = String(dadosApp.matriculaDestinatario).trim();
+
+      if (matriculaRemetente === matriculaDestinatario) {
+        return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Você não pode curtir o próprio perfil!" })).setMimeType(ContentService.MimeType.JSON);
+      }
+
+      // Cria a aba de curtidas se não existir
+      let abaCurtidas = planilha.getSheetByName("curtidas");
+      if (!abaCurtidas) {
+        abaCurtidas = planilha.insertSheet("curtidas");
+        abaCurtidas.appendRow(["ID_CURTIDA", "REMETENTE", "DESTINATARIO", "DATA"]);
+      }
+
+      const timezone = Session.getScriptTimeZone();
+      const dataHoje = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
+
+      // Regra de Ouro: Verifica se o Remetente JÁ CURTIU o Destinatário HOJE
+      const dadosCurtidas = abaCurtidas.getDataRange().getValues();
+      for (let i = 1; i < dadosCurtidas.length; i++) {
+        let rem = String(dadosCurtidas[i][1]).trim();
+        let dest = String(dadosCurtidas[i][2]).trim();
+        let dataBruta = dadosCurtidas[i][3];
+        let dataStr = dataBruta instanceof Date ? Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy") : String(dataBruta).trim();
+
+        if (rem === matriculaRemetente && dest === matriculaDestinatario && dataStr === dataHoje) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Você já curtiu o perfil desta Lenda hoje. Volte amanhã!" })).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+
+      // Se passou no teste, registra a curtida no banco
+      const idCurtida = "LIKE-" + new Date().getTime();
+      abaCurtidas.appendRow([idCurtida, matriculaRemetente, matriculaDestinatario, dataHoje]);
+
+      // Soma +1 Curtida no perfil do destinatário (Aba trilhatech, Coluna J / Índice 10)
+      const abaTrilha = planilha.getSheetByName("trilhatech");
+      if (abaTrilha) {
+        const dadosTrilha = abaTrilha.getDataRange().getValues();
+        for (let i = 1; i < dadosTrilha.length; i++) {
+          if (String(dadosTrilha[i][0]).trim() === matriculaDestinatario) {
+            let curtidasAtuais = Number(dadosTrilha[i][9]) || 0;
+            abaTrilha.getRange(i + 1, 10).setValue(curtidasAtuais + 1);
+            break;
+          }
+        }
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Perfil curtido com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
+    }
+
+// ==========================================
+// ROTA 36: BUSCAR PERFIL PÚBLICO (O Mural do Aluno)
+// ==========================================
+if (action === "buscar_perfil_publico") {
+const matriculaAlvo = String(dadosApp.matriculaAlvo).trim();
+const matriculaVisualizador = String(dadosApp.matriculaVisualizador).trim();
+
+      const planBase = planilha.getSheetByName("basededados");
+      const abaTrilha = planilha.getSheetByName("trilhatech");
+      const abaEntregas = planilha.getSheetByName("entregas");
+      const abaCurtidas = planilha.getSheetByName("curtidas");
+      const abaFrequencia = planilha.getSheetByName("frequencia");
+
+      if (!planBase || !abaTrilha) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Abas não encontradas." })).setMimeType(ContentService.MimeType.JSON);
+
+      let perfil = {
+        matricula: matriculaAlvo, nome: "", turma: "",
+        xpTotal: 0, nivel: "Hello World", avatar: "avatar-padrao", totalCurtidas: 0,
+        jaCurtiuHoje: false, missoesConcluidas: 0,
+        pixEnviado: 0, pixRecebido: 0, badges: [],
+        ofensivaDias: 0
+      };
+
+      // 1. Busca Nome
+      const dadosBase = planBase.getDataRange().getValues();
+      for (let i = 1; i < dadosBase.length; i++) {
+        if (String(dadosBase[i][2]).trim() === matriculaAlvo) { perfil.nome = String(dadosBase[i][0]); break; }
+      }
+
+      // 2. Busca Turma, XP, Nível, Avatar e Curtidas Totais
+      const dadosTrilha = abaTrilha.getDataRange().getValues();
+      for (let i = 1; i < dadosTrilha.length; i++) {
+        if (String(dadosTrilha[i][0]).trim() === matriculaAlvo) {
+          perfil.turma = String(dadosTrilha[i][1]).trim();
+          perfil.xpTotal = Number(dadosTrilha[i][4]) || 0;
+          perfil.nivel = String(dadosTrilha[i][5]).trim() || "Hello World";
+          perfil.avatar = String(dadosTrilha[i][8]).trim() || "avatar-padrao";
+          perfil.totalCurtidas = Number(dadosTrilha[i][9]) || 0;
+          break;
+        }
+      }
+
+      // 3. Calcula as vitórias na aba Entregas (Pix, Missões e Badges)
+      if (abaEntregas) {
+        const dadosEntregas = abaEntregas.getDataRange().getValues();
+        let missoesUnicas = new Set();
+        for (let i = 1; i < dadosEntregas.length; i++) {
+          let idEntrega = String(dadosEntregas[i][0]).trim();
+          let matRow = String(dadosEntregas[i][1]).trim();
+
+          if (matRow === matriculaAlvo) {
+            if (idEntrega.includes("PIX") && idEntrega.includes("-RECEBEU")) perfil.pixRecebido += Number(dadosEntregas[i][5]) || 0;
+            if (idEntrega.includes("PIX") && idEntrega.includes("-ENVIOU")) perfil.pixEnviado += Math.abs(Number(dadosEntregas[i][5]) || 0);
+            if (idEntrega.startsWith("BADGE-")) {
+              let nomeBadge = String(dadosEntregas[i][3]).replace("Desbloqueou: ", "").trim();
+              perfil.badges.push(nomeBadge);
+            }
+            // Conta as missões concluídas ignorando PIX, BDAY, BLOCK, etc.
+            if (!idEntrega.startsWith("PIX") && !idEntrega.startsWith("BDAY") && !idEntrega.startsWith("BADGE") && !idEntrega.startsWith("BLOCK") && String(dadosEntregas[i][4]) !== "Pendente") {
+              missoesUnicas.add(String(dadosEntregas[i][2]));
+            }
+          }
+        }
+        perfil.missoesConcluidas = missoesUnicas.size;
+      }
+
+      // 4. Verifica o botão de curtir (Para desabilitar se já curtiu hoje ou se for ele mesmo)
+      if (matriculaVisualizador === matriculaAlvo) {
+        perfil.jaCurtiuHoje = true;
+      } else if (abaCurtidas) {
+        const timezone = Session.getScriptTimeZone();
+        const dataHoje = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
+        const dadosCurtidas = abaCurtidas.getDataRange().getValues();
+        for (let i = 1; i < dadosCurtidas.length; i++) {
+          let rem = String(dadosCurtidas[i][1]).trim();
+          let dest = String(dadosCurtidas[i][2]).trim();
+          let dataBruta = dadosCurtidas[i][3];
+          let dataStr = dataBruta instanceof Date ? Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy") : String(dataBruta).trim();
+
+          if (rem === matriculaVisualizador && dest === matriculaAlvo && dataStr === dataHoje) {
+            perfil.jaCurtiuHoje = true; break;
+          }
+        }
+      }
+
+      // 5. CÁLCULO DE OFENSIVA PARA O PERFIL PÚBLICO
+      if (abaFrequencia && perfil.turma) {
+        let alunosDaMesmaTurma = new Set();
+        const dadosTrilhaAux = abaTrilha.getDataRange().getValues();
+        for (let i = 1; i < dadosTrilhaAux.length; i++) {
+            if (String(dadosTrilhaAux[i][1]).trim() === perfil.turma && String(dadosTrilhaAux[i][2]).trim().toLowerCase() === "ativo") {
+                alunosDaMesmaTurma.add(String(dadosTrilhaAux[i][0]).trim());
+            }
+        }
+        let diasComAulaSet = new Set();
+        let checkinsMap = {};
+        const timezone = Session.getScriptTimeZone();
+        const dadosFreq = abaFrequencia.getDataRange().getValues();
+        for (let i = 1; i < dadosFreq.length; i++) {
+            let idCheckin = String(dadosFreq[i][0]).trim();
+            if (idCheckin.startsWith("BDAY")) continue;
+            let mat = String(dadosFreq[i][1]).trim();
+            let dataBruta = dadosFreq[i][3];
+            let hora = String(dadosFreq[i][4]).trim();
+            let dataFormatada = dataBruta instanceof Date ? Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy") : String(dataBruta).trim();
+
+            if (alunosDaMesmaTurma.has(mat)) diasComAulaSet.add(dataFormatada);
+            if (mat === matriculaAlvo && (hora !== "00:00:00" && hora !== "00:00" && hora !== "")) {
+                checkinsMap[dataFormatada] = true;
+            }
+        }
+        let diasOrdenados = Array.from(diasComAulaSet).sort((a, b) => {
+            let pA = String(a).split('/'); let pB = String(b).split('/');
+            return new Date(pB[2], pB[1]-1, pB[0]).getTime() - new Date(pA[2], pA[1]-1, pA[0]).getTime();
+        });
+        let streak = 0;
+        const dataHojeStr = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
+        for (let dia of diasOrdenados) {
+            if (dia === dataHojeStr && !checkinsMap[dia]) continue;
+            if (checkinsMap[dia]) streak++;
+            else break;
+        }
+        perfil.ofensivaDias = streak;
+      }
+
+      return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", perfil: perfil })).setMimeType(ContentService.MimeType.JSON);
     }
 
 } catch (erro) {

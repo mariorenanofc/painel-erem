@@ -29,53 +29,50 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
       >
         {/* CABEÇALHO */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-center relative overflow-hidden">
-          <div className="absolute -top-10 -right-10 text-9xl opacity-10 rotate-12">
-            🚀
-          </div>
-          <span className="bg-white/20 text-white text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest backdrop-blur-sm border border-white/30">
-            Atualização Versão 1.3.0
-          </span>
-          <h2 className="text-2xl font-black text-white mt-4 leading-tight relative z-10">
-            O Trilha Tech virou Rede Social!
+          <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 pointer-events-none"></div>
+          <div className="text-5xl animate-bounce mb-2 relative z-10">🚀</div>
+          <h2 className="font-black text-2xl text-white relative z-10">
+            Novidades na Área!
           </h2>
-          <p className="text-blue-100 text-sm mt-2 relative z-10 font-medium">
-            Novos recursos sociais e de ranqueamento para deixar a sua jornada
-            ainda mais épica.
+          <p className="text-blue-100 text-sm font-medium mt-1 relative z-10">
+            A plataforma Trilha Tech acabou de ser atualizada com mecânicas
+            incríveis.
           </p>
         </div>
 
         {/* CORPO / LISTA DE NOVIDADES */}
-        <div className="p-6 overflow-y-auto max-h-[60vh] bg-slate-50">
+        <div className="p-6 bg-slate-50 overflow-y-auto max-h-[60vh]">
           <div className="space-y-4">
-            {/* Novidade 1: Perfil Público */}
+            {/* Novidade 1: Pix Escolar e Perfil */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
-              <div className="text-3xl shrink-0">👀</div>
+              <div className="text-3xl shrink-0">💸</div>
               <div>
                 <h3 className="font-bold text-slate-800">
-                  Perfis Públicos (Vitrine)
+                  Pix de XP para Toda a Escola!
                 </h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Curioso para saber como o 1º lugar do ranking conseguiu tanto
-                  XP? Agora você pode{" "}
-                  <strong>clicar no nome de qualquer colega</strong> no Ranking
-                  para espiar o perfil, avatar, estatísticas e o mural de
-                  conquistas dele!
+                  O sistema financeiro foi expandido! Agora você pode transferir
+                  XP para{" "}
+                  <strong>qualquer colega, independente da turma</strong>. Além
+                  disso, você pode ir no Ranking, abrir o{" "}
+                  <strong>Perfil do Colega</strong> e enviar um Pix diretamente
+                  por lá com apenas um clique!
                 </p>
               </div>
             </div>
 
-            {/* Novidade 2: Curtidas e Badges de Influenciador */}
+            {/* Novidade 2: Avatares e Curtidas */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
               <div className="text-3xl shrink-0">❤️</div>
               <div>
                 <h3 className="font-bold text-slate-800">
-                  Curtidas e Popularidade
+                  Rede Social e Likes
                 </h3>
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Mostre apoio aos seus amigos deixando um &quot;Like&ldquo; no perfil
-                  deles (limite de 1 vez por dia). Quem acumular muitas curtidas
-                  desbloqueia as novas Badges exclusivas de{" "}
-                  <strong>Influenciador Digital</strong>!
+                  Agora você pode visitar o perfil dos seus colegas no Ranking,
+                  ver as conquistas deles e deixar um <strong>Like (❤️)</strong>{" "}
+                  no perfil deles (limite de 1 vez por dia). Quem acumular
+                  muitas curtidas desbloqueia novas Badges exclusivas!
                 </p>
               </div>
             </div>
@@ -90,8 +87,8 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
                 <p className="text-xs text-slate-500 mt-1 leading-relaxed">
                   O sistema agora rastreia a sua assiduidade de forma rigorosa!
                   Mantenha a sua sequência de aulas sem faltar para ostentar o
-                  seu &ldquo;foguinho&quot; de dias consecutivos. Se faltar, a contagem
-                  volta para zero.
+                  seu &ldquo;foguinho&quot; de dias consecutivos. Se faltar, a
+                  contagem volta para zero.
                 </p>
               </div>
             </div>
@@ -104,7 +101,7 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
             onClick={onClose}
             className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl shadow-md transition-all active:scale-95"
           >
-            ENTENDI, VAMOS EXPLORAR! 🚀
+            ENTENDI, VAMOS LÁ!
           </button>
         </div>
       </div>

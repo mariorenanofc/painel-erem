@@ -54,7 +54,6 @@ export default function PerfilPublicoModal({
     if (curtindo || perfil.jaCurtiuHoje) return;
     setCurtindo(true);
 
-    // Efeito visual imediato e confetes 🎉
     setPerfil({
       ...perfil,
       totalCurtidas: perfil.totalCurtidas + 1,
@@ -78,7 +77,6 @@ export default function PerfilPublicoModal({
         }),
       });
     } catch (e) {
-      // Falha silenciosa ou aviso
     } finally {
       setCurtindo(false);
     }
@@ -97,8 +95,6 @@ export default function PerfilPublicoModal({
   const avatar =
     perfil.avatar && perfil.avatar !== "avatar-padrao" ? perfil.avatar : "👨‍💻";
 
-  // --- TRUQUE MÁGICO PARA RECUPERAR ÍCONES E DESCRIÇÕES DAS BADGES ---
-  // Geramos um catálogo de todas as badges passando valores máximos
   const dummyAtivs = Array.from({ length: 300 }).map((_, i) => ({
     id: `DUMMY-${i}`,
     status: "Avaliado",
@@ -117,7 +113,6 @@ export default function PerfilPublicoModal({
     totalCurtidas: 999999,
   });
 
-  // Mapeamos as strings vindas do banco para os objetos ricos do catálogo
   const badgesExibicao = (perfil.badges || []).map((nomeBadge: string) => {
     const encontrada = catalogoBadges.find((b) => b.nome === nomeBadge);
     return (
@@ -132,9 +127,7 @@ export default function PerfilPublicoModal({
 
   return (
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4 animate-in fade-in duration-200">
-      {/* MUDANÇA 1: max-w-3xl para ficar largo e bonito no Desktop */}
       <div className="bg-slate-50 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[95vh] overflow-hidden flex flex-col border border-white/20 relative">
-        {/* CABEÇALHO DO PERFIL */}
         <div className="bg-gradient-to-br from-indigo-700 via-purple-700 to-pink-600 p-6 md:p-8 relative overflow-hidden shrink-0">
           <button
             onClick={onClose}
@@ -143,17 +136,13 @@ export default function PerfilPublicoModal({
             &times;
           </button>
 
-          {/* Efeitos de fundo */}
           <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none"></div>
 
-          {/* MUDANÇA 2: flex-col no mobile, flex-row no Desktop. Acaba com o overlap! */}
           <div className="relative z-10 flex flex-col md:flex-row items-center md:items-start gap-6">
-            {/* Avatar Maior */}
             <div className="w-24 h-24 md:w-32 md:h-32 bg-white/20 rounded-full border-4 border-white flex items-center justify-center text-6xl md:text-7xl shadow-xl backdrop-blur-sm shrink-0 transform hover:scale-105 transition-all">
               {avatar}
             </div>
 
-            {/* Infos do Aluno */}
             <div className="flex-1 text-center md:text-left flex flex-col justify-center">
               <h2 className="font-black text-2xl md:text-3xl text-white tracking-tight">
                 {perfil.nome}
@@ -165,7 +154,6 @@ export default function PerfilPublicoModal({
                 <span className="inline-block bg-white/20 px-4 py-1.5 rounded-full text-white font-bold text-xs backdrop-blur-sm border border-white/30 shadow-inner">
                   🏆 Nível: {perfil.nivel}
                 </span>
-                {/* A NOVA BADGE DE CURTIDAS AQUI 👇 */}
                 <span className="inline-block bg-pink-500/80 px-4 py-1.5 rounded-full text-white font-bold text-xs backdrop-blur-sm border border-pink-400 shadow-inner">
                   ❤️ {perfil.totalCurtidas} Curtidas
                 </span>
@@ -177,25 +165,42 @@ export default function PerfilPublicoModal({
               </div>
             </div>
 
-            {/* MUDANÇA 3: O Botão Curtir agora é um elemento natural do layout (lado direito no desktop) */}
-            <div className="shrink-0 mt-2 md:mt-0 flex items-center md:h-32">
+            {/* AQUI ESTÃO OS BOTÕES LADO A LADO/EMPILHADOS */}
+            <div className="shrink-0 mt-4 md:mt-0 flex flex-col items-center justify-center gap-3">
               <button
                 onClick={handleCurtir}
                 disabled={perfil.jaCurtiuHoje || curtindo}
-                className={`flex items-center gap-2 px-6 py-3 rounded-full font-black shadow-lg transition-all border-2 ${perfil.jaCurtiuHoje ? "bg-pink-50 border-pink-200 text-pink-400 cursor-not-allowed" : "bg-pink-500 border-pink-400 text-white hover:bg-pink-600 hover:scale-105 active:scale-95"}`}
+                className={`flex w-full justify-center items-center gap-2 px-6 py-3 rounded-full font-black shadow-lg transition-all border-2 ${perfil.jaCurtiuHoje ? "bg-pink-50 border-pink-200 text-pink-400 cursor-not-allowed" : "bg-pink-500 border-pink-400 text-white hover:bg-pink-600 hover:scale-105 active:scale-95"}`}
               >
-                <span className={`text-xl ${perfil.jaCurtiuHoje ? "" : "animate-pulse"}`}>
+                <span
+                  className={`text-xl ${perfil.jaCurtiuHoje ? "" : "animate-pulse"}`}
+                >
                   ❤️
                 </span>
                 {perfil.jaCurtiuHoje ? "Você curtiu hoje!" : "Deixar um Like!"}
+              </button>
+
+              <button
+                onClick={() => {
+                  // MÁGICA: Emite um aviso global para o sistema abrir o Pix
+                  window.dispatchEvent(
+                    new CustomEvent("abrirPixRequest", {
+                      detail: perfil.matricula,
+                    }),
+                  );
+                  onClose(); // Fecha o modal do Perfil para dar espaço ao Pix
+                }}
+                className="flex w-full justify-center items-center gap-2 px-6 py-3 rounded-full font-black shadow-lg transition-all border-2 bg-gradient-to-r from-emerald-400 to-teal-500 border-emerald-300 text-white hover:from-emerald-500 hover:to-teal-600 hover:scale-105 active:scale-95"
+              >
+                <span className="text-xl">💸</span>
+                Enviar Pix de XP
               </button>
             </div>
           </div>
         </div>
 
-        {/* CORPO: ESTATÍSTICAS E BADGES */}
+        {/* RESTANTE DO CORPO (Estatísticas e Badges) */}
         <div className="p-6 bg-slate-50 flex-1 overflow-y-auto">
-          {/* MUDANÇA 4: Grid 2x2 no mobile e 4 colunas no Desktop */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-sm hover:-translate-y-1 transition-transform">
               <div className="text-2xl mb-1">⭐</div>
@@ -235,7 +240,6 @@ export default function PerfilPublicoModal({
             </div>
           </div>
 
-          {/* MUDANÇA 5: O Mural maravilhoso com Cards de Badges */}
           <div>
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2">
               Mural de Conquistas

@@ -8,7 +8,8 @@ const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
 interface PixModalProps {
   aluno: DadosAluno;
   onClose: () => void;
-  onSuccess: () => void; // Para atualizar as atividades após o Pix
+  onSuccess: () => void;
+  alunoAlvoInicial?: string | null; // <--- NOVO: Recebe a matrícula de quem vai ganhar o PIX
 }
 
 interface ItemExtrato {
@@ -19,7 +20,12 @@ interface ItemExtrato {
   tipo: "ENVIOU" | "RECEBEU";
 }
 
-export default function PixModal({ aluno, onClose, onSuccess }: PixModalProps) {
+export default function PixModal({
+  aluno,
+  onClose,
+  onSuccess,
+  alunoAlvoInicial,
+}: PixModalProps) {
   const [carregandoPix, setCarregandoPix] = useState(true);
   const [dadosPix, setDadosPix] = useState<{
     colegas: ColegaPix[];
@@ -33,7 +39,10 @@ export default function PixModal({ aluno, onClose, onSuccess }: PixModalProps) {
   const [abaAtiva, setAbaAtiva] = useState<"enviar" | "extrato">("enviar");
   const [novaSenhaPix, setNovaSenhaPix] = useState("");
   const [confirmarNovaSenhaPix, setConfirmarNovaSenhaPix] = useState("");
-  const [pixColega, setPixColega] = useState("");
+
+  // INICIA COM O ALUNO ALVO, SE EXISTIR
+  const [pixColega, setPixColega] = useState(alunoAlvoInicial || "");
+
   const [pixQuantidade, setPixQuantidade] = useState<number | "">("");
   const [pixMotivo, setPixMotivo] = useState("🤝 Parceria de Equipe");
   const [pixSenha, setPixSenha] = useState("");
@@ -51,8 +60,18 @@ export default function PixModal({ aluno, onClose, onSuccess }: PixModalProps) {
           }),
         });
         const data = await res.json();
-        if (data.status === "sucesso") setDadosPix(data);
-        else {
+        if (data.status === "sucesso") {
+          setDadosPix(data);
+          // Garante que o alunoAlvoInicial está na lista (caso seja um atalho rápido)
+          if (
+            alunoAlvoInicial &&
+            !data.colegas.some(
+              (c: ColegaPix) => c.matricula === alunoAlvoInicial,
+            )
+          ) {
+            setPixColega(""); // Reseta se não encontrar na lista da turma
+          }
+        } else {
           alert("Erro ao carregar Pix.");
           onClose();
         }
@@ -64,7 +83,7 @@ export default function PixModal({ aluno, onClose, onSuccess }: PixModalProps) {
       }
     };
     carregarDadosPix();
-  }, [aluno.matricula, onClose]);
+  }, [aluno.matricula, onClose, alunoAlvoInicial]);
 
   const criarSenhaPix = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -138,7 +157,7 @@ export default function PixModal({ aluno, onClose, onSuccess }: PixModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
+    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 animate-in fade-in">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
         <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-5 border-b flex justify-between items-center text-white shrink-0">
           <div>
@@ -221,7 +240,6 @@ export default function PixModal({ aluno, onClose, onSuccess }: PixModalProps) {
             </form>
           ) : dadosPix && dadosPix.temSenhaPix ? (
             <div className="animate-in slide-in-from-bottom-4">
-              {/* Menu de Abas (Transferir / Extrato) */}
               <div className="flex border-b border-slate-200 mb-5">
                 <button
                   onClick={() => setAbaAtiva("enviar")}
@@ -238,7 +256,6 @@ export default function PixModal({ aluno, onClose, onSuccess }: PixModalProps) {
               </div>
 
               {abaAtiva === "enviar" ? (
-                // --- TELA DE ENVIO ---
                 <form onSubmit={enviarPix}>
                   <div className="flex justify-between items-center bg-slate-100 p-3 rounded-lg border border-slate-200 mb-5">
                     <div>
@@ -355,7 +372,6 @@ export default function PixModal({ aluno, onClose, onSuccess }: PixModalProps) {
                   </button>
                 </form>
               ) : (
-                // --- TELA DE EXTRATO BANCÁRIO ---
                 <div className="space-y-3 animate-in fade-in">
                   {dadosPix.extrato.length === 0 ? (
                     <div className="text-center py-10 opacity-60">

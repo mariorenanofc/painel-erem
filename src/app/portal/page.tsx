@@ -116,9 +116,20 @@ export default function PortalDashboard() {
   const [resgatandoPresente, setResgatandoPresente] = useState(false);
 
   const [modalPixAberto, setModalPixAberto] = useState(false);
+  const [alvoPix, setAlvoPix] = useState<string | null>(null);
   const [rankingAberto, setRankingAberto] = useState(false);
 
-  const VERSAO_ATUALIZACAO = "1.3.0";
+  // MÁGICA DE INTEGRAÇÃO: Ouve quando alguém clica em "Enviar Pix" dentro do Perfil de um Colega
+  useEffect(() => {
+    const handleAbrirPixEvent = (e: CustomEvent) => {
+       setAlvoPix(e.detail); // O "detail" é a matrícula do colega enviada pelo PerfilPublicoModal
+       setModalPixAberto(true);
+    };
+    window.addEventListener("abrirPixRequest", handleAbrirPixEvent as EventListener);
+    return () => window.removeEventListener("abrirPixRequest", handleAbrirPixEvent as EventListener);
+  }, []);
+
+  const VERSAO_ATUALIZACAO = "1.3.1";
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
   const carregarPortal = useCallback(async () => {
@@ -590,7 +601,11 @@ export default function PortalDashboard() {
       {modalPixAberto && (
         <PixModal
           aluno={aluno}
-          onClose={() => setModalPixAberto(false)}
+          alunoAlvoInicial={alvoPix}
+          onClose={() => {
+            setModalPixAberto(false)
+            setAlvoPix(null);
+          }}
           onSuccess={carregarPortal}
         />
       )}
@@ -695,7 +710,10 @@ export default function PortalDashboard() {
                 <span className="text-sm">Classroom</span>
               </a>
               <button
-                onClick={() => setModalPixAberto(true)}
+                onClick={() => {
+                  setModalPixAberto(true)
+                  setAlvoPix(null);
+                }}
                 className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-emerald-400 whitespace-nowrap"
               >
                 <span className="text-lg">💸</span>{" "}

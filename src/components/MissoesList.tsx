@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { Atividade } from "../types";
+import Image from "next/image";
 
 interface MissoesListProps {
   atividades: Atividade[];
@@ -22,7 +23,7 @@ export default function MissoesList({
   const [filtroTurma, setFiltroTurma] = useState("Todas");
   const [filtroTipo, setFiltroTipo] = useState("Todos");
   const [filtroPrazo, setFiltroPrazo] = useState("Todas");
-  const [filtroStatusPub, setFiltroStatusPub] = useState("Todos"); // <--- NOVO FILTRO RASCUNHO/PUBLICADA
+  const [filtroStatusPub, setFiltroStatusPub] = useState("Todos");
 
   const [missaoPreview, setMissaoPreview] = useState<Atividade | null>(null);
 
@@ -58,7 +59,6 @@ export default function MissoesList({
       const matchTipo = filtroTipo === "Todos" || ativ.tipo === filtroTipo;
       if (!matchTipo) return false;
 
-      // Filtro de Rascunho / Publicada
       const statusPub = ativ.statusPublicacao || "Publicada";
       const matchStatusPub =
         filtroStatusPub === "Todos" || statusPub === filtroStatusPub;
@@ -111,7 +111,6 @@ export default function MissoesList({
             />
           </div>
 
-          {/* NOVO SELECT DE STATUS DE PUBLICAÇÃO */}
           <div className="w-full sm:w-auto shrink-0">
             <select
               value={filtroStatusPub}
@@ -187,12 +186,12 @@ export default function MissoesList({
           </div>
         ) : (
           <div className="space-y-4">
-            {atividadesFiltradas.map((ativ) => {
+            {atividadesFiltradas.map((ativ, index) => {
               const isRascunho = ativ.statusPublicacao === "Rascunho";
 
               return (
                 <div
-                  key={ativ.id}
+                  key={`${ativ.id}-${index}`}
                   className={`bg-white border ${isRascunho ? "border-yellow-200" : "border-slate-200"} rounded-2xl p-5 hover:shadow-md transition-all flex flex-col md:flex-row justify-between gap-6 group`}
                 >
                   <div className="flex-1">
@@ -201,7 +200,6 @@ export default function MissoesList({
                         {ativ.id}
                       </span>
 
-                      {/* BADGES DE STATUS DE PUBLICAÇÃO */}
                       {isRascunho ? (
                         <span className="bg-yellow-100 text-yellow-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-yellow-300 shadow-sm animate-pulse">
                           📝 Rascunho
@@ -313,7 +311,56 @@ export default function MissoesList({
                 {missaoPreview.descricao}
               </div>
 
+              {/* RENDERIZAÇÃO DA IMAGEM DE REFERÊNCIA NO PREVIEW */}
+              {missaoPreview.imagemUrl && (
+                <div className="mb-6 rounded-lg overflow-hidden border border-slate-200 shadow-sm flex justify-center bg-slate-100 p-2">
+                  <Image
+                    src={missaoPreview.imagemUrl}
+                    alt="Referência da Missão"
+                    width={800}
+                    height={400}
+                    unoptimized
+                    className="max-w-full h-auto max-h-[400px] object-contain rounded"
+                  />
+                </div>
+              )}
+
               <div className="border-t border-slate-200 pt-6">
+                {/* PREVIEW DA TRAVA DO CLASSROOM */}
+                {missaoPreview.linkClassroom && (
+                  <div className="bg-amber-50 border-2 border-amber-300 p-5 rounded-xl mb-6 shadow-sm opacity-90">
+                    <h3 className="text-amber-800 font-black text-sm flex items-center gap-2 mb-2">
+                      <span>🏫</span> Entrega Obrigatória no Classroom!
+                    </h3>
+                    <p className="text-amber-700 text-xs font-medium mb-4 leading-relaxed">
+                      Para ganhar o XP desta missão, você precisa primeiro
+                      registrar a sua entrega oficial no Ambiente Virtual de
+                      Aprendizagem (Classroom).
+                    </p>
+
+                    <div className="flex flex-col gap-3">
+                      <button
+                        type="button"
+                        disabled
+                        className="bg-amber-500 text-white font-black py-3 rounded-lg shadow cursor-not-allowed flex items-center justify-center gap-2"
+                      >
+                        1. ABRIR O GOOGLE CLASSROOM 🔗
+                      </button>
+                      <label className="flex items-start gap-3 p-3 bg-white border-2 border-slate-200 rounded-lg cursor-not-allowed opacity-70 mt-2">
+                        <input
+                          type="checkbox"
+                          disabled
+                          className="mt-1 w-5 h-5"
+                        />
+                        <span className="text-xs text-slate-500 font-bold leading-snug">
+                          2. Confirmo por minha honra que já anexei e enviei o
+                          meu material no Google Classroom oficial.
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
                 <h3 className="font-bold text-slate-800 mb-3 uppercase text-sm">
                   Visão do Formulário:
                 </h3>

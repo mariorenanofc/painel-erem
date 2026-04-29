@@ -10,6 +10,7 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
+import Image from "next/image";
 import {
   DadosAluno,
   Atividade,
@@ -122,11 +123,18 @@ export default function PortalDashboard() {
   // MÁGICA DE INTEGRAÇÃO: Ouve quando alguém clica em "Enviar Pix" dentro do Perfil de um Colega
   useEffect(() => {
     const handleAbrirPixEvent = (e: CustomEvent) => {
-       setAlvoPix(e.detail); // O "detail" é a matrícula do colega enviada pelo PerfilPublicoModal
-       setModalPixAberto(true);
+      setAlvoPix(e.detail); // O "detail" é a matrícula do colega enviada pelo PerfilPublicoModal
+      setModalPixAberto(true);
     };
-    window.addEventListener("abrirPixRequest", handleAbrirPixEvent as EventListener);
-    return () => window.removeEventListener("abrirPixRequest", handleAbrirPixEvent as EventListener);
+    window.addEventListener(
+      "abrirPixRequest",
+      handleAbrirPixEvent as EventListener,
+    );
+    return () =>
+      window.removeEventListener(
+        "abrirPixRequest",
+        handleAbrirPixEvent as EventListener,
+      );
   }, []);
 
   const VERSAO_ATUALIZACAO = "1.3.1";
@@ -603,7 +611,7 @@ export default function PortalDashboard() {
           aluno={aluno}
           alunoAlvoInicial={alvoPix}
           onClose={() => {
-            setModalPixAberto(false)
+            setModalPixAberto(false);
             setAlvoPix(null);
           }}
           onSuccess={carregarPortal}
@@ -711,7 +719,7 @@ export default function PortalDashboard() {
               </a>
               <button
                 onClick={() => {
-                  setModalPixAberto(true)
+                  setModalPixAberto(true);
                   setAlvoPix(null);
                 }}
                 className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-emerald-400 whitespace-nowrap"
@@ -1198,6 +1206,21 @@ export default function PortalDashboard() {
                   <div className="text-slate-700 whitespace-pre-wrap font-mono text-sm mb-6 bg-slate-50 p-4 rounded-lg border border-slate-200 leading-relaxed shadow-inner">
                     {missaoAberta.descricao}
                   </div>
+
+                  {/* NOVA RENDERIZAÇÃO DA IMAGEM DE REFERÊNCIA */}
+                  {missaoAberta.imagemUrl && (
+                    <div className="mb-6 rounded-lg overflow-hidden border border-slate-200 shadow-sm flex justify-center bg-slate-100 p-2">
+                      <Image
+                        src={missaoAberta.imagemUrl}
+                        alt="Referência da Missão"
+                        width={800}
+                        height={400}
+                        unoptimized
+                        className="max-w-full h-auto max-h-[400px] object-contain rounded"
+                      />
+                    </div>
+                  )}
+
                   <form
                     onSubmit={enviarMissao}
                     className="border-t border-slate-200 pt-6"

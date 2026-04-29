@@ -80,14 +80,14 @@ export default function CorrecaoMissoesModal({
             </div>
           ) : (
             <div className="divide-y divide-slate-200">
-              {entregas.map((entrega) => {
+              {entregas.map((entrega, index) => {
                 const isDevolvida = entrega.status === "Devolvida";
                 const isAprovada = entrega.status === "Avaliado";
                 const aguardando = entrega.status === "Aguardando Correção";
 
                 return (
                   <div
-                    key={entrega.idEntrega}
+                    key={`${entrega.idEntrega}-${index}`}
                     className={`p-5 transition-colors ${isDevolvida ? "bg-red-50/50" : isAprovada ? "bg-emerald-50/30" : "bg-white"}`}
                   >
                     <div className="flex flex-col md:flex-row justify-between gap-4">

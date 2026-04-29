@@ -80,9 +80,10 @@ export default function GestaoAulasPage() {
   const [opcaoD, setOpcaoD] = useState("");
   const [respostaCorreta, setRespostaCorreta] = useState("A");
 
-  // NOVOS ESTADOS: RASCUNHO E CLASSROOM
+  // NOVOS ESTADOS: RASCUNHO, CLASSROOM E IMAGEM
   const [linkClassroom, setLinkClassroom] = useState("");
   const [statusPublicacao, setStatusPublicacao] = useState("Publicada");
+  const [imagemUrl, setImagemUrl] = useState(""); // <--- ESTADO DA IMAGEM
   const [salvando, setSalvando] = useState(false);
 
   // === ESTADOS DOS MODAIS ===
@@ -312,6 +313,7 @@ export default function GestaoAulasPage() {
     setRespostaCorreta("A");
     setLinkClassroom("");
     setStatusPublicacao("Publicada");
+    setImagemUrl(""); // LIMPA O LINK DA IMAGEM
     setModalNovaMissaoAberto(false);
   };
 
@@ -330,6 +332,7 @@ export default function GestaoAulasPage() {
     setRespostaCorreta(String(ativ.respostaCorreta || "A"));
     setLinkClassroom(String(ativ.linkClassroom || ""));
     setStatusPublicacao(String(ativ.statusPublicacao || "Publicada"));
+    setImagemUrl(String(ativ.imagemUrl || "")); // CARREGA A IMAGEM NA EDIÇÃO
     setModalNovaMissaoAberto(true);
   };
 
@@ -374,7 +377,8 @@ export default function GestaoAulasPage() {
           opcaoD,
           respostaCorreta,
           linkClassroom,
-          statusPublicacao: statusAcao, // Passa o status do botão clicado
+          statusPublicacao: statusAcao,
+          imagemUrl, // <--- ENVIA A IMAGEM PARA O BACKEND
         }),
       });
       limparFormulario();
@@ -720,6 +724,24 @@ export default function GestaoAulasPage() {
                     placeholder="Descreva o que o aluno deve fazer..."
                     className="w-full bg-white border-2 border-slate-200 text-slate-800 rounded-lg p-3 font-mono text-sm focus:border-blue-500 outline-none transition-colors"
                   ></textarea>
+                </div>
+
+                {/* NOVO CAMPO: LINK DA IMAGEM */}
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2">
+                    <span>🖼️</span> Link da Imagem de Referência (Opcional)
+                  </label>
+                  <input
+                    type="url"
+                    value={imagemUrl}
+                    onChange={(e) => setImagemUrl(e.target.value)}
+                    placeholder="https://i.imgur.com/sua-imagem.png"
+                    className="w-full bg-white border-2 border-slate-200 text-slate-800 rounded-lg p-3 focus:border-blue-500 outline-none transition-colors"
+                  />
+                  <p className="text-[10px] text-slate-400 mt-1 font-medium">
+                    Se preenchido, a imagem será exibida dentro do corpo da
+                    missão para os alunos.
+                  </p>
                 </div>
 
                 {tipo === "Quiz" && (

@@ -1209,14 +1209,17 @@ export default function PortalDashboard() {
 
                   {/* NOVA RENDERIZAÇÃO DA IMAGEM DE REFERÊNCIA */}
                   {missaoAberta.imagemUrl && (
-                    <div className="mb-6 rounded-lg overflow-hidden border border-slate-200 shadow-sm flex justify-center bg-slate-100 p-2">
-                      <Image
-                        src={missaoAberta.imagemUrl}
-                        alt="Referência da Missão"
-                        width={800}
-                        height={400}
-                        unoptimized
-                        className="max-w-full h-auto max-h-[400px] object-contain rounded"
+                    <div className="relative w-full h-64 mb-6 rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
+                      <Image 
+                        src={(() => {
+                          const url = missaoAberta.imagemUrl || "";
+                          const match = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+                          return match ? `https://drive.google.com/uc?export=view&id=${match[1]}` : url;
+                        })()}
+                        alt="Referência da Missão" 
+                        fill
+                        sizes="(max-width: 768px) 100vw, 800px"
+                        className="object-contain p-2"
                       />
                     </div>
                   )}

@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { calcularBadges } from "../utils/badges";
 import { Atividade } from "../types";
+import { apiAluno } from "@/src/services/api"; 
 
 interface PerfilPublicoModalProps {
   matriculaAlvo: string;
@@ -12,32 +13,24 @@ interface PerfilPublicoModalProps {
   onClose: () => void;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default function PerfilPublicoModal({
   matriculaAlvo,
   matriculaVisualizador,
   onClose,
 }: PerfilPublicoModalProps) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [perfil, setPerfil] = useState<any>(null);
   const [carregando, setCarregando] = useState(true);
   const [curtindo, setCurtindo] = useState(false);
 
-  const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
-
   useEffect(() => {
     const buscarPerfil = async () => {
       try {
-        const res = await fetch(GOOGLE_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({
-            action: "buscar_perfil_publico",
-            matriculaAlvo: matriculaAlvo,
-            matriculaVisualizador: matriculaVisualizador,
-          }),
-        });
-        const data = await res.json();
+        //  CHAMADA LIMPA DA API
+        const data = await apiAluno.buscarPerfilPublico(
+          matriculaVisualizador,
+          matriculaAlvo,
+        );
+
         if (data.status === "sucesso") {
           setPerfil(data.perfil);
         }
@@ -47,8 +40,8 @@ export default function PerfilPublicoModal({
         setCarregando(false);
       }
     };
-    if (GOOGLE_API_URL) buscarPerfil();
-  }, [GOOGLE_API_URL, matriculaAlvo, matriculaVisualizador]);
+    buscarPerfil();
+  }, [matriculaAlvo, matriculaVisualizador]);
 
   const handleCurtir = async () => {
     if (curtindo || perfil.jaCurtiuHoje) return;
@@ -59,6 +52,7 @@ export default function PerfilPublicoModal({
       totalCurtidas: perfil.totalCurtidas + 1,
       jaCurtiuHoje: true,
     });
+
     confetti({
       particleCount: 50,
       spread: 60,
@@ -67,15 +61,8 @@ export default function PerfilPublicoModal({
     });
 
     try {
-      await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "curtir_perfil",
-          matriculaRemetente: matriculaVisualizador,
-          matriculaDestinatario: matriculaAlvo,
-        }),
-      });
+      //  CHAMADA LIMPA DA API
+      await apiAluno.curtirPerfil(matriculaVisualizador, matriculaAlvo);
     } catch (e) {
     } finally {
       setCurtindo(false);
@@ -165,7 +152,6 @@ export default function PerfilPublicoModal({
               </div>
             </div>
 
-            {/* AQUI ESTÃO OS BOTÕES LADO A LADO/EMPILHADOS */}
             <div className="shrink-0 mt-4 md:mt-0 flex flex-col items-center justify-center gap-3">
               <button
                 onClick={handleCurtir}
@@ -182,13 +168,12 @@ export default function PerfilPublicoModal({
 
               <button
                 onClick={() => {
-                  // MÁGICA: Emite um aviso global para o sistema abrir o Pix
                   window.dispatchEvent(
                     new CustomEvent("abrirPixRequest", {
                       detail: perfil.matricula,
                     }),
                   );
-                  onClose(); // Fecha o modal do Perfil para dar espaço ao Pix
+                  onClose();
                 }}
                 className="flex w-full justify-center items-center gap-2 px-6 py-3 rounded-full font-black shadow-lg transition-all border-2 bg-gradient-to-r from-emerald-400 to-teal-500 border-emerald-300 text-white hover:from-emerald-500 hover:to-teal-600 hover:scale-105 active:scale-95"
               >
@@ -199,7 +184,6 @@ export default function PerfilPublicoModal({
           </div>
         </div>
 
-        {/* RESTANTE DO CORPO (Estatísticas e Badges) */}
         <div className="p-6 bg-slate-50 flex-1 overflow-y-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-sm hover:-translate-y-1 transition-transform">

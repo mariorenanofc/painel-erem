@@ -3,10 +3,8 @@
 import { useState, useEffect } from "react";
 import { DadosAluno, AlunoRanking } from "../types";
 import PerfilPublicoModal from "./PerfilPublicoModal";
+import { apiTutor } from "@/src/services/api";
 
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
-
-// Atualização rápida da tipagem para aceitar o avatar
 interface AlunoRankingComAvatar extends AlunoRanking {
   avatar?: string;
 }
@@ -26,18 +24,14 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
 
   const [perfilAlvo, setPerfilAlvo] = useState<string | null>(null);
 
-  const carregarRanking = async (tempoSelecionado: string) => {
+  const carregarRanking = async (
+    tempoSelecionado: "geral" | "semanal" | "mensal",
+  ) => {
     setCarregandoRanking(true);
     try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "buscar_ranking",
-          filtroTempo: tempoSelecionado,
-        }),
-      });
-      const data = await res.json();
+      //  CHAMADA LIMPA DA API
+      const data = await apiTutor.buscarRanking(tempoSelecionado);
+
       if (data.status === "sucesso") setDadosRanking(data.ranking);
       else alert("⚠️ " + data.mensagem);
     } catch {
@@ -188,7 +182,6 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
                       onClick={() => setPerfilAlvo(userRank.matricula)}
                       className={`flex items-center gap-2 md:gap-4 p-2 md:p-3 rounded-xl border transition-all cursor-pointer hover:scale-[1.02] hover:shadow-md ${corFundo}`}
                     >
-                      {/* O NOVO BLOCO VISUAL DA POSIÇÃO + AVATAR */}
                       <div className="flex items-center justify-center gap-2 shrink-0 w-16 md:w-20">
                         <div className="w-5 text-center font-black text-slate-500 text-sm md:text-base">
                           {medalha || `${userRank.posicao}º`}

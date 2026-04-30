@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { DadosAluno, ColegaPix } from "../types";
-
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
+import { apiAluno } from "@/src/services/api";
 
 interface PixModalProps {
   aluno: DadosAluno;
   onClose: () => void;
   onSuccess: () => void;
-  alunoAlvoInicial?: string | null; // <--- NOVO: Recebe a matrícula de quem vai ganhar o PIX
+  alunoAlvoInicial?: string | null;
 }
 
 interface ItemExtrato {
@@ -40,9 +39,7 @@ export default function PixModal({
   const [novaSenhaPix, setNovaSenhaPix] = useState("");
   const [confirmarNovaSenhaPix, setConfirmarNovaSenhaPix] = useState("");
 
-  // INICIA COM O ALUNO ALVO, SE EXISTIR
   const [pixColega, setPixColega] = useState(alunoAlvoInicial || "");
-
   const [pixQuantidade, setPixQuantidade] = useState<number | "">("");
   const [pixMotivo, setPixMotivo] = useState("🤝 Parceria de Equipe");
   const [pixSenha, setPixSenha] = useState("");
@@ -51,25 +48,18 @@ export default function PixModal({
   useEffect(() => {
     const carregarDadosPix = async () => {
       try {
-        const res = await fetch(GOOGLE_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({
-            action: "iniciar_pix",
-            matricula: aluno.matricula,
-          }),
-        });
-        const data = await res.json();
+        //  USO DA API CENTRALIZADA
+        const data = await apiAluno.iniciarPix(aluno.matricula);
+
         if (data.status === "sucesso") {
           setDadosPix(data);
-          // Garante que o alunoAlvoInicial está na lista (caso seja um atalho rápido)
           if (
             alunoAlvoInicial &&
             !data.colegas.some(
               (c: ColegaPix) => c.matricula === alunoAlvoInicial,
             )
           ) {
-            setPixColega(""); // Reseta se não encontrar na lista da turma
+            setPixColega("");
           }
         } else {
           alert("Erro ao carregar Pix.");
@@ -94,22 +84,17 @@ export default function PixModal({
 
     setEnviandoPix(true);
     try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "criar_senha_pix",
-          matricula: aluno.matricula,
-          senha: novaSenhaPix,
-        }),
-      });
-      const data = await res.json();
+      // USO DA API CENTRALIZADA
+      const data = await apiAluno.criarSenhaPix(aluno.matricula, novaSenhaPix);
+
       if (data.status === "sucesso") {
         alert("✅ Senha criada com sucesso!");
         setDadosPix((prev) => (prev ? { ...prev, temSenhaPix: true } : null));
-      } else alert(data.mensagem);
+      } else {
+        alert(data.mensagem);
+      }
     } catch {
-      alert("Erro.");
+      alert("Erro ao criar senha.");
     } finally {
       setEnviandoPix(false);
     }
@@ -129,19 +114,15 @@ export default function PixModal({
 
     setEnviandoPix(true);
     try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "transferir_xp",
-          matriculaOrigem: aluno.matricula,
-          senha: pixSenha,
-          matriculaDestino: pixColega,
-          quantidade: Number(pixQuantidade),
-          motivo: pixMotivo,
-        }),
-      });
-      const data = await res.json();
+      // USO DA API CENTRALIZADA
+      const data = await apiAluno.transferirXP(
+        aluno.matricula,
+        pixSenha,
+        pixColega,
+        Number(pixQuantidade),
+        pixMotivo,
+      );
+
       if (data.status === "sucesso") {
         alert("🎉 PIX ENVIADO COM SUCESSO!");
         onSuccess();

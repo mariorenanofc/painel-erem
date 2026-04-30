@@ -27,6 +27,7 @@ import PortalHeader from "@/src/components/PortalHeader";
 import PerfilModal from "@/src/components/PerfilModal";
 import NovaConquistaModal from "@/src/components/NovaConquistaModal";
 import NovidadesModal from "@/src/components/NovidadesModal";
+import { apiAluno, apiGeral } from "@/src/services/api"; // 🔥 A MÁGICA AQUI!
 
 const subscribe = (callback: () => void) => {
   if (typeof window !== "undefined") {
@@ -41,7 +42,6 @@ const getServerSnapshot = () => null;
 
 export default function PortalDashboard() {
   const router = useRouter();
-  const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
 
   const [montado, setMontado] = useState(false);
   const dadosSalvos = useSyncExternalStore(
@@ -94,7 +94,6 @@ export default function PortalDashboard() {
   const [resposta, setResposta] = useState("");
   const [enviando, setEnviando] = useState(false);
 
-  // === ESTADOS DA TRAVA DO CLASSROOM ===
   const [timerClassroom, setTimerClassroom] = useState(0);
   const [classroomAberto, setClassroomAberto] = useState(false);
   const [checkboxHonestidade, setCheckboxHonestidade] = useState(false);
@@ -120,10 +119,9 @@ export default function PortalDashboard() {
   const [alvoPix, setAlvoPix] = useState<string | null>(null);
   const [rankingAberto, setRankingAberto] = useState(false);
 
-  // MÁGICA DE INTEGRAÇÃO: Ouve quando alguém clica em "Enviar Pix" dentro do Perfil de um Colega
   useEffect(() => {
     const handleAbrirPixEvent = (e: CustomEvent) => {
-      setAlvoPix(e.detail); // O "detail" é a matrícula do colega enviada pelo PerfilPublicoModal
+      setAlvoPix(e.detail);
       setModalPixAberto(true);
     };
     window.addEventListener(
@@ -141,17 +139,9 @@ export default function PortalDashboard() {
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
   const carregarPortal = useCallback(async () => {
-    if (!aluno || !GOOGLE_API_URL) return;
+    if (!aluno) return;
     try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "carregar_portal_aluno",
-          matricula: aluno.matricula,
-        }),
-      });
-      const data = await res.json();
+      const data = await apiAluno.carregarPortal(aluno.matricula); // 🔥 API CENTRALIZADA
       if (data.status === "sucesso") {
         setXpTotalSistema(data.xpTotal);
         if (data.progressoNivel) setProgressoNivel(data.progressoNivel);
@@ -175,26 +165,21 @@ export default function PortalDashboard() {
     } finally {
       setCarregandoPortal(false);
     }
-  }, [aluno, GOOGLE_API_URL]);
+  }, [aluno]);
 
   useEffect(() => {
     setMontado(true);
     const buscarConfiguracoes = async () => {
       try {
-        const res = await fetch(GOOGLE_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({ action: "buscar_configuracoes" }),
-        });
-        const data = await res.json();
+        const data = await apiGeral.buscarConfiguracoes(); // 🔥 API CENTRALIZADA
         if (data.status === "sucesso")
           setNomeProjeto(
             data.configuracoes.nomeProjeto || "Portal Educacional",
           );
       } catch (e) {}
     };
-    if (GOOGLE_API_URL) buscarConfiguracoes();
-  }, [GOOGLE_API_URL]);
+    buscarConfiguracoes();
+  }, []);
 
   useEffect(() => {
     if (montado && dadosSalvos === null) router.push("/portal/login");
@@ -273,7 +258,6 @@ export default function PortalDashboard() {
     curtidasSistema,
   ]);
 
-  // === LÓGICA DO TEMPORIZADOR CLASSROOM ===
   useEffect(() => {
     if (!missaoAberta) {
       setTimerClassroom(0);
@@ -295,7 +279,6 @@ export default function PortalDashboard() {
   const dispararIdaAoClassroom = (link: string) => {
     window.open(link, "_blank");
     setClassroomAberto(true);
-    // Só inicia o tempo se a caixa ainda não foi marcada
     if (!checkboxHonestidade && timerClassroom === 0) {
       setTimerClassroom(20);
     }
@@ -305,18 +288,12 @@ export default function PortalDashboard() {
     if (!aluno) return;
     setResgatandoBadge(true);
     try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "resgatar_badge",
-          matricula: aluno.matricula,
-          badgeId: badge.id,
-          xpGanho: badge.recompensa,
-          nomeBadge: badge.nome,
-        }),
-      });
-      const data = await res.json();
+      const data = await apiAluno.resgatarBadge(
+        aluno.matricula,
+        badge.id,
+        badge.recompensa,
+        badge.nome,
+      ); // 🔥 API CENTRALIZADA
       if (data.status === "sucesso") {
         setNovasConquistas((prev) => prev.slice(1));
         carregarPortal();
@@ -335,15 +312,7 @@ export default function PortalDashboard() {
     if (!aluno) return;
     setConfirmandoZap(true);
     try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "confirmar_whatsapp",
-          matricula: aluno.matricula,
-        }),
-      });
-      const data = await res.json();
+      const data = await apiAluno.confirmarWhatsapp(aluno.matricula); // 🔥 API CENTRALIZADA
       if (data.status === "sucesso") {
         setZapConfirmado(true);
         alert("✅ Perfeito! Agora você não perde nenhum aviso.");
@@ -366,17 +335,11 @@ export default function PortalDashboard() {
     if (!aluno || !missaoAberta) return;
     setEnviando(true);
     try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "enviar_atividade",
-          matricula: aluno.matricula,
-          idAtividade: missaoAberta.id,
-          resposta: resposta,
-        }),
-      });
-      const data = await res.json();
+      const data = await apiAluno.enviarMissao(
+        aluno.matricula,
+        missaoAberta.id,
+        resposta,
+      ); // 🔥 API CENTRALIZADA
       if (data.status === "sucesso") {
         alert("✅ " + data.mensagem);
         setMissaoAberta(null);
@@ -395,17 +358,9 @@ export default function PortalDashboard() {
     if (!senhaDigitada.trim()) return alert("Digite a senha da lousa!");
     setFazendoCheckin(true);
     try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "fazer_checkin",
-          matricula: aluno.matricula,
-          senha: senhaDigitada,
-        }),
-      });
-      const data = await res.json();
+      const data = await apiAluno.fazerCheckin(aluno.matricula, senhaDigitada); // 🔥 API CENTRALIZADA
       const dataHoje = new Date().toLocaleDateString("pt-BR");
+
       if (data.status === "sucesso") {
         confetti({
           particleCount: 100,
@@ -440,15 +395,7 @@ export default function PortalDashboard() {
     setPerfilAberto(true);
     setCarregandoPerfil(true);
     try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "buscar_perfil_aluno",
-          matricula: aluno.matricula,
-        }),
-      });
-      const data = await res.json();
+      const data = await apiAluno.buscarPerfil(aluno.matricula); // 🔥 API CENTRALIZADA
       if (data.status === "sucesso") setDadosPerfil(data.perfil);
       else alert("⚠️ " + data.mensagem);
     } catch {
@@ -461,18 +408,13 @@ export default function PortalDashboard() {
     if (!dadosAtualizados) return;
     setSalvandoPerfil(true);
     try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "atualizar_contatos_aluno",
-          matricula: dadosAtualizados.matricula,
-          turma: dadosAtualizados.turma,
-          telefoneAluno: dadosAtualizados.telefoneAluno,
-          telefoneResponsavel: dadosAtualizados.telefoneResponsavel,
-        }),
-      });
-      const data = await res.json();
+      const data = await apiAluno.atualizarContatos(
+        dadosAtualizados.matricula,
+        dadosAtualizados.turma,
+        dadosAtualizados.telefoneAluno,
+        dadosAtualizados.telefoneResponsavel,
+      ); // 🔥 API CENTRALIZADA
+
       if (data.status === "sucesso") {
         alert("✅ Salvo!");
         setPerfilAberto(false);
@@ -488,15 +430,7 @@ export default function PortalDashboard() {
     setModalFrequenciaAberto(true);
     setCarregandoFrequencia(true);
     try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "minha_frequencia",
-          matricula: aluno.matricula,
-        }),
-      });
-      const data = await res.json();
+      const data = await apiAluno.minhaFrequencia(aluno.matricula); // 🔥 API CENTRALIZADA
       if (data.status === "sucesso") setDadosFrequencia(data);
     } catch {
     } finally {
@@ -508,15 +442,7 @@ export default function PortalDashboard() {
     if (!aluno) return;
     setResgatandoPresente(true);
     try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "resgatar_aniversario",
-          matricula: aluno.matricula,
-        }),
-      });
-      const data = await res.json();
+      const data = await apiAluno.resgatarAniversario(aluno.matricula); // 🔥 API CENTRALIZADA
       if (data.status === "sucesso") {
         setModalPresenteAberto(false);
         carregarPortal();
@@ -525,6 +451,14 @@ export default function PortalDashboard() {
     } finally {
       setResgatandoPresente(false);
     }
+  };
+
+  const salvarNovoAvatar = async (emoji: string) => {
+    if (!aluno) return;
+    setAvatarSistema(emoji);
+    try {
+      await apiAluno.salvarAvatar(aluno.matricula, emoji); // 🔥 API CENTRALIZADA
+    } catch {}
   };
 
   if (!montado || !aluno || carregandoPortal)
@@ -582,22 +516,6 @@ export default function PortalDashboard() {
       return st !== "pendente" && st !== "devolvida";
     return true;
   });
-
-  const salvarNovoAvatar = async (emoji: string) => {
-    if (!aluno) return;
-    setAvatarSistema(emoji);
-    try {
-      await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        body: JSON.stringify({
-          action: "salvar_avatar",
-          matricula: aluno.matricula,
-          avatarId: emoji,
-        }),
-      });
-    } catch {}
-  };
 
   return (
     <main
@@ -748,11 +666,7 @@ export default function PortalDashboard() {
                     </span>
                     <span className="text-sm">
                       Fazer Check-in (+
-                      {taxaPresenca >= 90
-                        ? 15
-                        : taxaPresenca >= 75
-                          ? 12
-                          : 10}{" "}
+                      {taxaPresenca >= 90 ? 15 : taxaPresenca >= 75 ? 12 : 10}{" "}
                       XP)
                     </span>
                   </>
@@ -1162,7 +1076,6 @@ export default function PortalDashboard() {
           const statusAtual =
             missaoAberta.status?.toLowerCase().trim() || "pendente";
 
-          // MÁGICA: O BLOQUEIO DE HONESTIDADE AQUI
           let bloqueioClassroom = false;
           if (missaoAberta.linkClassroom && !checkboxHonestidade) {
             bloqueioClassroom = true;
@@ -1207,16 +1120,19 @@ export default function PortalDashboard() {
                     {missaoAberta.descricao}
                   </div>
 
-                  {/* NOVA RENDERIZAÇÃO DA IMAGEM DE REFERÊNCIA */}
                   {missaoAberta.imagemUrl && (
                     <div className="relative w-full h-64 mb-6 rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
-                      <Image 
+                      <Image
                         src={(() => {
                           const url = missaoAberta.imagemUrl || "";
-                          const match = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-                          return match ? `https://drive.google.com/uc?export=view&id=${match[1]}` : url;
+                          const match = url.match(
+                            /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
+                          );
+                          return match
+                            ? `https://drive.google.com/uc?export=view&id=${match[1]}`
+                            : url;
                         })()}
-                        alt="Referência da Missão" 
+                        alt="Referência da Missão"
                         fill
                         sizes="(max-width: 768px) 100vw, 800px"
                         className="object-contain p-2"
@@ -1253,7 +1169,6 @@ export default function PortalDashboard() {
                         </div>
                       )}
 
-                    {/* A TRAVA DE HONESTIDADE DO CLASSROOM INJETADA AQUI */}
                     {missaoAberta.linkClassroom &&
                       (statusAtual === "pendente" ||
                         statusAtual === "devolvida") && (

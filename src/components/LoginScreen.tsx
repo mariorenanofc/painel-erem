@@ -1,47 +1,44 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect } from "react";
+import { apiGeral } from "@/src/services/api"; // 🔥 NOSSA API
 
+// Mantivemos a prop apiUrl apenas para não quebrar a página pai que a invoca
 interface LoginScreenProps {
   onLoginSuccess: (nomeUsuario: string) => void;
-  apiUrl: string;
+  apiUrl?: string;
 }
 
-export default function LoginScreen({ onLoginSuccess, apiUrl }: LoginScreenProps) {
+export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   const [usuario, setUsuario] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
   const [carregando, setCarregando] = useState(false);
-  
-  // Estados Dinâmicos para o White-Label
+
   const [nomeEscola, setNomeEscola] = useState("Carregando...");
   const [nomeProjeto, setNomeProjeto] = useState("Portal Educacional");
 
   useEffect(() => {
-    // Busca o nome da escola e do projeto na Planilha (Aba configuracoes)
     const buscarConfiguracoes = async () => {
       try {
-        const res = await fetch(apiUrl, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({ action: "buscar_configuracoes" }),
-        });
-        const data = await res.json();
-        
+        // 🔥 CHAMADA LIMPA DA API
+        const data = await apiGeral.buscarConfiguracoes();
+
         if (data.status === "sucesso") {
           setNomeEscola(data.configuracoes.nomeEscola || "Portal Educacional");
-          setNomeProjeto(data.configuracoes.nomeProjeto || "Plataforma Gamificada");
+          setNomeProjeto(
+            data.configuracoes.nomeProjeto || "Plataforma Gamificada",
+          );
         } else {
           setNomeEscola("Portal Educacional");
         }
       } catch (e) {
-        setNomeEscola("Portal Educacional"); // Fallback em caso de erro de rede
+        setNomeEscola("Portal Educacional");
       }
     };
 
-    if (apiUrl) buscarConfiguracoes();
-  }, [apiUrl]);
+    buscarConfiguracoes();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,16 +46,10 @@ export default function LoginScreen({ onLoginSuccess, apiUrl }: LoginScreenProps
     setCarregando(true);
 
     try {
-      const res = await fetch(apiUrl, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain" },
-        // Enviando action "login", usuario e senha exatamente como o seu Apps Script espera
-        body: JSON.stringify({ action: "login", usuario, senha }), 
-      });
-      const data = await res.json();
+      // 🔥 CHAMADA LIMPA DA API
+      const data = await apiGeral.loginGestao(usuario, senha);
 
       if (data.status === "sucesso") {
-        // A sua rota retorna "data.nome"
         localStorage.setItem("usuarioLogado", data.nome);
         onLoginSuccess(data.nome);
       } else {
@@ -74,12 +65,10 @@ export default function LoginScreen({ onLoginSuccess, apiUrl }: LoginScreenProps
   return (
     <div className="min-h-screen bg-slate-100 flex items-center justify-center p-4 font-sans">
       <div className="bg-white rounded-3xl shadow-xl w-full max-w-md overflow-hidden border border-slate-200">
-        
-        {/* CABEÇALHO DO LOGIN DINÂMICO */}
         <div className="bg-slate-900 p-8 text-center relative overflow-hidden">
           <div className="absolute top-0 right-0 -mr-8 -mt-8 w-32 h-32 rounded-full bg-blue-500/20 blur-2xl"></div>
           <div className="absolute bottom-0 left-0 -ml-8 -mb-8 w-32 h-32 rounded-full bg-indigo-500/20 blur-2xl"></div>
-          
+
           <div className="relative z-10">
             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center text-3xl shadow-lg border border-white/10 mx-auto mb-4">
               🎓
@@ -87,16 +76,15 @@ export default function LoginScreen({ onLoginSuccess, apiUrl }: LoginScreenProps
             <h1 className="text-2xl font-black text-white leading-tight mb-1">
               {nomeProjeto}
             </h1>
-            <p className="text-sm text-slate-400 font-medium">
-              {nomeEscola}
-            </p>
+            <p className="text-sm text-slate-400 font-medium">{nomeEscola}</p>
           </div>
         </div>
 
-        {/* FORMULÁRIO */}
         <div className="p-8">
-          <h2 className="text-xl font-bold text-slate-800 mb-6 text-center">Acesso da Gestão</h2>
-          
+          <h2 className="text-xl font-bold text-slate-800 mb-6 text-center">
+            Acesso da Gestão
+          </h2>
+
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-2">

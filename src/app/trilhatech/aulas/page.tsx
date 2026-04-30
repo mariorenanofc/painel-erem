@@ -17,6 +17,7 @@ import RankingTutorModal from "@/src/components/RankingTutorModal";
 import CorrecaoMissoesModal from "@/src/components/CorrecaoMissoesModal";
 import GestaoFrequenciaModal from "@/src/components/GestaoFrequenciaModal";
 import MissoesList from "@/src/components/MissoesList";
+import GodModeModal from "@/src/components/GodModeModal";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
 
@@ -105,6 +106,7 @@ export default function GestaoAulasPage() {
   >([]);
 
   const [modalFreqAberto, setModalFreqAberto] = useState(false);
+  const [modalGodModeAberto, setModalGodModeAberto] = useState(false);
   const [abaDiario, setAbaDiario] = useState<"mensal" | "hoje">("mensal");
   const [carregandoFreq, setCarregandoFreq] = useState(false);
   const [diasComAula, setDiasComAula] = useState<number[]>([]);
@@ -625,6 +627,13 @@ export default function GestaoAulasPage() {
         setTextoJustificativa={setTextoJustificativa}
         salvarJustificativa={salvarJustificativa}
       />
+      {/* NOVO: MODAL GOD MODE */}
+      {modalGodModeAberto && (
+        <GodModeModal 
+          onClose={() => setModalGodModeAberto(false)} 
+          onSuccess={() => carregarRankingTutor("geral")} 
+        />
+      )}
 
       {modalZapAberto && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -1022,6 +1031,14 @@ export default function GestaoAulasPage() {
               className="cursor-pointer w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-sm font-bold py-3 px-4 rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 border border-emerald-200"
             >
               <span>💬</span> Configurar WhatsApp
+            </button>
+
+            {/* NOVO: BOTÃO GOD MODE */}
+            <button
+              onClick={() => setModalGodModeAberto(true)}
+              className="cursor-pointer w-full bg-gradient-to-r text-black from-slate-900 to-purple-900 hover:from-black hover:to-indigo-950 text-transparent bg-clip-text bg-gradient-to-r  text-sm font-black py-4 px-4 rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 border-2 border-amber-400 hover:scale-105 active:scale-95 uppercase tracking-widest mt-4"
+            >
+              <span className="text-xl ">⚡</span> God Mode
             </button>
           </div>
 

@@ -137,7 +137,7 @@ export default function PortalDashboard() {
       );
   }, []);
 
-  const VERSAO_ATUALIZACAO = "1.3.1";
+  const VERSAO_ATUALIZACAO = "1.4.0";
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
   const carregarPortal = useCallback(async () => {

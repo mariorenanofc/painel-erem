@@ -43,7 +43,18 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
         {/* CORPO / LISTA DE NOVIDADES */}
         <div className="p-6 bg-slate-50 overflow-y-auto max-h-[60vh]">
           <div className="space-y-4">
-            {/* Novidade 1: Pix Escolar e Perfil */}
+            {/* NOVIDADE 1: GOD MODE (PUNIÇÕES E BÔNUS) */}
+          <div className="bg-amber-50 border-2 border-amber-300 p-4 rounded-xl shadow-sm relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 text-6xl opacity-10">⚡</div>
+            <h3 className="font-black text-amber-800 text-sm md:text-base flex items-center gap-2 mb-1">
+              <span>⚡</span> O Olho do Mestre (God Mode)
+            </h3>
+            <p className="text-xs md:text-sm text-amber-700 leading-relaxed">
+              O Tutor agora tem o poder supremo! Ele pode dar <strong>bônus instantâneos de XP</strong> por boas participações, ou aplicar <strong className="text-red-600 font-black">punições severas (-100 XP)</strong> caso detete condutas antidesportivas (como usar IA para resolver quizzes, principalmente em sala de aula). Jogue limpo!
+            </p>
+          </div>
+
+            {/* Novidade 2: Pix Escolar e Perfil */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
               <div className="text-3xl shrink-0">💸</div>
               <div>
@@ -61,7 +72,7 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
               </div>
             </div>
 
-            {/* Novidade 2: Avatares e Curtidas */}
+            {/* Novidade 3: Avatares e Curtidas */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
               <div className="text-3xl shrink-0">❤️</div>
               <div>
@@ -77,7 +88,7 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
               </div>
             </div>
 
-            {/* Novidade 3: Ofensiva (Streak) */}
+            {/* Novidade 4: Ofensiva (Streak) */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
               <div className="text-3xl shrink-0">🔥</div>
               <div>

@@ -43,7 +43,18 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
         {/* CORPO / LISTA DE NOVIDADES */}
         <div className="p-6 bg-slate-50 overflow-y-auto max-h-[60vh]">
           <div className="space-y-4">
-            {/* NOVIDADE 1: GOD MODE (PUNIÇÕES E BÔNUS) */}
+
+            {/* NOVIDADE 1: MATERIAIS DE APOIO (NOVO!) */}
+          <div className="bg-blue-50 border-2 border-blue-300 p-4 rounded-xl shadow-sm relative overflow-hidden">
+            <div className="absolute -right-4 -top-4 text-6xl opacity-10">🚀</div>
+            <h3 className="font-black text-blue-800 text-sm md:text-base flex items-center gap-2 mb-1">
+              <span>📖</span> Missões de &quot;Material&ldquo;; (XP Fácil!)
+            </h3>
+            <p className="text-xs md:text-sm text-blue-700 leading-relaxed">
+              Agora você pode ganhar XP apenas por <strong>consumir conteúdos</strong> (PDFs, vídeos, resumos) no Classroom! Quando vir uma missão do tipo <span className="bg-blue-200 px-1 rounded font-bold">Material</span>, basta acessar o link, marcar a caixinha de honestidade e <strong>resgatar os seus XP na mesma hora</strong>, sem precisar digitar respostas ou fazer quizzes!
+            </p>
+          </div>
+            {/* NOVIDADE 2: GOD MODE (PUNIÇÕES E BÔNUS) */}
           <div className="bg-amber-50 border-2 border-amber-300 p-4 rounded-xl shadow-sm relative overflow-hidden">
             <div className="absolute -right-4 -top-4 text-6xl opacity-10">⚡</div>
             <h3 className="font-black text-amber-800 text-sm md:text-base flex items-center gap-2 mb-1">
@@ -54,7 +65,7 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
             </p>
           </div>
 
-            {/* Novidade 2: Pix Escolar e Perfil */}
+            {/* Novidade 3: Pix Escolar e Perfil */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
               <div className="text-3xl shrink-0">💸</div>
               <div>
@@ -72,7 +83,7 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
               </div>
             </div>
 
-            {/* Novidade 3: Avatares e Curtidas */}
+            {/* Novidade 4: Avatares e Curtidas */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
               <div className="text-3xl shrink-0">❤️</div>
               <div>
@@ -88,7 +99,7 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
               </div>
             </div>
 
-            {/* Novidade 4: Ofensiva (Streak) */}
+            {/* Novidade 5: Ofensiva (Streak) */}
             <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
               <div className="text-3xl shrink-0">🔥</div>
               <div>

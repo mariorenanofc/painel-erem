@@ -330,7 +330,10 @@ export default function PortalDashboard() {
 
   const enviarMissao = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!resposta.trim())
+
+    const respostaFinal = missaoAberta?.tipo === "Material" ? "Material Acessado e Consumido" : resposta;
+
+    if (!respostaFinal.trim())
       return alert("⚠️ Preencha a resposta antes de enviar!");
     if (!aluno || !missaoAberta) return;
     setEnviando(true);
@@ -338,7 +341,7 @@ export default function PortalDashboard() {
       const data = await apiAluno.enviarMissao(
         aluno.matricula,
         missaoAberta.id,
-        resposta,
+        respostaFinal,
       ); // 🔥 API CENTRALIZADA
       if (data.status === "sucesso") {
         alert("✅ " + data.mensagem);
@@ -666,7 +669,11 @@ export default function PortalDashboard() {
                     </span>
                     <span className="text-sm">
                       Fazer Check-in (+
-                      {taxaPresenca >= 90 ? 15 : taxaPresenca >= 75 ? 12 : 10}{" "}
+                      {taxaPresenca >= 90
+                        ? 15
+                        : taxaPresenca >= 75
+                          ? 12
+                          : 10}{" "}
                       XP)
                     </span>
                   </>
@@ -1224,9 +1231,13 @@ export default function PortalDashboard() {
                         </div>
                       )}
 
-                    <h3 className="font-bold text-slate-800 mb-3 uppercase text-sm">
-                      Sua Resposta:
-                    </h3>
+                    {/* Renderização Condicional da Resposta baseada no Tipo de Missão */}
+                    {missaoAberta.tipo !== "Material" && (
+                      <h3 className="font-bold text-slate-800 mb-3 uppercase text-sm mt-4">
+                        Sua Resposta:
+                      </h3>
+                    )}
+
                     {missaoAberta.tipo === "Quiz" ? (
                       <div className="space-y-3">
                         {["A", "B", "C", "D"].map((letra) => {
@@ -1258,7 +1269,7 @@ export default function PortalDashboard() {
                           ) : null;
                         })}
                       </div>
-                    ) : (
+                    ) : missaoAberta.tipo === "Projeto" ? (
                       <div>
                         <label className="block text-xs font-bold text-slate-500 mb-2">
                           Cole o link do seu projeto (GitHub, Replit, etc):
@@ -1268,12 +1279,27 @@ export default function PortalDashboard() {
                           placeholder="https://..."
                           value={resposta}
                           onChange={(e) => setResposta(e.target.value)}
-                          required
+                          required={!missaoAberta.linkClassroom}
                           disabled={inputDesabilitado}
                           className={`w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-3 focus:ring-2 focus:ring-blue-500 ${inputDesabilitado ? "opacity-60 cursor-not-allowed bg-slate-100" : ""}`}
                         />
                       </div>
+                    ) : (
+                      <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-xl text-center shadow-sm">
+                        <span className="text-3xl block mb-2">📚</span>
+                        <p className="text-sm font-black text-blue-800 uppercase tracking-widest mb-1">
+                          Material de Apoio
+                        </p>
+                        <p className="text-xs text-blue-600 font-medium">
+                          Nenhuma resposta em texto é necessária. Apenas acesse
+                          o conteúdo, marque a caixinha de honestidade acima e
+                          resgate seu XP!
+                        </p>
+                        {/* Se for material, garantimos que o form possa ser submetido passando uma resposta invisível */}
+                        <input type="hidden" value="Material Consumido" />
+                      </div>
                     )}
+
                     <div className="mt-6 flex justify-end gap-3">
                       <button
                         type="button"
@@ -1288,17 +1314,19 @@ export default function PortalDashboard() {
                         className={`text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition-all ${inputDesabilitado ? "bg-slate-400" : prazoEncerrado ? "bg-amber-500 hover:bg-amber-600" : "bg-emerald-600 hover:bg-emerald-700"}`}
                       >
                         {enviando
-                          ? "Enviando..."
+                          ? "Processando..."
                           : statusAtual === "aguardando correção" ||
                               statusAtual === "avaliador" ||
                               statusAtual === "avaliado" ||
                               statusAtual === "avaliada"
-                            ? "Já Enviado"
+                            ? "Já Concluído"
                             : statusAtual === "devolvida"
                               ? "Reenviar Missão"
-                              : prazoEncerrado
-                                ? "Enviar com Atraso (Penalidade)"
-                                : "Enviar Resposta"}
+                              : missaoAberta.tipo === "Material"
+                                ? "Resgatar XP do Material"
+                                : prazoEncerrado
+                                  ? "Enviar com Atraso (Penalidade)"
+                                  : "Enviar Resposta"}
                       </button>
                     </div>
                   </form>

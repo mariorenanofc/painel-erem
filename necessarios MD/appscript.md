@@ -583,14 +583,18 @@ function doPost(e) {
             }
           }
 
-          // 3. Auto-Correção para Quizzes com Desconto Automático
+          // 3. Auto-Correção para Quizzes e Materiais (com Desconto Automático)
           let statusFinal = "Aguardando Correção";
           let xpGanhoFinal = 0;
           let msgDesconto = "";
 
-          if (ativTipo === "Quiz") {
+          if (ativTipo === "Quiz" || ativTipo === "Material") {
+            // Se for Material, a resposta está sempre "correta" automaticamente!
+            let isCorreto = (ativTipo === "Material") ? true : (resposta === ativRespostaCorreta);
+            
             statusFinal = "Avaliado";
-            if (resposta === ativRespostaCorreta) {
+            
+            if (isCorreto) {
                 let desconto = 0;
                 if (atrasoDias > 0) {
                   let teto = Math.floor(ativXp / 2); // Teto máximo de desconto é metade do XP
@@ -605,7 +609,6 @@ function doPost(e) {
                   for(let t = 1; t < dadosTrilha.length; t++) {
                       if(String(dadosTrilha[t][0]).trim() === matricula) {
                         let xpAtual = Number(dadosTrilha[t][4]) || 0;
-                        // Se for reenvio de devolvida, desconta o XP antigo (que devia ser 0) e soma o novo
                         let xpAjustado = xpAtual - xpAnterior + xpGanhoFinal;
                         abaTrilha.getRange(t+1, 5).setValue(xpAjustado);
                         break;
@@ -3059,130 +3062,213 @@ function doPost(e) {
     // ==========================================
     // ROTA 36: BUSCAR PERFIL PÚBLICO (O Mural do Aluno)
     // ==========================================
-    if (action === "buscar_perfil_publico") {
-      const matriculaAlvo = String(dadosApp.matriculaAlvo).trim();
-      const matriculaVisualizador = String(dadosApp.matriculaVisualizador).trim(); 
+      if (action === "buscar_perfil_publico") {
+        const matriculaAlvo = String(dadosApp.matriculaAlvo).trim();
+        const matriculaVisualizador = String(dadosApp.matriculaVisualizador).trim(); 
 
-      const planBase = planilha.getSheetByName("basededados");
-      const abaTrilha = planilha.getSheetByName("trilhatech");
-      const abaEntregas = planilha.getSheetByName("entregas");
-      const abaCurtidas = planilha.getSheetByName("curtidas");
-      const abaFrequencia = planilha.getSheetByName("frequencia");
+        const planBase = planilha.getSheetByName("basededados");
+        const abaTrilha = planilha.getSheetByName("trilhatech");
+        const abaEntregas = planilha.getSheetByName("entregas");
+        const abaCurtidas = planilha.getSheetByName("curtidas");
+        const abaFrequencia = planilha.getSheetByName("frequencia");
 
-      if (!planBase || !abaTrilha) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Abas não encontradas." })).setMimeType(ContentService.MimeType.JSON);
+        if (!planBase || !abaTrilha) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Abas não encontradas." })).setMimeType(ContentService.MimeType.JSON);
 
-      let perfil = {
-        matricula: matriculaAlvo, nome: "", turma: "",
-        xpTotal: 0, nivel: "Hello World", avatar: "avatar-padrao", totalCurtidas: 0,
-        jaCurtiuHoje: false, missoesConcluidas: 0,
-        pixEnviado: 0, pixRecebido: 0, badges: [],
-        ofensivaDias: 0
-      };
+        let perfil = {
+          matricula: matriculaAlvo, nome: "", turma: "",
+          xpTotal: 0, nivel: "Hello World", avatar: "avatar-padrao", totalCurtidas: 0,
+          jaCurtiuHoje: false, missoesConcluidas: 0,
+          pixEnviado: 0, pixRecebido: 0, badges: [],
+          ofensivaDias: 0
+        };
 
-      // 1. Busca Nome
-      const dadosBase = planBase.getDataRange().getValues();
-      for (let i = 1; i < dadosBase.length; i++) {
-        if (String(dadosBase[i][2]).trim() === matriculaAlvo) { perfil.nome = String(dadosBase[i][0]); break; }
-      }
-
-      // 2. Busca Turma, XP, Nível, Avatar e Curtidas Totais
-      const dadosTrilha = abaTrilha.getDataRange().getValues();
-      for (let i = 1; i < dadosTrilha.length; i++) {
-        if (String(dadosTrilha[i][0]).trim() === matriculaAlvo) {
-          perfil.turma = String(dadosTrilha[i][1]).trim();
-          perfil.xpTotal = Number(dadosTrilha[i][4]) || 0;
-          perfil.nivel = String(dadosTrilha[i][5]).trim() || "Hello World";
-          perfil.avatar = String(dadosTrilha[i][8]).trim() || "avatar-padrao";
-          perfil.totalCurtidas = Number(dadosTrilha[i][9]) || 0;
-          break;
+        // 1. Busca Nome
+        const dadosBase = planBase.getDataRange().getValues();
+        for (let i = 1; i < dadosBase.length; i++) {
+          if (String(dadosBase[i][2]).trim() === matriculaAlvo) { perfil.nome = String(dadosBase[i][0]); break; }
         }
-      }
 
-      // 3. Calcula as vitórias na aba Entregas (Pix, Missões e Badges)
-      if (abaEntregas) {
-        const dadosEntregas = abaEntregas.getDataRange().getValues();
-        let missoesUnicas = new Set();
-        for (let i = 1; i < dadosEntregas.length; i++) {
-          let idEntrega = String(dadosEntregas[i][0]).trim();
-          let matRow = String(dadosEntregas[i][1]).trim();
+        // 2. Busca Turma, XP, Nível, Avatar e Curtidas Totais
+        const dadosTrilha = abaTrilha.getDataRange().getValues();
+        for (let i = 1; i < dadosTrilha.length; i++) {
+          if (String(dadosTrilha[i][0]).trim() === matriculaAlvo) {
+            perfil.turma = String(dadosTrilha[i][1]).trim();
+            perfil.xpTotal = Number(dadosTrilha[i][4]) || 0;
+            perfil.nivel = String(dadosTrilha[i][5]).trim() || "Hello World";
+            perfil.avatar = String(dadosTrilha[i][8]).trim() || "avatar-padrao";
+            perfil.totalCurtidas = Number(dadosTrilha[i][9]) || 0;
+            break;
+          }
+        }
 
-          if (matRow === matriculaAlvo) {
-            if (idEntrega.includes("PIX") && idEntrega.includes("-RECEBEU")) perfil.pixRecebido += Number(dadosEntregas[i][5]) || 0;
-            if (idEntrega.includes("PIX") && idEntrega.includes("-ENVIOU")) perfil.pixEnviado += Math.abs(Number(dadosEntregas[i][5]) || 0);
-            if (idEntrega.startsWith("BADGE-")) {
-              let nomeBadge = String(dadosEntregas[i][3]).replace("Desbloqueou: ", "").trim();
-              perfil.badges.push(nomeBadge);
+        // 3. Calcula as vitórias na aba Entregas (Pix, Missões e Badges)
+        if (abaEntregas) {
+          const dadosEntregas = abaEntregas.getDataRange().getValues();
+          let missoesUnicas = new Set();
+          for (let i = 1; i < dadosEntregas.length; i++) {
+            let idEntrega = String(dadosEntregas[i][0]).trim();
+            let matRow = String(dadosEntregas[i][1]).trim();
+
+            if (matRow === matriculaAlvo) {
+              if (idEntrega.includes("PIX") && idEntrega.includes("-RECEBEU")) perfil.pixRecebido += Number(dadosEntregas[i][5]) || 0;
+              if (idEntrega.includes("PIX") && idEntrega.includes("-ENVIOU")) perfil.pixEnviado += Math.abs(Number(dadosEntregas[i][5]) || 0);
+              if (idEntrega.startsWith("BADGE-")) {
+                let nomeBadge = String(dadosEntregas[i][3]).replace("Desbloqueou: ", "").trim();
+                perfil.badges.push(nomeBadge);
+              }
+              // Conta as missões concluídas ignorando PIX, BDAY, BLOCK, etc.
+              if (!idEntrega.startsWith("PIX") && !idEntrega.startsWith("BDAY") && !idEntrega.startsWith("BADGE") && !idEntrega.startsWith("BLOCK") && String(dadosEntregas[i][4]) !== "Pendente") {
+                missoesUnicas.add(String(dadosEntregas[i][2]));
+              }
             }
-            // Conta as missões concluídas ignorando PIX, BDAY, BLOCK, etc.
-            if (!idEntrega.startsWith("PIX") && !idEntrega.startsWith("BDAY") && !idEntrega.startsWith("BADGE") && !idEntrega.startsWith("BLOCK") && String(dadosEntregas[i][4]) !== "Pendente") {
-              missoesUnicas.add(String(dadosEntregas[i][2]));
+          }
+          perfil.missoesConcluidas = missoesUnicas.size;
+        }
+
+        // 4. Verifica o botão de curtir (Para desabilitar se já curtiu hoje ou se for ele mesmo)
+        if (matriculaVisualizador === matriculaAlvo) {
+          perfil.jaCurtiuHoje = true; 
+        } else if (abaCurtidas) {
+          const timezone = Session.getScriptTimeZone();
+          const dataHoje = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
+          const dadosCurtidas = abaCurtidas.getDataRange().getValues();
+          for (let i = 1; i < dadosCurtidas.length; i++) {
+            let rem = String(dadosCurtidas[i][1]).trim();
+            let dest = String(dadosCurtidas[i][2]).trim();
+            let dataBruta = dadosCurtidas[i][3];
+            let dataStr = dataBruta instanceof Date ? Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy") : String(dataBruta).trim();
+
+            if (rem === matriculaVisualizador && dest === matriculaAlvo && dataStr === dataHoje) {
+              perfil.jaCurtiuHoje = true; break;
             }
           }
         }
-        perfil.missoesConcluidas = missoesUnicas.size;
+
+        // 5. CÁLCULO DE OFENSIVA PARA O PERFIL PÚBLICO
+        if (abaFrequencia && perfil.turma) {
+          let alunosDaMesmaTurma = new Set();
+          const dadosTrilhaAux = abaTrilha.getDataRange().getValues();
+          for (let i = 1; i < dadosTrilhaAux.length; i++) {
+              if (String(dadosTrilhaAux[i][1]).trim() === perfil.turma && String(dadosTrilhaAux[i][2]).trim().toLowerCase() === "ativo") {
+                  alunosDaMesmaTurma.add(String(dadosTrilhaAux[i][0]).trim());
+              }
+          }
+          let diasComAulaSet = new Set();
+          let checkinsMap = {};
+          const timezone = Session.getScriptTimeZone();
+          const dadosFreq = abaFrequencia.getDataRange().getValues();
+          for (let i = 1; i < dadosFreq.length; i++) {
+              let idCheckin = String(dadosFreq[i][0]).trim();
+              if (idCheckin.startsWith("BDAY")) continue;
+              let mat = String(dadosFreq[i][1]).trim();
+              let dataBruta = dadosFreq[i][3];
+              let hora = String(dadosFreq[i][4]).trim();
+              let dataFormatada = dataBruta instanceof Date ? Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy") : String(dataBruta).trim();
+
+              if (alunosDaMesmaTurma.has(mat)) diasComAulaSet.add(dataFormatada);
+              if (mat === matriculaAlvo && (hora !== "00:00:00" && hora !== "00:00" && hora !== "")) {
+                  checkinsMap[dataFormatada] = true;
+              }
+          }
+          let diasOrdenados = Array.from(diasComAulaSet).sort((a, b) => {
+              let pA = String(a).split('/'); let pB = String(b).split('/');
+              return new Date(pB[2], pB[1]-1, pB[0]).getTime() - new Date(pA[2], pA[1]-1, pA[0]).getTime();
+          });
+          let streak = 0;
+          const dataHojeStr = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
+          for (let dia of diasOrdenados) {
+              if (dia === dataHojeStr && !checkinsMap[dia]) continue;
+              if (checkinsMap[dia]) streak++;
+              else break;
+          }
+          perfil.ofensivaDias = streak;
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", perfil: perfil })).setMimeType(ContentService.MimeType.JSON);
       }
+    // ==========================================
+    // ROTA 37: LISTAR ALUNOS PARA O GOD MODE
+    // ==========================================
+      if (action === "listar_alunos_godmode") {
+        const planBase = planilha.getSheetByName("basededados");
+        const abaTrilha = planilha.getSheetByName("trilhatech");
 
-      // 4. Verifica o botão de curtir (Para desabilitar se já curtiu hoje ou se for ele mesmo)
-      if (matriculaVisualizador === matriculaAlvo) {
-        perfil.jaCurtiuHoje = true; 
-      } else if (abaCurtidas) {
-        const timezone = Session.getScriptTimeZone();
-        const dataHoje = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
-        const dadosCurtidas = abaCurtidas.getDataRange().getValues();
-        for (let i = 1; i < dadosCurtidas.length; i++) {
-          let rem = String(dadosCurtidas[i][1]).trim();
-          let dest = String(dadosCurtidas[i][2]).trim();
-          let dataBruta = dadosCurtidas[i][3];
-          let dataStr = dataBruta instanceof Date ? Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy") : String(dataBruta).trim();
+        if (!planBase || !abaTrilha) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Abas não encontradas." })).setMimeType(ContentService.MimeType.JSON);
 
-          if (rem === matriculaVisualizador && dest === matriculaAlvo && dataStr === dataHoje) {
-            perfil.jaCurtiuHoje = true; break;
+        let nomesMap = {};
+        const dadosBase = planBase.getDataRange().getValues();
+        for (let i = 1; i < dadosBase.length; i++) nomesMap[String(dadosBase[i][2]).trim()] = String(dadosBase[i][0]);
+
+        let alunos = [];
+        const dadosTrilha = abaTrilha.getDataRange().getValues();
+        for (let i = 1; i < dadosTrilha.length; i++) {
+          let mat = String(dadosTrilha[i][0]).trim();
+          let turma = String(dadosTrilha[i][1]).trim();
+          let status = String(dadosTrilha[i][2]).trim().toLowerCase();
+          
+          if (mat && status === "ativo") {
+            alunos.push({ matricula: mat, nome: nomesMap[mat] || "Aluno " + mat, turma: turma });
           }
         }
+        // Ordena por turma e depois alfabeticamente
+        alunos.sort((a, b) => a.turma.localeCompare(b.turma) || a.nome.localeCompare(b.nome));
+
+        return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", alunos })).setMimeType(ContentService.MimeType.JSON);
       }
 
-      // 5. CÁLCULO DE OFENSIVA PARA O PERFIL PÚBLICO
-      if (abaFrequencia && perfil.turma) {
-        let alunosDaMesmaTurma = new Set();
-        const dadosTrilhaAux = abaTrilha.getDataRange().getValues();
-        for (let i = 1; i < dadosTrilhaAux.length; i++) {
-            if (String(dadosTrilhaAux[i][1]).trim() === perfil.turma && String(dadosTrilhaAux[i][2]).trim().toLowerCase() === "ativo") {
-                alunosDaMesmaTurma.add(String(dadosTrilhaAux[i][0]).trim());
-            }
-        }
-        let diasComAulaSet = new Set();
-        let checkinsMap = {};
-        const timezone = Session.getScriptTimeZone();
-        const dadosFreq = abaFrequencia.getDataRange().getValues();
-        for (let i = 1; i < dadosFreq.length; i++) {
-            let idCheckin = String(dadosFreq[i][0]).trim();
-            if (idCheckin.startsWith("BDAY")) continue;
-            let mat = String(dadosFreq[i][1]).trim();
-            let dataBruta = dadosFreq[i][3];
-            let hora = String(dadosFreq[i][4]).trim();
-            let dataFormatada = dataBruta instanceof Date ? Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy") : String(dataBruta).trim();
+    // ==========================================
+    // ROTA 38: INJETAR XP MANUAL (GOD MODE)
+    // ==========================================
+      if (action === "injetar_xp_manual") {
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(5000);
+          const matriculaAlvo = String(dadosApp.matriculaAlvo).trim();
+          const quantidadeXP = Number(dadosApp.quantidadeXP) || 0;
+          const motivo = String(dadosApp.motivo).trim() || "Ajuste manual do Mestre.";
+          
+          const abaTrilha = planilha.getSheetByName("trilhatech");
+          const abaEntregas = planilha.getSheetByName("entregas");
+          
+          if (!abaTrilha || !abaEntregas) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Abas base não encontradas" })).setMimeType(ContentService.MimeType.JSON);
 
-            if (alunosDaMesmaTurma.has(mat)) diasComAulaSet.add(dataFormatada);
-            if (mat === matriculaAlvo && (hora !== "00:00:00" && hora !== "00:00" && hora !== "")) {
-                checkinsMap[dataFormatada] = true;
+          let linhaTrilha = -1;
+          let xpAtual = 0;
+          const dadosTrilha = abaTrilha.getDataRange().getValues();
+          for (let i = 1; i < dadosTrilha.length; i++) {
+            if (String(dadosTrilha[i][0]).trim() === matriculaAlvo) {
+              linhaTrilha = i + 1;
+              xpAtual = Number(dadosTrilha[i][4]) || 0;
+              break;
             }
+          }
+
+          if (linhaTrilha === -1) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aluno não encontrado na TrilhaTech." })).setMimeType(ContentService.MimeType.JSON);
+
+          // 1. Injeta/Remove o XP
+          let novoXp = xpAtual + quantidadeXP;
+          if (novoXp < 0) novoXp = 0; // Não deixa ficar negativo
+          abaTrilha.getRange(linhaTrilha, 5).setValue(novoXp);
+
+          const timestamp = new Date().getTime();
+
+          // 2. Gera o Histórico (para o Analytics e Extrato)
+          const idEntrega = "GOD-" + timestamp;
+          abaEntregas.appendRow([idEntrega, matriculaAlvo, "AJUSTE-MANUAL", motivo, "Avaliado", quantidadeXP, timestamp, ""]);
+
+          // 3. Gera a Notificação Imediata para o Aluno
+          const idNotif = "NOTIF-" + timestamp;
+          const tipoNotif = quantidadeXP >= 0 ? "GODMODE-B" : "GODMODE-M";
+          const msgNotif = quantidadeXP >= 0 ? `⚡ Bônus do Mestre: ${motivo}` : `🚨 Punição do Mestre: ${motivo}`;
+          abaEntregas.appendRow([idNotif, matriculaAlvo, "SISTEMA", msgNotif, tipoNotif, quantidadeXP, timestamp, ""]);
+
+          return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Poder do Mestre aplicado com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Erro ao processar." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
         }
-        let diasOrdenados = Array.from(diasComAulaSet).sort((a, b) => {
-            let pA = String(a).split('/'); let pB = String(b).split('/');
-            return new Date(pB[2], pB[1]-1, pB[0]).getTime() - new Date(pA[2], pA[1]-1, pA[0]).getTime();
-        });
-        let streak = 0;
-        const dataHojeStr = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
-        for (let dia of diasOrdenados) {
-            if (dia === dataHojeStr && !checkinsMap[dia]) continue;
-            if (checkinsMap[dia]) streak++;
-            else break;
-        }
-        perfil.ofensivaDias = streak;
       }
-
-      return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", perfil: perfil })).setMimeType(ContentService.MimeType.JSON);
-    }
 
   } catch (erro) {
     return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: erro.toString() })).setMimeType(ContentService.MimeType.JSON);

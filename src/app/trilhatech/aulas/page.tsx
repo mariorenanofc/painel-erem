@@ -74,7 +74,7 @@ export default function GestaoAulasPage() {
   const [dataLimite, setDataLimite] = useState("");
   const [xp, setXp] = useState("100");
   const [turmaAlvo, setTurmaAlvo] = useState("Todas");
-  const [tipo, setTipo] = useState("Projeto");
+  const [tipo, setTipo] = useState("Projeto"); // Pode ser Projeto, Quiz ou Material
   const [opcaoA, setOpcaoA] = useState("");
   const [opcaoB, setOpcaoB] = useState("");
   const [opcaoC, setOpcaoC] = useState("");
@@ -629,9 +629,9 @@ export default function GestaoAulasPage() {
       />
       {/* NOVO: MODAL GOD MODE */}
       {modalGodModeAberto && (
-        <GodModeModal 
-          onClose={() => setModalGodModeAberto(false)} 
-          onSuccess={() => carregarRankingTutor("geral")} 
+        <GodModeModal
+          onClose={() => setModalGodModeAberto(false)}
+          onSuccess={() => carregarRankingTutor("geral")}
         />
       )}
 
@@ -683,7 +683,7 @@ export default function GestaoAulasPage() {
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-3">
                     Tipo de Missão
                   </label>
-                  <div className="flex gap-6">
+                  <div className="flex flex-wrap gap-6">
                     <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
                       <input
                         type="radio"
@@ -703,6 +703,17 @@ export default function GestaoAulasPage() {
                         className="w-4 h-4 text-amber-500 focus:ring-amber-500"
                       />{" "}
                       Quiz (Múltipla Escolha)
+                    </label>
+                    {/* NOVO: OPÇÃO MATERIAL DE APOIO */}
+                    <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-700">
+                      <input
+                        type="radio"
+                        value="Material"
+                        checked={tipo === "Material"}
+                        onChange={() => setTipo("Material")}
+                        className="w-4 h-4 text-emerald-500 focus:ring-emerald-500"
+                      />{" "}
+                      Material (Acesso no AVA)
                     </label>
                   </div>
                 </div>
@@ -735,7 +746,6 @@ export default function GestaoAulasPage() {
                   ></textarea>
                 </div>
 
-                {/* NOVO CAMPO: LINK DA IMAGEM */}
                 <div>
                   <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2">
                     <span>🖼️</span> Link da Imagem de Referência (Opcional)

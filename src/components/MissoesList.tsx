@@ -161,6 +161,8 @@ export default function MissoesList({
               <option value="Todos">Todos os Tipos</option>
               <option value="Projeto">Projetos</option>
               <option value="Quiz">Quizzes</option>
+              {/* NOVO: OPÇÃO MATERIAL NO FILTRO DE BUSCA */}
+              <option value="Material">Material</option>
             </select>
           </div>
         </div>
@@ -211,7 +213,7 @@ export default function MissoesList({
                       )}
 
                       <span
-                        className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border ${ativ.tipo === "Quiz" ? "bg-amber-50 text-amber-700 border-amber-200" : "bg-indigo-50 text-indigo-700 border-indigo-200"}`}
+                        className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border ${ativ.tipo === "Quiz" ? "bg-amber-50 text-amber-700 border-amber-200" : ativ.tipo === "Material" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-indigo-50 text-indigo-700 border-indigo-200"}`}
                       >
                         {ativ.tipo}
                       </span>
@@ -284,7 +286,7 @@ export default function MissoesList({
             </div>
 
             <div
-              className={`p-4 border-b flex justify-between items-center text-white ${missaoPreview.tipo === "Quiz" ? "bg-amber-600" : "bg-blue-600"}`}
+              className={`p-4 border-b flex justify-between items-center text-white ${missaoPreview.tipo === "Quiz" ? "bg-amber-600" : missaoPreview.tipo === "Material" ? "bg-emerald-600" : "bg-blue-600"}`}
             >
               <h2 className="font-bold text-lg">
                 🎯 {missaoPreview.tipo}: {missaoPreview.titulo}
@@ -314,13 +316,17 @@ export default function MissoesList({
               {/* RENDERIZAÇÃO DA IMAGEM DE REFERÊNCIA NO PREVIEW */}
               {missaoPreview.imagemUrl && (
                 <div className="relative w-full h-64 mb-6 rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
-                  <Image 
+                  <Image
                     src={(() => {
                       const url = missaoPreview.imagemUrl || "";
-                      const match = url.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-                      return match ? `https://drive.google.com/uc?export=view&id=${match[1]}` : url;
+                      const match = url.match(
+                        /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
+                      );
+                      return match
+                        ? `https://drive.google.com/uc?export=view&id=${match[1]}`
+                        : url;
                     })()}
-                    alt="Referência da Missão" 
+                    alt="Referência da Missão"
                     fill
                     sizes="(max-width: 768px) 100vw, 800px"
                     className="object-contain p-2"
@@ -368,6 +374,7 @@ export default function MissoesList({
                   Visão do Formulário:
                 </h3>
 
+                {/* NOVO: PREVIEW DO MATERIAL DE APOIO NO LADO DO TUTOR */}
                 {missaoPreview.tipo === "Quiz" ? (
                   <div className="space-y-3">
                     {["A", "B", "C", "D"].map((letra) => {
@@ -391,7 +398,7 @@ export default function MissoesList({
                       ) : null;
                     })}
                   </div>
-                ) : (
+                ) : missaoPreview.tipo === "Projeto" ? (
                   <div>
                     <label className="block text-xs font-bold text-slate-500 mb-2">
                       Cole o link do seu projeto (GitHub, Replit, etc):
@@ -402,6 +409,17 @@ export default function MissoesList({
                       placeholder="https://..."
                       className="w-full bg-slate-100 border border-slate-300 text-slate-800 rounded p-3 cursor-not-allowed opacity-80"
                     />
+                  </div>
+                ) : (
+                  <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-xl text-center shadow-sm opacity-80 cursor-not-allowed">
+                    <span className="text-3xl block mb-2">📚</span>
+                    <p className="text-sm font-black text-blue-800 uppercase tracking-widest mb-1">
+                      Material de Apoio
+                    </p>
+                    <p className="text-xs text-blue-600 font-medium">
+                      Nenhuma resposta em texto é necessária pelo aluno. Apenas
+                      acesso ao material e marcação da caixinha de honestidade.
+                    </p>
                   </div>
                 )}
 

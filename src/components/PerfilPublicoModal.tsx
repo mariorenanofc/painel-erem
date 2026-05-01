@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { calcularBadges } from "../utils/badges";
 import { Atividade } from "../types";
-import { apiAluno } from "@/src/services/api"; 
+import { apiAluno } from "@/src/services/api";
 
 interface PerfilPublicoModalProps {
   matriculaAlvo: string;
@@ -25,7 +25,6 @@ export default function PerfilPublicoModal({
   useEffect(() => {
     const buscarPerfil = async () => {
       try {
-        //  CHAMADA LIMPA DA API
         const data = await apiAluno.buscarPerfilPublico(
           matriculaVisualizador,
           matriculaAlvo,
@@ -61,7 +60,6 @@ export default function PerfilPublicoModal({
     });
 
     try {
-      //  CHAMADA LIMPA DA API
       await apiAluno.curtirPerfil(matriculaVisualizador, matriculaAlvo);
     } catch (e) {
     } finally {
@@ -79,6 +77,7 @@ export default function PerfilPublicoModal({
 
   if (!perfil) return null;
 
+  // Avatar sempre será o emoji correto escolhido pelo aluno
   const avatar =
     perfil.avatar && perfil.avatar !== "avatar-padrao" ? perfil.avatar : "👨‍💻";
 
@@ -100,17 +99,36 @@ export default function PerfilPublicoModal({
     totalCurtidas: 999999,
   });
 
-  const badgesExibicao = (perfil.badges || []).map((nomeBadge: string) => {
-    const encontrada = catalogoBadges.find((b) => b.nome === nomeBadge);
-    return (
-      encontrada || {
-        id: nomeBadge,
-        nome: nomeBadge,
-        icone: "🏆",
-        descricao: "Conquista especial do Trilha Tech!",
-      }
-    );
-  });
+  // ===== SISTEMA DE PLACAS VIP (BASEADO NO BD CORRETO) =====
+  const badgesDoAluno = perfil.badges || [];
+
+  // Busca se o aluno tem a placa na aba entregas
+  const isOuro = badgesDoAluno.some((b: string) => b.includes("Elite Ouro"));
+  const isPrata = badgesDoAluno.some((b: string) => b.includes("Elite Prata"));
+  const isBronze = badgesDoAluno.some((b: string) =>
+    b.includes("Elite Bronze"),
+  );
+
+  // Remove as placas VIP da lista de badges normais
+  const badgesExibicao = badgesDoAluno
+    .filter(
+      (nome: string) =>
+        !nome.includes("Elite Ouro") &&
+        !nome.includes("Elite Prata") &&
+        !nome.includes("Elite Bronze"),
+    )
+    .map((nomeBadge: string) => {
+      const nomeLimpo = nomeBadge.replace(/["']/g, "").trim();
+      const encontrada = catalogoBadges.find((b) => b.nome === nomeLimpo);
+      return (
+        encontrada || {
+          id: nomeLimpo,
+          nome: nomeLimpo,
+          icone: "🏆",
+          descricao: "Conquista especial do Trilha Tech!",
+        }
+      );
+    });
 
   return (
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4 animate-in fade-in duration-200">
@@ -185,6 +203,101 @@ export default function PerfilPublicoModal({
         </div>
 
         <div className="p-6 bg-slate-50 flex-1 overflow-y-auto">
+          {/* SESSÃO VIP: PLACAS DE ELITE MENSAL */}
+          {(isOuro || isPrata || isBronze) && (
+            <div className="mb-8 animate-in zoom-in duration-500">
+              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 text-center">
+                Hall da Fama - Conquistas de Elite
+              </h3>
+
+              <div className="flex flex-col gap-4">
+                {isOuro && (
+                  <div
+                    className="relative overflow-hidden rounded-2xl border-2 border-yellow-400 shadow-[0_10px_20px_rgba(234,179,8,0.4)] transform hover:scale-105 transition-all"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #BF953F, #FCF6BA, #B38728, #FBF5B7, #AA771C)",
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-white opacity-20 transform -skew-x-12 translate-x-full hover:translate-x-[-200%] transition-transform duration-1000"></div>
+                    <div className="p-4 flex items-center gap-4 relative z-10 bg-white/20 backdrop-blur-sm">
+                      <div className="text-5xl drop-shadow-lg">👑</div>
+                      <div className="flex-1">
+                        <h4 className="font-black text-yellow-900 text-xl tracking-wider uppercase drop-shadow-sm">
+                          Top 1 Geral
+                        </h4>
+                        <p className="text-yellow-800 font-bold text-xs uppercase tracking-widest">
+                          Campeão do Mês
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="bg-yellow-900/80 text-yellow-100 text-[10px] px-2 py-1 rounded-md font-black uppercase tracking-widest border border-yellow-700/50">
+                          Elite Ouro
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {isPrata && (
+                  <div
+                    className="relative overflow-hidden rounded-2xl border-2 border-slate-400 shadow-[0_10px_20px_rgba(148,163,184,0.4)] transform hover:scale-105 transition-all"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #8e9eab, #eef2f3, #8e9eab)",
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-white opacity-40 transform -skew-x-12 translate-x-full hover:translate-x-[-200%] transition-transform duration-1000"></div>
+                    <div className="p-4 flex items-center gap-4 relative z-10 bg-white/20 backdrop-blur-sm">
+                      <div className="text-5xl drop-shadow-lg">🥈</div>
+                      <div className="flex-1">
+                        <h4 className="font-black text-slate-800 text-xl tracking-wider uppercase drop-shadow-sm">
+                          Top 2 Geral
+                        </h4>
+                        <p className="text-slate-700 font-bold text-xs uppercase tracking-widest">
+                          Vice-Campeão do Mês
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="bg-slate-800 text-slate-100 text-[10px] px-2 py-1 rounded-md font-black uppercase tracking-widest border border-slate-600">
+                          Elite Prata
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {isBronze && (
+                  <div
+                    className="relative overflow-hidden rounded-2xl border-2 border-orange-500 shadow-[0_10px_20px_rgba(249,115,22,0.4)] transform hover:scale-105 transition-all"
+                    style={{
+                      background:
+                        "linear-gradient(135deg, #cd7f32, #ffdab9, #b87333)",
+                    }}
+                  >
+                    <div className="absolute inset-0 bg-white opacity-20 transform -skew-x-12 translate-x-full hover:translate-x-[-200%] transition-transform duration-1000"></div>
+                    <div className="p-4 flex items-center gap-4 relative z-10 bg-white/20 backdrop-blur-sm">
+                      <div className="text-5xl drop-shadow-lg">🥉</div>
+                      <div className="flex-1">
+                        <h4 className="font-black text-orange-950 text-xl tracking-wider uppercase drop-shadow-sm">
+                          Top 3 Geral
+                        </h4>
+                        <p className="text-orange-900 font-bold text-xs uppercase tracking-widest">
+                          Destaque do Mês
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span className="bg-orange-900/80 text-orange-100 text-[10px] px-2 py-1 rounded-md font-black uppercase tracking-widest border border-orange-700/50">
+                          Elite Bronze
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
             <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-sm hover:-translate-y-1 transition-transform">
               <div className="text-2xl mb-1">⭐</div>
@@ -226,13 +339,13 @@ export default function PerfilPublicoModal({
 
           <div>
             <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2">
-              Mural de Conquistas
+              Conquistas Regulares
             </h3>
             {badgesExibicao.length === 0 ? (
               <div className="text-center py-8">
                 <span className="text-4xl opacity-40 mb-2 block">📭</span>
                 <p className="text-sm text-slate-500 font-medium">
-                  Este aluno ainda não tem conquistas.
+                  Este aluno não tem outras conquistas exibíveis.
                 </p>
               </div>
             ) : (

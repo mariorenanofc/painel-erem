@@ -46,9 +46,16 @@ export const apiGeral = {
 // 2. API DO ALUNO (PORTAL)
 // ==========================================
 export const apiAluno = {
-  buscarPerfil: (matricula: string) => 
+  // --- PREMIAÇÃO DE ELITE ---
+  coroarElite: (
+    matriculaNova: string,
+    tipoPlaca: "Elite Ouro" | "Elite Prata" | "Elite Bronze",
+  ) =>
+    fetchApi({ action: "coroar_elite", matricula: matriculaNova, tipoPlaca }),
+
+  buscarPerfil: (matricula: string) =>
     fetchApi({ action: "buscar_perfil_aluno", matricula }),
-  
+
   carregarPortal: (matricula: string) =>
     fetchApi({ action: "carregar_portal_aluno", matricula }),
 
@@ -212,6 +219,9 @@ export const apiTutor = {
       quantidadeXP,
       motivo,
     }),
+
+  coroarElite: (matricula: string, tipoPlaca: string) =>
+    fetchApi({ action: "coroar_elite", matricula, tipoPlaca }),
 
   // --- CONFIGURAÇÕES ---
   buscarSenhaCheckin: () => fetchApi({ action: "buscar_senha_checkin" }),

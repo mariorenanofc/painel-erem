@@ -3270,6 +3270,59 @@ function doPost(e) {
         }
       }
 
+    // ==========================================
+    // ROTA 39: COROAR ELITE (TROFÉU ROTATIVO)
+    // ==========================================
+      if (action === "coroar_elite") {
+        try {
+          const dadosRequisicao = JSON.parse(e.postData.contents);
+
+          const matriculaNova = String(dadosRequisicao.matricula).trim();
+          const tipoPlaca = dadosRequisicao.tipoPlaca; // Ex: "Elite Ouro"
+
+          const sheetEntregas = planilha.getSheetByName("entregas");
+          const dataEntregas = sheetEntregas.getDataRange().getValues();
+
+          const dataHoje = new Date();
+          // Pega o nome do mês atual para a badge de legado (Ex: "maio")
+          const nomeMes = dataHoje.toLocaleString('pt-BR', { month: 'long' });
+          const tituloLegado = `Desbloqueou: 🏅 Legado ${tipoPlaca.replace("Elite ", "")} (${nomeMes})`;
+
+          // 1. Procurar o antigo dono e transformá-lo em "Legado"
+          for (let i = 1; i < dataEntregas.length; i++) {
+            const idAtiv = String(dataEntregas[i][2]).trim();
+            const projeto = String(dataEntregas[i][3]).trim();
+
+            if (idAtiv === "CONQUISTA-BADGE" && projeto === `Desbloqueou: ${tipoPlaca}`) {
+              // Achou o antigo dono! Troca a placa ativa dele pela badge de legado eterno.
+              sheetEntregas.getRange(i + 1, 4).setValue(tituloLegado);
+            }
+          }
+
+          // 2. Dar a Placa Ativa para o novo Campeão
+          // 🔥 CORREÇÃO: Adicionado 'BADGE-' na frente do VIP para o frontend reconhecer!
+          const newId = "BADGE-VIP-" + new Date().getTime(); 
+          
+          sheetEntregas.appendRow([
+            newId,
+            matriculaNova,
+            "CONQUISTA-BADGE",
+            `Desbloqueou: ${tipoPlaca}`,
+            "Avaliado",
+            0, // Sem XP extra
+            "token-" + newId
+          ]);
+
+          return ContentService.createTextOutput(JSON.stringify({
+            status: "sucesso",
+            mensagem: `${tipoPlaca} transferida com sucesso para o novo Campeão!`
+          })).setMimeType(ContentService.MimeType.JSON);
+
+        } catch (erro) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: erro.toString() })).setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+
   } catch (erro) {
     return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: erro.toString() })).setMimeType(ContentService.MimeType.JSON);
   }

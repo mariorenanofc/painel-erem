@@ -12,11 +12,12 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
   const [animando, setAnimando] = useState(false);
 
   useEffect(() => {
-    // Dispara uns confetes para celebrar a nova versão
+    // Dispara confetes com cores de Ouro, Prata e Bronze
     confetti({
       particleCount: 150,
       spread: 80,
       origin: { y: 0.3 },
+      colors: ["#fbbf24", "#94a3b8", "#f97316", "#ffffff"],
       zIndex: 99999,
     });
     setAnimando(true);
@@ -25,95 +26,64 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
   return (
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4">
       <div
-        className={`bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col transition-all duration-500 transform ${animando ? "scale-100 opacity-100" : "scale-95 opacity-0"}`}
+        className={`bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col border-4 border-yellow-400 transition-all duration-500 transform ${animando ? "scale-100 opacity-100" : "scale-95 opacity-0"}`}
       >
         {/* CABEÇALHO */}
-        <div className="bg-gradient-to-r from-blue-600 to-indigo-700 p-6 text-center relative overflow-hidden">
+        <div className="bg-gradient-to-r from-yellow-500 via-amber-500 to-orange-600 p-6 text-center relative overflow-hidden">
           <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 pointer-events-none"></div>
-          <div className="text-5xl animate-bounce mb-2 relative z-10">🚀</div>
-          <h2 className="font-black text-2xl text-white relative z-10">
-            Novidades na Área!
+          <div className="text-5xl animate-bounce mb-2 relative z-10">👑</div>
+          <h2 className="font-black text-2xl text-white uppercase tracking-widest relative z-10 drop-shadow-md">
+            Atualização v1.6.0
           </h2>
-          <p className="text-blue-100 text-sm font-medium mt-1 relative z-10">
-            A plataforma Trilha Tech acabou de ser atualizada com mecânicas
-            incríveis.
+          <p className="text-yellow-100 text-xs font-black mt-1 relative z-10 tracking-wider">
+            O HALL DA FAMA CHEGOU!
           </p>
         </div>
 
         {/* CORPO / LISTA DE NOVIDADES */}
         <div className="p-6 bg-slate-50 overflow-y-auto max-h-[60vh]">
           <div className="space-y-4">
-
-            {/* NOVIDADE 1: MATERIAIS DE APOIO (NOVO!) */}
-          <div className="bg-blue-50 border-2 border-blue-300 p-4 rounded-xl shadow-sm relative overflow-hidden">
-            <div className="absolute -right-4 -top-4 text-6xl opacity-10">🚀</div>
-            <h3 className="font-black text-blue-800 text-sm md:text-base flex items-center gap-2 mb-1">
-              <span>📖</span> Missões de &quot;Material&ldquo;; (XP Fácil!)
-            </h3>
-            <p className="text-xs md:text-sm text-blue-700 leading-relaxed">
-              Agora você pode ganhar XP apenas por <strong>consumir conteúdos</strong> (PDFs, vídeos, resumos) no Classroom! Quando vir uma missão do tipo <span className="bg-blue-200 px-1 rounded font-bold">Material</span>, basta acessar o link, marcar a caixinha de honestidade e <strong>resgatar os seus XP na mesma hora</strong>, sem precisar digitar respostas ou fazer quizzes!
+            
+            <p className="text-slate-600 font-medium text-center text-sm mb-4">
+              A competição subiu de nível! Descubra as novas recompensas para os melhores alunos da escola.
             </p>
-          </div>
-            {/* NOVIDADE 2: GOD MODE (PUNIÇÕES E BÔNUS) */}
-          <div className="bg-amber-50 border-2 border-amber-300 p-4 rounded-xl shadow-sm relative overflow-hidden">
-            <div className="absolute -right-4 -top-4 text-6xl opacity-10">⚡</div>
-            <h3 className="font-black text-amber-800 text-sm md:text-base flex items-center gap-2 mb-1">
-              <span>⚡</span> O Olho do Mestre (God Mode)
-            </h3>
-            <p className="text-xs md:text-sm text-amber-700 leading-relaxed">
-              O Tutor agora tem o poder supremo! Ele pode dar <strong>bônus instantâneos de XP</strong> por boas participações, ou aplicar <strong className="text-red-600 font-black">punições severas (-100 XP)</strong> caso detete condutas antidesportivas (como usar IA para resolver quizzes, principalmente em sala de aula). Jogue limpo!
-            </p>
-          </div>
 
-            {/* Novidade 3: Pix Escolar e Perfil */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
-              <div className="text-3xl shrink-0">💸</div>
-              <div>
-                <h3 className="font-bold text-slate-800">
-                  Pix de XP para Toda a Escola!
-                </h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  O sistema financeiro foi expandido! Agora você pode transferir
-                  XP para{" "}
-                  <strong>qualquer colega, independente da turma</strong>. Além
-                  disso, você pode ir no Ranking, abrir o{" "}
-                  <strong>Perfil do Colega</strong> e enviar um Pix diretamente
-                  por lá com apenas um clique!
+            {/* NOVIDADE 1: PLACAS DE ELITE (O GRANDE DESTAQUE) */}
+            <div className="bg-gradient-to-br from-yellow-100 to-amber-50 border-2 border-yellow-300 p-5 rounded-xl shadow-md relative overflow-hidden">
+              <div className="absolute -right-6 -top-6 text-7xl opacity-20">🏆</div>
+              <h3 className="font-black text-yellow-900 text-sm md:text-base flex items-center gap-2 mb-2">
+                <span>👑</span> Placas de Elite (Troféu Rotativo)
+              </h3>
+              <p className="text-xs md:text-sm text-yellow-800 leading-relaxed mb-3">
+                Os alunos que terminarem o mês no <strong>Top 1, Top 2 e Top 3 Geral da Escola</strong> receberão as lendárias Placas 3D Metálicas de Elite Ouro, Prata e Bronze no seu perfil!
+              </p>
+              <div className="bg-white/60 p-3 rounded-lg border border-yellow-200">
+                <p className="text-xs text-yellow-900 font-bold">
+                  ⚠️ Cuidado: O Troféu é rotativo! Se no mês seguinte você perder a sua posição no pódio, a placa será transferida para o novo campeão, e você receberá uma <em>Badge de Legado</em> para provar que já foi da Elite.
                 </p>
               </div>
             </div>
 
-            {/* Novidade 4: Avatares e Curtidas */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
-              <div className="text-3xl shrink-0">❤️</div>
-              <div>
-                <h3 className="font-bold text-slate-800">
-                  Rede Social e Likes
-                </h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  Agora você pode visitar o perfil dos seus colegas no Ranking,
-                  ver as conquistas deles e deixar um <strong>Like (❤️)</strong>{" "}
-                  no perfil deles (limite de 1 vez por dia). Quem acumular
-                  muitas curtidas desbloqueia novas Badges exclusivas!
-                </p>
-              </div>
+            {/* NOVIDADE 2: MATERIAIS DE APOIO */}
+            <div className="bg-blue-50 border-2 border-blue-300 p-4 rounded-xl shadow-sm relative overflow-hidden">
+              <h3 className="font-black text-blue-800 text-sm md:text-base flex items-center gap-2 mb-1">
+                <span>📖</span> Missões de &quot;Material&quot; (XP Fácil!)
+              </h3>
+              <p className="text-xs md:text-sm text-blue-700 leading-relaxed">
+                Ganhe XP apenas por <strong>consumir conteúdos</strong> (PDFs, vídeos) no Classroom! Quando vir uma missão do tipo <span className="bg-blue-200 px-1 rounded font-bold">Material</span>, acesse o link, marque a caixinha de honestidade e resgate os seus XP na hora!
+              </p>
             </div>
 
-            {/* Novidade 5: Ofensiva (Streak) */}
-            <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex gap-4 items-start">
-              <div className="text-3xl shrink-0">🔥</div>
-              <div>
-                <h3 className="font-bold text-slate-800">
-                  Ofensiva de Aulas (Streak)
-                </h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed">
-                  O sistema agora rastreia a sua assiduidade de forma rigorosa!
-                  Mantenha a sua sequência de aulas sem faltar para ostentar o
-                  seu &ldquo;foguinho&quot; de dias consecutivos. Se faltar, a
-                  contagem volta para zero.
-                </p>
-              </div>
+            {/* NOVIDADE 3: GOD MODE */}
+            <div className="bg-slate-100 border border-slate-200 p-4 rounded-xl shadow-sm relative overflow-hidden">
+              <h3 className="font-black text-slate-700 text-sm md:text-base flex items-center gap-2 mb-1">
+                <span>⚡</span> O Olho do Mestre
+              </h3>
+              <p className="text-xs md:text-sm text-slate-600 leading-relaxed">
+                Lembrete: O Tutor possui o <strong>God Mode</strong> e pode injetar bônus de XP por boas ações ou aplicar punições severas (-100 XP) por trapaças (ex: uso de IA nas atividades).
+              </p>
             </div>
+
           </div>
         </div>
 
@@ -121,9 +91,9 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
         <div className="p-4 bg-white border-t border-slate-200">
           <button
             onClick={onClose}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl shadow-md transition-all active:scale-95"
+            className="w-full bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-600 hover:to-amber-700 text-white font-black py-4 rounded-xl shadow-md transition-all active:scale-95 text-lg"
           >
-            ENTENDI, VAMOS LÁ!
+            VOU LUTAR PELO TOP 1!
           </button>
         </div>
       </div>

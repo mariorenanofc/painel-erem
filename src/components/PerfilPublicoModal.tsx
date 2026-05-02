@@ -4,14 +4,9 @@
 import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { calcularBadges } from "../utils/badges";
-import { Atividade } from "../types";
+import { Atividade, PerfilPublicoModalProps } from "../types";
 import { apiAluno } from "@/src/services/api";
 
-interface PerfilPublicoModalProps {
-  matriculaAlvo: string;
-  matriculaVisualizador: string;
-  onClose: () => void;
-}
 
 export default function PerfilPublicoModal({
   matriculaAlvo,

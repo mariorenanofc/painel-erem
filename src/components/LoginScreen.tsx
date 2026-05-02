@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { apiGeral } from "@/src/services/api"; // 🔥 NOSSA API
+import { apiGeral } from "@/src/services/api"; // 
 
 // Mantivemos a prop apiUrl apenas para não quebrar a página pai que a invoca
 interface LoginScreenProps {

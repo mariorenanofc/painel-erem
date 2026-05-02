@@ -1,4 +1,5 @@
 import { ChangeEvent } from "react";
+import { Badge } from "../utils/badges";
 
 // ==========================================
 // 1. MODELOS DE DADOS GERAIS
@@ -194,5 +195,183 @@ export interface AlunoRankingTutor {
 export interface RegistroDiario {
   matricula: string;
   nome: string;
-  frequencia: Record<number, { status: string; justificativa?: string; idFalta?: string }>;
+  frequencia: Record<
+    number,
+    { status: string; justificativa?: string; idFalta?: string }
+  >;
+}
+
+export interface AlunoSimples {
+  matricula: string;
+  nome: string;
+  turma: string;
+}
+
+export interface AlunoRisco {
+  matricula: string;
+  nome: string;
+  turma: string;
+  telefone: string;
+  taxaPresenca: number;
+  missoesAtrasadas: number;
+}
+
+export interface FichaAluno {
+  dadosPessoais: {
+    nome: string;
+    email: string;
+    telefone: string;
+    responsavel: string;
+    obs: string;
+  };
+  statusProjeto: string;
+  turmaProjeto: string;
+  xpTotal: number;
+  nivel: string;
+  frequencia: {
+    taxa: number;
+    totalPresencas: number;
+    totalAulas: number;
+  };
+  historicoXP: HistoricoXP[];
+}
+
+interface HistoricoXP {
+  id: string;
+  data: string;
+  atividade: string;
+  xp: number;
+  status: string;
+}
+
+export interface CorrecaoMissoesModalProps {
+  missaoAberta: Atividade | null;
+  entregas: Entrega[];
+  carregando: boolean;
+  notasTemp: Record<string, number>;
+  onClose: () => void;
+  onSetNotasTemp: (notas: Record<string, number>) => void;
+  onAvaliar: (
+    entrega: Entrega,
+    statusAvaliacao: "Avaliado" | "Devolvida",
+    feedbackTutor: string,
+  ) => void;
+}
+
+export interface GestaoFrequenciaModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  abaDiario: "mensal" | "hoje";
+  setAbaDiario: (aba: "mensal" | "hoje") => void;
+  turmaDiario: string;
+  setTurmaDiario: (val: string) => void;
+  mesDiario: string;
+  setMesDiario: (val: string) => void;
+  anoDiario: string;
+  setAnoDiario: (val: string) => void;
+  carregandoFreq: boolean;
+  diasComAula: number[];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  alunosDiario: any[];
+  carregandoFreqHoje: boolean;
+  freqHojeFiltrada: FrequenciaHoje[];
+  dadosFreqHoje: FrequenciaHoje[];
+  totalAulasTurma: number;
+  filtroStatusHoje: "Todos" | "Presentes" | "Faltantes";
+  setFiltroStatusHoje: (val: "Todos" | "Presentes" | "Faltantes") => void;
+  ordenacaoFreq: "alfabetica" | "mais_faltas";
+  setOrdenacaoFreq: (val: "alfabetica" | "mais_faltas") => void;
+
+  // Justificativas
+  modalJustificativaAberto: {
+    matricula: string;
+    nome: string;
+    dia: number;
+    idFalta?: string;
+  } | null;
+  setModalJustificativaAberto: (
+    val: {
+      matricula: string;
+      nome: string;
+      dia: number;
+      idFalta?: string;
+    } | null,
+  ) => void;
+  textoJustificativa: string;
+  setTextoJustificativa: (val: string) => void;
+  salvarJustificativa: () => void;
+}
+
+export interface AlunoGodMode {
+  matricula: string;
+  nome: string;
+  turma: string;
+}
+
+export interface GodModeModalProps {
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+export interface MissoesListProps {
+  atividades: Atividade[];
+  isLoading: boolean;
+  turmasDisponiveis: string[];
+  onEdit: (ativ: Atividade) => void;
+  onDelete: (id: string) => void;
+  onViewEntregas: (ativ: Atividade) => void;
+}
+
+export interface NovaConquistaModalProps {
+  badge: Badge;
+  loading: boolean;
+  onResgatar: (badge: Badge) => void;
+}
+
+export interface PerfilModalProps {
+  dadosPerfil: PerfilAluno | null;
+  carregando: boolean;
+  salvando: boolean;
+  onClose: () => void;
+  onSalvar: (dadosAtualizados: PerfilAluno) => void;
+  setDadosPerfil: (dados: PerfilAluno) => void;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  dadosBadges: any;
+  avatarAtual: string;
+  totalCurtidas: number;
+  onSalvarAvatar: (avatarId: string) => void;
+  ofensivaDias: number; // NOVO: Dias restantes para a ofensiva, se aplicável
+}
+
+export interface PerfilPublicoModalProps {
+  matriculaAlvo: string;
+  matriculaVisualizador: string;
+  onClose: () => void;
+}
+
+export interface PixModalProps {
+  aluno: DadosAluno;
+  onClose: () => void;
+  onSuccess: () => void;
+  alunoAlvoInicial?: string | null;
+}
+
+export interface ItemExtrato {
+  id: string;
+  mensagem: string;
+  xp: number;
+  tempo: number;
+  tipo: "ENVIOU" | "RECEBEU";
+}
+
+export interface PortalHeaderProps {
+  matricula: string;
+  nomeAluno: string;
+  turma: string;
+  nomeProjeto?: string; // NOVO: Recebe o nome dinâmico da planilha
+  notificacoes: Notificacao[];
+  onAbrirRanking: () => void;
+  onAbrirFrequencia: () => void;
+  onAbrirPerfil: () => void;
+  onLogout: () => void;
 }

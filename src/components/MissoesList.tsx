@@ -1,15 +1,8 @@
 import { useState, useMemo } from "react";
-import { Atividade } from "../types";
+import { Atividade, MissoesListProps } from "../types";
 import Image from "next/image";
 
-interface MissoesListProps {
-  atividades: Atividade[];
-  isLoading: boolean;
-  turmasDisponiveis: string[];
-  onEdit: (ativ: Atividade) => void;
-  onDelete: (id: string) => void;
-  onViewEntregas: (ativ: Atividade) => void;
-}
+
 
 export default function MissoesList({
   atividades,

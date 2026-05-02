@@ -1,23 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { DadosAluno, ColegaPix } from "../types";
+import { PixModalProps, ItemExtrato, ColegaPix } from "../types";
 import { apiAluno } from "@/src/services/api";
 
-interface PixModalProps {
-  aluno: DadosAluno;
-  onClose: () => void;
-  onSuccess: () => void;
-  alunoAlvoInicial?: string | null;
-}
-
-interface ItemExtrato {
-  id: string;
-  mensagem: string;
-  xp: number;
-  tempo: number;
-  tipo: "ENVIOU" | "RECEBEU";
-}
 
 export default function PixModal({
   aluno,

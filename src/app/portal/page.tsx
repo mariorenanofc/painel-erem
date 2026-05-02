@@ -27,7 +27,7 @@ import PortalHeader from "@/src/components/PortalHeader";
 import PerfilModal from "@/src/components/PerfilModal";
 import NovaConquistaModal from "@/src/components/NovaConquistaModal";
 import NovidadesModal from "@/src/components/NovidadesModal";
-import { apiAluno, apiGeral } from "@/src/services/api"; // 🔥 A MÁGICA AQUI!
+import { apiAluno, apiGeral } from "@/src/services/api"; // 🔥 NOSSA API CENTRALIZADA
 
 const subscribe = (callback: () => void) => {
   if (typeof window !== "undefined") {
@@ -135,13 +135,13 @@ export default function PortalDashboard() {
       );
   }, []);
 
-  const VERSAO_ATUALIZACAO = "1.5.0";
+  const VERSAO_ATUALIZACAO = "1.6.0"; // Atualizado para a versão do Hall da Fama!
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
   const carregarPortal = useCallback(async () => {
     if (!aluno) return;
     try {
-      const data = await apiAluno.carregarPortal(aluno.matricula); // 🔥 API CENTRALIZADA
+      const data = await apiAluno.carregarPortal(aluno.matricula);
       if (data.status === "sucesso") {
         setXpTotalSistema(data.xpTotal);
         if (data.progressoNivel) setProgressoNivel(data.progressoNivel);
@@ -171,7 +171,7 @@ export default function PortalDashboard() {
     setMontado(true);
     const buscarConfiguracoes = async () => {
       try {
-        const data = await apiGeral.buscarConfiguracoes(); // 🔥 API CENTRALIZADA
+        const data = await apiGeral.buscarConfiguracoes();
         if (data.status === "sucesso")
           setNomeProjeto(
             data.configuracoes.nomeProjeto || "Portal Educacional",
@@ -293,7 +293,7 @@ export default function PortalDashboard() {
         badge.id,
         badge.recompensa,
         badge.nome,
-      ); // 🔥 API CENTRALIZADA
+      );
       if (data.status === "sucesso") {
         setNovasConquistas((prev) => prev.slice(1));
         carregarPortal();
@@ -312,7 +312,7 @@ export default function PortalDashboard() {
     if (!aluno) return;
     setConfirmandoZap(true);
     try {
-      const data = await apiAluno.confirmarWhatsapp(aluno.matricula); // 🔥 API CENTRALIZADA
+      const data = await apiAluno.confirmarWhatsapp(aluno.matricula);
       if (data.status === "sucesso") {
         setZapConfirmado(true);
         alert("✅ Perfeito! Agora você não perde nenhum aviso.");
@@ -331,7 +331,10 @@ export default function PortalDashboard() {
   const enviarMissao = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const respostaFinal = missaoAberta?.tipo === "Material" ? "Material Acessado e Consumido" : resposta;
+    const respostaFinal =
+      missaoAberta?.tipo === "Material"
+        ? "Material Acessado e Consumido"
+        : resposta;
 
     if (!respostaFinal.trim())
       return alert("⚠️ Preencha a resposta antes de enviar!");
@@ -342,7 +345,7 @@ export default function PortalDashboard() {
         aluno.matricula,
         missaoAberta.id,
         respostaFinal,
-      ); // 🔥 API CENTRALIZADA
+      );
       if (data.status === "sucesso") {
         alert("✅ " + data.mensagem);
         setMissaoAberta(null);
@@ -361,7 +364,7 @@ export default function PortalDashboard() {
     if (!senhaDigitada.trim()) return alert("Digite a senha da lousa!");
     setFazendoCheckin(true);
     try {
-      const data = await apiAluno.fazerCheckin(aluno.matricula, senhaDigitada); // 🔥 API CENTRALIZADA
+      const data = await apiAluno.fazerCheckin(aluno.matricula, senhaDigitada);
       const dataHoje = new Date().toLocaleDateString("pt-BR");
 
       if (data.status === "sucesso") {
@@ -398,7 +401,7 @@ export default function PortalDashboard() {
     setPerfilAberto(true);
     setCarregandoPerfil(true);
     try {
-      const data = await apiAluno.buscarPerfil(aluno.matricula); // 🔥 API CENTRALIZADA
+      const data = await apiAluno.buscarPerfil(aluno.matricula);
       if (data.status === "sucesso") setDadosPerfil(data.perfil);
       else alert("⚠️ " + data.mensagem);
     } catch {
@@ -416,7 +419,7 @@ export default function PortalDashboard() {
         dadosAtualizados.turma,
         dadosAtualizados.telefoneAluno,
         dadosAtualizados.telefoneResponsavel,
-      ); // 🔥 API CENTRALIZADA
+      );
 
       if (data.status === "sucesso") {
         alert("✅ Salvo!");
@@ -433,7 +436,7 @@ export default function PortalDashboard() {
     setModalFrequenciaAberto(true);
     setCarregandoFrequencia(true);
     try {
-      const data = await apiAluno.minhaFrequencia(aluno.matricula); // 🔥 API CENTRALIZADA
+      const data = await apiAluno.minhaFrequencia(aluno.matricula);
       if (data.status === "sucesso") setDadosFrequencia(data);
     } catch {
     } finally {
@@ -445,7 +448,7 @@ export default function PortalDashboard() {
     if (!aluno) return;
     setResgatandoPresente(true);
     try {
-      const data = await apiAluno.resgatarAniversario(aluno.matricula); // 🔥 API CENTRALIZADA
+      const data = await apiAluno.resgatarAniversario(aluno.matricula);
       if (data.status === "sucesso") {
         setModalPresenteAberto(false);
         carregarPortal();
@@ -460,7 +463,7 @@ export default function PortalDashboard() {
     if (!aluno) return;
     setAvatarSistema(emoji);
     try {
-      await apiAluno.salvarAvatar(aluno.matricula, emoji); // 🔥 API CENTRALIZADA
+      await apiAluno.salvarAvatar(aluno.matricula, emoji);
     } catch {}
   };
 

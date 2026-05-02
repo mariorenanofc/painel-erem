@@ -1,21 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Atividade, Entrega } from "../types";
-
-interface CorrecaoMissoesModalProps {
-  missaoAberta: Atividade | null;
-  entregas: Entrega[];
-  carregando: boolean;
-  notasTemp: Record<string, number>;
-  onClose: () => void;
-  onSetNotasTemp: (notas: Record<string, number>) => void;
-  onAvaliar: (
-    entrega: Entrega,
-    statusAvaliacao: "Avaliado" | "Devolvida",
-    feedbackTutor: string,
-  ) => void;
-}
+import { CorrecaoMissoesModalProps } from "../types";
 
 export default function CorrecaoMissoesModal({
   missaoAberta,

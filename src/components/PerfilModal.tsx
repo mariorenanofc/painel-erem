@@ -1,23 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { PerfilAluno } from "../types";
+import { PerfilModalProps } from "../types";
 import BadgesGallery from "./BadgesGallery";
-
-interface PerfilModalProps {
-  dadosPerfil: PerfilAluno | null;
-  carregando: boolean;
-  salvando: boolean;
-  onClose: () => void;
-  onSalvar: (dadosAtualizados: PerfilAluno) => void;
-  setDadosPerfil: (dados: PerfilAluno) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  dadosBadges: any;
-  avatarAtual: string;
-  totalCurtidas: number;
-  onSalvarAvatar: (avatarId: string) => void;
-  ofensivaDias: number; // NOVO: Dias restantes para a ofensiva, se aplicável
-}
 
 const GALERIA_AVATARES = [
   // Profissionais e Heróis (Os originais + Novos)
@@ -74,7 +59,6 @@ export default function PerfilModal({
   totalCurtidas,
   onSalvarAvatar,
   ofensivaDias, // NOVO: Dias restantes para a ofensiva, se aplicável
-  
 }: PerfilModalProps) {
   const [abaAtiva, setAbaAtiva] = useState<"dados" | "avatar" | "badges">(
     "dados",

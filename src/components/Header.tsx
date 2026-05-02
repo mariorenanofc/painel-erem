@@ -2,12 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-interface HeaderProps {
-  carregando?: boolean;
-  nomeUsuario?: string;
-  onLogout?: () => void;
-}
+import { HeaderProps } from "../types";
 
 export default function Header({ carregando, nomeUsuario, onLogout }: HeaderProps) {
   // Lemos a URL atual da página

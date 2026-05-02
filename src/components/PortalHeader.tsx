@@ -2,19 +2,8 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { Notificacao } from "../types";
+import { PortalHeaderProps } from "../types";
 
-interface PortalHeaderProps {
-  matricula: string;
-  nomeAluno: string;
-  turma: string;
-  nomeProjeto?: string; // NOVO: Recebe o nome dinâmico da planilha
-  notificacoes: Notificacao[];
-  onAbrirRanking: () => void;
-  onAbrirFrequencia: () => void;
-  onAbrirPerfil: () => void;
-  onLogout: () => void;
-}
 
 export default function PortalHeader({
   matricula,

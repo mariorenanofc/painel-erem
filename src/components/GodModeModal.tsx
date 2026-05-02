@@ -4,17 +4,7 @@
 import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { apiTutor } from "@/src/services/api";
-
-interface AlunoGodMode {
-  matricula: string;
-  nome: string;
-  turma: string;
-}
-
-interface GodModeModalProps {
-  onClose: () => void;
-  onSuccess: () => void;
-}
+import { AlunoGodMode, GodModeModalProps } from "../types";
 
 export default function GodModeModal({
   onClose,

@@ -2,8 +2,6 @@ import { useState, useMemo } from "react";
 import { Atividade, MissoesListProps } from "../types";
 import Image from "next/image";
 
-
-
 export default function MissoesList({
   atividades,
   isLoading,
@@ -19,6 +17,11 @@ export default function MissoesList({
   const [filtroStatusPub, setFiltroStatusPub] = useState("Todos");
 
   const [missaoPreview, setMissaoPreview] = useState<Atividade | null>(null);
+
+  // 🔥 NOVO: ESTADO PARA CONTROLAR QUAIS MÓDULOS ESTÃO EXPANDIDOS
+  const [modulosFechados, setModulosFechados] = useState<
+    Record<string, boolean>
+  >({});
 
   const atividadesFiltradas = useMemo(() => {
     const hoje = new Date();
@@ -90,6 +93,31 @@ export default function MissoesList({
     filtroStatusPub,
   ]);
 
+  // 🔥 NOVO: AGRUPAR AS ATIVIDADES FILTRADAS POR MÓDULO
+  const atividadesAgrupadas = useMemo(() => {
+    const grupos: Record<string, Atividade[]> = {};
+
+    atividadesFiltradas.forEach((ativ) => {
+      // Se não tiver módulo, joga para "Geral"
+      const nomeModulo =
+        ativ.modulo && ativ.modulo.trim() !== "" ? ativ.modulo : "Geral";
+      if (!grupos[nomeModulo]) {
+        grupos[nomeModulo] = [];
+      }
+      grupos[nomeModulo].push(ativ);
+    });
+
+    return grupos;
+  }, [atividadesFiltradas]);
+
+  // Função para abrir/fechar o módulo
+  const toggleModulo = (nomeModulo: string) => {
+    setModulosFechados((prev) => ({
+      ...prev,
+      [nomeModulo]: !prev[nomeModulo],
+    }));
+  };
+
   return (
     <div className="flex flex-col h-full">
       <div className="p-0 mb-4 bg-transparent flex flex-col gap-4">
@@ -154,7 +182,6 @@ export default function MissoesList({
               <option value="Todos">Todos os Tipos</option>
               <option value="Projeto">Projetos</option>
               <option value="Quiz">Quizzes</option>
-              {/* NOVO: OPÇÃO MATERIAL NO FILTRO DE BUSCA */}
               <option value="Material">Material</option>
             </select>
           </div>
@@ -180,92 +207,143 @@ export default function MissoesList({
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {atividadesFiltradas.map((ativ, index) => {
-              const isRascunho = ativ.statusPublicacao === "Rascunho";
+          <div className="space-y-6">
+            {/* 🔥 RENDERIZAÇÃO DOS MÓDULOS (ACCORDIONS) */}
+            {Object.entries(atividadesAgrupadas)
+              // Ordenação alfabética dos Módulos (empurrando 'Geral' para o fim, opcional)
+              .sort(([modA], [modB]) => {
+                if (modA === "Geral") return 1;
+                if (modB === "Geral") return -1;
+                return modA.localeCompare(modB);
+              })
+              .map(([nomeModulo, missoesDoModulo]) => {
+                const isFechado = modulosFechados[nomeModulo] || false;
 
-              return (
-                <div
-                  key={`${ativ.id}-${index}`}
-                  className={`bg-white border ${isRascunho ? "border-yellow-200" : "border-slate-200"} rounded-2xl p-5 hover:shadow-md transition-all flex flex-col md:flex-row justify-between gap-6 group`}
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center flex-wrap gap-2 mb-3">
-                      <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
-                        {ativ.id}
-                      </span>
-
-                      {isRascunho ? (
-                        <span className="bg-yellow-100 text-yellow-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-yellow-300 shadow-sm animate-pulse">
-                          📝 Rascunho
-                        </span>
-                      ) : (
-                        <span className="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-blue-300 shadow-sm">
-                          🚀 Publicada
-                        </span>
-                      )}
-
-                      <span
-                        className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border ${ativ.tipo === "Quiz" ? "bg-amber-50 text-amber-700 border-amber-200" : ativ.tipo === "Material" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-indigo-50 text-indigo-700 border-indigo-200"}`}
-                      >
-                        {ativ.tipo}
-                      </span>
-                      <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-md border border-emerald-200 tracking-wider">
-                        ⭐ {ativ.xp} XP
-                      </span>
-                      <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider text-slate-500 bg-slate-50 border border-slate-200">
-                        📅 Prazo:{" "}
-                        {ativ.dataLimite
-                          ? ativ.dataLimite.split("-").reverse().join("/")
-                          : "Sem prazo"}
-                      </span>
-                    </div>
-                    <h4
-                      className={`font-bold text-lg leading-tight ${isRascunho ? "text-slate-400" : "text-slate-800"}`}
+                return (
+                  <div key={nomeModulo} className="flex flex-col">
+                    {/* CABEÇALHO DO MÓDULO */}
+                    <div
+                      onClick={() => toggleModulo(nomeModulo)}
+                      className="bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 transition-colors p-4 rounded-xl flex justify-between items-center cursor-pointer mb-3 shadow-sm select-none group"
                     >
-                      {ativ.titulo}
-                    </h4>
-                    <p className="text-sm text-slate-500 line-clamp-2 mt-2 leading-relaxed">
-                      {ativ.descricao}
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col items-end justify-between min-w-[160px] gap-4 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6">
-                    <div className="flex gap-2 w-full justify-end opacity-100 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity">
-                      <button
-                        onClick={() => onEdit(ativ)}
-                        className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
-                        title="Editar Missão"
-                      >
-                        ✏️
-                      </button>
-                      <button
-                        onClick={() => onDelete(ativ.id)}
-                        className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                        title="Excluir Missão"
-                      >
-                        🗑️
-                      </button>
+                      <h3 className="font-black text-indigo-900 flex items-center gap-2 text-lg">
+                        <span>📂</span> {nomeModulo}
+                      </h3>
+                      <div className="flex items-center gap-3">
+                        <span className="bg-indigo-200 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full">
+                          {missoesDoModulo.length}{" "}
+                          {missoesDoModulo.length === 1 ? "Item" : "Itens"}
+                        </span>
+                        <span
+                          className={`text-indigo-500 font-bold transition-transform duration-200 ${isFechado ? "rotate-180" : ""}`}
+                        >
+                          ▼
+                        </span>
+                      </div>
                     </div>
 
-                    <div className="flex flex-col gap-2 w-full">
-                      <button
-                        onClick={() => setMissaoPreview(ativ)}
-                        className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold py-2 px-3 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2"
-                      >
-                        👀 Ver como Aluno
-                      </button>
-                      <button
-                        onClick={() => onViewEntregas(ativ)}
-                        className="cursor-pointer w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold py-2.5 px-3 rounded-lg shadow-md transition-all active:scale-95 flex justify-center items-center gap-2"
-                      >
-                        Ver Entregas
-                      </button>
-                    </div>
+                    {/* LISTA DE MISSÕES DENTRO DO MÓDULO */}
+                    {!isFechado && (
+                      <div className="space-y-4 pl-2 md:pl-6 border-l-2 border-indigo-100 ml-2 md:ml-4 animate-in slide-in-from-top-2 duration-300">
+                        {missoesDoModulo.map((ativ, index) => {
+                          const isRascunho =
+                            ativ.statusPublicacao === "Rascunho";
+
+                          return (
+                            <div
+                              key={`${ativ.id}-${index}`}
+                              className={`bg-white border ${isRascunho ? "border-yellow-200" : "border-slate-200"} rounded-2xl p-5 hover:shadow-md transition-all flex flex-col md:flex-row justify-between gap-6 group relative`}
+                            >
+                              {/* Decoração lateral para os cards */}
+                              <div
+                                className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-md ${ativ.tipo === "Quiz" ? "bg-amber-400" : ativ.tipo === "Material" ? "bg-emerald-400" : "bg-blue-400"}`}
+                              ></div>
+
+                              <div className="flex-1 pl-2">
+                                <div className="flex items-center flex-wrap gap-2 mb-3">
+                                  <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
+                                    {ativ.id}
+                                  </span>
+
+                                  {isRascunho ? (
+                                    <span className="bg-yellow-100 text-yellow-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-yellow-300 shadow-sm animate-pulse">
+                                      📝 Rascunho
+                                    </span>
+                                  ) : (
+                                    <span className="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-blue-300 shadow-sm">
+                                      🚀 Publicada
+                                    </span>
+                                  )}
+
+                                  <span
+                                    className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border ${ativ.tipo === "Quiz" ? "bg-amber-50 text-amber-700 border-amber-200" : ativ.tipo === "Material" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-indigo-50 text-indigo-700 border-indigo-200"}`}
+                                  >
+                                    {ativ.tipo}
+                                  </span>
+                                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-md border border-emerald-200 tracking-wider">
+                                    ⭐ {ativ.xp} XP
+                                  </span>
+                                  <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider text-slate-500 bg-slate-50 border border-slate-200">
+                                    📅 Prazo:{" "}
+                                    {ativ.dataLimite
+                                      ? ativ.dataLimite
+                                          .split("-")
+                                          .reverse()
+                                          .join("/")
+                                      : "Sem prazo"}
+                                  </span>
+                                </div>
+                                <h4
+                                  className={`font-bold text-lg leading-tight ${isRascunho ? "text-slate-400" : "text-slate-800"}`}
+                                >
+                                  {ativ.titulo}
+                                </h4>
+                                <p className="text-sm text-slate-500 line-clamp-2 mt-2 leading-relaxed">
+                                  {ativ.descricao}
+                                </p>
+                              </div>
+
+                              <div className="flex flex-col items-end justify-between min-w-[160px] gap-4 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6">
+                                <div className="flex gap-2 w-full justify-end opacity-100 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity">
+                                  <button
+                                    onClick={() => onEdit(ativ)}
+                                    className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
+                                    title="Editar Missão"
+                                  >
+                                    ✏️
+                                  </button>
+                                  <button
+                                    onClick={() => onDelete(ativ.id)}
+                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    title="Excluir Missão"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+
+                                <div className="flex flex-col gap-2 w-full">
+                                  <button
+                                    onClick={() => setMissaoPreview(ativ)}
+                                    className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold py-2 px-3 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2"
+                                  >
+                                    👀 Ver Aluno
+                                  </button>
+                                  <button
+                                    onClick={() => onViewEntregas(ativ)}
+                                    className="cursor-pointer w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold py-2.5 px-3 rounded-lg shadow-md transition-all active:scale-95 flex justify-center items-center gap-2"
+                                  >
+                                    Ver Entregas
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         )}
       </div>
@@ -367,7 +445,7 @@ export default function MissoesList({
                   Visão do Formulário:
                 </h3>
 
-                {/* NOVO: PREVIEW DO MATERIAL DE APOIO NO LADO DO TUTOR */}
+                {/* PREVIEW DO MATERIAL DE APOIO NO LADO DO TUTOR */}
                 {missaoPreview.tipo === "Quiz" ? (
                   <div className="space-y-3">
                     {["A", "B", "C", "D"].map((letra) => {

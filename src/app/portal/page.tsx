@@ -10,7 +10,6 @@ import {
 } from "react";
 import { useRouter } from "next/navigation";
 import confetti from "canvas-confetti";
-import Image from "next/image";
 import {
   DadosAluno,
   Atividade,
@@ -27,7 +26,8 @@ import PortalHeader from "@/src/components/PortalHeader";
 import PerfilModal from "@/src/components/PerfilModal";
 import NovaConquistaModal from "@/src/components/NovaConquistaModal";
 import NovidadesModal from "@/src/components/NovidadesModal";
-import { apiAluno, apiGeral } from "@/src/services/api"; // 🔥 NOSSA API CENTRALIZADA
+import ResponderMissaoModal from "@/src/components/ResponderMissaoModal"; // 🔥 NOSSO NOVO COMPONENTE
+import { apiAluno, apiGeral } from "@/src/services/api";
 
 const subscribe = (callback: () => void) => {
   if (typeof window !== "undefined") {
@@ -91,12 +91,7 @@ export default function PortalDashboard() {
   const [senhaDigitada, setSenhaDigitada] = useState("");
 
   const [missaoAberta, setMissaoAberta] = useState<Atividade | null>(null);
-  const [resposta, setResposta] = useState("");
   const [enviando, setEnviando] = useState(false);
-
-  const [timerClassroom, setTimerClassroom] = useState(0);
-  const [classroomAberto, setClassroomAberto] = useState(false);
-  const [checkboxHonestidade, setCheckboxHonestidade] = useState(false);
 
   const [zapConfirmado, setZapConfirmado] = useState(true);
   const [zapLink, setZapLink] = useState("");
@@ -119,6 +114,11 @@ export default function PortalDashboard() {
   const [alvoPix, setAlvoPix] = useState<string | null>(null);
   const [rankingAberto, setRankingAberto] = useState(false);
 
+  // 🔥 NOVO ESTADO: Controle dos Módulos Expandidos/Recolhidos
+  const [modulosFechados, setModulosFechados] = useState<
+    Record<string, boolean>
+  >({});
+
   useEffect(() => {
     const handleAbrirPixEvent = (e: CustomEvent) => {
       setAlvoPix(e.detail);
@@ -135,7 +135,7 @@ export default function PortalDashboard() {
       );
   }, []);
 
-  const VERSAO_ATUALIZACAO = "1.6.0"; // Atualizado para a versão do Hall da Fama!
+  const VERSAO_ATUALIZACAO = "1.6.0";
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
   const carregarPortal = useCallback(async () => {
@@ -258,32 +258,6 @@ export default function PortalDashboard() {
     curtidasSistema,
   ]);
 
-  useEffect(() => {
-    if (!missaoAberta) {
-      setTimerClassroom(0);
-      setClassroomAberto(false);
-      setCheckboxHonestidade(false);
-    }
-  }, [missaoAberta]);
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (classroomAberto && timerClassroom > 0) {
-      interval = setInterval(() => {
-        setTimerClassroom((prev) => prev - 1);
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [classroomAberto, timerClassroom]);
-
-  const dispararIdaAoClassroom = (link: string) => {
-    window.open(link, "_blank");
-    setClassroomAberto(true);
-    if (!checkboxHonestidade && timerClassroom === 0) {
-      setTimerClassroom(20);
-    }
-  };
-
   const resgatarRecompensaBadge = async (badge: Badge) => {
     if (!aluno) return;
     setResgatandoBadge(true);
@@ -328,16 +302,8 @@ export default function PortalDashboard() {
     router.push("/portal/login");
   };
 
-  const enviarMissao = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    const respostaFinal =
-      missaoAberta?.tipo === "Material"
-        ? "Material Acessado e Consumido"
-        : resposta;
-
-    if (!respostaFinal.trim())
-      return alert("⚠️ Preencha a resposta antes de enviar!");
+  // 🔥 FUNÇÃO DE ENVIO AGORA RECEBE A RESPOSTA DO MODAL
+  const enviarMissao = async (respostaFinal: string) => {
     if (!aluno || !missaoAberta) return;
     setEnviando(true);
     try {
@@ -467,6 +433,14 @@ export default function PortalDashboard() {
     } catch {}
   };
 
+  // Função para abrir/fechar os Módulos do Aluno
+  const toggleModulo = (nomeModulo: string) => {
+    setModulosFechados((prev) => ({
+      ...prev,
+      [nomeModulo]: !prev[nomeModulo],
+    }));
+  };
+
   if (!montado || !aluno || carregandoPortal)
     return (
       <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
@@ -523,6 +497,18 @@ export default function PortalDashboard() {
     return true;
   });
 
+  // 🔥 AGRUPAMENTO POR MÓDULO PARA O ALUNO
+  const atividadesAgrupadas = atividadesFiltradas.reduce(
+    (grupos, ativ) => {
+      const nomeModulo =
+        ativ.modulo && ativ.modulo.trim() !== "" ? ativ.modulo : "Geral";
+      if (!grupos[nomeModulo]) grupos[nomeModulo] = [];
+      grupos[nomeModulo].push(ativ);
+      return grupos;
+    },
+    {} as Record<string, Atividade[]>,
+  );
+
   return (
     <main
       className="min-h-screen bg-slate-50 font-sans pb-12 select-none"
@@ -561,6 +547,17 @@ export default function PortalDashboard() {
               );
             setModalNovidadesAberto(false);
           }}
+        />
+      )}
+
+      {/* 🔥 RENDERING DO NOVO MODAL EXTRAÍDO */}
+      {missaoAberta && (
+        <ResponderMissaoModal
+          missaoAberta={missaoAberta}
+          onClose={() => setMissaoAberta(null)}
+          onEnviar={enviarMissao}
+          enviando={enviando}
+          respostaInicial={missaoAberta.respostaEnviada || ""}
         />
       )}
 
@@ -794,52 +791,89 @@ export default function PortalDashboard() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {atividadesFiltradas.map((ativ) => {
-              const statusNormalizado =
-                ativ.status?.toLowerCase().trim() || "pendente";
+          <div className="space-y-6">
+            {/* 🔥 RENDERIZAÇÃO DOS MÓDULOS (ACCORDIONS NO ALUNO) */}
+            {Object.entries(atividadesAgrupadas)
+              .sort(([modA], [modB]) => {
+                if (modA === "Geral") return 1;
+                if (modB === "Geral") return -1;
+                return modA.localeCompare(modB);
+              })
+              .map(([nomeModulo, missoesDoModulo]) => {
+                const isFechado = modulosFechados[nomeModulo] || false;
 
-              return (
-                <div
-                  key={ativ.id}
-                  onClick={() => {
-                    setMissaoAberta(ativ);
-                    setResposta(ativ.respostaEnviada || "");
-                  }}
-                  className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all flex flex-col overflow-hidden cursor-pointer group"
-                >
-                  <div
-                    className={`h-1.5 w-full ${statusNormalizado === "pendente" ? "bg-amber-400" : statusNormalizado === "devolvida" ? "bg-red-500" : statusNormalizado === "aguardando correção" ? "bg-blue-400" : "bg-emerald-500"}`}
-                  ></div>
-                  <div className="p-5 flex-1 flex flex-col">
-                    <div className="flex justify-between items-start mb-3">
-                      <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border border-slate-200">
-                        {ativ.tipo}
-                      </span>
-                      <span className="text-xs font-black flex items-center gap-1 text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full shadow-sm">
-                        ⭐ {ativ.xp} XP
-                      </span>
-                    </div>
-                    <h4 className="font-bold text-slate-800 text-lg mb-2 leading-tight group-hover:text-blue-600 transition-colors">
-                      {ativ.titulo}
-                    </h4>
-                    <p className="text-slate-500 text-sm mb-4 flex-1 line-clamp-2">
-                      {ativ.descricao}
-                    </p>
-                    <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
-                      <div className="text-xs text-slate-500 font-bold flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-200">
-                        📅 {ativ.dataLimite}
+                return (
+                  <div key={nomeModulo} className="flex flex-col">
+                    {/* CABEÇALHO DO MÓDULO */}
+                    <div
+                      onClick={() => toggleModulo(nomeModulo)}
+                      className="bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors p-4 rounded-xl flex justify-between items-center cursor-pointer mb-3 shadow-sm select-none"
+                    >
+                      <h3 className="font-black text-blue-900 flex items-center gap-2 text-lg">
+                        <span>📘</span> {nomeModulo}
+                      </h3>
+                      <div className="flex items-center gap-3">
+                        <span className="bg-blue-200 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full">
+                          {missoesDoModulo.length}
+                        </span>
+                        <span
+                          className={`text-blue-500 font-bold transition-transform duration-200 ${isFechado ? "rotate-180" : ""}`}
+                        >
+                          ▼
+                        </span>
                       </div>
-                      <span
-                        className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${statusNormalizado === "pendente" ? "text-amber-600 bg-amber-50" : statusNormalizado === "devolvida" ? "text-red-600 bg-red-50" : statusNormalizado === "aguardando correção" ? "text-blue-600 bg-blue-50" : "text-emerald-600 bg-emerald-50"}`}
-                      >
-                        {ativ.status}
-                      </span>
                     </div>
+
+                    {/* LISTA DE MISSÕES DO MÓDULO */}
+                    {!isFechado && (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pl-2 md:pl-4 border-l-2 border-blue-100 mb-6 animate-in slide-in-from-top-2">
+                        {missoesDoModulo.map((ativ) => {
+                          const statusNormalizado =
+                            ativ.status?.toLowerCase().trim() || "pendente";
+
+                          return (
+                            <div
+                              key={ativ.id}
+                              onClick={() => setMissaoAberta(ativ)}
+                              className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all flex flex-col overflow-hidden cursor-pointer group"
+                            >
+                              <div
+                                className={`h-1.5 w-full ${statusNormalizado === "pendente" ? "bg-amber-400" : statusNormalizado === "devolvida" ? "bg-red-500" : statusNormalizado === "aguardando correção" ? "bg-blue-400" : "bg-emerald-500"}`}
+                              ></div>
+                              <div className="p-5 flex-1 flex flex-col">
+                                <div className="flex justify-between items-start mb-3">
+                                  <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border border-slate-200">
+                                    {ativ.tipo}
+                                  </span>
+                                  <span className="text-xs font-black flex items-center gap-1 text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full shadow-sm">
+                                    ⭐ {ativ.xp} XP
+                                  </span>
+                                </div>
+                                <h4 className="font-bold text-slate-800 text-lg mb-2 leading-tight group-hover:text-blue-600 transition-colors">
+                                  {ativ.titulo}
+                                </h4>
+                                <p className="text-slate-500 text-sm mb-4 flex-1 line-clamp-2">
+                                  {ativ.descricao}
+                                </p>
+                                <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
+                                  <div className="text-xs text-slate-500 font-bold flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-200">
+                                    📅 {ativ.dataLimite}
+                                  </div>
+                                  <span
+                                    className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${statusNormalizado === "pendente" ? "text-amber-600 bg-amber-50" : statusNormalizado === "devolvida" ? "text-red-600 bg-red-50" : statusNormalizado === "aguardando correção" ? "text-blue-600 bg-blue-50" : "text-emerald-600 bg-emerald-50"}`}
+                                  >
+                                    {ativ.status}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
         )}
       </div>
@@ -906,37 +940,6 @@ export default function PortalDashboard() {
                 </button>
               </div>
             </form>
-          </div>
-        </div>
-      )}
-
-      {modalPresenteAberto && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in zoom-in duration-300">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col text-center border-4 border-amber-400 relative">
-            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-amber-200/50 to-transparent"></div>
-            <div className="p-8 relative z-10">
-              <div className="text-7xl animate-bounce mb-4 drop-shadow-md">
-                🎁
-              </div>
-              <h2 className="font-black text-2xl text-slate-800 mb-2 uppercase text-amber-600">
-                Feliz Aniversário!
-              </h2>
-              <p className="text-sm text-slate-600 font-medium mb-6">
-                Parabéns, <strong>{aluno.nome.split(" ")[0]}</strong>! Hoje é o
-                seu dia especial. Como presente do Tutor, você ganhou{" "}
-                <strong className="text-emerald-600">100 XP</strong> para
-                turbinar o seu nível!
-              </p>
-              <button
-                onClick={resgatarPresente}
-                disabled={resgatandoPresente}
-                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black py-4 rounded-xl shadow-lg transition-transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50"
-              >
-                {resgatandoPresente
-                  ? "Abrindo Presente..."
-                  : "RESGATAR MEU PRESENTE"}
-              </button>
-            </div>
           </div>
         </div>
       )}
@@ -1063,281 +1066,6 @@ export default function PortalDashboard() {
           </div>
         </div>
       )}
-
-      {missaoAberta &&
-        (() => {
-          const verificarPrazo = (dataStr: string) => {
-            if (!dataStr) return false;
-            const hoje = new Date();
-            hoje.setHours(0, 0, 0, 0);
-            const partes = dataStr.split("/");
-            if (partes.length === 3) {
-              const limite = new Date(
-                Number(partes[2]),
-                Number(partes[1]) - 1,
-                Number(partes[0]),
-              );
-              return hoje > limite;
-            }
-            return false;
-          };
-          const prazoEncerrado = verificarPrazo(missaoAberta.dataLimite);
-
-          const statusAtual =
-            missaoAberta.status?.toLowerCase().trim() || "pendente";
-
-          let bloqueioClassroom = false;
-          if (missaoAberta.linkClassroom && !checkboxHonestidade) {
-            bloqueioClassroom = true;
-          }
-
-          const inputDesabilitado =
-            enviando ||
-            (statusAtual !== "pendente" && statusAtual !== "devolvida") ||
-            bloqueioClassroom;
-
-          return (
-            <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
-              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-                <div
-                  className={`p-4 border-b flex justify-between items-center text-white ${missaoAberta.tipo === "Quiz" ? "bg-amber-600" : "bg-blue-600"}`}
-                >
-                  <h2 className="font-bold text-lg">
-                    🎯 {missaoAberta.tipo}: {missaoAberta.titulo}
-                  </h2>
-                  <button
-                    onClick={() => setMissaoAberta(null)}
-                    className="text-2xl leading-none hover:text-slate-200"
-                  >
-                    &times;
-                  </button>
-                </div>
-                <div className="p-6 overflow-y-auto">
-                  <div className="flex gap-4 mb-4 text-sm font-bold">
-                    <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded border border-slate-200">
-                      ID: {missaoAberta.id}
-                    </span>
-                    <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded border border-emerald-200">
-                      ⭐ {missaoAberta.xp} XP Possíveis
-                    </span>
-                    {prazoEncerrado && (
-                      <span className="bg-red-100 text-red-700 px-3 py-1 rounded border border-red-200 animate-pulse">
-                        ⏳ Prazo Encerrado
-                      </span>
-                    )}
-                  </div>
-                  <div className="text-slate-700 whitespace-pre-wrap font-mono text-sm mb-6 bg-slate-50 p-4 rounded-lg border border-slate-200 leading-relaxed shadow-inner">
-                    {missaoAberta.descricao}
-                  </div>
-
-                  {missaoAberta.imagemUrl && (
-                    <div className="relative w-full h-64 mb-6 rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
-                      <Image
-                        src={(() => {
-                          const url = missaoAberta.imagemUrl || "";
-                          const match = url.match(
-                            /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
-                          );
-                          return match
-                            ? `https://drive.google.com/uc?export=view&id=${match[1]}`
-                            : url;
-                        })()}
-                        alt="Referência da Missão"
-                        fill
-                        sizes="(max-width: 768px) 100vw, 800px"
-                        className="object-contain p-2"
-                      />
-                    </div>
-                  )}
-
-                  <form
-                    onSubmit={enviarMissao}
-                    className="border-t border-slate-200 pt-6"
-                  >
-                    {statusAtual === "devolvida" && (
-                      <div className="bg-red-50 border-2 border-red-200 p-4 rounded-xl mb-4 animate-in slide-in-from-top-2 shadow-sm">
-                        <h3 className="text-red-700 font-black text-sm flex items-center gap-2 mb-1">
-                          <span>⚠️</span> Missão Devolvida pelo Tutor!
-                        </h3>
-                        <p className="text-red-600 text-xs font-medium">
-                          {missaoAberta.feedback ||
-                            "A sua missão foi devolvida para correção. Por favor, revise as instruções e envie novamente."}
-                        </p>
-                      </div>
-                    )}
-
-                    {(statusAtual === "avaliado" ||
-                      statusAtual === "avaliada") &&
-                      missaoAberta.feedback && (
-                        <div className="bg-emerald-50 border-2 border-emerald-200 p-4 rounded-xl mb-4 animate-in slide-in-from-top-2 shadow-sm">
-                          <h3 className="text-emerald-700 font-black text-sm flex items-center gap-2 mb-1">
-                            <span>💬</span> Feedback do Tutor
-                          </h3>
-                          <p className="text-emerald-600 text-xs font-medium">
-                            {missaoAberta.feedback}
-                          </p>
-                        </div>
-                      )}
-
-                    {missaoAberta.linkClassroom &&
-                      (statusAtual === "pendente" ||
-                        statusAtual === "devolvida") && (
-                        <div className="bg-amber-50 border-2 border-amber-300 p-5 rounded-xl mb-6 shadow-sm">
-                          <h3 className="text-amber-800 font-black text-sm flex items-center gap-2 mb-2">
-                            <span>🏫</span> Entrega Obrigatória no Classroom!
-                          </h3>
-                          <p className="text-amber-700 text-xs font-medium mb-4 leading-relaxed">
-                            Para ganhar o XP desta missão, você precisa primeiro
-                            registrar a sua entrega oficial no Ambiente Virtual
-                            de Aprendizagem (Classroom).
-                          </p>
-
-                          <div className="flex flex-col gap-3">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                dispararIdaAoClassroom(
-                                  missaoAberta.linkClassroom!,
-                                )
-                              }
-                              className="bg-amber-500 hover:bg-amber-600 text-white font-black py-3 rounded-lg shadow transition-colors flex items-center justify-center gap-2"
-                            >
-                              1. ABRIR O GOOGLE CLASSROOM 🔗
-                            </button>
-
-                            {classroomAberto && timerClassroom > 0 && (
-                              <div className="text-center p-3 bg-amber-100 text-amber-700 font-bold text-xs rounded-lg animate-pulse">
-                                ⏳ Validando o seu acesso... aguarde{" "}
-                                {timerClassroom} segundos.
-                              </div>
-                            )}
-
-                            {classroomAberto && timerClassroom === 0 && (
-                              <label className="flex items-start gap-3 p-3 bg-white border-2 border-emerald-200 rounded-lg cursor-pointer hover:bg-emerald-50 transition-colors mt-2 animate-in fade-in">
-                                <input
-                                  type="checkbox"
-                                  required
-                                  checked={checkboxHonestidade}
-                                  onChange={(e) =>
-                                    setCheckboxHonestidade(e.target.checked)
-                                  }
-                                  className="mt-1 w-5 h-5 text-emerald-600 focus:ring-emerald-500 shrink-0 cursor-pointer"
-                                />
-                                <span className="text-xs text-slate-700 font-bold leading-snug">
-                                  2. Confirmo por minha honra que já anexei e
-                                  enviei o meu material no Google Classroom
-                                  oficial.
-                                </span>
-                              </label>
-                            )}
-                          </div>
-                        </div>
-                      )}
-
-                    {/* Renderização Condicional da Resposta baseada no Tipo de Missão */}
-                    {missaoAberta.tipo !== "Material" && (
-                      <h3 className="font-bold text-slate-800 mb-3 uppercase text-sm mt-4">
-                        Sua Resposta:
-                      </h3>
-                    )}
-
-                    {missaoAberta.tipo === "Quiz" ? (
-                      <div className="space-y-3">
-                        {["A", "B", "C", "D"].map((letra) => {
-                          const opcaoTexto =
-                            missaoAberta[`opcao${letra}` as keyof Atividade];
-                          return opcaoTexto ? (
-                            <label
-                              key={letra}
-                              className={`flex items-start p-3 rounded-lg border cursor-pointer transition-colors ${resposta === letra ? "bg-blue-50 border-blue-500 ring-1 ring-blue-500" : "bg-white border-slate-300 hover:bg-slate-50"} ${inputDesabilitado ? "opacity-60 cursor-not-allowed" : ""}`}
-                            >
-                              <input
-                                type="radio"
-                                name="quiz"
-                                value={letra}
-                                checked={resposta === letra}
-                                onChange={(e) => setResposta(e.target.value)}
-                                disabled={inputDesabilitado}
-                                className="mt-1 mr-3"
-                              />
-                              <div className="flex-1 overflow-x-auto">
-                                <strong className="text-slate-700 mr-2">
-                                  {letra})
-                                </strong>
-                                <code className="text-slate-600 font-mono text-xs whitespace-pre-wrap leading-tight">
-                                  {opcaoTexto}
-                                </code>
-                              </div>
-                            </label>
-                          ) : null;
-                        })}
-                      </div>
-                    ) : missaoAberta.tipo === "Projeto" ? (
-                      <div>
-                        <label className="block text-xs font-bold text-slate-500 mb-2">
-                          Cole o link do seu projeto (GitHub, Replit, etc):
-                        </label>
-                        <input
-                          type="url"
-                          placeholder="https://..."
-                          value={resposta}
-                          onChange={(e) => setResposta(e.target.value)}
-                          required={!missaoAberta.linkClassroom}
-                          disabled={inputDesabilitado}
-                          className={`w-full bg-slate-50 border border-slate-300 text-slate-800 rounded p-3 focus:ring-2 focus:ring-blue-500 ${inputDesabilitado ? "opacity-60 cursor-not-allowed bg-slate-100" : ""}`}
-                        />
-                      </div>
-                    ) : (
-                      <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-xl text-center shadow-sm">
-                        <span className="text-3xl block mb-2">📚</span>
-                        <p className="text-sm font-black text-blue-800 uppercase tracking-widest mb-1">
-                          Material de Apoio
-                        </p>
-                        <p className="text-xs text-blue-600 font-medium">
-                          Nenhuma resposta em texto é necessária. Apenas acesse
-                          o conteúdo, marque a caixinha de honestidade acima e
-                          resgate seu XP!
-                        </p>
-                        {/* Se for material, garantimos que o form possa ser submetido passando uma resposta invisível */}
-                        <input type="hidden" value="Material Consumido" />
-                      </div>
-                    )}
-
-                    <div className="mt-6 flex justify-end gap-3">
-                      <button
-                        type="button"
-                        onClick={() => setMissaoAberta(null)}
-                        className="px-5 py-2.5 rounded-lg text-slate-600 font-bold hover:bg-slate-100"
-                      >
-                        Cancelar
-                      </button>
-                      <button
-                        type="submit"
-                        disabled={inputDesabilitado}
-                        className={`text-white px-6 py-2.5 rounded-lg font-bold shadow-md transition-all ${inputDesabilitado ? "bg-slate-400" : prazoEncerrado ? "bg-amber-500 hover:bg-amber-600" : "bg-emerald-600 hover:bg-emerald-700"}`}
-                      >
-                        {enviando
-                          ? "Processando..."
-                          : statusAtual === "aguardando correção" ||
-                              statusAtual === "avaliador" ||
-                              statusAtual === "avaliado" ||
-                              statusAtual === "avaliada"
-                            ? "Já Concluído"
-                            : statusAtual === "devolvida"
-                              ? "Reenviar Missão"
-                              : missaoAberta.tipo === "Material"
-                                ? "Resgatar XP do Material"
-                                : prazoEncerrado
-                                  ? "Enviar com Atraso (Penalidade)"
-                                  : "Enviar Resposta"}
-                      </button>
-                    </div>
-                  </form>
-                </div>
-              </div>
-            </div>
-          );
-        })()}
     </main>
   );
 }

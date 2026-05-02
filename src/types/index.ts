@@ -48,6 +48,7 @@ export interface Atividade {
   linkClassroom?: string;
   statusPublicacao?: string;
   imagemUrl?: string;
+  modulo?: string;
 }
 
 export interface PerfilAluno {

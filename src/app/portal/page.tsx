@@ -608,7 +608,7 @@ export default function PortalDashboard() {
       )}
 
       <div className="bg-white border-b border-slate-200">
-        <div className="max-w-6xl mx-auto p-4 md:p-8 flex flex-col lg:flex-row justify-between items-start gap-8">
+        <div className="max-w-[1536px] w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row justify-between items-start gap-8">
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left w-full lg:flex-1">
             <h2 className="text-2xl md:text-3xl font-black text-slate-800">
               Bem-vindo, {aluno.nome.split(" ")[0]}!
@@ -747,7 +747,7 @@ export default function PortalDashboard() {
         </div>
       </div>
 
-      <div className="max-w-5xl mx-auto p-4 md:p-8 mt-4">
+      <div className="max-w-[1536px] w-full mx-auto p-4 md:p-8 mt-4"></div><div className="max-w-5xl mx-auto p-4 md:p-8 mt-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
             🎯 Suas Missões

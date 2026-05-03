@@ -4,12 +4,11 @@
 import { useState, useRef, useEffect } from "react";
 import { PortalHeaderProps } from "../types";
 
-
 export default function PortalHeader({
   matricula,
   nomeAluno,
   turma,
-  nomeProjeto = "Portal Educacional", // Fallback de segurança
+  nomeProjeto = "Portal Educacional",
   notificacoes,
   onAbrirRanking,
   onAbrirFrequencia,
@@ -18,7 +17,7 @@ export default function PortalHeader({
 }: PortalHeaderProps) {
   const [menuAberto, setMenuAberto] = useState(false);
   const [notificacoesAbertas, setNotificacoesAbertas] = useState(false);
-  const [ultimoVisto, setUltimoVisto] = useState<number>(0); // <--- ESTADO DO SININHO
+  const [ultimoVisto, setUltimoVisto] = useState<number>(0);
 
   const menuRef = useRef<HTMLDivElement>(null);
   const notifRef = useRef<HTMLDivElement>(null);
@@ -34,7 +33,6 @@ export default function PortalHeader({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // CARREGA A ÚLTIMA VEZ QUE O ALUNO ABRIU O SININHO
   useEffect(() => {
     const salvo = localStorage.getItem(`notif_vistas_${matricula}`);
     if (salvo) setUltimoVisto(Number(salvo));
@@ -42,7 +40,6 @@ export default function PortalHeader({
 
   const primeiroNome = nomeAluno.split(" ")[0];
 
-  // A MÁGICA: Só mostra o número das notificações que chegaram DEPOIS da última visualização
   const notificacoesNaoLidas = notificacoes.filter(
     (n) => n.tempo > ultimoVisto,
   ).length;
@@ -52,7 +49,6 @@ export default function PortalHeader({
     setNotificacoesAbertas(abrindo);
     setMenuAberto(false);
 
-    // Quando ele ABRIR o sininho, marcamos todas como "Lidas" guardando o tempo da mais nova
     if (abrindo && notificacoes.length > 0) {
       const maisRecente = notificacoes[0].tempo;
       setUltimoVisto(maisRecente);
@@ -62,7 +58,8 @@ export default function PortalHeader({
 
   return (
     <header className="bg-blue-900 text-white p-4 shadow-md sticky top-0 z-40">
-      <div className="max-w-5xl mx-auto flex justify-between items-center relative">
+      {/* 🔥 A MÁGICA AQUI: Mudamos de max-w-5xl para max-w-[1536px] e adicionamos px-4 lg:px-8 */}
+      <div className="max-w-[1536px] w-full px-4 lg:px-8 mx-auto flex justify-between items-center relative transition-all duration-300">
         <div className="flex items-center gap-3">
           <span className="text-2xl drop-shadow-md">🚀</span>
           <div>
@@ -77,7 +74,6 @@ export default function PortalHeader({
 
         <div className="flex items-center gap-4">
           <div className="relative" ref={notifRef}>
-            {/* O BOTÃO DO SININHO */}
             <button
               onClick={toggleNotificacoes}
               className="relative p-2 text-blue-200 hover:text-white transition-colors"
@@ -111,7 +107,6 @@ export default function PortalHeader({
                   ) : (
                     <div className="divide-y divide-slate-100">
                       {notificacoes.map((notif) => {
-                        // LÓGICA DE ESTILIZAÇÃO DO ÍCONE DA NOTIFICAÇÃO
                         let iconeNotif = "💸";
                         let corBg = "bg-emerald-100";
                         let corTexto = "text-emerald-600";

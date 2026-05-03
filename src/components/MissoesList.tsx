@@ -18,7 +18,6 @@ export default function MissoesList({
 
   const [missaoPreview, setMissaoPreview] = useState<Atividade | null>(null);
 
-  // 🔥 NOVO: ESTADO PARA CONTROLAR QUAIS MÓDULOS ESTÃO EXPANDIDOS
   const [modulosFechados, setModulosFechados] = useState<
     Record<string, boolean>
   >({});
@@ -93,12 +92,10 @@ export default function MissoesList({
     filtroStatusPub,
   ]);
 
-  // 🔥 NOVO: AGRUPAR AS ATIVIDADES FILTRADAS POR MÓDULO
   const atividadesAgrupadas = useMemo(() => {
     const grupos: Record<string, Atividade[]> = {};
 
     atividadesFiltradas.forEach((ativ) => {
-      // Se não tiver módulo, joga para "Geral"
       const nomeModulo =
         ativ.modulo && ativ.modulo.trim() !== "" ? ativ.modulo : "Geral";
       if (!grupos[nomeModulo]) {
@@ -110,7 +107,6 @@ export default function MissoesList({
     return grupos;
   }, [atividadesFiltradas]);
 
-  // Função para abrir/fechar o módulo
   const toggleModulo = (nomeModulo: string) => {
     setModulosFechados((prev) => ({
       ...prev,
@@ -208,9 +204,7 @@ export default function MissoesList({
           </div>
         ) : (
           <div className="space-y-6">
-            {/* 🔥 RENDERIZAÇÃO DOS MÓDULOS (ACCORDIONS) */}
             {Object.entries(atividadesAgrupadas)
-              // Ordenação alfabética dos Módulos (empurrando 'Geral' para o fim, opcional)
               .sort(([modA], [modB]) => {
                 if (modA === "Geral") return 1;
                 if (modB === "Geral") return -1;
@@ -221,7 +215,6 @@ export default function MissoesList({
 
                 return (
                   <div key={nomeModulo} className="flex flex-col">
-                    {/* CABEÇALHO DO MÓDULO */}
                     <div
                       onClick={() => toggleModulo(nomeModulo)}
                       className="bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 transition-colors p-4 rounded-xl flex justify-between items-center cursor-pointer mb-3 shadow-sm select-none group"
@@ -242,9 +235,8 @@ export default function MissoesList({
                       </div>
                     </div>
 
-                    {/* LISTA DE MISSÕES DENTRO DO MÓDULO */}
                     {!isFechado && (
-                      <div className="space-y-4 pl-2 md:pl-6 border-l-2 border-indigo-100 ml-2 md:ml-4 animate-in slide-in-from-top-2 duration-300">
+                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 pl-2 md:pl-6 border-l-2 border-indigo-100 ml-2 md:ml-4 mt-2 mb-6 animate-in slide-in-from-top-2 duration-300">
                         {missoesDoModulo.map((ativ, index) => {
                           const isRascunho =
                             ativ.statusPublicacao === "Rascunho";
@@ -252,14 +244,14 @@ export default function MissoesList({
                           return (
                             <div
                               key={`${ativ.id}-${index}`}
-                              className={`bg-white border ${isRascunho ? "border-yellow-200" : "border-slate-200"} rounded-2xl p-5 hover:shadow-md transition-all flex flex-col md:flex-row justify-between gap-6 group relative`}
+                              className={`bg-white border ${isRascunho ? "border-yellow-200" : "border-slate-200"} rounded-2xl p-5 hover:shadow-md transition-all flex flex-col lg:flex-row justify-between gap-6 group relative h-full`}
                             >
-                              {/* Decoração lateral para os cards */}
                               <div
                                 className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-md ${ativ.tipo === "Quiz" ? "bg-amber-400" : ativ.tipo === "Material" ? "bg-emerald-400" : "bg-blue-400"}`}
                               ></div>
 
-                              <div className="flex-1 pl-2">
+                              {/* 🔥 MÁGICA DE LAYOUT AQUI: min-w-0 forca o container a não passar dos limites */}
+                              <div className="flex-1 pl-2 min-w-0">
                                 <div className="flex items-center flex-wrap gap-2 mb-3">
                                   <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
                                     {ativ.id}
@@ -293,18 +285,23 @@ export default function MissoesList({
                                       : "Sem prazo"}
                                   </span>
                                 </div>
+
+                                {/* 🔥 QUEBRA DE TEXTO AQUI: line-clamp-2 e break-words adicionados no título */}
                                 <h4
-                                  className={`font-bold text-lg leading-tight ${isRascunho ? "text-slate-400" : "text-slate-800"}`}
+                                  className={`font-bold text-lg leading-tight line-clamp-2 break-words ${isRascunho ? "text-slate-400" : "text-slate-800"}`}
                                 >
                                   {ativ.titulo}
                                 </h4>
-                                <p className="text-sm text-slate-500 line-clamp-2 mt-2 leading-relaxed">
+
+                                {/* 🔥 QUEBRA DE TEXTO AQUI: break-words adicionado na descrição */}
+                                <p className="text-sm text-slate-500 line-clamp-2 md:line-clamp-3 mt-2 leading-relaxed break-words">
                                   {ativ.descricao}
                                 </p>
                               </div>
 
-                              <div className="flex flex-col items-end justify-between min-w-[160px] gap-4 border-t md:border-t-0 md:border-l border-slate-100 pt-4 md:pt-0 md:pl-6">
-                                <div className="flex gap-2 w-full justify-end opacity-100 xl:opacity-0 xl:group-hover:opacity-100 transition-opacity">
+                              {/* 🔥 FIX DOS BOTÕES: shrink-0 impede que o texto esmague eles */}
+                              <div className="flex flex-col items-end justify-between min-w-[160px] shrink-0 gap-4 border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6">
+                                <div className="flex gap-2 w-full justify-end opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                                   <button
                                     onClick={() => onEdit(ativ)}
                                     className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
@@ -321,7 +318,7 @@ export default function MissoesList({
                                   </button>
                                 </div>
 
-                                <div className="flex flex-col gap-2 w-full">
+                                <div className="flex flex-col gap-2 w-full mt-auto">
                                   <button
                                     onClick={() => setMissaoPreview(ativ)}
                                     className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold py-2 px-3 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2"
@@ -384,7 +381,6 @@ export default function MissoesList({
                 {missaoPreview.descricao}
               </div>
 
-              {/* RENDERIZAÇÃO DA IMAGEM DE REFERÊNCIA NO PREVIEW */}
               {missaoPreview.imagemUrl && (
                 <div className="relative w-full h-64 mb-6 rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
                   <Image
@@ -406,7 +402,6 @@ export default function MissoesList({
               )}
 
               <div className="border-t border-slate-200 pt-6">
-                {/* PREVIEW DA TRAVA DO CLASSROOM */}
                 {missaoPreview.linkClassroom && (
                   <div className="bg-amber-50 border-2 border-amber-300 p-5 rounded-xl mb-6 shadow-sm opacity-90">
                     <h3 className="text-amber-800 font-black text-sm flex items-center gap-2 mb-2">
@@ -445,7 +440,6 @@ export default function MissoesList({
                   Visão do Formulário:
                 </h3>
 
-                {/* PREVIEW DO MATERIAL DE APOIO NO LADO DO TUTOR */}
                 {missaoPreview.tipo === "Quiz" ? (
                   <div className="space-y-3">
                     {["A", "B", "C", "D"].map((letra) => {

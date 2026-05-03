@@ -608,7 +608,7 @@ export default function GestaoAulasPage() {
         />
       )}
 
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-[1600px] w-full mx-auto px-4 lg:px-8">
         <Header
           carregando={isLoading}
           nomeUsuario={nomeUsuario}
@@ -673,7 +673,7 @@ export default function GestaoAulasPage() {
           </a>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
           <div className="xl:col-span-1 space-y-4">
             {aniversariantes.length > 0 && (
               <div className="bg-gradient-to-br from-amber-100 to-orange-100 border border-amber-300 p-4 rounded-2xl shadow-sm text-center">
@@ -756,7 +756,7 @@ export default function GestaoAulasPage() {
             </button>
           </div>
 
-          <div className="xl:col-span-3">
+          <div className="xl:col-span-4 overflow-hidden">
             <div className="grid grid-cols-3 gap-3 md:gap-4 mb-8">
               <button
                 onClick={() => {

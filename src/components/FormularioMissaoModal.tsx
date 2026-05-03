@@ -170,7 +170,7 @@ export default function FormularioMissaoModal({
                   </select>
                 </div>
                 <p className="text-[10px] text-indigo-600 mt-2 font-medium leading-tight">
-                  Dica: Digite "Aula 01" e selecione a Turma ao lado para criar
+                  Dica: Digite &quot;Aula 01&ldquo; e selecione a Turma ao lado para criar
                   o grupo rapidamente.
                 </p>
               </div>
@@ -213,7 +213,7 @@ export default function FormularioMissaoModal({
               </div>
               <p className="text-[10px] text-slate-400 mt-1 font-medium">
                 Use o botão esquerdo para adicionar o tipo de conteúdo (Ex:
-                "Desafio 01") direto no título.
+                &quot;Desafio 01&ldquo;) direto no título.
               </p>
             </div>
 

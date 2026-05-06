@@ -1,5 +1,8 @@
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
 
+// 🔥 A SUA IDEIA GENIAL APLICADA AQUI:
+const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
+
 /**
  * Função central de comunicação com o Google Apps Script.
  * Centraliza os cabeçalhos, o método POST e o tratamento de erros.
@@ -43,10 +46,9 @@ export const apiGeral = {
 };
 
 // ==========================================
-// 2. API DO ALUNO (PORTAL)
+// 2. API DO ALUNO (PORTAL) - SEM O TOKEN DE MESTRE
 // ==========================================
 export const apiAluno = {
-  // --- PREMIAÇÃO DE ELITE ---
   coroarElite: (
     matriculaNova: string,
     tipoPlaca: "Elite Ouro" | "Elite Prata" | "Elite Bronze",
@@ -119,7 +121,6 @@ export const apiAluno = {
   confirmarWhatsapp: (matricula: string) =>
     fetchApi({ action: "confirmar_whatsapp", matricula }),
 
-  // --- PIX ---
   iniciarPix: (matricula: string) =>
     fetchApi({ action: "iniciar_pix", matricula }),
 
@@ -144,33 +145,33 @@ export const apiAluno = {
 };
 
 // ==========================================
-// 3. API DO TUTOR E GESTÃO
+// 3. API DO TUTOR E GESTÃO - BLINDADA COM O TOKEN
 // ==========================================
 export const apiTutor = {
   // --- RANKING E ANALYTICS ---
   buscarRanking: (filtroTempo: "geral" | "semanal" | "mensal") =>
-    fetchApi({ action: "buscar_ranking", filtroTempo }),
+    fetchApi({ action: "buscar_ranking", filtroTempo, token: TUTOR_TOKEN }),
 
-  buscarAnalyticsGeral: () => fetchApi({ action: "buscar_analytics_geral" }),
+  buscarAnalyticsGeral: () => fetchApi({ action: "buscar_analytics_geral", token: TUTOR_TOKEN }),
 
   buscarFicha360: (matricula: string) =>
-    fetchApi({ action: "buscar_ficha_360", matricula }),
+    fetchApi({ action: "buscar_ficha_360", matricula, token: TUTOR_TOKEN }),
 
   // --- MISSÕES ---
   buscarTodasAtividades: (
     filtroTurma: string = "Todas",
     filtroTipo: string = "Todos",
-  ) => fetchApi({ action: "buscar_todas_atividades", filtroTurma, filtroTipo }),
+  ) => fetchApi({ action: "buscar_todas_atividades", filtroTurma, filtroTipo, token: TUTOR_TOKEN }),
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   salvarAtividade: (dados: any) =>
-    fetchApi({ action: "salvar_atividade", ...dados }),
+    fetchApi({ action: "salvar_atividade", ...dados, token: TUTOR_TOKEN }),
 
   excluirAtividade: (idAtividade: string) =>
-    fetchApi({ action: "excluir_atividade", idAtividade }),
+    fetchApi({ action: "excluir_atividade", idAtividade, token: TUTOR_TOKEN }),
 
   buscarEntregas: (idAtividade: string) =>
-    fetchApi({ action: "buscar_entregas_atividade", idAtividade }),
+    fetchApi({ action: "buscar_entregas_atividade", idAtividade, token: TUTOR_TOKEN }),
 
   avaliarEntrega: (
     idEntrega: string,
@@ -186,14 +187,15 @@ export const apiTutor = {
       xpGanho,
       novoStatus,
       feedback,
+      token: TUTOR_TOKEN,
     }),
 
   // --- FREQUÊNCIA ---
   buscarDiarioClasse: (turma: string, mes: string, ano: string) =>
-    fetchApi({ action: "buscar_diario_classe", turma, mes, ano }),
+    fetchApi({ action: "buscar_diario_classe", turma, mes, ano, token: TUTOR_TOKEN }),
 
   buscarFrequenciaHoje: (turma: string) =>
-    fetchApi({ action: "buscar_frequencia_hoje", turma }),
+    fetchApi({ action: "buscar_frequencia_hoje", turma, token: TUTOR_TOKEN }),
 
   justificarFalta: (
     matricula: string,
@@ -207,10 +209,11 @@ export const apiTutor = {
       data: dataIso,
       justificativa,
       idFalta,
+      token: TUTOR_TOKEN,
     }),
 
   // --- GOD MODE ---
-  listarAlunosGodMode: () => fetchApi({ action: "listar_alunos_godmode" }),
+  listarAlunosGodMode: () => fetchApi({ action: "listar_alunos_godmode", token: TUTOR_TOKEN }),
 
   injetarXP: (matriculaAlvo: string, quantidadeXP: number, motivo: string) =>
     fetchApi({
@@ -218,20 +221,21 @@ export const apiTutor = {
       matriculaAlvo,
       quantidadeXP,
       motivo,
+      token: TUTOR_TOKEN,
     }),
 
   coroarElite: (matricula: string, tipoPlaca: string) =>
-    fetchApi({ action: "coroar_elite", matricula, tipoPlaca }),
+    fetchApi({ action: "coroar_elite", matricula, tipoPlaca, token: TUTOR_TOKEN }),
 
   // --- CONFIGURAÇÕES ---
-  buscarSenhaCheckin: () => fetchApi({ action: "buscar_senha_checkin" }),
+  buscarSenhaCheckin: () => fetchApi({ action: "buscar_senha_checkin", token: TUTOR_TOKEN }),
 
   atualizarSenhaCheckin: (novaSenha: string) =>
-    fetchApi({ action: "atualizar_senha_checkin", novaSenha }),
+    fetchApi({ action: "atualizar_senha_checkin", novaSenha, token: TUTOR_TOKEN }),
 
   toggleModoReposicao: (status: "LIGADO" | "DESLIGADO") =>
-    fetchApi({ action: "toggle_modo_reposicao", status }),
+    fetchApi({ action: "toggle_modo_reposicao", status, token: TUTOR_TOKEN }),
 
   buscarAniversariantes: () =>
-    fetchApi({ action: "buscar_aniversariantes_dia" }),
+    fetchApi({ action: "buscar_aniversariantes_dia", token: TUTOR_TOKEN }),
 };

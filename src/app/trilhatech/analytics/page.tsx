@@ -544,11 +544,18 @@ export default function AnalyticsPage() {
                                                 ? "Conquista Desbloqueada"
                                                 : `Missão: ${item.atividade}`}
                                           </p>
-                                          <p className="text-xs text-slate-400">
-                                            {new Date(
-                                              item.data,
-                                            ).toLocaleDateString("pt-BR")}{" "}
-                                            - Status: {item.status}
+                                          <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1 font-bold">
+                                            <span>🕒</span>{" "}
+                                            {new Date(item.data)
+                                              .toLocaleString("pt-BR", {
+                                                day: "2-digit",
+                                                month: "2-digit",
+                                                year: "numeric",
+                                                hour: "2-digit",
+                                                minute: "2-digit",
+                                              })
+                                              .replace(",", " às")}{" "}
+                                            • Status: {item.status}
                                           </p>
                                         </div>
                                       </div>

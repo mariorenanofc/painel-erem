@@ -747,7 +747,8 @@ export default function PortalDashboard() {
         </div>
       </div>
 
-      <div className="max-w-[1536px] w-full mx-auto p-4 md:p-8 mt-4"></div><div className="max-w-5xl mx-auto p-4 md:p-8 mt-4">
+      <div className="max-w-[1536px] w-full mx-auto p-4 md:p-8 mt-4"></div>
+      <div className="max-w-5xl mx-auto p-4 md:p-8 mt-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
             🎯 Suas Missões
@@ -1062,6 +1063,38 @@ export default function PortalDashboard() {
                   Erro ao carregar dados.
                 </p>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE PRESENTE DE ANIVERSÁRIO */}
+      {modalPresenteAberto && (
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in zoom-in duration-300">
+          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col text-center border-4 border-amber-400 relative">
+            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-amber-200/50 to-transparent"></div>
+            <div className="p-8 relative z-10">
+              <div className="text-7xl animate-bounce mb-4 drop-shadow-md">
+                🎁
+              </div>
+              <h2 className="font-black text-2xl text-slate-800 mb-2 uppercase text-amber-600">
+                Feliz Aniversário!
+              </h2>
+              <p className="text-sm text-slate-600 font-medium mb-6">
+                Parabéns, <strong>{aluno?.nome.split(" ")[0]}</strong>! Hoje é o
+                seu dia especial. Como presente do Tutor, você ganhou{" "}
+                <strong className="text-emerald-600">100 XP</strong> para
+                turbinar o seu nível!
+              </p>
+              <button
+                onClick={resgatarPresente}
+                disabled={resgatandoPresente}
+                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black py-4 rounded-xl shadow-lg transition-transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 cursor-pointer"
+              >
+                {resgatandoPresente
+                  ? "Abrindo Presente..."
+                  : "RESGATAR MEU PRESENTE"}
+              </button>
             </div>
           </div>
         </div>

@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -26,7 +27,6 @@ export default function CorrecaoMissoesModal({
     setFeedbacksTemp({ ...feedbacksTemp, [idEntrega]: val });
   };
 
-  // Verifica se é Quiz para desabilitar a devolução manual
   const isQuiz = missaoAberta.tipo === "Quiz";
 
   return (
@@ -70,6 +70,10 @@ export default function CorrecaoMissoesModal({
                 const isDevolvida = entrega.status === "Devolvida";
                 const isAprovada = entrega.status === "Avaliado";
                 const aguardando = entrega.status === "Aguardando Correção";
+                
+                // 🔥 FORMATAÇÃO DA HORA DA ENTREGA
+                const rawDataEnvio = (entrega as any).dataEnvio;
+                const dataFormatada = rawDataEnvio ? new Date(rawDataEnvio).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric", hour: "2-digit", minute: "2-digit" }).replace(",", " às") : "";
 
                 return (
                   <div
@@ -78,7 +82,7 @@ export default function CorrecaoMissoesModal({
                   >
                     <div className="flex flex-col md:flex-row justify-between gap-4">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
+                        <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-black text-slate-800 text-lg">
                             {entrega.nomeAluno}
                           </h3>
@@ -91,6 +95,13 @@ export default function CorrecaoMissoesModal({
                             </span>
                           )}
                         </div>
+                        
+                        {/* 🔥 EXIBIÇÃO DA HORA */}
+                        {dataFormatada && (
+                          <p className="text-[10px] text-slate-500 font-bold mb-3 flex items-center gap-1">
+                            <span>🕒</span> Enviado em: {dataFormatada}
+                          </p>
+                        )}
 
                         <div className="bg-slate-100 p-3 rounded-xl border border-slate-200 mb-3">
                           <p className="text-xs font-bold text-slate-500 uppercase mb-1">

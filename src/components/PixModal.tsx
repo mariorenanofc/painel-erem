@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { PixModalProps, ItemExtrato, ColegaPix } from "../types";
 import { apiAluno } from "@/src/services/api";
 
-
 export default function PixModal({
   aluno,
   onClose,
@@ -374,13 +373,17 @@ export default function PixModal({
                             >
                               {item.mensagem}
                             </p>
-                            <p className="text-[10px] text-slate-400 mt-1">
-                              {new Date(item.tempo).toLocaleString("pt-BR", {
-                                day: "2-digit",
-                                month: "short",
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              })}
+                            <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1 font-medium">
+                              <span>🕒</span>{" "}
+                              {new Date(item.tempo)
+                                .toLocaleString("pt-BR", {
+                                  day: "2-digit",
+                                  month: "2-digit",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                                .replace(",", " às")}
                             </p>
                           </div>
                         </div>

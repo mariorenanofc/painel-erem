@@ -49,6 +49,9 @@ export interface Atividade {
   statusPublicacao?: string;
   imagemUrl?: string;
   modulo?: string;
+  dataEnvio?: number;
+  gabarito?: string;
+  gabaritoLiberado?: boolean;
 }
 
 export interface PerfilAluno {

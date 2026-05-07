@@ -32,6 +32,10 @@ interface FormularioMissaoModalProps {
   setImagemUrl: (val: string) => void;
   modulo: string;
   setModulo: (val: string) => void;
+  gabarito: string;
+  setGabarito: (val: string) => void;
+  gabaritoLiberado: boolean; // 🔥 NOVA PROPRIEDADE AQUI
+  setGabaritoLiberado: (val: boolean) => void; // 🔥 NOVA FUNÇÃO AQUI
   turmasDisponiveis: string[];
   salvando: boolean;
   limparFormulario: () => void;
@@ -68,6 +72,10 @@ export default function FormularioMissaoModal({
   setImagemUrl,
   modulo,
   setModulo,
+  gabarito,
+  setGabarito,
+  gabaritoLiberado, // 🔥 RECEBENDO A PROPRIEDADE
+  setGabaritoLiberado, // 🔥 RECEBENDO A FUNÇÃO
   turmasDisponiveis,
   salvando,
   limparFormulario,
@@ -76,7 +84,6 @@ export default function FormularioMissaoModal({
   return (
     <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] border-2 border-slate-200">
-        {/* CABEÇALHO */}
         <div className="bg-slate-800 p-4 flex justify-between items-center text-white shrink-0">
           <h2 className="font-bold text-lg flex items-center gap-2">
             <span>📝</span>{" "}
@@ -92,12 +99,9 @@ export default function FormularioMissaoModal({
           </button>
         </div>
 
-        {/* CORPO DO FORMULÁRIO */}
-        <div className="p-6 overflow-y-auto bg-slate-50">
+        <div className="p-6 overflow-y-auto bg-slate-50 custom-scrollbar">
           <form className="space-y-6">
-            {/* LINHA 1: TIPO E MÓDULO */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {/* TIPO DE MISSÃO */}
               <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-3">
                   Tipo de Sistema
@@ -109,7 +113,7 @@ export default function FormularioMissaoModal({
                       value="Projeto"
                       checked={tipo === "Projeto"}
                       onChange={() => setTipo("Projeto")}
-                      className="w-4 h-4 text-blue-600 focus:ring-blue-500"
+                      className="w-4 h-4 text-blue-600"
                     />{" "}
                     Projeto (Envio de Link)
                   </label>
@@ -119,7 +123,7 @@ export default function FormularioMissaoModal({
                       value="Quiz"
                       checked={tipo === "Quiz"}
                       onChange={() => setTipo("Quiz")}
-                      className="w-4 h-4 text-amber-500 focus:ring-amber-500"
+                      className="w-4 h-4 text-amber-500"
                     />{" "}
                     Quiz (Múltipla Escolha)
                   </label>
@@ -129,14 +133,13 @@ export default function FormularioMissaoModal({
                       value="Material"
                       checked={tipo === "Material"}
                       onChange={() => setTipo("Material")}
-                      className="w-4 h-4 text-emerald-500 focus:ring-emerald-500"
+                      className="w-4 h-4 text-emerald-500"
                     />{" "}
                     Material (Acesso no AVA)
                   </label>
                 </div>
               </div>
 
-              {/* MÓDULO COM PREENCHIMENTO AUTOMÁTICO DE TURMA */}
               <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-200 shadow-sm flex flex-col justify-center">
                 <label className="block text-xs font-bold text-indigo-800 uppercase mb-1 flex items-center gap-2">
                   <span>🗂️</span> Módulo / Tópico no Classroom
@@ -149,46 +152,36 @@ export default function FormularioMissaoModal({
                     placeholder="Ex: Aula 01"
                     className="w-full bg-white border-2 border-indigo-200 text-slate-800 rounded-lg p-3 font-bold focus:border-indigo-500 outline-none transition-colors"
                   />
-                  {/* SELECT AJUDANTE: TURMA DO MÓDULO */}
                   <select
                     className="bg-white border-2 border-indigo-200 rounded-lg p-3 text-sm font-bold text-indigo-600 outline-none w-[140px] shrink-0 cursor-pointer hover:bg-indigo-50"
                     onChange={(e) => {
                       if (e.target.value) {
-                        // Pega apenas a parte antes de " - Turma" para evitar duplicações
                         const baseModulo =
                           modulo.split(" - Turma")[0].trim() || "Aula XX";
                         setModulo(`${baseModulo} - ${e.target.value}`);
-                        e.target.value = ""; // Reseta o select
+                        e.target.value = "";
                       }
                     }}
                   >
                     <option value="">+ Turma</option>
-                    <option value="Turma 01">Turma 01</option>
-                    <option value="Turma 02">Turma 02</option>
-                    <option value="Turma 03">Turma 03</option>
-                    <option value="Turma 04">Turma 04</option>
+                    <option value="Turma 1 - 1º Ano">Turma 1 - 1º Ano</option>
+                    <option value="Turma 2 - 2º Ano">Turma 2 - 2º Ano</option>
                   </select>
                 </div>
-                <p className="text-[10px] text-indigo-600 mt-2 font-medium leading-tight">
-                  Dica: Digite &quot;Aula 01&ldquo; e selecione a Turma ao lado para criar
-                  o grupo rapidamente.
-                </p>
               </div>
             </div>
 
-            {/* LINHA 2: TÍTULO COM PREENCHIMENTO AUTOMÁTICO DO CONTEÚDO */}
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
                 Título da Missão
               </label>
               <div className="flex gap-2">
-                {/* SELECT AJUDANTE: TIPO DE CONTEÚDO */}
                 <select
                   className="bg-slate-100 border-2 border-slate-200 rounded-lg p-3 text-sm font-bold text-blue-600 outline-none w-[170px] shrink-0 cursor-pointer hover:bg-blue-50"
                   onChange={(e) => {
                     if (e.target.value) {
                       setTitulo(`${e.target.value} - ${titulo}`);
-                      e.target.value = ""; // Reseta o select
+                      e.target.value = "";
                     }
                   }}
                 >
@@ -211,18 +204,11 @@ export default function FormularioMissaoModal({
                   className="w-full bg-white border-2 border-slate-200 text-slate-800 rounded-lg p-3 focus:border-blue-500 outline-none transition-colors"
                 />
               </div>
-              <p className="text-[10px] text-slate-400 mt-1 font-medium">
-                Use o botão esquerdo para adicionar o tipo de conteúdo (Ex:
-                &quot;Desafio 01&ldquo;) direto no título.
-              </p>
             </div>
 
-            {/* LINHA 3: DESCRIÇÃO */}
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                {tipo === "Quiz"
-                  ? "Enunciado da Questão (Aceita código)"
-                  : "Instruções Detalhadas"}
+                Instruções Detalhadas
               </label>
               <textarea
                 rows={4}
@@ -233,21 +219,34 @@ export default function FormularioMissaoModal({
               ></textarea>
             </div>
 
-            {/* LINHA 4: IMAGEM (OPCIONAL) */}
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2">
-                <span>🖼️</span> Link da Imagem de Referência (Opcional)
+            {/* 🔥 CAMPO: GABARITO / RECUPERAÇÃO E INTERRUPTOR DE SEGURANÇA */}
+            <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-xl shadow-sm">
+              <label className="block text-xs font-black text-emerald-800 uppercase mb-2 flex items-center gap-2">
+                <span>🗝️</span> Gabarito / Material de Recuperação (Opcional)
               </label>
-              <input
-                type="url"
-                value={imagemUrl}
-                onChange={(e) => setImagemUrl(e.target.value)}
-                placeholder="https://i.imgur.com/sua-imagem.png"
-                className="w-full bg-white border-2 border-slate-200 text-slate-800 rounded-lg p-3 focus:border-blue-500 outline-none transition-colors"
-              />
+              <textarea
+                rows={2}
+                value={gabarito}
+                onChange={(e) => setGabarito(e.target.value)}
+                placeholder="Cole o link do Colab, CodePen, ou digite a resposta correta aqui."
+                className="w-full bg-white border-2 border-emerald-200 text-slate-800 rounded-lg p-3 font-mono text-sm focus:border-emerald-500 outline-none transition-colors"
+              ></textarea>
+
+              {/* 🔥 O INTERRUPTOR MÁGICO */}
+              <label className="flex items-center gap-3 p-3 bg-white border border-emerald-200 rounded-lg cursor-pointer hover:bg-emerald-50 mt-3 transition-colors shadow-sm">
+                <input
+                  type="checkbox"
+                  checked={gabaritoLiberado}
+                  onChange={(e) => setGabaritoLiberado(e.target.checked)}
+                  className="w-5 h-5 text-emerald-600 focus:ring-emerald-500 rounded cursor-pointer shrink-0"
+                />
+                <span className="text-sm font-bold text-emerald-900">
+                  Liberar acesso ao Gabarito para os Alunos (Fica visível na
+                  Central deles)
+                </span>
+              </label>
             </div>
 
-            {/* BLOCO EXCLUSIVO: QUIZ */}
             {tipo === "Quiz" && (
               <div className="bg-amber-50 p-5 rounded-xl border border-amber-200 space-y-4 shadow-sm">
                 <h3 className="font-bold text-amber-800 text-sm uppercase mb-2">
@@ -292,21 +291,33 @@ export default function FormularioMissaoModal({
               </div>
             )}
 
-            {/* LINHA 5: CLASSROOM TRAVA */}
-            <div>
-              <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2">
-                <span>🏫</span> Link da Atividade no Classroom (Opcional)
-              </label>
-              <input
-                type="url"
-                value={linkClassroom}
-                onChange={(e) => setLinkClassroom(e.target.value)}
-                placeholder="https://classroom.google.com/..."
-                className="w-full bg-white border-2 border-slate-200 text-slate-800 rounded-lg p-3 focus:border-blue-500 outline-none transition-colors"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2">
+                  <span>🖼️</span> Link da Imagem
+                </label>
+                <input
+                  type="url"
+                  value={imagemUrl}
+                  onChange={(e) => setImagemUrl(e.target.value)}
+                  placeholder="https://i.imgur.com/..."
+                  className="w-full bg-white border-2 border-slate-200 text-slate-800 rounded-lg p-3 focus:border-blue-500 outline-none transition-colors"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold text-slate-500 uppercase mb-1 flex items-center gap-2">
+                  <span>🏫</span> Link do Classroom
+                </label>
+                <input
+                  type="url"
+                  value={linkClassroom}
+                  onChange={(e) => setLinkClassroom(e.target.value)}
+                  placeholder="https://classroom.google.com/..."
+                  className="w-full bg-white border-2 border-slate-200 text-slate-800 rounded-lg p-3 focus:border-blue-500 outline-none transition-colors"
+                />
+              </div>
             </div>
 
-            {/* LINHA 6: CONFIGURAÇÕES FINAIS (PRAZO, XP E TURMA) */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
@@ -332,7 +343,7 @@ export default function FormularioMissaoModal({
               </div>
               <div>
                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
-                  Turma Alvo (Visibilidade)
+                  Turma Alvo
                 </label>
                 <select
                   value={turmaAlvo}
@@ -351,7 +362,6 @@ export default function FormularioMissaoModal({
           </form>
         </div>
 
-        {/* RODAPÉ E BOTÕES DE AÇÃO */}
         <div className="p-4 bg-white flex flex-wrap gap-3 justify-end border-t border-slate-200 shrink-0">
           <button
             type="button"

@@ -679,6 +679,15 @@ export default function PortalDashboard() {
                   </>
                 )}
               </button>
+
+              {/* 🔥 NOSSO NOVO BOTÃO DA CENTRAL DE GABARITOS AQUI 👇 */}
+              <button
+                onClick={() => router.push("/portal/gabaritos")}
+                className="inline-flex items-center justify-center gap-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-indigo-300 whitespace-nowrap"
+              >
+                <span className="text-lg">🗝️</span>{" "}
+                <span className="text-sm">Gabaritos e Códigos</span>
+              </button>
             </div>
           </div>
 

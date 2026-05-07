@@ -19,7 +19,7 @@ import CorrecaoMissoesModal from "@/src/components/CorrecaoMissoesModal";
 import GestaoFrequenciaModal from "@/src/components/GestaoFrequenciaModal";
 import MissoesList from "@/src/components/MissoesList";
 import GodModeModal from "@/src/components/GodModeModal";
-import FormularioMissaoModal from "@/src/components/FormularioMissaoModal"; // 🔥 O NOSSO NOVO COMPONENTE AQUI!
+import FormularioMissaoModal from "@/src/components/FormularioMissaoModal";
 
 // SWR Fetcher super limpo usando a API
 const fetcherAtividades = async () => {
@@ -75,7 +75,12 @@ export default function GestaoAulasPage() {
   const [linkClassroom, setLinkClassroom] = useState("");
   const [statusPublicacao, setStatusPublicacao] = useState("Publicada");
   const [imagemUrl, setImagemUrl] = useState("");
-  const [modulo, setModulo] = useState("Geral"); // 🔥 NOVO ESTADO DO MÓDULO AQUI
+  const [modulo, setModulo] = useState("Geral");
+
+  // 🔥 ESTADOS DO GABARITO E SEGURANÇA
+  const [gabarito, setGabarito] = useState("");
+  const [gabaritoLiberado, setGabaritoLiberado] = useState(false);
+
   const [salvando, setSalvando] = useState(false);
 
   // === ESTADOS DOS MODAIS ===
@@ -266,7 +271,9 @@ export default function GestaoAulasPage() {
     setStatusPublicacao("Publicada");
     setImagemUrl("");
     setModulo("Geral");
-    setModalNovaMissaoAberto(false); // 🔥 LIMPANDO O MÓDULO
+    setGabarito(""); // 🔥 LIMPANDO O GABARITO
+    setGabaritoLiberado(false); // 🔥 LIMPANDO O INTERRUPTOR
+    setModalNovaMissaoAberto(false);
   };
 
   const preencherEdicao = (ativ: Atividade) => {
@@ -285,7 +292,10 @@ export default function GestaoAulasPage() {
     setLinkClassroom(String(ativ.linkClassroom || ""));
     setStatusPublicacao(String(ativ.statusPublicacao || "Publicada"));
     setImagemUrl(String(ativ.imagemUrl || ""));
-    setModulo(String(ativ.modulo || "Geral")); // 🔥 PREENCHENDO O MÓDULO
+    setModulo(String(ativ.modulo || "Geral"));
+    setGabarito(String(ativ.gabarito || ""));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    setGabaritoLiberado((ativ as any).gabaritoLiberado || false); // 🔥 PREENCHENDO O INTERRUPTOR
     setModalNovaMissaoAberto(true);
   };
 
@@ -324,7 +334,9 @@ export default function GestaoAulasPage() {
         linkClassroom,
         statusPublicacao: statusAcao,
         imagemUrl,
-        modulo, // 🔥 ENVIANDO O MÓDULO PARA O BANCO DE DADOS
+        modulo,
+        gabarito,
+        gabaritoLiberado, // 🔥 ENVIANDO O INTERRUPTOR PARA O BANCO DE DADOS
       });
       limparFormulario();
       mutate();
@@ -569,7 +581,6 @@ export default function GestaoAulasPage() {
         </div>
       )}
 
-      {/* 🔥 O NOSSO NOVO COMPONENTE SUBSTITUI AS 150 LINHAS DE CÓDIGO AQUI! */}
       {modalNovaMissaoAberto && (
         <FormularioMissaoModal
           idEditando={idEditando}
@@ -601,6 +612,10 @@ export default function GestaoAulasPage() {
           setImagemUrl={setImagemUrl}
           modulo={modulo}
           setModulo={setModulo}
+          gabarito={gabarito}
+          setGabarito={setGabarito}
+          gabaritoLiberado={gabaritoLiberado} // 🔥 PASSANDO A PROPRIEDADE
+          setGabaritoLiberado={setGabaritoLiberado} // 🔥 PASSANDO A FUNÇÃO
           turmasDisponiveis={turmasDisponiveis}
           salvando={salvando}
           limparFormulario={limparFormulario}

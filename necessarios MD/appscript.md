@@ -60,6 +60,28 @@ const action = dadosApp.action;
 const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
     // ==========================================
+    // 🛡️ SISTEMA DE SEGURANÇA (FIREWALL)
+    // ==========================================
+    const ROTAS_PROTEGIDAS = [
+      "salvar_atividade", "excluir_atividade", "avaliar_entrega",
+      "injetar_xp_manual", "cadastrar_aluno", "inscrever_trilhatech",
+      "mudar_status_trilha", "atualizar_senha_lousa", "alternar_modo_reposicao"
+    ];
+
+    // A nossa "Chave Mestra" que só o Painel do Tutor conhece
+    const TOKEN_TUTOR = "TrilhaTech_Seguranca_Total_2026";
+
+    // Se a ação for uma rota de professor, exige a chave!
+    if (ROTAS_PROTEGIDAS.includes(action)) {
+      if (dadosApp.token !== TOKEN_TUTOR) {
+        return ContentService.createTextOutput(JSON.stringify({
+          status: "erro",
+          mensagem: "⛔ ALERTA DE SEGURANÇA: Tentativa de fraude bloqueada! O seu IP foi registado."
+        })).setMimeType(ContentService.MimeType.JSON);
+      }
+    }
+
+    // ==========================================
     // ROTA 1: LOGIN DA GESTÃO
     // ==========================================
       if (action === "login") {
@@ -332,6 +354,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                 resposta: String(dadosEntregas[i][3]).trim(),
                 status: String(dadosEntregas[i][4]).trim() || "Aguardando Correção",
                 xpGanho: dadosEntregas[i][5] || 0,
+                dataEnvio: Number(dadosEntregas[i][6]) || 0,
                 feedback: String(dadosEntregas[i][7] || "").trim()
               };
             }
@@ -450,6 +473,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                 abaAtividades.getRange(linhaEdit, 14).setValue(statusPublicacao); // Coluna N
                 abaAtividades.getRange(linhaEdit, 15).setValue(imagemUrl);
                 abaAtividades.getRange(linhaEdit, 16).setValue(modulo);
+                abaAtividades.getRange(linhaEdit, 17).setValue(String(dadosApp.gabarito || ""));
                 return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Missão atualizada!" })).setMimeType(ContentService.MimeType.JSON);
               }
             } else {
@@ -475,7 +499,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
               const idGerado = "ATIV-" + numeroIdStr;
 
               // Grava a nova linha
-              abaAtividades.appendRow([idGerado, titulo, descricao, dataLimite, xp, turmaAlvo, tipo, opcaoA, opcaoB, opcaoC, opcaoD, respostaCorreta, linkClassroom, statusPublicacao, imagemUrl, modulo]);
+              abaAtividades.appendRow([idGerado, titulo, descricao, dataLimite, xp, turmaAlvo, tipo, opcaoA, opcaoB, opcaoC, opcaoD, respostaCorreta, linkClassroom, statusPublicacao, imagemUrl, modulo, String(dadosApp.gabarito || "")]);
               return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Missão criada! ID: " + idGerado })).setMimeType(ContentService.MimeType.JSON);
             }
       }
@@ -516,7 +540,8 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                   linkClassroom: String(dadosAtiv[i][12] || ""), // <-- RETORNA PRO TUTOR
                   statusPublicacao: String(dadosAtiv[i][13] || "Publicada"), // <-- RETORNA PRO TUTOR
                   imagemUrl: String(dadosAtiv[i][14] || ""),
-                  modulo: String(dadosAtiv[i][15] || "Geral")
+                  modulo: String(dadosAtiv[i][15] || "Geral"),
+                  gabarito: String(dadosAtiv[i][16] || ""),
                 });
               }
             }
@@ -712,6 +737,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                   resposta: String(dadosEntregas[i][3]),
                   status: String(dadosEntregas[i][4]),
                   xpGanho: dadosEntregas[i][5] || 0,
+                  dataEnvio: Number(dadosEntregas[i][6] || 0),
                   feedback: String(dadosEntregas[i][7] || "") // <--- NOVO: LÊ A COLUNA H
                 });
               }
@@ -2456,8 +2482,17 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                 diaNasc = Utilities.formatDate(celulaDataNasc, timezone, "dd");
                 mesNasc = Utilities.formatDate(celulaDataNasc, timezone, "MM");
               } else {
-                let partesNasc = String(celulaDataNasc).trim().split("/");
-                if (partesNasc.length === 3) { diaNasc = partesNasc[0].padStart(2, '0'); mesNasc = partesNasc[1].padStart(2, '0'); }
+                let strNasc = String(celulaDataNasc).trim();
+                // 1. Tenta quebrar por barras (DD/MM/YYYY)
+                if (strNasc.includes("/")) {
+                  let partesNasc = strNasc.split("/");
+                  if (partesNasc.length === 3) { diaNasc = partesNasc[0].padStart(2, '0'); mesNasc = partesNasc[1].padStart(2, '0'); }
+                }
+                // 2. Tenta quebrar por hífen (YYYY-MM-DD) do formulário web
+                else if (strNasc.includes("-")) {
+                  let partesNasc = strNasc.split("T")[0].split("-");
+                  if (partesNasc.length === 3) { diaNasc = partesNasc[2].padStart(2, '0'); mesNasc = partesNasc[1].padStart(2, '0'); }
+                }
               }
               if (diaNasc === diaHoje && mesNasc === mesHoje) dadosRetorno.aniversario.isAniversario = true;
             }
@@ -2490,7 +2525,8 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                   resposta: String(dadosEntregas[i][3]).trim(),
                   status: String(dadosEntregas[i][4]).trim() || "Aguardando Correção",
                   xpGanho: dadosEntregas[i][5] || 0,
-                  feedback: String(dadosEntregas[i][7] || "").trim() // <--- LEITURA DO FEEDBACK (COLUNA H)
+                  dataEnvio: Number(dadosEntregas[i][6]) || 0,
+                  feedback: String(dadosEntregas[i][7] || "").trim()
                 };
               }
               if (idEntrega.includes("PIX") && idEntrega.includes("-RECEBEU")) {
@@ -2622,11 +2658,13 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                 status: entregaAluno ? entregaAluno.status : "Pendente",
                 respostaEnviada: entregaAluno ? entregaAluno.resposta : "",
                 xpGanho: entregaAluno ? entregaAluno.xpGanho : 0,
+                dataEnvio: entregaAluno ? entregaAluno.dataEnvio : 0, // 🔥 ADICIONE ESTA LINHA AQUI
                 statusPrazo: statusPrazo,
                 feedback: entregaAluno ? entregaAluno.feedback : "",
-                linkClassroom: String(dadosAtiv[i][12] || ""), // <-- ENVIA O LINK
-                imagemUrl: String(dadosAtiv[i][14] || ""), // <--- LÊ A IMAGEM PARA O ALUNO
-                modulo: String(dadosAtiv[i][15] || "Geral")
+                linkClassroom: String(dadosAtiv[i][12] || ""),
+                imagemUrl: String(dadosAtiv[i][14] || ""),
+                modulo: String(dadosAtiv[i][15] || "Geral"),
+                gabarito: String(dadosAtiv[i][16] || ""),
               });
             }
           }

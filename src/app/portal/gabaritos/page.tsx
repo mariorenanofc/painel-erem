@@ -36,7 +36,7 @@ export default function GabaritosPage() {
           setNomeProjeto(
             data.configuracoes.nomeProjeto || "Portal Educacional",
           );
-      } catch (e) {}
+      } catch {}
     };
     buscarConfiguracoes();
   }, [router]);
@@ -101,7 +101,7 @@ export default function GabaritosPage() {
       />
 
       <div className="bg-white border-b border-slate-200">
-        <div className="max-w-[1536px] w-full mx-auto p-4 md:p-8 flex items-center gap-4">
+        <div className="max-w-384 w-full mx-auto p-4 md:p-8 flex items-center gap-4">
           <button
             onClick={() => router.push("/portal")}
             className="text-slate-500 hover:text-slate-700 font-bold px-3 py-1.5 bg-slate-100 hover:bg-slate-200 rounded-lg shadow-sm transition-colors"
@@ -120,7 +120,7 @@ export default function GabaritosPage() {
         </div>
       </div>
 
-      <div className="max-w-[1536px] w-full mx-auto p-4 md:p-8 mt-4">
+      <div className="max-w-384 w-full mx-auto p-4 md:p-8 mt-4">
         {carregando ? (
           <div className="flex flex-col items-center justify-center py-20 opacity-60">
             <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-emerald-600 mb-4"></div>

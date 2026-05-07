@@ -153,7 +153,7 @@ export default function FormularioMissaoModal({
                     className="w-full bg-white border-2 border-indigo-200 text-slate-800 rounded-lg p-3 font-bold focus:border-indigo-500 outline-none transition-colors"
                   />
                   <select
-                    className="bg-white border-2 border-indigo-200 rounded-lg p-3 text-sm font-bold text-indigo-600 outline-none w-[140px] shrink-0 cursor-pointer hover:bg-indigo-50"
+                    className="bg-white border-2 border-indigo-200 rounded-lg p-3 text-sm font-bold text-indigo-600 outline-none w-35 shrink-0 cursor-pointer hover:bg-indigo-50"
                     onChange={(e) => {
                       if (e.target.value) {
                         const baseModulo =
@@ -177,7 +177,7 @@ export default function FormularioMissaoModal({
               </label>
               <div className="flex gap-2">
                 <select
-                  className="bg-slate-100 border-2 border-slate-200 rounded-lg p-3 text-sm font-bold text-blue-600 outline-none w-[170px] shrink-0 cursor-pointer hover:bg-blue-50"
+                  className="bg-slate-100 border-2 border-slate-200 rounded-lg p-3 text-sm font-bold text-blue-600 outline-none w-42 shrink-0 cursor-pointer hover:bg-blue-50"
                   onChange={(e) => {
                     if (e.target.value) {
                       setTitulo(`${e.target.value} - ${titulo}`);

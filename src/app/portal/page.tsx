@@ -608,7 +608,7 @@ export default function PortalDashboard() {
       )}
 
       <div className="bg-white border-b border-slate-200">
-        <div className="max-w-[1536px] w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row justify-between items-start gap-8">
+        <div className="max-w-384 w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row justify-between items-start gap-8">
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left w-full lg:flex-1">
             <h2 className="text-2xl md:text-3xl font-black text-slate-800">
               Bem-vindo, {aluno.nome.split(" ")[0]}!
@@ -691,7 +691,7 @@ export default function PortalDashboard() {
             </div>
           </div>
 
-          <div className="flex flex-col w-full lg:w-[420px] shrink-0 mt-6 lg:mt-0 gap-4">
+          <div className="flex flex-col w-full lg:w-105 shrink-0 mt-6 lg:mt-0 gap-4">
             <div className="flex flex-row gap-3 w-full justify-center lg:justify-end">
               <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex items-center gap-3 w-1/2 shadow-sm">
                 <div className="bg-blue-100 p-2.5 rounded-full text-xl shrink-0">
@@ -756,7 +756,7 @@ export default function PortalDashboard() {
         </div>
       </div>
 
-      <div className="max-w-[1536px] w-full mx-auto p-4 md:p-8 mt-4"></div>
+      <div className="max-w-384 w-full mx-auto p-4 md:p-8 mt-4"></div>
       <div className="max-w-5xl mx-auto p-4 md:p-8 mt-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
@@ -1079,7 +1079,7 @@ export default function PortalDashboard() {
 
       {/* MODAL DE PRESENTE DE ANIVERSÁRIO */}
       {modalPresenteAberto && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-in fade-in zoom-in duration-300">
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-100 p-4 animate-in fade-in zoom-in duration-300">
           <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col text-center border-4 border-amber-400 relative">
             <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-amber-200/50 to-transparent"></div>
             <div className="p-8 relative z-10">

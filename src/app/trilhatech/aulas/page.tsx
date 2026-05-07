@@ -623,7 +623,7 @@ export default function GestaoAulasPage() {
         />
       )}
 
-      <div className="max-w-[1600px] w-full mx-auto px-4 lg:px-8">
+      <div className="max-w-400 w-full mx-auto px-4 lg:px-8">
         <Header
           carregando={isLoading}
           nomeUsuario={nomeUsuario}

@@ -474,6 +474,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                 abaAtividades.getRange(linhaEdit, 15).setValue(imagemUrl);
                 abaAtividades.getRange(linhaEdit, 16).setValue(modulo);
                 abaAtividades.getRange(linhaEdit, 17).setValue(String(dadosApp.gabarito || ""));
+                abaAtividades.getRange(linhaEdit, 18).setValue(dadosApp.gabaritoLiberado ? true : false);
                 return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Missão atualizada!" })).setMimeType(ContentService.MimeType.JSON);
               }
             } else {
@@ -499,7 +500,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
               const idGerado = "ATIV-" + numeroIdStr;
 
               // Grava a nova linha
-              abaAtividades.appendRow([idGerado, titulo, descricao, dataLimite, xp, turmaAlvo, tipo, opcaoA, opcaoB, opcaoC, opcaoD, respostaCorreta, linkClassroom, statusPublicacao, imagemUrl, modulo, String(dadosApp.gabarito || "")]);
+              abaAtividades.appendRow([idGerado, titulo, descricao, dataLimite, xp, turmaAlvo, tipo, opcaoA, opcaoB, opcaoC, opcaoD, respostaCorreta, linkClassroom, statusPublicacao, imagemUrl, modulo, String(dadosApp.gabarito || ""), dadosApp.gabaritoLiberado ? true : false]);
               return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Missão criada! ID: " + idGerado })).setMimeType(ContentService.MimeType.JSON);
             }
       }
@@ -511,6 +512,19 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             const filtroTurma = String(dadosApp.filtroTurma || "Todas").trim();
             const filtroTipo = String(dadosApp.filtroTipo || "Todos").trim();
             const abaAtividades = planilha.getSheetByName("atividades");
+            const abaEntregas = planilha.getSheetByName("entregas");
+
+            let pendentesMap = {};
+            if (abaEntregas) {
+              const dadosEntregas = abaEntregas.getDataRange().getValues();
+              for (let i = 1; i < dadosEntregas.length; i++) {
+                let statusEntrega = String(dadosEntregas[i][4]).trim();
+                if (statusEntrega === "Aguardando Correção") {
+                  let idAtiv = String(dadosEntregas[i][2]).trim();
+                  pendentesMap[idAtiv] = (pendentesMap[idAtiv] || 0) + 1;
+                }
+              }
+            }
             let atividades = [];
             if (abaAtividades) {
               const dadosAtiv = abaAtividades.getDataRange().getValues();
@@ -542,6 +556,8 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                   imagemUrl: String(dadosAtiv[i][14] || ""),
                   modulo: String(dadosAtiv[i][15] || "Geral"),
                   gabarito: String(dadosAtiv[i][16] || ""),
+                  gabaritoLiberado: dadosAtiv[i][17] === true || String(dadosAtiv[i][17]).toLowerCase() === "true",
+                  pendentes: pendentesMap[idAtiv] || 0
                 });
               }
             }
@@ -2651,6 +2667,11 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                   }
               }
 
+              // Verifica se o Tutor liberou
+              let isGabaritoLiberado = dadosAtiv[i][17] === true || String(dadosAtiv[i][17]).toLowerCase() === "true";
+              // Se não estiver liberado, o texto vira NADA (impossível hackear)
+              let textoGabaritoSeguro = isGabaritoLiberado ? String(dadosAtiv[i][16] || "") : "";
+
               dadosRetorno.atividades.push({
                 id: idAtiv, titulo: String(dadosAtiv[i][1]), descricao: String(dadosAtiv[i][2]), dataLimite: dataLimiteStr,
                 xp: dadosAtiv[i][4], tipo: String(dadosAtiv[i][6] || "Projeto"),
@@ -2665,6 +2686,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                 imagemUrl: String(dadosAtiv[i][14] || ""),
                 modulo: String(dadosAtiv[i][15] || "Geral"),
                 gabarito: String(dadosAtiv[i][16] || ""),
+                gabarito: textoGabaritoSeguro
               });
             }
           }

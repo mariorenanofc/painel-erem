@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo } from "react";
 import { Atividade, MissoesListProps } from "../types";
 import Image from "next/image";
@@ -15,6 +16,9 @@ export default function MissoesList({
   const [filtroTipo, setFiltroTipo] = useState("Todos");
   const [filtroPrazo, setFiltroPrazo] = useState("Todas");
   const [filtroStatusPub, setFiltroStatusPub] = useState("Todos");
+  
+  // 🔥 NOVO ESTADO: O Radar de Pendências!
+  const [filtroPendentes, setFiltroPendentes] = useState(false);
 
   const [missaoPreview, setMissaoPreview] = useState<Atividade | null>(null);
 
@@ -40,6 +44,11 @@ export default function MissoesList({
     const anoAtual = hoje.getFullYear();
 
     return atividades.filter((ativ) => {
+      // 🔥 FILTRO DE PENDÊNCIAS AQUI
+      // Usamos 'any' para evitar erro caso não tenha atualizado o arquivo de Tipos ainda
+      const pendentesCount = (ativ as any).pendentes || 0;
+      if (filtroPendentes && pendentesCount === 0) return false;
+
       const matchBusca = ativ.titulo
         .toLowerCase()
         .includes(busca.toLowerCase());
@@ -90,6 +99,7 @@ export default function MissoesList({
     filtroTipo,
     filtroPrazo,
     filtroStatusPub,
+    filtroPendentes, // 🔥 Adicionado nas dependências
   ]);
 
   const atividadesAgrupadas = useMemo(() => {
@@ -126,6 +136,16 @@ export default function MissoesList({
               onChange={(e) => setBusca(e.target.value)}
               className="w-full border text-slate-800 border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
             />
+          </div>
+
+          {/* 🔥 BOTÃO DO RADAR DE PENDÊNCIAS */}
+          <div className="w-full sm:w-auto shrink-0">
+            <button
+              onClick={() => setFiltroPendentes(!filtroPendentes)}
+              className={`w-full sm:w-auto px-4 py-2.5 rounded-lg text-sm font-bold border transition-all shadow-sm flex items-center justify-center gap-2 ${filtroPendentes ? "bg-red-100 border-red-300 text-red-800" : "bg-white border-slate-300 text-slate-600 hover:bg-slate-50"}`}
+            >
+              {filtroPendentes ? "🚨 Mostrando Pendentes" : "⏳ Filtrar Pendentes"}
+            </button>
           </div>
 
           <div className="w-full sm:w-auto shrink-0">
@@ -199,7 +219,7 @@ export default function MissoesList({
               Nenhuma missão encontrada.
             </p>
             <p className="text-slate-400 text-sm mt-1">
-              Tente ajustar os filtros acima.
+              {filtroPendentes ? "Você não tem nenhuma missão pendente para corrigir! 🎉" : "Tente ajustar os filtros acima."}
             </p>
           </div>
         ) : (
@@ -213,15 +233,25 @@ export default function MissoesList({
               .map(([nomeModulo, missoesDoModulo]) => {
                 const isFechado = modulosFechados[nomeModulo] || false;
 
+                // Conta o total de pendentes no módulo inteiro para avisar o Tutor
+                const pendentesNoModulo = missoesDoModulo.reduce((acc, ativ) => acc + ((ativ as any).pendentes || 0), 0);
+
                 return (
                   <div key={nomeModulo} className="flex flex-col">
                     <div
                       onClick={() => toggleModulo(nomeModulo)}
                       className="bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 transition-colors p-4 rounded-xl flex justify-between items-center cursor-pointer mb-3 shadow-sm select-none group"
                     >
-                      <h3 className="font-black text-indigo-900 flex items-center gap-2 text-lg">
-                        <span>📂</span> {nomeModulo}
-                      </h3>
+                      <div className="flex items-center gap-3">
+                        <h3 className="font-black text-indigo-900 flex items-center gap-2 text-lg">
+                          <span>📂</span> {nomeModulo}
+                        </h3>
+                        {pendentesNoModulo > 0 && (
+                          <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm animate-pulse">
+                            🚨 {pendentesNoModulo} Pendentes
+                          </span>
+                        )}
+                      </div>
                       <div className="flex items-center gap-3">
                         <span className="bg-indigo-200 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full">
                           {missoesDoModulo.length}{" "}
@@ -238,19 +268,20 @@ export default function MissoesList({
                     {!isFechado && (
                       <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 pl-2 md:pl-6 border-l-2 border-indigo-100 ml-2 md:ml-4 mt-2 mb-6 animate-in slide-in-from-top-2 duration-300">
                         {missoesDoModulo.map((ativ, index) => {
-                          const isRascunho =
-                            ativ.statusPublicacao === "Rascunho";
+                          const isRascunho = ativ.statusPublicacao === "Rascunho";
+                          
+                          // 🔥 VARIÁVEL MAGICA DOS PENDENTES
+                          const pendentesCount = (ativ as any).pendentes || 0;
 
                           return (
                             <div
                               key={`${ativ.id}-${index}`}
-                              className={`bg-white border ${isRascunho ? "border-yellow-200" : "border-slate-200"} rounded-2xl p-5 hover:shadow-md transition-all flex flex-col lg:flex-row justify-between gap-6 group relative h-full`}
+                              className={`bg-white border ${isRascunho ? "border-yellow-200" : pendentesCount > 0 ? "border-red-300 shadow-red-100" : "border-slate-200"} rounded-2xl p-5 hover:shadow-md transition-all flex flex-col lg:flex-row justify-between gap-6 group relative h-full`}
                             >
                               <div
                                 className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-md ${ativ.tipo === "Quiz" ? "bg-amber-400" : ativ.tipo === "Material" ? "bg-emerald-400" : "bg-blue-400"}`}
                               ></div>
 
-                              {/* 🔥 MÁGICA DE LAYOUT AQUI: min-w-0 forca o container a não passar dos limites */}
                               <div className="flex-1 pl-2 min-w-0">
                                 <div className="flex items-center flex-wrap gap-2 mb-3">
                                   <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
@@ -272,9 +303,14 @@ export default function MissoesList({
                                   >
                                     {ativ.tipo}
                                   </span>
-                                  <span className="bg-emerald-50 text-emerald-700 text-[10px] font-bold px-2 py-1 rounded-md border border-emerald-200 tracking-wider">
-                                    ⭐ {ativ.xp} XP
-                                  </span>
+                                  
+                                  {/* 🔥 SELO DE ALERTA SE HOUVER ENTREGAS! */}
+                                  {pendentesCount > 0 && (
+                                    <span className="bg-red-100 text-red-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-red-300 shadow-sm animate-pulse flex items-center gap-1">
+                                      <span>🚨</span> {pendentesCount} {pendentesCount === 1 ? 'Pendente' : 'Pendentes'}
+                                    </span>
+                                  )}
+
                                   <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider text-slate-500 bg-slate-50 border border-slate-200">
                                     📅 Prazo:{" "}
                                     {ativ.dataLimite
@@ -286,20 +322,17 @@ export default function MissoesList({
                                   </span>
                                 </div>
 
-                                {/* 🔥 QUEBRA DE TEXTO AQUI: line-clamp-2 e break-words adicionados no título */}
                                 <h4
                                   className={`font-bold text-lg leading-tight line-clamp-2 break-words ${isRascunho ? "text-slate-400" : "text-slate-800"}`}
                                 >
                                   {ativ.titulo}
                                 </h4>
 
-                                {/* 🔥 QUEBRA DE TEXTO AQUI: break-words adicionado na descrição */}
                                 <p className="text-sm text-slate-500 line-clamp-2 md:line-clamp-3 mt-2 leading-relaxed break-words">
                                   {ativ.descricao}
                                 </p>
                               </div>
 
-                              {/* 🔥 FIX DOS BOTÕES: shrink-0 impede que o texto esmague eles */}
                               <div className="flex flex-col items-end justify-between min-w-[160px] shrink-0 gap-4 border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6">
                                 <div className="flex gap-2 w-full justify-end opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
                                   <button
@@ -325,11 +358,13 @@ export default function MissoesList({
                                   >
                                     👀 Ver Aluno
                                   </button>
+                                  
+                                  {/* 🔥 BOTÃO INTELIGENTE QUE FICA VERMELHO SE HOUVER PENDÊNCIAS */}
                                   <button
                                     onClick={() => onViewEntregas(ativ)}
-                                    className="cursor-pointer w-full bg-slate-800 hover:bg-slate-900 text-white text-xs font-bold py-2.5 px-3 rounded-lg shadow-md transition-all active:scale-95 flex justify-center items-center gap-2"
+                                    className={`cursor-pointer w-full text-xs font-bold py-2.5 px-3 rounded-lg shadow-md transition-all active:scale-95 flex justify-center items-center gap-2 ${pendentesCount > 0 ? "bg-red-600 hover:bg-red-700 text-white shadow-red-500/30" : "bg-slate-800 hover:bg-slate-900 text-white"}`}
                                   >
-                                    Ver Entregas
+                                    {pendentesCount > 0 ? `🚨 Corrigir ${pendentesCount}` : "Ver Entregas"}
                                   </button>
                                 </div>
                               </div>

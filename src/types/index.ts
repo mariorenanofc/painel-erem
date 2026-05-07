@@ -52,6 +52,7 @@ export interface Atividade {
   dataEnvio?: number;
   gabarito?: string;
   gabaritoLiberado?: boolean;
+  pendentes?: number;
 }
 
 export interface PerfilAluno {

@@ -68,6 +68,31 @@ export default function ResponderMissaoModal({
     return false;
   };
 
+  // 🔥 MÁGICA 1: Função que transforma URLs de texto em links clicáveis!
+  const renderDescricaoComLinks = (texto: string) => {
+    if (!texto) return null;
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    const partes = texto.split(urlRegex);
+
+    return partes.map((parte, index) => {
+      if (parte.match(urlRegex)) {
+        return (
+          <a
+            key={index}
+            href={parte}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 hover:text-blue-800 font-black underline break-all bg-blue-50 px-1 rounded transition-colors"
+            onClick={(e) => e.stopPropagation()} // Garante que o clique não faça outra coisa
+          >
+            {parte}
+          </a>
+        );
+      }
+      return <span key={index}>{parte}</span>;
+    });
+  };
+
   const prazoEncerrado = verificarPrazo(missaoAberta.dataLimite);
   const statusAtual = missaoAberta.status?.toLowerCase().trim() || "pendente";
 
@@ -81,7 +106,6 @@ export default function ResponderMissaoModal({
     (statusAtual !== "pendente" && statusAtual !== "devolvida") ||
     bloqueioClassroom;
 
-  // 🔥 LÓGICA DE FORMATAÇÃO DA HORA DO ALUNO
   const rawDataEnvio = (missaoAberta as any).dataEnvio;
   const dataFormatada = rawDataEnvio
     ? new Date(rawDataEnvio)
@@ -130,8 +154,9 @@ export default function ResponderMissaoModal({
             )}
           </div>
 
+          {/* 🔥 MÁGICA 1 APLICADA AQUI: Renderiza a descrição com links ativos! */}
           <div className="text-slate-700 whitespace-pre-wrap font-mono text-sm mb-6 bg-white p-5 rounded-xl border border-slate-200 leading-relaxed shadow-sm">
-            {missaoAberta.descricao}
+            {renderDescricaoComLinks(missaoAberta.descricao)}
           </div>
 
           {missaoAberta.imagemUrl && (
@@ -158,7 +183,6 @@ export default function ResponderMissaoModal({
             onSubmit={handleSubmit}
             className="border-t border-slate-200 pt-6"
           >
-            {/* 🔥 ALERTA VISUAL COM A HORA DO ENVIO */}
             {dataFormatada &&
               (statusAtual === "aguardando correção" ||
                 statusAtual === "avaliado" ||

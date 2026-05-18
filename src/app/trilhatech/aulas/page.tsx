@@ -139,6 +139,10 @@ export default function GestaoAulasPage() {
 
   const atividades: Atividade[] =
     data?.status === "sucesso" ? data.atividades : [];
+    
+  // 🔥 NOVO: Extrai a lista de módulos que o Apps Script mandou
+  const modulosCadastrados: string[] = 
+    data?.status === "sucesso" ? data.modulosMatriz || [] : [];
 
   // ==========================================
   // INICIALIZAÇÃO DA PÁGINA (Limpa e Paralela)
@@ -616,6 +620,7 @@ export default function GestaoAulasPage() {
           setGabarito={setGabarito}
           gabaritoLiberado={gabaritoLiberado} // 🔥 PASSANDO A PROPRIEDADE
           setGabaritoLiberado={setGabaritoLiberado} // 🔥 PASSANDO A FUNÇÃO
+          modulosCadastrados={modulosCadastrados}
           turmasDisponiveis={turmasDisponiveis}
           salvando={salvando}
           limparFormulario={limparFormulario}

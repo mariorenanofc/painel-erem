@@ -509,60 +509,95 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
     // ROTA 8: BUSCAR TODAS ATIVIDADES (Professor)
     // ==========================================
       if (action === "buscar_todas_atividades") {
-            const filtroTurma = String(dadosApp.filtroTurma || "Todas").trim();
-            const filtroTipo = String(dadosApp.filtroTipo || "Todos").trim();
-            const abaAtividades = planilha.getSheetByName("atividades");
-            const abaEntregas = planilha.getSheetByName("entregas");
+          const filtroTurma = String(dadosApp.filtroTurma || "Todas").trim();
+          const filtroTipo = String(dadosApp.filtroTipo || "Todos").trim();
 
-            let pendentesMap = {};
-            if (abaEntregas) {
-              const dadosEntregas = abaEntregas.getDataRange().getValues();
-              for (let i = 1; i < dadosEntregas.length; i++) {
-                let statusEntrega = String(dadosEntregas[i][4]).trim();
-                if (statusEntrega === "Aguardando Correção") {
-                  let idAtiv = String(dadosEntregas[i][2]).trim();
-                  pendentesMap[idAtiv] = (pendentesMap[idAtiv] || 0) + 1;
-                }
+          const abaAtividades = planilha.getSheetByName("atividades");
+          const abaEntregas = planilha.getSheetByName("entregas");
+
+          // 🔥 1. LÊ A NOVA ABA DE MÓDULOS (E CRIA A LISTA)
+          const abaModulos = planilha.getSheetByName("controle_modulos");
+          let statusModulosMap = {};
+          let listaModulos = [];
+          if (abaModulos) {
+            const dadosModulos = abaModulos.getDataRange().getValues();
+            for (let i = 1; i < dadosModulos.length; i++) {
+              let nomeMod = String(dadosModulos[i][0]).trim();
+              let statusMod = String(dadosModulos[i][1]).trim();
+              let turmaMod = String(dadosModulos[i][2] || "Todas").trim();
+              if (nomeMod) {
+                statusModulosMap[nomeMod + "|" + turmaMod] = statusMod;
+                if (listaModulos.indexOf(nomeMod) === -1) listaModulos.push(nomeMod);
               }
             }
-            let atividades = [];
-            if (abaAtividades) {
-              const dadosAtiv = abaAtividades.getDataRange().getValues();
-              for (let i = 1; i < dadosAtiv.length; i++) {
-                let dataLimiteBruta = dadosAtiv[i][3];
-                let dataLimiteStr = dataLimiteBruta instanceof Date ? Utilities.formatDate(dataLimiteBruta, Session.getScriptTimeZone(), "yyyy-MM-dd") : String(dataLimiteBruta);
+          }
 
-                let turmaAlvo = String(dadosAtiv[i][5]);
-                let tipoAtiv = String(dadosAtiv[i][6] || "Projeto");
-
-                if (filtroTurma !== "Todas" && turmaAlvo !== "Todas" && turmaAlvo !== filtroTurma) continue;
-                if (filtroTipo !== "Todos" && tipoAtiv !== filtroTipo) continue;
-
-                atividades.push({
-                  id: String(dadosAtiv[i][0]),
-                  titulo: String(dadosAtiv[i][1]),
-                  descricao: String(dadosAtiv[i][2]),
-                  dataLimite: dataLimiteStr,
-                  xp: dadosAtiv[i][4],
-                  turmaAlvo: String(dadosAtiv[i][5]),
-                  tipo: String(dadosAtiv[i][6] || "Projeto"),
-                  opcaoA: String(dadosAtiv[i][7] || ""),
-                  opcaoB: String(dadosAtiv[i][8] || ""),
-                  opcaoC: String(dadosAtiv[i][9] || ""),
-                  opcaoD: String(dadosAtiv[i][10] || ""),
-                  respostaCorreta: String(dadosAtiv[i][11] || "A"),
-                  linkClassroom: String(dadosAtiv[i][12] || ""), // <-- RETORNA PRO TUTOR
-                  statusPublicacao: String(dadosAtiv[i][13] || "Publicada"), // <-- RETORNA PRO TUTOR
-                  imagemUrl: String(dadosAtiv[i][14] || ""),
-                  modulo: String(dadosAtiv[i][15] || "Geral"),
-                  gabarito: String(dadosAtiv[i][16] || ""),
-                  gabaritoLiberado: dadosAtiv[i][17] === true || String(dadosAtiv[i][17]).toLowerCase() === "true",
-                  pendentes: pendentesMap[idAtiv] || 0
-                });
+          // 🔥 2. MAPA DE PENDÊNCIAS (Para o alerta vermelho)
+          let pendentesMap = {};
+          if (abaEntregas) {
+            const dadosEntregas = abaEntregas.getDataRange().getValues();
+            for (let i = 1; i < dadosEntregas.length; i++) {
+              let statusEntrega = String(dadosEntregas[i][4]).trim();
+              if (statusEntrega === "Aguardando Correção") {
+                let idAtiv = String(dadosEntregas[i][2]).trim();
+                pendentesMap[idAtiv] = (pendentesMap[idAtiv] || 0) + 1;
               }
             }
-            return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", atividades: atividades.reverse() })).setMimeType(ContentService.MimeType.JSON);
-      }
+          }
+
+          // 🔥 3. LÊ E FILTRA AS ATIVIDADES
+          let atividades = [];
+          if (abaAtividades) {
+            const dadosAtiv = abaAtividades.getDataRange().getValues();
+            for (let i = 1; i < dadosAtiv.length; i++) {
+              let idAtiv = String(dadosAtiv[i][0]).trim();
+              if (!idAtiv || idAtiv === "ID") continue;
+
+              let turmaAtiv = String(dadosAtiv[i][5] || "Todas").trim();
+              let tipoAtiv = String(dadosAtiv[i][6] || "Projeto").trim();
+
+              // Aplica os filtros do painel do tutor
+              if (filtroTurma !== "Todas" && turmaAtiv !== "Todas" && turmaAtiv !== filtroTurma) continue;
+              if (filtroTipo !== "Todos" && tipoAtiv !== filtroTipo) continue;
+
+              let dataLimiteBruta = dadosAtiv[i][3];
+              let dataLimiteStr = dataLimiteBruta instanceof Date ? Utilities.formatDate(dataLimiteBruta, Session.getScriptTimeZone(), "yyyy-MM-dd") : String(dataLimiteBruta);
+
+              let statusPub = String(dadosAtiv[i][13] || "Publicada").trim();
+              let nomeModulo = String(dadosAtiv[i][15] || "Geral").trim();
+
+              atividades.push({
+                id: idAtiv,
+                titulo: String(dadosAtiv[i][1]),
+                descricao: String(dadosAtiv[i][2]),
+                dataLimite: dataLimiteStr,
+                xp: dadosAtiv[i][4],
+                turmaAlvo: turmaAtiv,
+                tipo: tipoAtiv,
+                opcaoA: String(dadosAtiv[i][7] || ""),
+                opcaoB: String(dadosAtiv[i][8] || ""),
+                opcaoC: String(dadosAtiv[i][9] || ""),
+                opcaoD: String(dadosAtiv[i][10] || ""),
+                respostaCorreta: String(dadosAtiv[i][11] || "A"),
+                linkClassroom: String(dadosAtiv[i][12] || ""),
+                statusPublicacao: statusPub,
+                imagemUrl: String(dadosAtiv[i][14] || ""),
+                modulo: nomeModulo,
+                gabarito: String(dadosAtiv[i][16] || ""),
+                gabaritoLiberado: dadosAtiv[i][17] === true || String(dadosAtiv[i][17]).toLowerCase() === "true",
+                pendentes: pendentesMap[idAtiv] || 0,
+                statusModulo: statusModulosMap[nomeModulo + "|" + turmaAtiv] || statusModulosMap[nomeModulo + "|Todas"] || "Aberto"
+              });
+            }
+          }
+
+          // 🔥 4. DEVOLVE A LISTA DE ATIVIDADES E OS MÓDULOS!
+          return ContentService.createTextOutput(JSON.stringify({
+            status: "sucesso",
+            atividades: atividades,
+            modulosMatriz: listaModulos
+          })).setMimeType(ContentService.MimeType.JSON);
+        }
     // ==========================================
     // ROTA 9: ENVIAR ATIVIDADE (BLINDADA ANTI-DUPLICAÇÃO E LOCK)
     // ==========================================
@@ -2401,6 +2436,22 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         const abaFrequencia = planilha.getSheetByName("frequencia");
         const abaCurtidas = planilha.getSheetByName("curtidas");
 
+        const abaModulos = planilha.getSheetByName("controle_modulos");
+          let statusModulosMap = {};
+          if (abaModulos) {
+            const dadosModulos = abaModulos.getDataRange().getValues();
+            for (let i = 1; i < dadosModulos.length; i++) {
+              let nomeMod = String(dadosModulos[i][0]).trim();
+              let statusMod = String(dadosModulos[i][1]).trim();
+              let turmaMod = String(dadosModulos[i][2] || "Todas").trim();
+
+              if (nomeMod) {
+                // Cria uma chave única: "Nome do Módulo|Turma"
+                statusModulosMap[nomeMod + "|" + turmaMod] = statusMod;
+              }
+            }
+          }
+
         let dadosRetorno = {
           status: "sucesso",
           xpTotal: 0,
@@ -2679,14 +2730,15 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                 status: entregaAluno ? entregaAluno.status : "Pendente",
                 respostaEnviada: entregaAluno ? entregaAluno.resposta : "",
                 xpGanho: entregaAluno ? entregaAluno.xpGanho : 0,
-                dataEnvio: entregaAluno ? entregaAluno.dataEnvio : 0, // 🔥 ADICIONE ESTA LINHA AQUI
+                dataEnvio: entregaAluno ? entregaAluno.dataEnvio : 0,
                 statusPrazo: statusPrazo,
                 feedback: entregaAluno ? entregaAluno.feedback : "",
                 linkClassroom: String(dadosAtiv[i][12] || ""),
                 imagemUrl: String(dadosAtiv[i][14] || ""),
                 modulo: String(dadosAtiv[i][15] || "Geral"),
                 gabarito: String(dadosAtiv[i][16] || ""),
-                gabarito: textoGabaritoSeguro
+                gabarito: textoGabaritoSeguro,
+                statusModulo: statusModulosMap[String(dadosAtiv[i][15]).trim() + "|" + turmaDoAlunoNoProjeto] || statusModulosMap[String(dadosAtiv[i][15]).trim() + "|Todas"] || "Aberto"
               });
             }
           }
@@ -3440,4 +3492,69 @@ const linha = e.range.getRow();
     }
 
 }
+}
+
+// ========================================================
+// 🤖 ROBÔ MIGRADOR DE DADOS LEGADOS (TRILHA TECH)
+// ========================================================
+function migrarAtividadesInteligente() {
+const planilha = SpreadsheetApp.getActiveSpreadsheet();
+const abaAtividades = planilha.getSheetByName("atividades");
+
+if (!abaAtividades) {
+SpreadsheetApp.getUi().alert("Aba 'atividades' não encontrada!");
+return;
+}
+
+const dados = abaAtividades.getDataRange().getValues();
+let alteradas = 0;
+
+// 🔥 MAPEAMENTO INTELIGENTE: Liga a turma antiga ao Curso Novo Oficial
+const mapeamentoModulos = {
+"Turma 1 - 1º Ano": "Módulo 1 - Lógica Matemática e Programação em Python",
+"Turma 2 - 2º Ano": "Módulo 3.1 - HTML" // As antigas da T2 eram de HTML
+};
+
+// Começa do 1 para pular o cabeçalho
+for (let i = 1; i < dados.length; i++) {
+let idAtiv = String(dados[i][0]).trim();
+if (!idAtiv || idAtiv === "ID") continue;
+
+    let tituloAtual = String(dados[i][1]).trim();   // Coluna B
+    let turmaAlvo = String(dados[i][5]).trim();     // Coluna F
+    let moduloAtual = String(dados[i][15]).trim();  // Coluna P
+
+    // 1. Procura o número da aula no módulo atual ou no título
+    let matchAula = moduloAtual.match(/Aula\s*(\d+)/i) || tituloAtual.match(/Aula\s*(\d+)/i);
+
+    if (matchAula) {
+      let numeroAula = matchAula[1].padStart(2, '0'); // Transforma "1" em "01"
+      let prefixo = "[Aula " + numeroAula + "] ";
+
+      // 2. Limpa o título atual para não ficar com "Aula 01" duplicado
+      // Isso remove coisas como "Aula 01 - ", "Aula 01- ", "Aula 01" do início
+      let tituloLimpo = tituloAtual.replace(/^(Aula\s*\d+\s*[-–]*\s*)/i, "").trim();
+
+      // Monta o título final
+      if (!tituloLimpo.startsWith("[Aula")) {
+        tituloLimpo = prefixo + tituloLimpo;
+      }
+
+      // 3. Define o módulo correto baseado na turma do aluno
+      let moduloCorreto = mapeamentoModulos[turmaAlvo] || "Módulo Geral";
+
+      // 4. Salva as alterações APENAS se algo mudou (para não pesar a planilha)
+      if (tituloAtual !== tituloLimpo || moduloAtual !== moduloCorreto) {
+        // Atualiza Título (Coluna B = 2)
+        abaAtividades.getRange(i + 1, 2).setValue(tituloLimpo);
+        // Atualiza Módulo (Coluna P = 16)
+        abaAtividades.getRange(i + 1, 16).setValue(moduloCorreto);
+        alteradas++;
+      }
+    }
+
+}
+
+// Avisa que terminou!
+SpreadsheetApp.getUi().alert("✅ Migração Concluída! Foram formatadas e migradas " + alteradas + " atividades com sucesso.");
 }

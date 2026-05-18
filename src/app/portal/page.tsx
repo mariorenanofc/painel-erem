@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import {
@@ -26,7 +27,7 @@ import PortalHeader from "@/src/components/PortalHeader";
 import PerfilModal from "@/src/components/PerfilModal";
 import NovaConquistaModal from "@/src/components/NovaConquistaModal";
 import NovidadesModal from "@/src/components/NovidadesModal";
-import ResponderMissaoModal from "@/src/components/ResponderMissaoModal"; // 🔥 NOSSO NOVO COMPONENTE
+import ResponderMissaoModal from "@/src/components/ResponderMissaoModal";
 import { apiAluno, apiGeral } from "@/src/services/api";
 
 const subscribe = (callback: () => void) => {
@@ -36,6 +37,7 @@ const subscribe = (callback: () => void) => {
   }
   return () => {};
 };
+
 const getSnapshot = () =>
   typeof window !== "undefined" ? localStorage.getItem("alunoLogado") : null;
 const getServerSnapshot = () => null;
@@ -54,6 +56,7 @@ export default function PortalDashboard() {
     return dadosSalvos ? JSON.parse(dadosSalvos) : null;
   }, [dadosSalvos]);
 
+  // ================= ESTADOS =================
   const [progressoNivel, setProgressoNivel] = useState({
     porcentagem: 0,
     faltam: 0,
@@ -63,6 +66,12 @@ export default function PortalDashboard() {
   const [nomeProjeto, setNomeProjeto] = useState("Portal Educacional");
   const [carregandoPortal, setCarregandoPortal] = useState(true);
   const [atividades, setAtividades] = useState<Atividade[]>([]);
+
+  const [cursoSelecionado, setCursoSelecionado] = useState<string | null>(null);
+  const [aulasFechadas, setAulasFechadas] = useState<Record<string, boolean>>(
+    {},
+  );
+
   const [xpTotalSistema, setXpTotalSistema] = useState(0);
   const [nivelSistema, setNivelSistema] = useState("Iniciante");
   const [avatarSistema, setAvatarSistema] = useState("avatar-padrao");
@@ -114,11 +123,10 @@ export default function PortalDashboard() {
   const [alvoPix, setAlvoPix] = useState<string | null>(null);
   const [rankingAberto, setRankingAberto] = useState(false);
 
-  // 🔥 NOVO ESTADO: Controle dos Módulos Expandidos/Recolhidos
-  const [modulosFechados, setModulosFechados] = useState<
-    Record<string, boolean>
-  >({});
+  const VERSAO_ATUALIZACAO = "1.7.0";
+  const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
+  // ================= EFEITOS =================
   useEffect(() => {
     const handleAbrirPixEvent = (e: CustomEvent) => {
       setAlvoPix(e.detail);
@@ -134,9 +142,6 @@ export default function PortalDashboard() {
         handleAbrirPixEvent as EventListener,
       );
   }, []);
-
-  const VERSAO_ATUALIZACAO = "1.7.0";
-  const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
   const carregarPortal = useCallback(async () => {
     if (!aluno) return;
@@ -258,6 +263,7 @@ export default function PortalDashboard() {
     curtidasSistema,
   ]);
 
+  // ================= FUNÇÕES DE AÇÃO =================
   const resgatarRecompensaBadge = async (badge: Badge) => {
     if (!aluno) return;
     setResgatandoBadge(true);
@@ -302,7 +308,6 @@ export default function PortalDashboard() {
     router.push("/portal/login");
   };
 
-  // 🔥 FUNÇÃO DE ENVIO AGORA RECEBE A RESPOSTA DO MODAL
   const enviarMissao = async (respostaFinal: string) => {
     if (!aluno || !missaoAberta) return;
     setEnviando(true);
@@ -386,7 +391,6 @@ export default function PortalDashboard() {
         dadosAtualizados.telefoneAluno,
         dadosAtualizados.telefoneResponsavel,
       );
-
       if (data.status === "sucesso") {
         alert("✅ Salvo!");
         setPerfilAberto(false);
@@ -433,24 +437,11 @@ export default function PortalDashboard() {
     } catch {}
   };
 
-  // Função para abrir/fechar os Módulos do Aluno
-  const toggleModulo = (nomeModulo: string) => {
-    setModulosFechados((prev) => ({
-      ...prev,
-      [nomeModulo]: !prev[nomeModulo],
-    }));
+  const toggleAula = (nomeAula: string) => {
+    setAulasFechadas((prev) => ({ ...prev, [nomeAula]: !prev[nomeAula] }));
   };
 
-  if (!montado || !aluno || carregandoPortal)
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mb-4"></div>
-        <p className="text-slate-500 font-bold animate-pulse">
-          Carregando seu progresso...
-        </p>
-      </div>
-    );
-
+  // ================= CÁLCULOS E FILTROS =================
   const missoesPendentes = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
     return st === "pendente" || st === "devolvida";
@@ -497,25 +488,98 @@ export default function PortalDashboard() {
     return true;
   });
 
-  // 🔥 AGRUPAMENTO POR MÓDULO PARA O ALUNO
-  const atividadesAgrupadas = atividadesFiltradas.reduce(
-    (grupos, ativ) => {
-      const nomeModulo =
-        ativ.modulo && ativ.modulo.trim() !== "" ? ativ.modulo : "Geral";
-      if (!grupos[nomeModulo]) grupos[nomeModulo] = [];
-      grupos[nomeModulo].push(ativ);
-      return grupos;
-    },
-    {} as Record<string, Atividade[]>,
-  );
+  // 🔥 MOTOR DE CURSOS
+  const trilhasDeEstudo = useMemo(() => {
+    const grupos: Record<
+      string,
+      {
+        status: string;
+        todasMissoes: Atividade[];
+        missoesFiltradas: Atividade[];
+        concluidas: number;
+        xpTotal: number;
+      }
+    > = {};
+
+    atividades.forEach((ativ) => {
+      const nomeMod =
+        ativ.modulo && ativ.modulo.trim() !== "" ? ativ.modulo : "Módulo Geral";
+      if (!grupos[nomeMod]) {
+        grupos[nomeMod] = {
+          status: (ativ as any).statusModulo || "Aberto",
+          todasMissoes: [],
+          missoesFiltradas: [],
+          concluidas: 0,
+          xpTotal: 0,
+        };
+      }
+
+      grupos[nomeMod].todasMissoes.push(ativ);
+      grupos[nomeMod].xpTotal += Number(ativ.xp) || 0;
+
+      const st = ativ.status?.toLowerCase();
+      if (
+        st === "avaliado" ||
+        st === "avaliada" ||
+        st === "aguardando correção"
+      ) {
+        grupos[nomeMod].concluidas++;
+      }
+    });
+
+    atividadesFiltradas.forEach((ativ) => {
+      const nomeMod =
+        ativ.modulo && ativ.modulo.trim() !== "" ? ativ.modulo : "Módulo Geral";
+      if (grupos[nomeMod]) {
+        grupos[nomeMod].missoesFiltradas.push(ativ);
+      }
+    });
+
+    return grupos;
+  }, [atividades, atividadesFiltradas]);
+
+  const abrirMissaoEspecial = (ativ: Atividade, statusCurso: string) => {
+    const missaoAjustada = { ...ativ };
+    if (statusCurso.toLowerCase() === "encerrado") {
+      missaoAjustada.dataLimite = "01/01/2000";
+    }
+    setMissaoAberta(missaoAjustada);
+  };
+
+  // 🔥 MOTOR DE TEMAS DE LINGUAGEM
+  const getTemaCurso = (nomeCurso: string) => {
+    const n = nomeCurso.toLowerCase();
+    if (n.includes("python"))
+      return { bg: "from-blue-600 to-cyan-500", icon: "🐍" };
+    if (n.includes("javascript") || n.includes("js"))
+      return { bg: "from-amber-400 to-orange-500", icon: "🟨" };
+    if (n.includes("html"))
+      return { bg: "from-orange-500 to-rose-500", icon: "🌐" };
+    if (n.includes("css"))
+      return { bg: "from-indigo-500 to-blue-500", icon: "🎨" };
+    return { bg: "from-slate-700 to-slate-800", icon: "💻" };
+  };
+
+  // ================= RENDERIZAÇÃO =================
+  if (!montado || !aluno || carregandoPortal)
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mb-4"></div>
+        <p className="text-slate-500 font-bold animate-pulse">
+          Carregando seu progresso...
+        </p>
+      </div>
+    );
 
   return (
     <main
-      className="min-h-screen bg-slate-50 font-sans pb-12 select-none"
+      className="min-h-screen relative bg-slate-50 font-sans pb-12 select-none"
       onContextMenu={(e) => e.preventDefault()}
       onCopy={(e) => e.preventDefault()}
       onCut={(e) => e.preventDefault()}
     >
+
+      {/* MODAIS GLOBAIS */}
       {modalPixAberto && (
         <PixModal
           aluno={aluno}
@@ -550,7 +614,6 @@ export default function PortalDashboard() {
         />
       )}
 
-      {/* 🔥 RENDERING DO NOVO MODAL EXTRAÍDO */}
       {missaoAberta && (
         <ResponderMissaoModal
           missaoAberta={missaoAberta}
@@ -561,18 +624,21 @@ export default function PortalDashboard() {
         />
       )}
 
-      <PortalHeader
-        matricula={aluno.matricula}
-        nomeAluno={aluno.nome}
-        turma={aluno.turma}
-        nomeProjeto={nomeProjeto}
-        notificacoes={notificacoes}
-        onAbrirRanking={() => setRankingAberto(true)}
-        onAbrirFrequencia={abrirMinhaFrequencia}
-        onAbrirPerfil={abrirPerfil}
-        onLogout={fazerLogout}
-      />
+      <div className="relative z-10">
+        <PortalHeader
+          matricula={aluno.matricula}
+          nomeAluno={aluno.nome}
+          turma={aluno.turma}
+          nomeProjeto={nomeProjeto}
+          notificacoes={notificacoes}
+          onAbrirRanking={() => setRankingAberto(true)}
+          onAbrirFrequencia={abrirMinhaFrequencia}
+          onAbrirPerfil={abrirPerfil}
+          onLogout={fazerLogout}
+        />
+      </div>
 
+      {/* AVISO DO WHATSAPP */}
       {!zapConfirmado && zapLink && (
         <div className="bg-emerald-600 text-white p-4 shadow-inner flex flex-col md:flex-row items-center justify-between gap-4 animate-in slide-in-from-top">
           <div className="flex items-center gap-3">
@@ -607,7 +673,8 @@ export default function PortalDashboard() {
         </div>
       )}
 
-      <div className="bg-white border-b border-slate-200">
+      {/* BOAS-VINDAS E STATUS DO ALUNO */}
+      <div className="bg-white/80 backdrop-blur-md border-b border-white/20">
         <div className="max-w-384 w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row justify-between items-start gap-8">
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left w-full lg:flex-1">
             <h2 className="text-2xl md:text-3xl font-black text-slate-800">
@@ -679,8 +746,6 @@ export default function PortalDashboard() {
                   </>
                 )}
               </button>
-
-              {/* 🔥 NOSSO NOVO BOTÃO DA CENTRAL DE GABARITOS AQUI 👇 */}
               <button
                 onClick={() => router.push("/portal/gabaritos")}
                 className="inline-flex items-center justify-center gap-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-indigo-300 whitespace-nowrap"
@@ -693,7 +758,7 @@ export default function PortalDashboard() {
 
           <div className="flex flex-col w-full lg:w-105 shrink-0 mt-6 lg:mt-0 gap-4">
             <div className="flex flex-row gap-3 w-full justify-center lg:justify-end">
-              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex items-center gap-3 w-1/2 shadow-sm">
+              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex items-center gap-3 w-1/2 shadow-sm hover:shadow-md transition-shadow">
                 <div className="bg-blue-100 p-2.5 rounded-full text-xl shrink-0">
                   🎓
                 </div>
@@ -706,7 +771,7 @@ export default function PortalDashboard() {
                   </p>
                 </div>
               </div>
-              <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex items-center gap-3 w-1/2 shadow-sm">
+              <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex items-center gap-3 w-1/2 shadow-sm hover:shadow-md transition-shadow">
                 <div className="bg-emerald-200/50 p-2.5 rounded-full text-xl shrink-0">
                   ⭐
                 </div>
@@ -721,7 +786,7 @@ export default function PortalDashboard() {
               </div>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm w-full">
+            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow w-full">
               <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2.5">
                 <span>Progresso</span>
                 <span className="text-blue-600">
@@ -756,138 +821,404 @@ export default function PortalDashboard() {
         </div>
       </div>
 
-      <div className="max-w-384 w-full mx-auto p-4 md:p-8 mt-4"></div>
-      <div className="max-w-5xl mx-auto p-4 md:p-8 mt-4">
+      {/* ÁREA DE CURSOS E MISSÕES */}
+      <div className="max-w-384 mx-auto p-4 md:p-8 mt-4 backdrop-blur-sm bg-white/80">
+        {/* Filtros e Busca */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
-            🎯 Suas Missões
+            🎯 Suas Missões e Cursos
           </h3>
           <div className="w-full md:w-64">
             <input
               type="text"
-              placeholder="Pesquisar missão..."
+              placeholder="Pesquisar..."
               value={buscaAtividade}
               onChange={(e) => setBuscaAtividade(e.target.value)}
               className="w-full bg-white border border-slate-200 text-slate-800 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
             />
           </div>
         </div>
+
         <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
           <button
             onClick={() => setAbaAtividade("Pendentes")}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-colors border ${abaAtividade === "Pendentes" ? "bg-amber-100 text-amber-800 border-amber-300 shadow-sm" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"}`}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${abaAtividade === "Pendentes" ? "bg-amber-100 text-amber-800 border-amber-300 shadow-sm scale-105" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"}`}
           >
             ⏳ No Prazo ({qtdPendentes})
           </button>
           <button
             onClick={() => setAbaAtividade("Atrasadas")}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-colors border ${abaAtividade === "Atrasadas" ? "bg-red-100 text-red-800 border-red-300 shadow-sm" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"}`}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${abaAtividade === "Atrasadas" ? "bg-red-100 text-red-800 border-red-300 shadow-sm scale-105" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"}`}
           >
             🚨 Atrasadas ({qtdAtrasadas})
           </button>
           <button
             onClick={() => setAbaAtividade("Concluidas")}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-colors border ${abaAtividade === "Concluidas" ? "bg-emerald-100 text-emerald-800 border-emerald-300 shadow-sm" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"}`}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${abaAtividade === "Concluidas" ? "bg-emerald-100 text-emerald-800 border-emerald-300 shadow-sm scale-105" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"}`}
           >
             ✅ Concluídas ({qtdConcluidas})
           </button>
         </div>
 
         {atividadesFiltradas.length === 0 ? (
-          <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-500 shadow-sm flex flex-col items-center">
-            <div className="text-5xl opacity-50 mb-3">📭</div>
+          <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-500 shadow-sm flex flex-col items-center animate-in fade-in">
+            <div className="text-5xl opacity-50 mb-3 animate-bounce">📭</div>
             <p className="font-bold">
               Nenhuma missão encontrada para esta categoria.
             </p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {/* 🔥 RENDERIZAÇÃO DOS MÓDULOS (ACCORDIONS NO ALUNO) */}
-            {Object.entries(atividadesAgrupadas)
-              .sort(([modA], [modB]) => {
-                if (modA === "Geral") return 1;
-                if (modB === "Geral") return -1;
-                return modA.localeCompare(modB);
-              })
-              .map(([nomeModulo, missoesDoModulo]) => {
-                const isFechado = modulosFechados[nomeModulo] || false;
+          <div className="mt-8">
+            {!cursoSelecionado ? (
+              // ================= TELA 1: GALERIA DE CURSOS =================
+              <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <h3 className="font-black text-2xl text-slate-800 mb-6 flex items-center gap-2">
+                  <span>🎓</span> Suas Trilhas de Estudo
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                  {Object.entries(trilhasDeEstudo).map(([nomeCurso, info]) => {
+                    if (info.missoesFiltradas.length === 0) return null;
 
-                return (
-                  <div key={nomeModulo} className="flex flex-col">
-                    {/* CABEÇALHO DO MÓDULO */}
-                    <div
-                      onClick={() => toggleModulo(nomeModulo)}
-                      className="bg-blue-50 border border-blue-100 hover:bg-blue-100 transition-colors p-4 rounded-xl flex justify-between items-center cursor-pointer mb-3 shadow-sm select-none"
-                    >
-                      <h3 className="font-black text-blue-900 flex items-center gap-2 text-lg">
-                        <span>📘</span> {nomeModulo}
-                      </h3>
-                      <div className="flex items-center gap-3">
-                        <span className="bg-blue-200 text-blue-800 text-xs font-bold px-2.5 py-1 rounded-full">
-                          {missoesDoModulo.length}
-                        </span>
-                        <span
-                          className={`text-blue-500 font-bold transition-transform duration-200 ${isFechado ? "rotate-180" : ""}`}
-                        >
-                          ▼
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* LISTA DE MISSÕES DO MÓDULO */}
-                    {!isFechado && (
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pl-2 md:pl-4 border-l-2 border-blue-100 mb-6 animate-in slide-in-from-top-2">
-                        {missoesDoModulo.map((ativ) => {
-                          const statusNormalizado =
-                            ativ.status?.toLowerCase().trim() || "pendente";
-
-                          return (
-                            <div
-                              key={ativ.id}
-                              onClick={() => setMissaoAberta(ativ)}
-                              className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all flex flex-col overflow-hidden cursor-pointer group"
-                            >
-                              <div
-                                className={`h-1.5 w-full ${statusNormalizado === "pendente" ? "bg-amber-400" : statusNormalizado === "devolvida" ? "bg-red-500" : statusNormalizado === "aguardando correção" ? "bg-blue-400" : "bg-emerald-500"}`}
-                              ></div>
-                              <div className="p-5 flex-1 flex flex-col">
-                                <div className="flex justify-between items-start mb-3">
-                                  <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border border-slate-200">
-                                    {ativ.tipo}
-                                  </span>
-                                  <span className="text-xs font-black flex items-center gap-1 text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full shadow-sm">
-                                    ⭐ {ativ.xp} XP
-                                  </span>
-                                </div>
-                                <h4 className="font-bold text-slate-800 text-lg mb-2 leading-tight group-hover:text-blue-600 transition-colors">
-                                  {ativ.titulo}
-                                </h4>
-                                <p className="text-slate-500 text-sm mb-4 flex-1 line-clamp-2">
-                                  {ativ.descricao}
-                                </p>
-                                <div className="mt-auto pt-4 border-t border-slate-100 flex items-center justify-between">
-                                  <div className="text-xs text-slate-500 font-bold flex items-center gap-1 bg-slate-50 px-2 py-1 rounded border border-slate-200">
-                                    📅 {ativ.dataLimite}
-                                  </div>
-                                  <span
-                                    className={`text-[10px] font-black px-2.5 py-1 rounded-full uppercase tracking-wider ${statusNormalizado === "pendente" ? "text-amber-600 bg-amber-50" : statusNormalizado === "devolvida" ? "text-red-600 bg-red-50" : statusNormalizado === "aguardando correção" ? "text-blue-600 bg-blue-50" : "text-emerald-600 bg-emerald-50"}`}
-                                  >
-                                    {ativ.status}
-                                  </span>
-                                </div>
-                              </div>
-                            </div>
+                    const statusStr = info.status.toLowerCase();
+                    const isTrancado = statusStr === "em breve";
+                    const isEncerrado = statusStr === "encerrado";
+                    const isRecuperacao =
+                      statusStr === "recuperação" ||
+                      statusStr === "recuperacao";
+                    const progressoPct =
+                      info.todasMissoes.length === 0
+                        ? 0
+                        : Math.round(
+                            (info.concluidas / info.todasMissoes.length) * 100,
                           );
-                        })}
+
+                    // 🔥 OBTÉM O TEMA VISUAL DO CURSO
+                    const tema = getTemaCurso(nomeCurso);
+
+                    let selo = (
+                      <span className="bg-white/90 text-blue-800 text-[10px] font-black px-2.5 py-1 rounded-md uppercase shadow-sm">
+                        🟢 Aberto
+                      </span>
+                    );
+                    let corFiltro = "";
+
+                    if (isTrancado) {
+                      corFiltro =
+                        "grayscale-[80%] opacity-80 cursor-not-allowed";
+                      selo = (
+                        <span className="bg-slate-800 text-white text-[10px] font-black px-2.5 py-1 rounded-md uppercase shadow-sm">
+                          🔒 Em Breve
+                        </span>
+                      );
+                    } else if (isEncerrado) {
+                      corFiltro =
+                        "grayscale-[30%] opacity-90 cursor-pointer hover:-translate-y-1 hover:shadow-lg";
+                      selo = (
+                        <span className="bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-md uppercase shadow-sm">
+                          🔴 Encerrado
+                        </span>
+                      );
+                    } else if (isRecuperacao) {
+                      corFiltro =
+                        "cursor-pointer hover:-translate-y-1 hover:shadow-lg hover:ring-2 hover:ring-amber-400 hover:ring-offset-2";
+                      selo = (
+                        <span className="bg-amber-400 text-amber-900 text-[10px] font-black px-2.5 py-1 rounded-md uppercase shadow-sm animate-pulse">
+                          🟡 Recuperação
+                        </span>
+                      );
+                    } else {
+                      // Curso Aberto Normal
+                      corFiltro =
+                        "cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:ring-2 hover:ring-blue-400 hover:ring-offset-2";
+                    }
+
+                    return (
+                      <div
+                        key={nomeCurso}
+                        onClick={() =>
+                          !isTrancado && setCursoSelecionado(nomeCurso)
+                        }
+                        className={`bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200 shadow-md flex flex-col group overflow-hidden transition-all duration-300 ${corFiltro}`}
+                      >
+                        {/* 🌟 BANNER SUPERIOR COM TEMA */}
+                        <div
+                          className={`h-36 bg-gradient-to-br ${tema.bg} relative overflow-hidden flex items-center justify-center shrink-0`}
+                        >
+                          {/* Textura de Fundo Tech */}
+                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-30 mix-blend-overlay"></div>
+
+                          <span className="text-6xl relative z-10 group-hover:scale-110 transition-transform duration-500 drop-shadow-lg">
+                            {tema.icon}
+                          </span>
+
+                          <div className="absolute top-3 right-3 z-10">
+                            {selo}
+                          </div>
+                        </div>
+
+                        {/* INFORMAÇÕES INFERIORES */}
+                        <div className="p-5 flex-1 flex flex-col">
+                          <h4
+                            className={`font-black text-lg leading-tight mb-2 ${isTrancado ? "text-slate-500" : "text-slate-800"}`}
+                          >
+                            {nomeCurso}
+                          </h4>
+
+                          <div className="mt-auto pt-4">
+                            <div className="flex justify-between text-xs font-bold text-slate-500 mb-1.5">
+                              <span>Progresso do Módulo</span>
+                              <span>{progressoPct}%</span>
+                            </div>
+                            <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden shadow-inner">
+                              <div
+                                className={`h-full rounded-full transition-all duration-1000 ${progressoPct === 100 ? "bg-emerald-500" : isTrancado ? "bg-slate-400" : "bg-blue-500"}`}
+                                style={{ width: `${progressoPct}%` }}
+                              ></div>
+                            </div>
+                            <div className="flex justify-between items-center mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                              <span>
+                                {info.concluidas} / {info.todasMissoes.length}{" "}
+                                Aulas
+                              </span>
+                              <span className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                                ⭐ {info.xpTotal} XP
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              // ================= TELA 2: LISTA DE MISSÕES DO CURSO COM SANFONA DE AULAS =================
+              <div className="animate-in slide-in-from-right-8 duration-300">
+                <button
+                  onClick={() => setCursoSelecionado(null)}
+                  className="mb-6 inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 shadow-sm hover:shadow-md hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all hover:-translate-x-1"
+                >
+                  <span>←</span> Voltar para Trilhas
+                </button>
+
+                {/* 🌟 CABEÇALHO DO CURSO COM TEMA */}
+                <div
+                  className={`rounded-3xl p-6 md:p-10 mb-8 text-white shadow-xl relative overflow-hidden bg-gradient-to-r ${getTemaCurso(cursoSelecionado).bg} animate-in zoom-in-95 duration-500 border border-white/10`}
+                >
+                  <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-20 mix-blend-overlay"></div>
+                  <div className="absolute top-0 right-0 opacity-20 text-9xl transform translate-x-4 -translate-y-4">
+                    {getTemaCurso(cursoSelecionado).icon}
+                  </div>
+
+                  <div className="relative z-10">
+                    <span className="bg-white/20 backdrop-blur-sm text-white border border-white/30 text-[10px] font-black px-3 py-1.5 rounded-lg uppercase tracking-widest mb-4 inline-block shadow-sm">
+                      Módulo Atual
+                    </span>
+                    <h2 className="text-3xl md:text-5xl font-black mb-3 drop-shadow-md">
+                      {cursoSelecionado}
+                    </h2>
+                    <p className="text-white/80 font-medium text-sm md:text-base">
+                      {trilhasDeEstudo[cursoSelecionado].concluidas} de{" "}
+                      {trilhasDeEstudo[cursoSelecionado].todasMissoes.length}{" "}
+                      missões concluídas no total.
+                    </p>
+
+                    {trilhasDeEstudo[cursoSelecionado].status.toLowerCase() ===
+                      "encerrado" && (
+                      <div className="mt-6 bg-red-900/50 backdrop-blur-md border border-red-500/50 p-4 rounded-xl flex items-start gap-3 shadow-lg">
+                        <span className="text-xl">🔴</span>
+                        <div>
+                          <h4 className="font-black text-red-100 text-sm">
+                            Este Módulo foi Encerrado!
+                          </h4>
+                          <p className="text-red-200/80 text-xs mt-1">
+                            O prazo final expirou. Você pode visualizar o
+                            conteúdo e acessar a Central de Gabaritos para
+                            revisão, mas envios de atividades estão bloqueados.
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {trilhasDeEstudo[cursoSelecionado].status
+                      .toLowerCase()
+                      .includes("recupera") && (
+                      <div className="mt-6 bg-amber-900/50 backdrop-blur-md border border-amber-500/50 p-4 rounded-xl flex items-start gap-3 shadow-lg">
+                        <span className="text-xl animate-pulse">🟡</span>
+                        <div>
+                          <h4 className="font-black text-amber-100 text-sm">
+                            Semana de Recuperação!
+                          </h4>
+                          <p className="text-amber-200/80 text-xs mt-1">
+                            O módulo já acabou, mas o professor concedeu um
+                            prazo extra. Envie suas missões pendentes o mais
+                            rápido possível!
+                          </p>
+                        </div>
                       </div>
                     )}
                   </div>
-                );
-              })}
+                </div>
+
+                {trilhasDeEstudo[cursoSelecionado].missoesFiltradas.length ===
+                0 ? (
+                  <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 shadow-sm flex flex-col items-center">
+                    <div className="text-4xl opacity-50 mb-3">📭</div>
+                    <p className="font-bold">
+                      Nenhuma missão nesta aba (Pendentes/Concluídas).
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {/* 🔥 AGRUPAMENTO POR AULA */}
+                    {Object.entries(
+                      trilhasDeEstudo[cursoSelecionado].missoesFiltradas.reduce(
+                        (acc, ativ) => {
+                          const match = ativ.titulo.match(/^\[(Aula\s*\d+)\]/i);
+                          const aula = match ? match[1] : "Outras Atividades";
+                          if (!acc[aula]) acc[aula] = [];
+                          acc[aula].push(ativ);
+                          return acc;
+                        },
+                        {} as Record<string, Atividade[]>,
+                      ),
+                    )
+                      .sort(([aulaA], [aulaB]) => {
+                        if (aulaA === "Outras Atividades") return 1;
+                        if (aulaB === "Outras Atividades") return -1;
+                        return aulaA.localeCompare(aulaB);
+                      })
+                      .map(([nomeAula, missoesDaAula]) => {
+                        const isAulaFechada = aulasFechadas[nomeAula] || false;
+
+                        return (
+                          <div
+                            key={nomeAula}
+                            className="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                          >
+                            <div
+                              onClick={() => toggleAula(nomeAula)}
+                              className="bg-white hover:bg-slate-50 border-b border-slate-200 p-5 flex justify-between items-center cursor-pointer transition-colors"
+                            >
+                              <h3 className="font-black text-slate-800 flex items-center gap-3 text-lg">
+                                <span className="text-2xl">
+                                  {getTemaCurso(cursoSelecionado).icon}
+                                </span>{" "}
+                                {nomeAula}
+                              </h3>
+                              <div className="flex items-center gap-3">
+                                <span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm border border-slate-200">
+                                  {missoesDaAula.length}{" "}
+                                  {missoesDaAula.length === 1
+                                    ? "item"
+                                    : "itens"}
+                                </span>
+                                <span
+                                  className={`text-slate-400 font-bold transition-transform duration-300 ${isAulaFechada ? "" : "rotate-180"}`}
+                                >
+                                  ▼
+                                </span>
+                              </div>
+                            </div>
+
+                            {!isAulaFechada && (
+                              <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in slide-in-from-top-2 duration-300">
+                                {missoesDaAula.map((ativ) => {
+                                  const st = ativ.status?.toLowerCase().trim();
+                                  const isConcluida =
+                                    st === "avaliado" ||
+                                    st === "avaliada" ||
+                                    st === "aguardando correção";
+                                  const isDevolvida = st === "devolvida";
+
+                                  return (
+                                    <div
+                                      key={ativ.id}
+                                      className={`bg-white rounded-2xl border-2 shadow-sm flex flex-col overflow-hidden relative transition-all hover:shadow-xl hover:-translate-y-1 ${isConcluida ? "border-emerald-200" : isDevolvida ? "border-red-300" : "border-slate-200"}`}
+                                    >
+                                      <div
+                                        className={`h-2 w-full ${isConcluida ? "bg-emerald-500" : isDevolvida ? "bg-red-500" : ativ.tipo === "Quiz" ? "bg-amber-400" : ativ.tipo === "Material" ? "bg-emerald-400" : "bg-blue-500"}`}
+                                      ></div>
+                                      <div className="p-5 flex-1 flex flex-col">
+                                        <div className="flex justify-between items-start mb-4">
+                                          <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border border-slate-200 shadow-sm">
+                                            {ativ.tipo}
+                                          </span>
+                                          <span className="text-[10px] bg-slate-50 text-slate-400 font-bold px-2 py-1 rounded border border-slate-100">
+                                            ID: {ativ.id.replace("ATIV-", "")}
+                                          </span>
+                                        </div>
+                                        <h4 className="font-bold text-slate-800 text-lg mb-3 leading-tight line-clamp-2">
+                                          {ativ.titulo}
+                                        </h4>
+                                        <div className="mt-auto pt-4 space-y-3">
+                                          {isConcluida ? (
+                                            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex justify-between items-center shadow-inner">
+                                              <span className="text-emerald-700 font-bold text-xs flex items-center gap-1.5">
+                                                <span className="text-base">
+                                                  ✅
+                                                </span>{" "}
+                                                Concluída
+                                              </span>
+                                              <span className="bg-emerald-200 text-emerald-800 text-[10px] font-black px-2 py-1 rounded uppercase shadow-sm">
+                                                ⭐ {ativ.xpGanho || ativ.xp} XP
+                                              </span>
+                                            </div>
+                                          ) : isDevolvida ? (
+                                            <div className="bg-red-50 border border-red-200 rounded-xl p-3 shadow-inner">
+                                              <span className="text-red-700 font-bold text-xs flex items-center gap-1.5">
+                                                <span className="text-base">
+                                                  ⚠️
+                                                </span>{" "}
+                                                Devolvida - Refazer!
+                                              </span>
+                                            </div>
+                                          ) : (
+                                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center shadow-inner">
+                                              <span className="text-slate-500 font-bold text-xs flex items-center gap-1.5">
+                                                <span className="text-base">
+                                                  ⏳
+                                                </span>{" "}
+                                                Pendente
+                                              </span>
+                                              <span className="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1 rounded uppercase shadow-sm">
+                                                ⭐ {ativ.xp} XP
+                                              </span>
+                                            </div>
+                                          )}
+                                          <button
+                                            onClick={() =>
+                                              abrirMissaoEspecial(
+                                                ativ,
+                                                trilhasDeEstudo[
+                                                  cursoSelecionado
+                                                ].status,
+                                              )
+                                            }
+                                            className={`w-full text-white text-sm font-black py-3.5 rounded-xl transition-all active:scale-95 shadow-md ${isConcluida ? "bg-slate-800 hover:bg-slate-900" : isDevolvida ? "bg-red-500 hover:bg-red-600" : "bg-blue-600 hover:bg-blue-700"}`}
+                                          >
+                                            {isConcluida
+                                              ? "Ver Detalhes"
+                                              : "Abrir Atividade"}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
       </div>
 
+      {/* OUTROS MODAIS DA PÁGINA */}
       {perfilAberto && (
         <PerfilModal
           dadosPerfil={dadosPerfil}

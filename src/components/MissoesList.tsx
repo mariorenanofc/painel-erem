@@ -16,12 +16,9 @@ export default function MissoesList({
   const [filtroTipo, setFiltroTipo] = useState("Todos");
   const [filtroPrazo, setFiltroPrazo] = useState("Todas");
   const [filtroStatusPub, setFiltroStatusPub] = useState("Todos");
-  
-  // 🔥 NOVO ESTADO: O Radar de Pendências!
   const [filtroPendentes, setFiltroPendentes] = useState(false);
 
   const [missaoPreview, setMissaoPreview] = useState<Atividade | null>(null);
-
   const [modulosFechados, setModulosFechados] = useState<
     Record<string, boolean>
   >({});
@@ -33,18 +30,15 @@ export default function MissoesList({
       hoje.getMonth(),
       hoje.getDate(),
     ).getTime();
-
     const diaDaSemana = hoje.getDay();
     const diasAteDomingo = diaDaSemana === 0 ? 0 : 7 - diaDaSemana;
     const fimDaSemana = new Date(hojeTime);
     fimDaSemana.setDate(fimDaSemana.getDate() + diasAteDomingo);
     const fimDaSemanaTime = fimDaSemana.getTime();
-
     const mesAtual = hoje.getMonth();
     const anoAtual = hoje.getFullYear();
 
     return atividades.filter((ativ) => {
-      // 🔥 FILTRO DE PENDÊNCIAS AQUI
       // Usamos 'any' para evitar erro caso não tenha atualizado o arquivo de Tipos ainda
       const pendentesCount = (ativ as any).pendentes || 0;
       if (filtroPendentes && pendentesCount === 0) return false;
@@ -99,7 +93,7 @@ export default function MissoesList({
     filtroTipo,
     filtroPrazo,
     filtroStatusPub,
-    filtroPendentes, // 🔥 Adicionado nas dependências
+    filtroPendentes,
   ]);
 
   const atividadesAgrupadas = useMemo(() => {
@@ -108,9 +102,7 @@ export default function MissoesList({
     atividadesFiltradas.forEach((ativ) => {
       const nomeModulo =
         ativ.modulo && ativ.modulo.trim() !== "" ? ativ.modulo : "Geral";
-      if (!grupos[nomeModulo]) {
-        grupos[nomeModulo] = [];
-      }
+      if (!grupos[nomeModulo]) grupos[nomeModulo] = [];
       grupos[nomeModulo].push(ativ);
     });
 
@@ -131,20 +123,21 @@ export default function MissoesList({
           <div className="flex-1 min-w-[200px]">
             <input
               type="text"
-              placeholder="Buscar por título..."
+              placeholder="Buscar por título ou aula (ex: Aula 01)..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               className="w-full border text-slate-800 border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
             />
           </div>
 
-          {/* 🔥 BOTÃO DO RADAR DE PENDÊNCIAS */}
           <div className="w-full sm:w-auto shrink-0">
             <button
               onClick={() => setFiltroPendentes(!filtroPendentes)}
               className={`w-full sm:w-auto px-4 py-2.5 rounded-lg text-sm font-bold border transition-all shadow-sm flex items-center justify-center gap-2 ${filtroPendentes ? "bg-red-100 border-red-300 text-red-800" : "bg-white border-slate-300 text-slate-600 hover:bg-slate-50"}`}
             >
-              {filtroPendentes ? "🚨 Mostrando Pendentes" : "⏳ Filtrar Pendentes"}
+              {filtroPendentes
+                ? "🚨 Mostrando Pendentes"
+                : "⏳ Filtrar Pendentes"}
             </button>
           </div>
 
@@ -204,7 +197,7 @@ export default function MissoesList({
         </div>
       </div>
 
-      <div className="h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+      <div className="h-150 overflow-y-auto pr-2 custom-scrollbar">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-40 gap-3">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -219,7 +212,9 @@ export default function MissoesList({
               Nenhuma missão encontrada.
             </p>
             <p className="text-slate-400 text-sm mt-1">
-              {filtroPendentes ? "Você não tem nenhuma missão pendente para corrigir! 🎉" : "Tente ajustar os filtros acima."}
+              {filtroPendentes
+                ? "Você não tem nenhuma missão pendente para corrigir! 🎉"
+                : "Tente ajustar os filtros acima."}
             </p>
           </div>
         ) : (
@@ -232,9 +227,10 @@ export default function MissoesList({
               })
               .map(([nomeModulo, missoesDoModulo]) => {
                 const isFechado = modulosFechados[nomeModulo] || false;
-
-                // Conta o total de pendentes no módulo inteiro para avisar o Tutor
-                const pendentesNoModulo = missoesDoModulo.reduce((acc, ativ) => acc + ((ativ as any).pendentes || 0), 0);
+                const pendentesNoModulo = missoesDoModulo.reduce(
+                  (acc, ativ) => acc + ((ativ as any).pendentes || 0),
+                  0,
+                );
 
                 return (
                   <div key={nomeModulo} className="flex flex-col">
@@ -266,111 +262,153 @@ export default function MissoesList({
                     </div>
 
                     {!isFechado && (
-                      <div className="grid grid-cols-1 xl:grid-cols-2 gap-5 pl-2 md:pl-6 border-l-2 border-indigo-100 ml-2 md:ml-4 mt-2 mb-6 animate-in slide-in-from-top-2 duration-300">
-                        {missoesDoModulo.map((ativ, index) => {
-                          const isRascunho = ativ.statusPublicacao === "Rascunho";
-                          
-                          // 🔥 VARIÁVEL MAGICA DOS PENDENTES
-                          const pendentesCount = (ativ as any).pendentes || 0;
+                      <div className="p-4 md:p-6 bg-white/50 border-l-2 border-indigo-100 ml-2 md:ml-4 mb-6 rounded-br-2xl animate-in slide-in-from-top-2 duration-300">
+                        {/* 🔥 MAGIA DO AGRUPAMENTO POR AULA (Sub-Módulos) */}
+                        {Object.entries(
+                          missoesDoModulo.reduce(
+                            (acc, ativ) => {
+                              const match =
+                                ativ.titulo.match(/^\[(Aula\s*\d+)\]/i);
+                              const aula = match
+                                ? match[1]
+                                : "Outras Atividades";
+                              if (!acc[aula]) acc[aula] = [];
+                              acc[aula].push(ativ);
+                              return acc;
+                            },
+                            {} as Record<string, Atividade[]>,
+                          ),
+                        )
+                          .sort(([aulaA], [aulaB]) => {
+                            if (aulaA === "Outras Atividades") return 1;
+                            if (aulaB === "Outras Atividades") return -1;
+                            return aulaA.localeCompare(aulaB);
+                          })
+                          .map(([nomeAula, missoesDaAula]) => (
+                            <div key={nomeAula} className="mb-8 last:mb-0">
+                              <h4 className="text-sm font-black text-indigo-800 uppercase tracking-widest mb-4 flex items-center gap-2 border-b-2 border-indigo-100 pb-2">
+                                <span>📖</span> {nomeAula}
+                                <span className="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded text-[10px] ml-2">
+                                  {missoesDaAula.length}{" "}
+                                  {missoesDaAula.length === 1
+                                    ? "item"
+                                    : "itens"}
+                                </span>
+                              </h4>
 
-                          return (
-                            <div
-                              key={`${ativ.id}-${index}`}
-                              className={`bg-white border ${isRascunho ? "border-yellow-200" : pendentesCount > 0 ? "border-red-300 shadow-red-100" : "border-slate-200"} rounded-2xl p-5 hover:shadow-md transition-all flex flex-col lg:flex-row justify-between gap-6 group relative h-full`}
-                            >
-                              <div
-                                className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-md ${ativ.tipo === "Quiz" ? "bg-amber-400" : ativ.tipo === "Material" ? "bg-emerald-400" : "bg-blue-400"}`}
-                              ></div>
+                              <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
+                                {missoesDaAula.map((ativ, index) => {
+                                  const isRascunho =
+                                    ativ.statusPublicacao === "Rascunho";
+                                  const pendentesCount =
+                                    (ativ as any).pendentes || 0;
 
-                              <div className="flex-1 pl-2 min-w-0">
-                                <div className="flex items-center flex-wrap gap-2 mb-3">
-                                  <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
-                                    {ativ.id}
-                                  </span>
+                                  return (
+                                    <div
+                                      key={`${ativ.id}-${index}`}
+                                      className={`bg-white border ${isRascunho ? "border-yellow-200" : pendentesCount > 0 ? "border-red-300 shadow-red-100" : "border-slate-200"} rounded-2xl p-5 hover:shadow-md transition-all flex flex-col lg:flex-row justify-between gap-6 group relative h-full`}
+                                    >
+                                      <div
+                                        className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-md ${ativ.tipo === "Quiz" ? "bg-amber-400" : ativ.tipo === "Material" ? "bg-emerald-400" : "bg-blue-400"}`}
+                                      ></div>
 
-                                  {isRascunho ? (
-                                    <span className="bg-yellow-100 text-yellow-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-yellow-300 shadow-sm animate-pulse">
-                                      📝 Rascunho
-                                    </span>
-                                  ) : (
-                                    <span className="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-blue-300 shadow-sm">
-                                      🚀 Publicada
-                                    </span>
-                                  )}
+                                      <div className="flex-1 pl-2 min-w-0">
+                                        <div className="flex items-center flex-wrap gap-2 mb-3">
+                                          <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
+                                            {ativ.id}
+                                          </span>
 
-                                  <span
-                                    className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border ${ativ.tipo === "Quiz" ? "bg-amber-50 text-amber-700 border-amber-200" : ativ.tipo === "Material" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-indigo-50 text-indigo-700 border-indigo-200"}`}
-                                  >
-                                    {ativ.tipo}
-                                  </span>
-                                  
-                                  {/* 🔥 SELO DE ALERTA SE HOUVER ENTREGAS! */}
-                                  {pendentesCount > 0 && (
-                                    <span className="bg-red-100 text-red-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-red-300 shadow-sm animate-pulse flex items-center gap-1">
-                                      <span>🚨</span> {pendentesCount} {pendentesCount === 1 ? 'Pendente' : 'Pendentes'}
-                                    </span>
-                                  )}
+                                          {isRascunho ? (
+                                            <span className="bg-yellow-100 text-yellow-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-yellow-300 shadow-sm animate-pulse">
+                                              📝 Rascunho
+                                            </span>
+                                          ) : (
+                                            <span className="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-blue-300 shadow-sm">
+                                              🚀 Publicada
+                                            </span>
+                                          )}
 
-                                  <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider text-slate-500 bg-slate-50 border border-slate-200">
-                                    📅 Prazo:{" "}
-                                    {ativ.dataLimite
-                                      ? ativ.dataLimite
-                                          .split("-")
-                                          .reverse()
-                                          .join("/")
-                                      : "Sem prazo"}
-                                  </span>
-                                </div>
+                                          <span
+                                            className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border ${ativ.tipo === "Quiz" ? "bg-amber-50 text-amber-700 border-amber-200" : ativ.tipo === "Material" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-indigo-50 text-indigo-700 border-indigo-200"}`}
+                                          >
+                                            {ativ.tipo}
+                                          </span>
 
-                                <h4
-                                  className={`font-bold text-lg leading-tight line-clamp-2 break-words ${isRascunho ? "text-slate-400" : "text-slate-800"}`}
-                                >
-                                  {ativ.titulo}
-                                </h4>
+                                          {pendentesCount > 0 && (
+                                            <span className="bg-red-100 text-red-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-red-300 shadow-sm animate-pulse flex items-center gap-1">
+                                              <span>🚨</span> {pendentesCount}{" "}
+                                              {pendentesCount === 1
+                                                ? "Pendente"
+                                                : "Pendentes"}
+                                            </span>
+                                          )}
 
-                                <p className="text-sm text-slate-500 line-clamp-2 md:line-clamp-3 mt-2 leading-relaxed break-words">
-                                  {ativ.descricao}
-                                </p>
-                              </div>
+                                          <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider text-slate-500 bg-slate-50 border border-slate-200">
+                                            📅 Prazo:{" "}
+                                            {ativ.dataLimite
+                                              ? ativ.dataLimite
+                                                  .split("-")
+                                                  .reverse()
+                                                  .join("/")
+                                              : "Sem prazo"}
+                                          </span>
+                                        </div>
 
-                              <div className="flex flex-col items-end justify-between min-w-[160px] shrink-0 gap-4 border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6">
-                                <div className="flex gap-2 w-full justify-end opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                                  <button
-                                    onClick={() => onEdit(ativ)}
-                                    className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
-                                    title="Editar Missão"
-                                  >
-                                    ✏️
-                                  </button>
-                                  <button
-                                    onClick={() => onDelete(ativ.id)}
-                                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                    title="Excluir Missão"
-                                  >
-                                    🗑️
-                                  </button>
-                                </div>
+                                        <h4
+                                          className={`font-bold text-lg leading-tight line-clamp-2 break-words ${isRascunho ? "text-slate-400" : "text-slate-800"}`}
+                                        >
+                                          {ativ.titulo}
+                                        </h4>
 
-                                <div className="flex flex-col gap-2 w-full mt-auto">
-                                  <button
-                                    onClick={() => setMissaoPreview(ativ)}
-                                    className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold py-2 px-3 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2"
-                                  >
-                                    👀 Ver Aluno
-                                  </button>
-                                  
-                                  {/* 🔥 BOTÃO INTELIGENTE QUE FICA VERMELHO SE HOUVER PENDÊNCIAS */}
-                                  <button
-                                    onClick={() => onViewEntregas(ativ)}
-                                    className={`cursor-pointer w-full text-xs font-bold py-2.5 px-3 rounded-lg shadow-md transition-all active:scale-95 flex justify-center items-center gap-2 ${pendentesCount > 0 ? "bg-red-600 hover:bg-red-700 text-white shadow-red-500/30" : "bg-slate-800 hover:bg-slate-900 text-white"}`}
-                                  >
-                                    {pendentesCount > 0 ? `🚨 Corrigir ${pendentesCount}` : "Ver Entregas"}
-                                  </button>
-                                </div>
+                                        <p className="text-sm text-slate-500 line-clamp-2 md:line-clamp-3 mt-2 leading-relaxed break-words">
+                                          {ativ.descricao}
+                                        </p>
+                                      </div>
+
+                                      <div className="flex flex-col items-end justify-between min-w-40 shrink-0 gap-4 border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6">
+                                        <div className="flex gap-2 w-full justify-end opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
+                                          <button
+                                            onClick={() => onEdit(ativ)}
+                                            className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
+                                            title="Editar Missão"
+                                          >
+                                            ✏️
+                                          </button>
+                                          <button
+                                            onClick={() => onDelete(ativ.id)}
+                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            title="Excluir Missão"
+                                          >
+                                            🗑️
+                                          </button>
+                                        </div>
+
+                                        <div className="flex flex-col gap-2 w-full mt-auto">
+                                          <button
+                                            onClick={() =>
+                                              setMissaoPreview(ativ)
+                                            }
+                                            className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold py-2 px-3 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2"
+                                          >
+                                            👀 Ver Aluno
+                                          </button>
+
+                                          <button
+                                            onClick={() => onViewEntregas(ativ)}
+                                            className={`cursor-pointer w-full text-xs font-bold py-2.5 px-3 rounded-lg shadow-md transition-all active:scale-95 flex justify-center items-center gap-2 ${pendentesCount > 0 ? "bg-red-600 hover:bg-red-700 text-white shadow-red-500/30" : "bg-slate-800 hover:bg-slate-900 text-white"}`}
+                                          >
+                                            {pendentesCount > 0
+                                              ? `🚨 Corrigir ${pendentesCount}`
+                                              : "Ver Entregas"}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
-                          );
-                        })}
+                          ))}
                       </div>
                     )}
                   </div>
@@ -380,9 +418,9 @@ export default function MissoesList({
         )}
       </div>
 
-      {/* MODAL DE PREVIEW */}
+      {/* MODAL DE PREVIEW DA MISSÃO (Continua igual...) */}
       {missaoPreview && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-60 flex items-center justify-center p-4 animate-in fade-in duration-200">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
             <div className="bg-amber-400 text-amber-900 text-[10px] font-black uppercase tracking-widest text-center py-1">
               Modo de Visualização do Aluno

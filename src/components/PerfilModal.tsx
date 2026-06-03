@@ -180,7 +180,7 @@ export default function PerfilModal({
                         type="text"
                         value={dadosPerfil.email}
                         disabled
-                        className="w-full bg-slate-100 border border-slate-200 text-slate-500 rounded-lg p-2.5 text-sm cursor-not-allowed font-mono"
+                        className="w-full bg-slate-100 border border-slate-200 text-slate-500 rounded-lg p-2.5 text-sm cursor-e-resize font-mono"
                       />
                     </div>
                     <div>

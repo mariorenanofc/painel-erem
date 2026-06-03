@@ -39,7 +39,7 @@ export default function ResponderMissaoModal({
     window.open(link, "_blank");
     setClassroomAberto(true);
     if (!checkboxHonestidade && timerClassroom === 0) {
-      setTimerClassroom(20);
+      setTimerClassroom(10);
     }
   };
 
@@ -120,7 +120,10 @@ export default function ResponderMissaoModal({
     : "";
 
   return (
-    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
+    <div className="fixed inset-0 bg-slate-900/70 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200 select-none"
+      onContextMenu={(e) => e.preventDefault()}
+      onCopy={(e) => e.preventDefault()}
+      onCut={(e) => e.preventDefault()}>
       <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
         <div
           className={`p-4 border-b flex justify-between items-center text-white ${missaoAberta.tipo === "Quiz" ? "bg-amber-600" : missaoAberta.tipo === "Material" ? "bg-emerald-600" : "bg-blue-600"}`}

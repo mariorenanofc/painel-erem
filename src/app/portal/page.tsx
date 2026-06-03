@@ -441,24 +441,30 @@ export default function PortalDashboard() {
     setAulasFechadas((prev) => ({ ...prev, [nomeAula]: !prev[nomeAula] }));
   };
 
-  // ================= CÁLCULOS E FILTROS =================
+// ================= CÁLCULOS E FILTROS =================
   const missoesPendentes = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
+    // 🔥 IGNORA SE O MÓDULO ESTIVER ENCERRADO OU FECHADO
+    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
+    if (stMod === "encerrado" || stMod === "em breve") return false;
+    
     return st === "pendente" || st === "devolvida";
   }).length;
 
   const qtdPendentes = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
-    return (
-      (st === "pendente" || st === "devolvida") && a.statusPrazo !== "Atrasada"
-    );
+    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
+    if (stMod === "encerrado" || stMod === "em breve") return false;
+    
+    return (st === "pendente" || st === "devolvida") && a.statusPrazo !== "Atrasada";
   }).length;
 
   const qtdAtrasadas = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
-    return (
-      (st === "pendente" || st === "devolvida") && a.statusPrazo === "Atrasada"
-    );
+    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
+    if (stMod === "encerrado" || stMod === "em breve") return false;
+    
+    return (st === "pendente" || st === "devolvida") && a.statusPrazo === "Atrasada";
   }).length;
 
   const qtdConcluidas = atividades.filter((a) => {
@@ -467,24 +473,21 @@ export default function PortalDashboard() {
   }).length;
 
   const atividadesFiltradas = atividades.filter((a) => {
-    const matchBusca = a.titulo
-      .toLowerCase()
-      .includes(buscaAtividade.toLowerCase());
+    const matchBusca = a.titulo.toLowerCase().includes(buscaAtividade.toLowerCase());
     if (!matchBusca) return false;
 
     const st = a.status?.toLowerCase().trim() || "pendente";
-    if (abaAtividade === "Pendentes")
-      return (
-        (st === "pendente" || st === "devolvida") &&
-        a.statusPrazo !== "Atrasada"
-      );
-    if (abaAtividade === "Atrasadas")
-      return (
-        (st === "pendente" || st === "devolvida") &&
-        a.statusPrazo === "Atrasada"
-      );
-    if (abaAtividade === "Concluidas")
-      return st !== "pendente" && st !== "devolvida";
+    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
+
+    if (abaAtividade === "Pendentes") {
+      if (stMod === "encerrado" || stMod === "em breve") return false;
+      return (st === "pendente" || st === "devolvida") && a.statusPrazo !== "Atrasada";
+    }
+    if (abaAtividade === "Atrasadas") {
+      if (stMod === "encerrado" || stMod === "em breve") return false;
+      return (st === "pendente" || st === "devolvida") && a.statusPrazo === "Atrasada";
+    }
+    if (abaAtividade === "Concluidas") return st !== "pendente" && st !== "devolvida";
     return true;
   });
 
@@ -573,10 +576,7 @@ export default function PortalDashboard() {
 
   return (
     <main
-      className="min-h-screen relative bg-slate-50 font-sans pb-12 select-none"
-      onContextMenu={(e) => e.preventDefault()}
-      onCopy={(e) => e.preventDefault()}
-      onCut={(e) => e.preventDefault()}
+      className="min-h-screen relative bg-slate-50 font-sans pb-12"
     >
 
       {/* MODAIS GLOBAIS */}

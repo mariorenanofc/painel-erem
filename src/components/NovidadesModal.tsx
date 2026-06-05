@@ -23,7 +23,7 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
   }, []);
 
   return (
-    <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-[100] p-4 transition-colors duration-300">
+    <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-100 p-4 transition-colors duration-300">
       <div
         className={`bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col border-4 border-emerald-400 dark:border-emerald-600 transition-all duration-500 transform ${animando ? "scale-100 opacity-100" : "scale-95 opacity-0"}`}
       >

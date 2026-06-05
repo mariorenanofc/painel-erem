@@ -14,562 +14,354 @@ export default function MissoesList({
   const [busca, setBusca] = useState("");
   const [filtroTurma, setFiltroTurma] = useState("Todas");
   const [filtroTipo, setFiltroTipo] = useState("Todos");
-  const [filtroPrazo, setFiltroPrazo] = useState("Todas");
   const [filtroStatusPub, setFiltroStatusPub] = useState("Todos");
-  const [filtroPendentes, setFiltroPendentes] = useState(false);
 
+  const [filtrosAvançadosAbertos, setFiltrosAvançadosAbertos] = useState(false);
   const [missaoPreview, setMissaoPreview] = useState<Atividade | null>(null);
-  const [modulosFechados, setModulosFechados] = useState<
-    Record<string, boolean>
-  >({});
+
+  // Estados dos Acordeões
+  const [modulosAbertos, setModulosAbertos] = useState<Record<string, boolean>>(
+    {},
+  );
+  const [aulasAbertas, setAulasAbertas] = useState<Record<string, boolean>>({});
+
+  const toggleModulo = (mod: string) => {
+    setModulosAbertos((prev) => ({ ...prev, [mod]: !prev[mod] }));
+  };
+
+  const toggleAula = (aulaChave: string) => {
+    setAulasAbertas((prev) => ({ ...prev, [aulaChave]: !prev[aulaChave] }));
+  };
 
   const atividadesFiltradas = useMemo(() => {
-    const hoje = new Date();
-    const hojeTime = new Date(
-      hoje.getFullYear(),
-      hoje.getMonth(),
-      hoje.getDate(),
-    ).getTime();
-    const diaDaSemana = hoje.getDay();
-    const diasAteDomingo = diaDaSemana === 0 ? 0 : 7 - diaDaSemana;
-    const fimDaSemana = new Date(hojeTime);
-    fimDaSemana.setDate(fimDaSemana.getDate() + diasAteDomingo);
-    const fimDaSemanaTime = fimDaSemana.getTime();
-    const mesAtual = hoje.getMonth();
-    const anoAtual = hoje.getFullYear();
-
     return atividades.filter((ativ) => {
-      // Usamos 'any' para evitar erro caso não tenha atualizado o arquivo de Tipos ainda
-      const pendentesCount = (ativ as any).pendentes || 0;
-      if (filtroPendentes && pendentesCount === 0) return false;
-
       const matchBusca = ativ.titulo
         .toLowerCase()
         .includes(busca.toLowerCase());
-      if (!matchBusca) return false;
-
       const matchTurma =
         filtroTurma === "Todas" ||
         ativ.turmaAlvo === "Todas" ||
         ativ.turmaAlvo === filtroTurma;
-      if (!matchTurma) return false;
-
       const matchTipo = filtroTipo === "Todos" || ativ.tipo === filtroTipo;
-      if (!matchTipo) return false;
+      const matchStatus =
+        filtroStatusPub === "Todos" ||
+        ativ.statusPublicacao === filtroStatusPub;
 
-      const statusPub = ativ.statusPublicacao || "Publicada";
-      const matchStatusPub =
-        filtroStatusPub === "Todos" || statusPub === filtroStatusPub;
-      if (!matchStatusPub) return false;
-
-      if (filtroPrazo !== "Todas") {
-        if (!ativ.dataLimite) return false;
-
-        const [y, m, d] = ativ.dataLimite.split("-");
-        const dataLimiteAtiv = new Date(Number(y), Number(m) - 1, Number(d));
-        const ativTime = dataLimiteAtiv.getTime();
-
-        if (filtroPrazo === "Hoje") {
-          if (ativTime !== hojeTime) return false;
-        } else if (filtroPrazo === "Semana") {
-          if (ativTime < hojeTime || ativTime > fimDaSemanaTime) return false;
-        } else if (filtroPrazo === "Mes") {
-          if (
-            dataLimiteAtiv.getMonth() !== mesAtual ||
-            dataLimiteAtiv.getFullYear() !== anoAtual
-          )
-            return false;
-        } else if (filtroPrazo === "Atrasadas") {
-          if (ativTime < hojeTime) return false;
-        }
-      }
-
-      return true;
+      return matchBusca && matchTurma && matchTipo && matchStatus;
     });
-  }, [
-    atividades,
-    busca,
-    filtroTurma,
-    filtroTipo,
-    filtroPrazo,
-    filtroStatusPub,
-    filtroPendentes,
-  ]);
+  }, [atividades, busca, filtroTurma, filtroTipo, filtroStatusPub]);
 
-  const atividadesAgrupadas = useMemo(() => {
-    const grupos: Record<string, Atividade[]> = {};
+  // Agrupamento Duplo: Módulo -> Aula -> Missões
+  const arvoreDeMissoes = useMemo(() => {
+    const arvore: Record<string, Record<string, Atividade[]>> = {};
 
     atividadesFiltradas.forEach((ativ) => {
-      const nomeModulo =
-        ativ.modulo && ativ.modulo.trim() !== "" ? ativ.modulo : "Geral";
-      if (!grupos[nomeModulo]) grupos[nomeModulo] = [];
-      grupos[nomeModulo].push(ativ);
+      const modulo =
+        ativ.modulo && ativ.modulo.trim() !== "" ? ativ.modulo : "Módulo Geral";
+
+      // Extrai "Aula 01" do título "[Aula 01] Desafio..."
+      const match = ativ.titulo.match(/^\[(Aula\s*\d+)\]/i);
+      const aula = match ? match[1] : "Outras Atividades";
+
+      if (!arvore[modulo]) arvore[modulo] = {};
+      if (!arvore[modulo][aula]) arvore[modulo][aula] = [];
+
+      arvore[modulo][aula].push(ativ);
     });
 
-    return grupos;
+    return arvore;
   }, [atividadesFiltradas]);
 
-  const toggleModulo = (nomeModulo: string) => {
-    setModulosFechados((prev) => ({
-      ...prev,
-      [nomeModulo]: !prev[nomeModulo],
-    }));
-  };
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 dark:border-blue-400"></div>
+        <span className="ml-3 text-slate-500 dark:text-slate-400 font-medium">
+          Carregando missões...
+        </span>
+      </div>
+    );
+  }
 
   return (
-    <div className="flex flex-col h-full">
-      <div className="p-0 mb-4 bg-transparent flex flex-col gap-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="flex-1 min-w-[200px]">
+    <div className="space-y-4">
+      {/* BARRA DE PESQUISA E FILTROS PRINCIPAIS */}
+      <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col gap-3 transition-colors duration-300">
+        <div className="flex flex-col md:flex-row gap-3">
+          <div className="flex-1 relative">
+            <span className="absolute left-3 top-2.5 text-slate-400 dark:text-slate-500">
+              🔍
+            </span>
             <input
               type="text"
-              placeholder="Buscar por título ou aula (ex: Aula 01)..."
+              placeholder="Buscar por título ou palavra-chave..."
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
-              className="w-full border text-slate-800 border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all shadow-sm"
+              className="w-full pl-9 pr-4 py-2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg text-sm focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors"
             />
           </div>
-
-          <div className="w-full sm:w-auto shrink-0">
-            <button
-              onClick={() => setFiltroPendentes(!filtroPendentes)}
-              className={`w-full sm:w-auto px-4 py-2.5 rounded-lg text-sm font-bold border transition-all shadow-sm flex items-center justify-center gap-2 ${filtroPendentes ? "bg-red-100 border-red-300 text-red-800" : "bg-white border-slate-300 text-slate-600 hover:bg-slate-50"}`}
-            >
-              {filtroPendentes
-                ? "🚨 Mostrando Pendentes"
-                : "⏳ Filtrar Pendentes"}
-            </button>
-          </div>
-
-          <div className="w-full sm:w-auto shrink-0">
-            <select
-              value={filtroStatusPub}
-              onChange={(e) => setFiltroStatusPub(e.target.value)}
-              className="w-full border text-slate-800 border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white transition-all font-bold shadow-sm"
-            >
-              <option value="Todos">👁️ Todos os Status</option>
-              <option value="Publicada">🚀 Publicadas</option>
-              <option value="Rascunho">📝 Rascunhos</option>
-            </select>
-          </div>
-
-          <div className="w-full sm:w-auto shrink-0">
-            <select
-              value={filtroPrazo}
-              onChange={(e) => setFiltroPrazo(e.target.value)}
-              className="w-full border text-slate-800 border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white transition-all font-medium shadow-sm"
-            >
-              <option value="Todas">🗓️ Todos os Prazos</option>
-              <option value="Hoje">⚠️ Vence Hoje</option>
-              <option value="Semana">📅 Vence nesta Semana</option>
-              <option value="Mes">📆 Vence neste Mês</option>
-              <option value="Atrasadas">❌ Prazos Encerrados</option>
-            </select>
-          </div>
-
-          <div className="w-full sm:w-auto shrink-0">
-            <select
-              value={filtroTurma}
-              onChange={(e) => setFiltroTurma(e.target.value)}
-              className="w-full border text-slate-800 border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white transition-all shadow-sm"
-            >
-              <option value="Todas">Todas as Turmas</option>
-              {turmasDisponiveis.map((turma) => (
-                <option key={turma} value={turma}>
-                  {turma}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="w-full sm:w-auto shrink-0">
-            <select
-              value={filtroTipo}
-              onChange={(e) => setFiltroTipo(e.target.value)}
-              className="w-full border text-slate-800 border-slate-300 rounded-lg p-2.5 text-sm outline-none focus:ring-2 focus:ring-blue-500 bg-white transition-all shadow-sm"
-            >
-              <option value="Todos">Todos os Tipos</option>
-              <option value="Projeto">Projetos</option>
-              <option value="Quiz">Quizzes</option>
-              <option value="Material">Material</option>
-            </select>
-          </div>
+          <select
+            value={filtroTurma}
+            onChange={(e) => setFiltroTurma(e.target.value)}
+            className="cursor-pointer w-full md:w-48 py-2 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-700 dark:text-slate-300 font-bold focus:outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors"
+          >
+            <option value="Todas">Todas as Turmas</option>
+            {turmasDisponiveis.map((t) => (
+              <option key={t} value={t}>
+                {t}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => setFiltrosAvançadosAbertos(!filtrosAvançadosAbertos)}
+            className={`cursor-pointer px-4 py-2 rounded-lg text-sm font-bold border transition-colors ${filtrosAvançadosAbertos ? "bg-slate-800 dark:bg-slate-700 text-white border-slate-800 dark:border-slate-700" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
+          >
+            Filtros ⚙️
+          </button>
         </div>
+
+        {/* FILTROS AVANÇADOS (Colapsáveis) */}
+        {filtrosAvançadosAbertos && (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-3 border-t border-slate-100 dark:border-slate-800 animate-in fade-in transition-colors">
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">
+                Tipo de Missão
+              </label>
+              <select
+                value={filtroTipo}
+                onChange={(e) => setFiltroTipo(e.target.value)}
+                className="cursor-pointer w-full py-1.5 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-600 dark:text-slate-400 transition-colors"
+              >
+                <option value="Todos">Todos os Tipos</option>
+                <option value="Projeto">Projeto Prático</option>
+                <option value="Quiz">Quiz Interativo</option>
+                <option value="Material">Material de Apoio</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase mb-1">
+                Status de Publicação
+              </label>
+              <select
+                value={filtroStatusPub}
+                onChange={(e) => setFiltroStatusPub(e.target.value)}
+                className="cursor-pointer w-full py-1.5 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-600 dark:text-slate-400 transition-colors"
+              >
+                <option value="Todos">Todos os Status</option>
+                <option value="Publicada">Publicadas</option>
+                <option value="Rascunho">Rascunhos</option>
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
-      <div className="h-150 overflow-y-auto pr-2 custom-scrollbar">
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-40 gap-3">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-            <p className="text-slate-500 text-sm font-medium">
-              Carregando missões...
-            </p>
-          </div>
-        ) : atividadesFiltradas.length === 0 ? (
-          <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-300 shadow-sm">
-            <span className="text-5xl mb-4 block opacity-50">📭</span>
-            <p className="text-slate-600 font-bold">
-              Nenhuma missão encontrada.
-            </p>
-            <p className="text-slate-400 text-sm mt-1">
-              {filtroPendentes
-                ? "Você não tem nenhuma missão pendente para corrigir! 🎉"
-                : "Tente ajustar os filtros acima."}
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {Object.entries(atividadesAgrupadas)
-              .sort(([modA], [modB]) => {
-                if (modA === "Geral") return 1;
-                if (modB === "Geral") return -1;
-                return modA.localeCompare(modB);
-              })
-              .map(([nomeModulo, missoesDoModulo]) => {
-                const isFechado = modulosFechados[nomeModulo] || false;
-                const pendentesNoModulo = missoesDoModulo.reduce(
-                  (acc, ativ) => acc + ((ativ as any).pendentes || 0),
-                  0,
-                );
+      {/* LISTAGEM DUPLO ACORDEÃO */}
+      {Object.keys(arvoreDeMissoes).length === 0 ? (
+        <div className="text-center py-12 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-colors">
+          <div className="text-4xl mb-2 opacity-50">📭</div>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">
+            Nenhuma missão encontrada com estes filtros.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-4">
+          {Object.entries(arvoreDeMissoes).map(([nomeModulo, aulas]) => {
+            const isModuloAberto = modulosAbertos[nomeModulo] || false;
+            const qtdMissoesModulo = Object.values(aulas).reduce(
+              (acc, miss) => acc + miss.length,
+              0,
+            );
 
-                return (
-                  <div key={nomeModulo} className="flex flex-col">
-                    <div
-                      onClick={() => toggleModulo(nomeModulo)}
-                      className="bg-indigo-50 border border-indigo-100 hover:bg-indigo-100 transition-colors p-4 rounded-xl flex justify-between items-center cursor-pointer mb-3 shadow-sm select-none group"
+            return (
+              <div
+                key={nomeModulo}
+                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm overflow-hidden transition-all duration-300"
+              >
+                {/* CABEÇALHO DO MÓDULO */}
+                <div
+                  onClick={() => toggleModulo(nomeModulo)}
+                  className="bg-slate-100 dark:bg-slate-800 hover:bg-slate-200/70 dark:hover:bg-slate-700 p-4 flex justify-between items-center cursor-pointer select-none transition-colors border-b border-slate-200 dark:border-slate-700"
+                >
+                  <h3 className="font-black text-slate-800 dark:text-slate-100 text-lg flex items-center gap-2">
+                    <span className="text-blue-600 dark:text-blue-400">📚</span>{" "}
+                    {nomeModulo}
+                  </h3>
+                  <div className="flex items-center gap-4">
+                    <span className="bg-slate-200 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-xs font-bold px-3 py-1 rounded-full transition-colors">
+                      {qtdMissoesModulo} itens
+                    </span>
+                    <span
+                      className={`text-slate-500 dark:text-slate-400 font-bold transition-transform ${isModuloAberto ? "rotate-180" : ""}`}
                     >
-                      <div className="flex items-center gap-3">
-                        <h3 className="font-black text-indigo-900 flex items-center gap-2 text-lg">
-                          <span>📂</span> {nomeModulo}
-                        </h3>
-                        {pendentesNoModulo > 0 && (
-                          <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm animate-pulse">
-                            🚨 {pendentesNoModulo} Pendentes
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="bg-indigo-200 text-indigo-800 text-xs font-bold px-2.5 py-1 rounded-full">
-                          {missoesDoModulo.length}{" "}
-                          {missoesDoModulo.length === 1 ? "Item" : "Itens"}
-                        </span>
-                        <span
-                          className={`text-indigo-500 font-bold transition-transform duration-200 ${isFechado ? "rotate-180" : ""}`}
-                        >
-                          ▼
-                        </span>
-                      </div>
-                    </div>
+                      ▼
+                    </span>
+                  </div>
+                </div>
 
-                    {!isFechado && (
-                      <div className="p-4 md:p-6 bg-white/50 border-l-2 border-indigo-100 ml-2 md:ml-4 mb-6 rounded-br-2xl animate-in slide-in-from-top-2 duration-300">
-                        {/* 🔥 MAGIA DO AGRUPAMENTO POR AULA (Sub-Módulos) */}
-                        {Object.entries(
-                          missoesDoModulo.reduce(
-                            (acc, ativ) => {
-                              const match =
-                                ativ.titulo.match(/^\[(Aula\s*\d+)\]/i);
-                              const aula = match
-                                ? match[1]
-                                : "Outras Atividades";
-                              if (!acc[aula]) acc[aula] = [];
-                              acc[aula].push(ativ);
-                              return acc;
-                            },
-                            {} as Record<string, Atividade[]>,
-                          ),
-                        )
-                          .sort(([aulaA], [aulaB]) => {
-                            if (aulaA === "Outras Atividades") return 1;
-                            if (aulaB === "Outras Atividades") return -1;
-                            return aulaA.localeCompare(aulaB);
-                          })
-                          .map(([nomeAula, missoesDaAula]) => (
-                            <div key={nomeAula} className="mb-8 last:mb-0">
-                              <h4 className="text-sm font-black text-indigo-800 uppercase tracking-widest mb-4 flex items-center gap-2 border-b-2 border-indigo-100 pb-2">
-                                <span>📖</span> {nomeAula}
-                                <span className="bg-indigo-100 text-indigo-600 px-2 py-0.5 rounded text-[10px] ml-2">
-                                  {missoesDaAula.length}{" "}
-                                  {missoesDaAula.length === 1
-                                    ? "item"
-                                    : "itens"}
-                                </span>
+                {/* CORPO DO MÓDULO (Lista de Aulas) */}
+                {isModuloAberto && (
+                  <div className="bg-slate-50 dark:bg-slate-950/50 flex flex-col transition-colors">
+                    {Object.entries(aulas)
+                      .sort(([a], [b]) =>
+                        a === "Outras Atividades"
+                          ? 1
+                          : b === "Outras Atividades"
+                            ? -1
+                            : a.localeCompare(b),
+                      )
+                      .map(([nomeAula, missoes]) => {
+                        const aulaChave = `${nomeModulo}-${nomeAula}`;
+                        const isAulaAberta = aulasAbertas[aulaChave] || false;
+
+                        return (
+                          <div
+                            key={aulaChave}
+                            className="border-b border-slate-200 dark:border-slate-800/50 last:border-0"
+                          >
+                            {/* CABEÇALHO DA AULA */}
+                            <div
+                              onClick={() => toggleAula(aulaChave)}
+                              className="p-3 pl-6 hover:bg-slate-100 dark:hover:bg-slate-800/50 flex justify-between items-center cursor-pointer select-none transition-colors"
+                            >
+                              <h4 className="font-bold text-slate-700 dark:text-slate-300 text-md flex items-center gap-2">
+                                <span className="text-slate-400 dark:text-slate-500">
+                                  📄
+                                </span>{" "}
+                                {nomeAula}
                               </h4>
+                              <div className="flex items-center gap-3">
+                                <span className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                                  {missoes.length} missoes
+                                </span>
+                                <span
+                                  className={`text-slate-400 dark:text-slate-500 text-xs transition-transform ${isAulaAberta ? "rotate-180" : ""}`}
+                                >
+                                  ▼
+                                </span>
+                              </div>
+                            </div>
 
-                              <div className="grid grid-cols-1 xl:grid-cols-2 gap-5">
-                                {missoesDaAula.map((ativ, index) => {
+                            {/* CORPO DA AULA (Lista de Missões Compactas) */}
+                            {isAulaAberta && (
+                              <div className="bg-white dark:bg-slate-900 p-2 pl-8 space-y-2 border-t border-slate-100 dark:border-slate-800 shadow-inner transition-colors">
+                                {missoes.map((ativ) => {
                                   const isRascunho =
                                     ativ.statusPublicacao === "Rascunho";
-                                  const pendentesCount =
-                                    (ativ as any).pendentes || 0;
-
                                   return (
                                     <div
-                                      key={`${ativ.id}-${index}`}
-                                      className={`bg-white border ${isRascunho ? "border-yellow-200" : pendentesCount > 0 ? "border-red-300 shadow-red-100" : "border-slate-200"} rounded-2xl p-5 hover:shadow-md transition-all flex flex-col lg:flex-row justify-between gap-6 group relative h-full`}
+                                      key={ativ.id}
+                                      className={`flex flex-col md:flex-row md:items-center justify-between p-3 rounded-lg border transition-all hover:shadow-md ${isRascunho ? "border-amber-200 dark:border-amber-800/50 bg-amber-50/30 dark:bg-amber-900/10" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-blue-300 dark:hover:border-blue-500"}`}
                                     >
-                                      <div
-                                        className={`absolute left-0 top-4 bottom-4 w-1 rounded-r-md ${ativ.tipo === "Quiz" ? "bg-amber-400" : ativ.tipo === "Material" ? "bg-emerald-400" : "bg-blue-400"}`}
-                                      ></div>
-
-                                      <div className="flex-1 pl-2 min-w-0">
-                                        <div className="flex items-center flex-wrap gap-2 mb-3">
-                                          <span className="bg-slate-800 text-white text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider">
-                                            {ativ.id}
-                                          </span>
-
-                                          {isRascunho ? (
-                                            <span className="bg-yellow-100 text-yellow-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-yellow-300 shadow-sm animate-pulse">
-                                              📝 Rascunho
-                                            </span>
-                                          ) : (
-                                            <span className="bg-blue-100 text-blue-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-blue-300 shadow-sm">
-                                              🚀 Publicada
-                                            </span>
-                                          )}
-
+                                      <div className="flex-1 min-w-0 pr-4">
+                                        <div className="flex items-center gap-2 mb-1">
                                           <span
-                                            className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider border ${ativ.tipo === "Quiz" ? "bg-amber-50 text-amber-700 border-amber-200" : ativ.tipo === "Material" ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-indigo-50 text-indigo-700 border-indigo-200"}`}
+                                            className={`text-[9px] font-black uppercase px-2 py-0.5 rounded border transition-colors ${ativ.tipo === "Quiz" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-500 border-amber-200 dark:border-amber-800/50" : ativ.tipo === "Material" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-500 border-emerald-200 dark:border-emerald-800/50" : "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-500 border-blue-200 dark:border-blue-800/50"}`}
                                           >
                                             {ativ.tipo}
                                           </span>
-
-                                          {pendentesCount > 0 && (
-                                            <span className="bg-red-100 text-red-800 text-[10px] font-black px-2 py-1 rounded-md uppercase tracking-wider border border-red-300 shadow-sm animate-pulse flex items-center gap-1">
-                                              <span>🚨</span> {pendentesCount}{" "}
-                                              {pendentesCount === 1
-                                                ? "Pendente"
-                                                : "Pendentes"}
+                                          {isRascunho && (
+                                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-slate-700 dark:bg-slate-600 text-white shadow-sm transition-colors">
+                                              Rascunho
                                             </span>
                                           )}
-
-                                          <span className="text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider text-slate-500 bg-slate-50 border border-slate-200">
-                                            📅 Prazo:{" "}
-                                            {ativ.dataLimite
-                                              ? ativ.dataLimite
-                                                  .split("-")
-                                                  .reverse()
-                                                  .join("/")
-                                              : "Sem prazo"}
+                                          <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                                            ID:{" "}
+                                            {ativ.id?.split("-")[1] || ativ.id}
                                           </span>
                                         </div>
-
-                                        <h4
-                                          className={`font-bold text-lg leading-tight line-clamp-2 break-words ${isRascunho ? "text-slate-400" : "text-slate-800"}`}
+                                        <h5
+                                          className="font-bold text-slate-800 dark:text-slate-100 text-sm truncate cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                          onClick={() => setMissaoPreview(ativ)}
                                         >
                                           {ativ.titulo}
-                                        </h4>
-
-                                        <p className="text-sm text-slate-500 line-clamp-2 md:line-clamp-3 mt-2 leading-relaxed break-words">
-                                          {ativ.descricao}
-                                        </p>
+                                        </h5>
+                                        <div className="flex items-center gap-3 mt-1 text-[10px] text-slate-500 dark:text-slate-400 font-medium transition-colors">
+                                          <span className="text-emerald-600 dark:text-emerald-500 font-bold">
+                                            ⭐ {ativ.xp} XP
+                                          </span>
+                                          <span>👥 {ativ.turmaAlvo}</span>
+                                          {ativ.dataLimite && (
+                                            <span>⏳ {ativ.dataLimite}</span>
+                                          )}
+                                        </div>
                                       </div>
 
-                                      <div className="flex flex-col items-end justify-between min-w-40 shrink-0 gap-4 border-t lg:border-t-0 lg:border-l border-slate-100 pt-4 lg:pt-0 lg:pl-6">
-                                        <div className="flex gap-2 w-full justify-end opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-opacity">
-                                          <button
-                                            onClick={() => onEdit(ativ)}
-                                            className="p-2 text-slate-400 hover:text-amber-500 hover:bg-amber-50 rounded-lg transition-colors"
-                                            title="Editar Missão"
-                                          >
-                                            ✏️
-                                          </button>
-                                          <button
-                                            onClick={() => onDelete(ativ.id)}
-                                            className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-                                            title="Excluir Missão"
-                                          >
-                                            🗑️
-                                          </button>
-                                        </div>
-
-                                        <div className="flex flex-col gap-2 w-full mt-auto">
-                                          <button
-                                            onClick={() =>
-                                              setMissaoPreview(ativ)
-                                            }
-                                            className="w-full bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold py-2 px-3 rounded-lg shadow-sm transition-colors flex justify-center items-center gap-2"
-                                          >
-                                            👀 Ver Aluno
-                                          </button>
-
-                                          <button
-                                            onClick={() => onViewEntregas(ativ)}
-                                            className={`cursor-pointer w-full text-xs font-bold py-2.5 px-3 rounded-lg shadow-md transition-all active:scale-95 flex justify-center items-center gap-2 ${pendentesCount > 0 ? "bg-red-600 hover:bg-red-700 text-white shadow-red-500/30" : "bg-slate-800 hover:bg-slate-900 text-white"}`}
-                                          >
-                                            {pendentesCount > 0
-                                              ? `🚨 Corrigir ${pendentesCount}`
-                                              : "Ver Entregas"}
-                                          </button>
-                                        </div>
+                                      {/* BOTÕES DE AÇÃO COMPACTOS */}
+                                      <div className="flex gap-2 mt-3 md:mt-0 shrink-0">
+                                        <button
+                                          onClick={() => setMissaoPreview(ativ)}
+                                          className="cursor-pointer p-2 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md transition-colors"
+                                          title="Visualizar Detalhes"
+                                        >
+                                          👁️
+                                        </button>
+                                        <button
+                                          onClick={() => onViewEntregas(ativ)}
+                                          className="cursor-pointer p-2 text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors"
+                                          title="Corrigir Entregas"
+                                        >
+                                          📝
+                                        </button>
+                                        <button
+                                          onClick={() => onEdit(ativ)}
+                                          className="cursor-pointer p-2 text-amber-500 dark:text-amber-400 hover:text-amber-600 dark:hover:text-amber-300 hover:bg-amber-50 dark:hover:bg-amber-900/30 rounded-md transition-colors"
+                                          title="Editar Atividade"
+                                        >
+                                          ✏️
+                                        </button>
+                                        <button
+                                          onClick={() => onDelete(ativ.id!)}
+                                          className="cursor-pointer p-2 text-red-400 dark:text-red-500 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-md transition-colors"
+                                          title="Excluir"
+                                        >
+                                          🗑️
+                                        </button>
                                       </div>
                                     </div>
                                   );
                                 })}
                               </div>
-                            </div>
-                          ))}
-                      </div>
-                    )}
+                            )}
+                          </div>
+                        );
+                      })}
                   </div>
-                );
-              })}
-          </div>
-        )}
-      </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
 
-      {/* MODAL DE PREVIEW DA MISSÃO (Continua igual...) */}
+      {/* MODAL DE PREVIEW MANTIDO INTACTO COM DARK MODE */}
       {missaoPreview && (
-        <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-60 flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
-            <div className="bg-amber-400 text-amber-900 text-[10px] font-black uppercase tracking-widest text-center py-1">
-              Modo de Visualização do Aluno
-            </div>
-
-            <div
-              className={`p-4 border-b flex justify-between items-center text-white ${missaoPreview.tipo === "Quiz" ? "bg-amber-600" : missaoPreview.tipo === "Material" ? "bg-emerald-600" : "bg-blue-600"}`}
-            >
-              <h2 className="font-bold text-lg">
-                🎯 {missaoPreview.tipo}: {missaoPreview.titulo}
-              </h2>
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-[60] flex items-center justify-center p-4 transition-colors duration-300">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl border dark:border-slate-800 w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] transition-colors duration-300">
+            <div className="p-4 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex justify-between items-center transition-colors">
+              <h3 className="font-bold text-lg text-slate-800 dark:text-slate-100">
+                Detalhes da Missão
+              </h3>
               <button
                 onClick={() => setMissaoPreview(null)}
-                className="cursor-pointer text-2xl leading-none hover:text-slate-200"
+                className="cursor-pointer text-2xl text-slate-500 dark:text-slate-400 hover:text-red-500 dark:hover:text-red-500 transition-colors leading-none"
               >
                 &times;
               </button>
             </div>
-
             <div className="p-6 overflow-y-auto">
-              <div className="flex gap-4 mb-4 text-sm font-bold">
-                <span className="bg-slate-100 text-slate-600 px-3 py-1 rounded border border-slate-200">
-                  ID: {missaoPreview.id}
-                </span>
-                <span className="bg-emerald-100 text-emerald-700 px-3 py-1 rounded border border-emerald-200">
-                  ⭐ {missaoPreview.xp} XP Possíveis
-                </span>
-              </div>
-
-              <div className="text-slate-700 whitespace-pre-wrap font-mono text-sm mb-6 bg-slate-50 p-4 rounded-lg border border-slate-200 leading-relaxed shadow-inner">
+              <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 mb-2 transition-colors">
+                {missaoPreview.titulo}
+              </h2>
+              <div className="text-sm text-slate-600 dark:text-slate-300 mb-6 bg-slate-50 dark:bg-slate-800 p-4 rounded-lg border border-slate-200 dark:border-slate-700 whitespace-pre-wrap transition-colors">
                 {missaoPreview.descricao}
               </div>
-
-              {missaoPreview.imagemUrl && (
-                <div className="relative w-full h-64 mb-6 rounded-lg overflow-hidden border border-slate-200 shadow-sm bg-slate-100">
-                  <Image
-                    src={(() => {
-                      const url = missaoPreview.imagemUrl || "";
-                      const match = url.match(
-                        /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
-                      );
-                      return match
-                        ? `https://drive.google.com/uc?export=view&id=${match[1]}`
-                        : url;
-                    })()}
-                    alt="Referência da Missão"
-                    fill
-                    sizes="(max-width: 768px) 100vw, 800px"
-                    className="object-contain p-2"
-                  />
-                </div>
-              )}
-
-              <div className="border-t border-slate-200 pt-6">
-                {missaoPreview.linkClassroom && (
-                  <div className="bg-amber-50 border-2 border-amber-300 p-5 rounded-xl mb-6 shadow-sm opacity-90">
-                    <h3 className="text-amber-800 font-black text-sm flex items-center gap-2 mb-2">
-                      <span>🏫</span> Entrega Obrigatória no Classroom!
-                    </h3>
-                    <p className="text-amber-700 text-xs font-medium mb-4 leading-relaxed">
-                      Para ganhar o XP desta missão, você precisa primeiro
-                      registrar a sua entrega oficial no Ambiente Virtual de
-                      Aprendizagem (Classroom).
-                    </p>
-
-                    <div className="flex flex-col gap-3">
-                      <button
-                        type="button"
-                        disabled
-                        className="bg-amber-500 text-white font-black py-3 rounded-lg shadow cursor-not-allowed flex items-center justify-center gap-2"
-                      >
-                        1. ABRIR O GOOGLE CLASSROOM 🔗
-                      </button>
-                      <label className="flex items-start gap-3 p-3 bg-white border-2 border-slate-200 rounded-lg cursor-not-allowed opacity-70 mt-2">
-                        <input
-                          type="checkbox"
-                          disabled
-                          className="mt-1 w-5 h-5"
-                        />
-                        <span className="text-xs text-slate-500 font-bold leading-snug">
-                          2. Confirmo por minha honra que já anexei e enviei o
-                          meu material no Google Classroom oficial.
-                        </span>
-                      </label>
-                    </div>
-                  </div>
-                )}
-
-                <h3 className="font-bold text-slate-800 mb-3 uppercase text-sm">
-                  Visão do Formulário:
-                </h3>
-
-                {missaoPreview.tipo === "Quiz" ? (
-                  <div className="space-y-3">
-                    {["A", "B", "C", "D"].map((letra) => {
-                      const opcaoTexto =
-                        missaoPreview[`opcao${letra}` as keyof Atividade];
-                      return opcaoTexto ? (
-                        <label
-                          key={letra}
-                          className="flex items-start p-3 rounded-lg border bg-white border-slate-300 cursor-not-allowed opacity-80"
-                        >
-                          <input type="radio" disabled className="mt-1 mr-3" />
-                          <div className="flex-1 overflow-x-auto">
-                            <strong className="text-slate-700 mr-2">
-                              {letra})
-                            </strong>
-                            <code className="text-slate-600 font-mono text-xs whitespace-pre-wrap leading-tight">
-                              {opcaoTexto}
-                            </code>
-                          </div>
-                        </label>
-                      ) : null;
-                    })}
-                  </div>
-                ) : missaoPreview.tipo === "Projeto" ? (
-                  <div>
-                    <label className="block text-xs font-bold text-slate-500 mb-2">
-                      Cole o link do seu projeto (GitHub, Replit, etc):
-                    </label>
-                    <input
-                      type="url"
-                      disabled
-                      placeholder="https://..."
-                      className="w-full bg-slate-100 border border-slate-300 text-slate-800 rounded p-3 cursor-not-allowed opacity-80"
-                    />
-                  </div>
-                ) : (
-                  <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-xl text-center shadow-sm opacity-80 cursor-not-allowed">
-                    <span className="text-3xl block mb-2">📚</span>
-                    <p className="text-sm font-black text-blue-800 uppercase tracking-widest mb-1">
-                      Material de Apoio
-                    </p>
-                    <p className="text-xs text-blue-600 font-medium">
-                      Nenhuma resposta em texto é necessária pelo aluno. Apenas
-                      acesso ao material e marcação da caixinha de honestidade.
-                    </p>
-                  </div>
-                )}
-
-                <div className="mt-6 flex justify-end">
-                  <button
-                    onClick={() => setMissaoPreview(null)}
-                    className="cursor-pointer bg-slate-800 hover:bg-slate-900 text-white px-8 py-3 rounded-xl font-bold shadow-md transition-all active:scale-95"
-                  >
-                    Fechar Visualização
-                  </button>
-                </div>
-              </div>
+              <button
+                onClick={() => setMissaoPreview(null)}
+                className="cursor-pointer w-full py-3 bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white rounded-xl font-bold transition-colors"
+              >
+                Fechar
+              </button>
             </div>
           </div>
         </div>

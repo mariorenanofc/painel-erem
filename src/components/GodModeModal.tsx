@@ -117,13 +117,13 @@ export default function GodModeModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col relative border-4 border-amber-400">
-        <div className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 p-6 relative overflow-hidden shrink-0">
+    <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-in fade-in duration-200 transition-colors">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col relative border-4 border-amber-400 dark:border-amber-500 transition-colors duration-300">
+        <div className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 p-6 relative overflow-hidden shrink-0 transition-colors duration-300">
           <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] pointer-events-none"></div>
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-3xl leading-none text-white hover:text-amber-400 z-10"
+            className="cursor-pointer absolute top-4 right-4 text-3xl leading-none text-white hover:text-amber-400 dark:hover:text-amber-300 z-10 transition-colors"
           >
             &times;
           </button>
@@ -133,31 +133,31 @@ export default function GodModeModal({
             <h2 className="font-black text-2xl text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-500 uppercase tracking-widest">
               God Mode
             </h2>
-            <p className="text-purple-200 text-xs font-bold mt-1">
+            <p className="text-purple-200 text-xs font-bold mt-1 transition-colors">
               Controle Absoluto do Jogo
             </p>
           </div>
         </div>
 
-        <div className="flex bg-slate-100 border-b border-slate-200 shrink-0">
+        <div className="flex bg-slate-100 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 shrink-0 transition-colors duration-300">
           <button
             onClick={() => setAbaAtiva("xp")}
-            className={`flex-1 py-3 font-black text-sm transition-colors ${abaAtiva === "xp" ? "text-purple-700 border-b-2 border-purple-600 bg-white" : "text-slate-500 hover:bg-slate-200"}`}
+            className={`cursor-pointer flex-1 py-3 font-black text-sm transition-colors ${abaAtiva === "xp" ? "text-purple-700 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-500 bg-white dark:bg-slate-900" : "text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"}`}
           >
             ⚖️ Injetar/Punir XP
           </button>
           <button
             onClick={() => setAbaAtiva("coroa")}
-            className={`flex-1 py-3 font-black text-sm transition-colors ${abaAtiva === "coroa" ? "text-amber-600 border-b-2 border-amber-500 bg-white" : "text-slate-500 hover:bg-slate-200"}`}
+            className={`cursor-pointer flex-1 py-3 font-black text-sm transition-colors ${abaAtiva === "coroa" ? "text-amber-600 dark:text-amber-400 border-b-2 border-amber-500 bg-white dark:bg-slate-900" : "text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"}`}
           >
             👑 Coroar Elite
           </button>
         </div>
 
-        <div className="p-6 bg-slate-50 max-h-[60vh] overflow-y-auto">
+        <div className="p-6 bg-slate-50 dark:bg-slate-900 max-h-[60vh] overflow-y-auto transition-colors duration-300 custom-scrollbar">
           {carregando ? (
             <div className="flex justify-center py-10">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-purple-600"></div>
+              <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-purple-600 dark:border-purple-400"></div>
             </div>
           ) : abaAtiva === "xp" ? (
             <form
@@ -165,13 +165,13 @@ export default function GodModeModal({
               className="space-y-5 animate-in slide-in-from-left-4"
             >
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
                   1. Escolha o Alvo
                 </label>
                 <select
                   value={matriculaSelecionada}
                   onChange={(e) => setMatriculaSelecionada(e.target.value)}
-                  className="w-full border-2 border-slate-300 rounded-xl p-3 text-sm font-bold text-slate-700 outline-none focus:border-purple-500 shadow-sm"
+                  className="cursor-pointer w-full border-2 border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-950 outline-none focus:border-purple-500 dark:focus:border-purple-500 shadow-sm transition-colors"
                   required
                 >
                   <option value="">Selecione um aluno...</option>
@@ -185,7 +185,7 @@ export default function GodModeModal({
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 md:col-span-1">
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
                     2. Quantidade (+ ou -)
                   </label>
                   <div className="relative">
@@ -194,16 +194,20 @@ export default function GodModeModal({
                       value={quantidadeXP}
                       onChange={(e) => setQuantidadeXP(Number(e.target.value))}
                       placeholder="Ex: 50 ou -100"
-                      className={`w-full border-2 rounded-xl p-3 text-lg font-black outline-none shadow-sm text-center ${Number(quantidadeXP) < 0 ? "border-red-400 text-red-600 focus:border-red-600" : "border-emerald-400 text-emerald-600 focus:border-emerald-600"}`}
+                      className={`w-full border-2 rounded-xl p-3 text-lg font-black outline-none shadow-sm text-center bg-white dark:bg-slate-950 transition-colors ${Number(quantidadeXP) < 0 ? "border-red-400 dark:border-red-800 text-red-600 dark:text-red-400 focus:border-red-600 dark:focus:border-red-500" : "border-emerald-400 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 focus:border-emerald-600 dark:focus:border-emerald-500"}`}
                       required
                     />
                   </div>
                 </div>
                 <div className="col-span-2 md:col-span-1 flex flex-col justify-end pb-2">
-                  <p className="text-[10px] text-slate-500 font-bold leading-tight">
-                    💡 <span className="text-emerald-600">Positivo (+10)</span>{" "}
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold leading-tight transition-colors">
+                    💡{" "}
+                    <span className="text-emerald-600 dark:text-emerald-400">
+                      Positivo (+10)
+                    </span>{" "}
                     para premiar. <br />
-                    🚨 <span className="text-red-500">
+                    🚨{" "}
+                    <span className="text-red-500 dark:text-red-400">
                       Negativo (-100)
                     </span>{" "}
                     para punir IA/cola.
@@ -212,7 +216,7 @@ export default function GodModeModal({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
                   3. Motivo da Ação
                 </label>
                 <input
@@ -220,7 +224,7 @@ export default function GodModeModal({
                   value={motivo}
                   onChange={(e) => setMotivo(e.target.value)}
                   placeholder="Ex: Ajudou o colega / Punição por uso de IA"
-                  className="w-full border-2 border-slate-300 rounded-xl p-3 text-sm text-slate-700 outline-none focus:border-purple-500 shadow-sm"
+                  className="w-full border-2 border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-950 outline-none focus:border-purple-500 dark:focus:border-purple-500 shadow-sm transition-colors"
                   required
                 />
               </div>
@@ -228,7 +232,7 @@ export default function GodModeModal({
               <button
                 type="submit"
                 disabled={injetando}
-                className={`w-full text-white font-black py-4 rounded-xl shadow-lg transition-transform active:scale-95 text-lg flex items-center justify-center gap-2 ${Number(quantidadeXP) < 0 ? "bg-red-600 hover:bg-red-700" : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"}`}
+                className={`cursor-pointer w-full text-white font-black py-4 rounded-xl shadow-lg transition-transform active:scale-95 text-lg flex items-center justify-center gap-2 ${Number(quantidadeXP) < 0 ? "bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600" : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"}`}
               >
                 {injetando
                   ? "Aplicando..."
@@ -242,8 +246,8 @@ export default function GodModeModal({
               onSubmit={handleCoroar}
               className="space-y-5 animate-in slide-in-from-right-4"
             >
-              <div className="bg-amber-50 p-4 rounded-xl border border-amber-200 mb-4">
-                <p className="text-xs text-amber-800 font-medium">
+              <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-200 dark:border-amber-800/50 mb-4 transition-colors">
+                <p className="text-xs text-amber-800 dark:text-amber-400 font-medium">
                   <strong>Como funciona:</strong> Ao transferir a placa, o dono
                   anterior perde o destaque VIP, mas recebe automaticamente uma{" "}
                   <strong>Badge de Legado</strong> para guardar no mural dele
@@ -252,13 +256,13 @@ export default function GodModeModal({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
                   1. Qual placa transferir?
                 </label>
                 <select
                   value={tipoPlaca}
                   onChange={(e) => setTipoPlaca(e.target.value as any)}
-                  className="w-full border-2 border-amber-300 rounded-xl p-3 text-sm font-black text-amber-700 outline-none focus:border-amber-500 shadow-sm bg-white"
+                  className="cursor-pointer w-full border-2 border-amber-300 dark:border-amber-700 rounded-xl p-3 text-sm font-black text-amber-700 dark:text-amber-500 outline-none focus:border-amber-500 dark:focus:border-amber-400 shadow-sm bg-white dark:bg-slate-950 transition-colors"
                 >
                   <option value="Elite Ouro">👑 Elite Ouro (Top 1)</option>
                   <option value="Elite Prata">🥈 Elite Prata (Top 2)</option>
@@ -267,13 +271,13 @@ export default function GodModeModal({
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
                   2. Novo Dono (Campeão Atual)
                 </label>
                 <select
                   value={matriculaCoroa}
                   onChange={(e) => setMatriculaCoroa(e.target.value)}
-                  className="w-full border-2 border-slate-300 rounded-xl p-3 text-sm font-bold text-slate-700 outline-none focus:border-purple-500 shadow-sm"
+                  className="cursor-pointer w-full border-2 border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-950 outline-none focus:border-purple-500 dark:focus:border-purple-500 shadow-sm transition-colors"
                   required
                 >
                   <option value="">Selecione o novo campeão...</option>
@@ -288,7 +292,7 @@ export default function GodModeModal({
               <button
                 type="submit"
                 disabled={coroando}
-                className="w-full text-white font-black py-4 rounded-xl shadow-lg transition-transform active:scale-95 text-lg flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 mt-4"
+                className="cursor-pointer w-full text-white font-black py-4 rounded-xl shadow-lg transition-transform active:scale-95 text-lg flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 mt-4"
               >
                 {coroando ? "Transferindo..." : "👑 COROAR NOVO CAMPEÃO"}
               </button>

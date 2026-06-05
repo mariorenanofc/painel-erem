@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
@@ -7,7 +8,6 @@ import Header from "@/src/components/Header";
 import { useRouter } from "next/navigation";
 import { apiTutor, apiGeral } from "@/src/services/api";
 
-// Imports dos Tipos e Componentes centralizados
 import {
   Atividade,
   Entrega,
@@ -20,8 +20,9 @@ import GestaoFrequenciaModal from "@/src/components/GestaoFrequenciaModal";
 import MissoesList from "@/src/components/MissoesList";
 import GodModeModal from "@/src/components/GodModeModal";
 import FormularioMissaoModal from "@/src/components/FormularioMissaoModal";
+import ImportadorLoteModal from "@/src/components/ImportadorLoteModal";
+import FechamentoCicloModal from "@/src/components/FechamentoCicloModal";
 
-// SWR Fetcher super limpo usando a API
 const fetcherAtividades = async () => {
   return await apiTutor.buscarTodasAtividades("Todas", "Todos");
 };
@@ -35,14 +36,12 @@ export default function GestaoAulasPage() {
   );
   const [montado, setMontado] = useState(false);
 
-  // === CONFIGURAÇÕES DINÂMICAS ===
   const [turmasDisponiveis, setTurmasDisponiveis] = useState<string[]>([
     "Turma 1 - 1º Ano",
     "Turma 2 - 2º Ano",
   ]);
   const [nomeProjeto, setNomeProjeto] = useState("Trilha Tech");
 
-  // === LINKS DINÂMICOS ===
   const [linksGerais, setLinksGerais] = useState({
     planilha: "https://docs.google.com/spreadsheets",
     classroom: "https://classroom.google.com/",
@@ -51,15 +50,16 @@ export default function GestaoAulasPage() {
     cronograma: "#",
   });
 
-  // === ESTADOS DO MODO REPOSIÇÃO E SENHA ===
   const [modoReposicao, setModoReposicao] = useState(false);
   const [carregandoReposicao, setCarregandoReposicao] = useState(false);
   const [senhaLousa, setSenhaLousa] = useState("");
   const [salvandoSenha, setSalvandoSenha] = useState(false);
   const [modalZapAberto, setModalZapAberto] = useState(false);
+  const [modalFechamentoAberto, setModalFechamentoAberto] = useState(false);
 
-  // === ESTADOS DO FORMULÁRIO (NOVA MISSÃO) ===
   const [modalNovaMissaoAberto, setModalNovaMissaoAberto] = useState(false);
+  const [modalImportadorAberto, setModalImportadorAberto] = useState(false);
+
   const [idEditando, setIdEditando] = useState<string | null>(null);
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -76,14 +76,10 @@ export default function GestaoAulasPage() {
   const [statusPublicacao, setStatusPublicacao] = useState("Publicada");
   const [imagemUrl, setImagemUrl] = useState("");
   const [modulo, setModulo] = useState("Geral");
-
-  // 🔥 ESTADOS DO GABARITO E SEGURANÇA
   const [gabarito, setGabarito] = useState("");
   const [gabaritoLiberado, setGabaritoLiberado] = useState(false);
-
   const [salvando, setSalvando] = useState(false);
 
-  // === ESTADOS DOS MODAIS ===
   const [missaoAberta, setMissaoAberta] = useState<Atividade | null>(null);
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [carregandoEntregas, setCarregandoEntregas] = useState(false);
@@ -106,7 +102,6 @@ export default function GestaoAulasPage() {
   const [abaDiario, setAbaDiario] = useState<"mensal" | "hoje">("mensal");
   const [carregandoFreq, setCarregandoFreq] = useState(false);
   const [diasComAula, setDiasComAula] = useState<number[]>([]);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [alunosDiario, setAlunosDiario] = useState<any[]>([]);
 
   const [turmaDiario, setTurmaDiario] = useState("");
@@ -130,7 +125,6 @@ export default function GestaoAulasPage() {
     "alfabetica" | "mais_faltas"
   >("mais_faltas");
 
-  // SWR com cache local otimizado
   const { data, isLoading, mutate } = useSWR(
     nomeUsuario ? "atividades_tutor" : null,
     fetcherAtividades,
@@ -139,14 +133,9 @@ export default function GestaoAulasPage() {
 
   const atividades: Atividade[] =
     data?.status === "sucesso" ? data.atividades : [];
-    
-  // 🔥 NOVO: Extrai a lista de módulos que o Apps Script mandou
-  const modulosCadastrados: string[] = 
+  const modulosCadastrados: string[] =
     data?.status === "sucesso" ? data.modulosMatriz || [] : [];
 
-  // ==========================================
-  // INICIALIZAÇÃO DA PÁGINA (Limpa e Paralela)
-  // ==========================================
   useEffect(() => {
     setMontado(true);
     if (!nomeUsuario) window.location.href = "/";
@@ -178,7 +167,6 @@ export default function GestaoAulasPage() {
           });
           setModoReposicao(resConf.configuracoes.modoReposicao === "LIGADO");
         }
-
         if (resSenha.status === "sucesso") setSenhaLousa(resSenha.senha);
         if (resNiver.status === "sucesso")
           setAniversariantes(resNiver.aniversariantes);
@@ -190,9 +178,49 @@ export default function GestaoAulasPage() {
     carregarDadosIniciais();
   }, [nomeUsuario]);
 
-  // ==========================================
-  // FUNÇÕES DE AÇÃO DA PÁGINA
-  // ==========================================
+  const executarImportacaoLote = async (
+    atividadesMapeadas: any[],
+    moduloSelecionado: string,
+    turmaSelecionada: string,
+  ) => {
+    setSalvando(true);
+    try {
+      for (const ativ of atividadesMapeadas) {
+        await apiTutor.salvarAtividade({
+          idAtividadeEdit: null,
+          titulo: ativ.titulo,
+          descricao:
+            "Acesse o Google Classroom para visualizar as instruções detalhadas desta atividade.",
+          dataLimite: "",
+          xp: ativ.xp.toString(),
+          turmaAlvo: turmaSelecionada,
+          tipo: ativ.tipo,
+          opcaoA: "",
+          opcaoB: "",
+          opcaoC: "",
+          opcaoD: "",
+          respostaCorreta: "A",
+          linkClassroom: "",
+          statusPublicacao: "Rascunho",
+          imagemUrl: "",
+          modulo: moduloSelecionado,
+          gabarito: "",
+          gabaritoLiberado: false,
+        });
+      }
+      alert(
+        `✅ Importação de ${atividadesMapeadas.length} rascunhos concluída com sucesso!`,
+      );
+      setModalImportadorAberto(false);
+      mutate();
+    } catch (e) {
+      console.error("Erro na importação em lote", e);
+      alert("Houve um erro ao tentar importar algumas atividades.");
+    } finally {
+      setSalvando(false);
+    }
+  };
+
   const toggleModoReposicao = async () => {
     setCarregandoReposicao(true);
     const novoStatus = !modoReposicao ? "LIGADO" : "DESLIGADO";
@@ -215,7 +243,6 @@ export default function GestaoAulasPage() {
     try {
       const data = await apiTutor.buscarRanking(tempo);
       if (data.status === "sucesso") setDadosRanking(data.ranking);
-      else alert("Erro: " + data.mensagem);
     } catch {
       alert("Erro ao buscar o ranking.");
     } finally {
@@ -275,8 +302,8 @@ export default function GestaoAulasPage() {
     setStatusPublicacao("Publicada");
     setImagemUrl("");
     setModulo("Geral");
-    setGabarito(""); // 🔥 LIMPANDO O GABARITO
-    setGabaritoLiberado(false); // 🔥 LIMPANDO O INTERRUPTOR
+    setGabarito("");
+    setGabaritoLiberado(false);
     setModalNovaMissaoAberto(false);
   };
 
@@ -299,7 +326,7 @@ export default function GestaoAulasPage() {
     setModulo(String(ativ.modulo || "Geral"));
     setGabarito(String(ativ.gabarito || ""));
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    setGabaritoLiberado((ativ as any).gabaritoLiberado || false); // 🔥 PREENCHENDO O INTERRUPTOR
+    setGabaritoLiberado((ativ as any).gabaritoLiberado || false);
     setModalNovaMissaoAberto(true);
   };
 
@@ -340,7 +367,7 @@ export default function GestaoAulasPage() {
         imagemUrl,
         modulo,
         gabarito,
-        gabaritoLiberado, // 🔥 ENVIANDO O INTERRUPTOR PARA O BANCO DE DADOS
+        gabaritoLiberado,
       });
       limparFormulario();
       mutate();
@@ -388,7 +415,6 @@ export default function GestaoAulasPage() {
         statusAvaliacao,
         feedbackTutor,
       );
-
       if (data.status === "sucesso") {
         alert("✅ " + data.mensagem);
         setEntregas(
@@ -457,13 +483,11 @@ export default function GestaoAulasPage() {
   useEffect(() => {
     if (modalFreqAberto && turmaDiario)
       buscarDiarioClasse(turmaDiario, mesDiario, anoDiario);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [turmaDiario, mesDiario, anoDiario]);
+  }, [turmaDiario, mesDiario, anoDiario, modalFreqAberto]);
 
   useEffect(() => {
     if (modalFreqAberto && turmaDiario) buscarFrequenciaHoje(turmaDiario);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [turmaDiario]);
+  }, [turmaDiario, modalFreqAberto]);
 
   const salvarJustificativa = async () => {
     if (!modalJustificativaAberto || !textoJustificativa)
@@ -493,7 +517,6 @@ export default function GestaoAulasPage() {
       lista = lista.filter((a) => a.presenteHoje === true);
     else if (filtroStatusHoje === "Faltantes")
       lista = lista.filter((a) => a.presenteHoje === false);
-
     if (ordenacaoFreq === "mais_faltas")
       lista.sort((a, b) => b.faltasTotais - a.faltasTotais);
     else lista.sort((a, b) => a.nome.localeCompare(b.nome));
@@ -501,10 +524,18 @@ export default function GestaoAulasPage() {
   }, [dadosFreqHoje, filtroStatusHoje, ordenacaoFreq]);
 
   if (!montado || !nomeUsuario)
-    return <div className="min-h-screen bg-slate-50"></div>;
+    return <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300"></div>;
 
   return (
-    <main className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans pb-24">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-24 transition-colors duration-300">
+      {/* ================= MODAIS ================= */}
+      <ImportadorLoteModal
+        isOpen={modalImportadorAberto}
+        onClose={() => setModalImportadorAberto(false)}
+        modulosCadastrados={modulosCadastrados}
+        turmasDisponiveis={turmasDisponiveis}
+        onImportar={executarImportacaoLote}
+      />
       <RankingTutorModal
         isOpen={modalRankingAberto}
         onClose={() => setModalRankingAberto(false)}
@@ -553,30 +584,28 @@ export default function GestaoAulasPage() {
         setTextoJustificativa={setTextoJustificativa}
         salvarJustificativa={salvarJustificativa}
       />
-
       {modalGodModeAberto && (
         <GodModeModal
           onClose={() => setModalGodModeAberto(false)}
           onSuccess={() => carregarRankingTutor("geral")}
         />
       )}
-
       {modalZapAberto && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden p-6">
-            <h2 className="font-bold text-xl text-slate-800 flex items-center gap-2 mb-4">
+        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-100 flex items-center justify-center p-4 transition-colors duration-300">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden p-6 border dark:border-slate-800 transition-colors">
+            <h2 className="font-bold text-xl text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4 transition-colors">
               <span>💬</span> Configurar Grupos
             </h2>
-            <div className="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-4 text-sm text-blue-800 font-medium">
+            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 p-4 rounded-lg mb-4 text-sm text-blue-800 dark:text-blue-300 font-medium transition-colors">
               As configurações de WhatsApp agora devem ser alteradas diretamente
-              na aba <strong>&quot;configuracoes&quot;</strong> da sua Planilha
+              na aba <strong>&ldquo;configuracoes&quot;</strong> da sua Planilha
               do Google!
             </div>
-            <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-200">
+            <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 transition-colors">
               <button
                 type="button"
                 onClick={() => setModalZapAberto(false)}
-                className="cursor-pointer px-6 py-2 bg-slate-200 hover:bg-slate-300 rounded font-bold text-slate-700 transition-colors"
+                className="cursor-pointer px-6 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 rounded font-bold text-slate-700 dark:text-slate-300 transition-colors"
               >
                 Entendido, Fechar
               </button>
@@ -584,7 +613,6 @@ export default function GestaoAulasPage() {
           </div>
         </div>
       )}
-
       {modalNovaMissaoAberto && (
         <FormularioMissaoModal
           idEditando={idEditando}
@@ -618,8 +646,8 @@ export default function GestaoAulasPage() {
           setModulo={setModulo}
           gabarito={gabarito}
           setGabarito={setGabarito}
-          gabaritoLiberado={gabaritoLiberado} // 🔥 PASSANDO A PROPRIEDADE
-          setGabaritoLiberado={setGabaritoLiberado} // 🔥 PASSANDO A FUNÇÃO
+          gabaritoLiberado={gabaritoLiberado}
+          setGabaritoLiberado={setGabaritoLiberado}
           modulosCadastrados={modulosCadastrados}
           turmasDisponiveis={turmasDisponiveis}
           salvando={salvando}
@@ -628,50 +656,83 @@ export default function GestaoAulasPage() {
         />
       )}
 
-      <div className="max-w-400 w-full mx-auto px-4 lg:px-8">
-        <Header
-          carregando={isLoading}
-          nomeUsuario={nomeUsuario}
-          onLogout={() => {
-            localStorage.removeItem("usuarioLogado");
-            window.location.href = "/";
-          }}
-        />
+      {/* ================= CORPO INSTITUCIONAL DA PÁGINA ================= */}
+      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm mb-6 transition-colors duration-300">
+        <div className="max-w-[1536px] w-full mx-auto px-4 lg:px-8 py-3">
+          <Header
+            carregando={isLoading}
+            nomeUsuario={nomeUsuario}
+            onLogout={() => {
+              localStorage.removeItem("usuarioLogado");
+              window.location.href = "/";
+            }}
+          />
 
-        <div className="flex items-center gap-4 mb-4 mt-6">
-          <button
-            onClick={() => router.push("/trilhatech")}
-            className="text-slate-500 hover:text-slate-800 font-bold px-3 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm transition-colors"
-          >
-            ← Voltar
-          </button>
-          <h2 className="text-2xl font-black text-slate-800 border-l-4 border-blue-500 pl-3">
-            Gestão: {nomeProjeto}
-          </h2>
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-6 mb-3">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.push("/trilhatech")}
+                className="cursor-pointer text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-bold px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              >
+                ← Voltar
+              </button>
+              <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 border-l-4 border-blue-600 pl-3 transition-colors">
+                Portal do Tutor
+              </h2>
+            </div>
+
+            {/* DASHBOARD SUPERIOR (SHORTCUTS) */}
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => {
+                  setModalRankingAberto(true);
+                  carregarRankingTutor("geral");
+                }}
+                className="cursor-pointer px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-800 dark:hover:text-amber-400 shadow-sm transition-colors flex items-center gap-2"
+              >
+                🏆 Ranking
+              </button>
+              <button
+                onClick={abrirRelatorioFrequencia}
+                className="cursor-pointer px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300 hover:border-emerald-400 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-800 dark:hover:text-emerald-400 shadow-sm transition-colors flex items-center gap-2"
+              >
+                📍 Diário
+              </button>
+              <button
+                onClick={() => router.push("/trilhatech/analytics")}
+                className="cursor-pointer px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-800 dark:hover:text-indigo-400 shadow-sm transition-colors flex items-center gap-2"
+              >
+                📈 Analytics
+              </button>
+            </div>
+          </div>
         </div>
+      </div>
 
-        <div className="flex flex-wrap gap-2 mb-8">
+      <div className="max-w-384 w-full mx-auto px-4 lg:px-8">
+        {/* BARRA DE LINKS EXTERNOS COMPACTA */}
+        <div className="flex flex-wrap gap-2 mb-6">
           <a
             href={linksGerais.planilha}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:bg-blue-50 hover:text-blue-700 transition-colors flex items-center gap-2 shadow-sm"
+            className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-md text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
           >
-            <span>📊</span> Planilha (BD)
+            <span>📊</span> Planilha BD
           </a>
           <a
             href={linksGerais.classroom}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:bg-amber-50 hover:text-amber-700 transition-colors flex items-center gap-2 shadow-sm"
+            className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-md text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
           >
-            <span>🏫</span> AVA (Classroom)
+            <span>🏫</span> AVA Classroom
           </a>
           <a
             href={linksGerais.matriz}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:bg-indigo-50 hover:text-indigo-700 transition-colors flex items-center gap-2 shadow-sm"
+            className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-md text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
           >
             <span>📑</span> Matriz Curricular
           </a>
@@ -679,7 +740,7 @@ export default function GestaoAulasPage() {
             href={linksGerais.cronograma}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:bg-purple-50 hover:text-purple-700 transition-colors flex items-center gap-2 shadow-sm"
+            className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-md text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
           >
             <span>🗓️</span> Cronograma
           </a>
@@ -687,22 +748,22 @@ export default function GestaoAulasPage() {
             href={linksGerais.ajuda}
             target="_blank"
             rel="noopener noreferrer"
-            className="px-4 py-2 bg-white border border-slate-200 rounded-full text-xs font-bold text-slate-600 hover:bg-rose-50 hover:text-rose-700 transition-colors flex items-center gap-2 shadow-sm"
+            className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-md text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
           >
             <span>🆘</span> Ajuda
           </a>
         </div>
 
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          {/* PAINEL LATERAL DE CONFIGURAÇÕES */}
           <div className="xl:col-span-1 space-y-4">
             {aniversariantes.length > 0 && (
-              <div className="bg-gradient-to-br from-amber-100 to-orange-100 border border-amber-300 p-4 rounded-2xl shadow-sm text-center">
-                <div className="text-4xl animate-bounce mb-2">🎂</div>
-                <h3 className="font-black text-sm uppercase tracking-tight text-amber-800">
-                  Aniversariantes!
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800/50 p-4 rounded-xl shadow-sm transition-colors">
+                <h3 className="font-black text-sm uppercase tracking-tight text-amber-800 dark:text-amber-400 mb-1 flex items-center gap-2 transition-colors">
+                  <span>🎂</span> Aniversariantes!
                 </h3>
-                <p className="text-xs font-medium text-amber-700 mt-1">
-                  Parabéns para:{" "}
+                <p className="text-xs font-medium text-amber-700 dark:text-amber-500 transition-colors">
+                  Parabéns:{" "}
                   <strong>
                     {aniversariantes.map((a) => `${a.nome}`).join(", ")}
                   </strong>
@@ -710,149 +771,123 @@ export default function GestaoAulasPage() {
               </div>
             )}
 
-            <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-              <h3 className="font-black text-sm text-slate-800 uppercase tracking-widest border-b border-slate-100 pb-2 mb-4">
-                Controles da Aula
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
+              <h3 className="font-black text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2 mb-4 transition-colors">
+                Configurações Rápidas
               </h3>
-              <div className="mb-5">
+
+              <div className="mb-5 bg-slate-50 dark:bg-slate-950 p-3 rounded-lg border border-slate-100 dark:border-slate-800 transition-colors">
                 <div className="flex justify-between items-center mb-1">
                   <span
-                    className={`text-sm font-bold flex items-center gap-2 ${modoReposicao ? "text-indigo-600" : "text-slate-600"}`}
+                    className={`text-xs font-bold flex items-center gap-2 transition-colors ${modoReposicao ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 dark:text-slate-400"}`}
                   >
                     ⚙️ Modo Reposição
                   </span>
                   <button
                     onClick={toggleModoReposicao}
                     disabled={carregandoReposicao}
-                    className={`cursor-pointer relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus:outline-none ${modoReposicao ? "bg-indigo-600" : "bg-slate-300"} ${carregandoReposicao ? "opacity-50" : ""}`}
+                    className={`cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${modoReposicao ? "bg-indigo-600 dark:bg-indigo-500" : "bg-slate-300 dark:bg-slate-700"}`}
                   >
                     <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${modoReposicao ? "translate-x-6" : "translate-x-1"}`}
+                      className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${modoReposicao ? "translate-x-5" : "translate-x-1"}`}
                     />
                   </button>
                 </div>
-                <p className="text-[10px] text-slate-400 leading-tight">
+                <p className="text-[9px] text-slate-400 dark:text-slate-500 leading-tight transition-colors">
                   Ignora o dia da semana para permitir check-ins atrasados.
                 </p>
               </div>
 
-              <div>
-                <label className="text-sm font-bold text-slate-600 flex items-center gap-2 mb-2">
+              <div className="mb-4">
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-2 mb-1.5 transition-colors">
                   <span>🔐</span> Senha da Lousa
                 </label>
-                <div className="flex flex-col gap-2">
+                <div className="flex gap-2">
                   <input
                     type="text"
                     value={senhaLousa}
                     onChange={(e) =>
                       setSenhaLousa(e.target.value.toUpperCase())
                     }
-                    placeholder="AULA01"
-                    className="w-full font-mono font-black text-center border-2 border-slate-200 rounded-lg p-2 text-slate-800 uppercase focus:border-blue-500 outline-none bg-slate-50"
+                    className="w-full font-mono font-black text-center border border-slate-200 dark:border-slate-700 rounded-md p-1.5 text-slate-800 dark:text-slate-100 uppercase text-sm focus:border-blue-500 dark:focus:border-blue-400 outline-none bg-slate-50 dark:bg-slate-950 transition-colors"
                   />
                   <button
                     onClick={salvarNovaSenha}
                     disabled={salvandoSenha}
-                    className="cursor-pointer w-full bg-slate-800 hover:bg-slate-900 text-white font-bold py-2 rounded-lg transition-colors text-sm"
+                    className="cursor-pointer bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold px-3 rounded-md transition-colors text-xs"
                   >
-                    {salvandoSenha ? "..." : "Atualizar Senha"}
+                    {salvandoSenha ? "..." : "OK"}
                   </button>
                 </div>
               </div>
-            </div>
 
-            <button
-              onClick={() => setModalZapAberto(true)}
-              className="cursor-pointer w-full bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-sm font-bold py-3 px-4 rounded-2xl shadow-sm transition-all flex items-center justify-center gap-2 border border-emerald-200"
-            >
-              <span>💬</span> Configurar WhatsApp
-            </button>
-
-            <button
-              onClick={() => setModalGodModeAberto(true)}
-              className="cursor-pointer w-full bg-gradient-to-r text-black from-slate-900 to-purple-900 hover:from-black hover:to-indigo-950 text-transparent bg-clip-text bg-gradient-to-r text-sm font-black py-4 px-4 rounded-2xl shadow-xl transition-all flex items-center justify-center gap-2 border-2 border-amber-400 hover:scale-105 active:scale-95 uppercase tracking-widest mt-4"
-            >
-              <span className="text-xl">⚡</span> God Mode
-            </button>
-          </div>
-
-          <div className="xl:col-span-4 overflow-hidden">
-            <div className="grid grid-cols-3 gap-3 md:gap-4 mb-8">
-              <button
-                onClick={() => {
-                  setModalRankingAberto(true);
-                  carregarRankingTutor("geral");
-                }}
-                className="bg-gradient-to-br from-amber-500 to-orange-500 p-4 md:p-5 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all text-left flex flex-col items-start gap-2 group"
-              >
-                <div className="bg-white/20 p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
-                  🏆
-                </div>
-                <div>
-                  <h3 className="text-white font-black text-sm md:text-base leading-tight">
-                    Ranking Escolar
-                  </h3>
-                  <p className="text-amber-100 text-[10px] md:text-xs">
-                    Ver Líderes e XP
-                  </p>
-                </div>
-              </button>
-              <button
-                onClick={abrirRelatorioFrequencia}
-                className="bg-gradient-to-br from-emerald-500 to-teal-500 p-4 md:p-5 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all text-left flex flex-col items-start gap-2 group"
-              >
-                <div className="bg-white/20 p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
-                  📍
-                </div>
-                <div>
-                  <h3 className="text-white font-black text-sm md:text-base leading-tight">
-                    Frequência
-                  </h3>
-                  <p className="text-emerald-100 text-[10px] md:text-xs">
-                    Diário de Classe
-                  </p>
-                </div>
-              </button>
-              <button
-                onClick={() => router.push("/trilhatech/analytics")}
-                className="bg-gradient-to-br from-indigo-600 to-blue-600 p-4 md:p-5 rounded-2xl shadow-md hover:shadow-lg hover:-translate-y-1 transition-all text-left flex flex-col items-start gap-2 group"
-              >
-                <div className="bg-white/20 p-2 rounded-lg text-white group-hover:scale-110 transition-transform">
-                  📈
-                </div>
-                <div>
-                  <h3 className="text-white font-black text-sm md:text-base leading-tight">
-                    Analytics
-                  </h3>
-                  <p className="text-indigo-100 text-[10px] md:text-xs">
-                    Radar e Relatórios
-                  </p>
-                </div>
-              </button>
-            </div>
-
-            <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-1">
-              <div className="p-4 md:p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                  <h2 className="text-xl font-black text-slate-800">
-                    Missões Publicadas
-                  </h2>
-                  <p className="text-sm text-slate-500">
-                    Gerencie as atividades, prazos e notas dos alunos.
-                  </p>
-                </div>
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800 transition-colors">
                 <button
-                  onClick={() => {
-                    limparFormulario();
-                    setModalNovaMissaoAberto(true);
-                  }}
-                  className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2.5 rounded-xl font-black shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-2 w-full md:w-auto justify-center"
+                  onClick={() => setModalZapAberto(true)}
+                  className="cursor-pointer w-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700"
                 >
-                  <span className="text-lg leading-none">+</span> Criar Nova
-                  Missão
+                  <span>💬</span> WhatsApp
+                </button>
+                <button
+                  onClick={() => setModalGodModeAberto(true)}
+                  className="cursor-pointer w-full bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-2 border border-slate-800 dark:border-slate-700"
+                >
+                  <span>⚡</span> God Mode
+                </button>
+                <button
+                  onClick={() => setModalFechamentoAberto(true)}
+                  className="cursor-pointer w-full bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 text-white text-xs font-black py-2.5 rounded-lg shadow-md transition-all flex items-center justify-center gap-2 border border-amber-600 dark:border-amber-500 mt-2 uppercase tracking-wide"
+                >
+                  <span>🏆</span> Fechar Ranking
                 </button>
               </div>
-              <div className="p-4 md:p-6 bg-slate-50/50 rounded-b-2xl">
+            </div>
+          </div>
+
+          {modalFechamentoAberto && (
+            <FechamentoCicloModal
+              isOpen={modalFechamentoAberto}
+              onClose={() => setModalFechamentoAberto(false)}
+              turmasDisponiveis={turmasDisponiveis}
+            />
+          )}
+
+          {/* ÁREA PRINCIPAL: CENTRAL DE MISSÕES */}
+          <div className="xl:col-span-3">
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
+              {/* CABEÇALHO E AÇÕES PRIMÁRIAS */}
+              <div className="p-4 md:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-colors">
+                <div>
+                  <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 transition-colors">
+                    Central de Missões
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 transition-colors">
+                    Gira o conteúdo, prazos e os XP da turma.
+                  </p>
+                </div>
+
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => setModalImportadorAberto(true)}
+                    className="cursor-pointer bg-white dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-800/50 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-4 py-2 rounded-xl font-bold transition-all flex items-center justify-center gap-2"
+                  >
+                    <span className="text-base leading-none">⚡</span> Importar
+                    Lote
+                  </button>
+                  <button
+                    onClick={() => {
+                      limparFormulario();
+                      setModalNovaMissaoAberto(true);
+                    }}
+                    className="cursor-pointer bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white px-5 py-2 rounded-xl font-black shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-2 justify-center"
+                  >
+                    <span className="text-lg leading-none">+</span> Nova Missão
+                  </button>
+                </div>
+              </div>
+
+              {/* LISTA COMPACTA */}
+              <div className="p-4 md:p-6 bg-slate-50/50 dark:bg-slate-950/50 rounded-b-2xl min-h-[500px] transition-colors duration-300">
                 <MissoesList
                   atividades={atividades}
                   isLoading={isLoading}

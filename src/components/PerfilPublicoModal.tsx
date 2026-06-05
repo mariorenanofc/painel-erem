@@ -63,7 +63,7 @@ export default function PerfilPublicoModal({
 
   if (carregando) {
     return (
-      <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+      <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-110 p-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-pink-500"></div>
       </div>
     );
@@ -120,7 +120,7 @@ export default function PerfilPublicoModal({
     });
 
   return (
-    <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-[110] p-4 animate-in fade-in duration-200 transition-colors">
+    <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-110 p-4 animate-in fade-in duration-200 transition-colors">
       <div className="bg-slate-50 dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[95vh] overflow-hidden flex flex-col border border-white/20 dark:border-slate-800 relative transition-colors duration-300">
         <div className="bg-gradient-to-br from-indigo-700 via-purple-700 to-pink-600 p-6 md:p-8 relative overflow-hidden shrink-0">
           <button

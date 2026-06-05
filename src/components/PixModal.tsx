@@ -33,9 +33,7 @@ export default function PixModal({
   useEffect(() => {
     const carregarDadosPix = async () => {
       try {
-        //  USO DA API CENTRALIZADA
         const data = await apiAluno.iniciarPix(aluno.matricula);
-
         if (data.status === "sucesso") {
           setDadosPix(data);
           if (
@@ -69,9 +67,7 @@ export default function PixModal({
 
     setEnviandoPix(true);
     try {
-      // USO DA API CENTRALIZADA
       const data = await apiAluno.criarSenhaPix(aluno.matricula, novaSenhaPix);
-
       if (data.status === "sucesso") {
         alert("✅ Senha criada com sucesso!");
         setDadosPix((prev) => (prev ? { ...prev, temSenhaPix: true } : null));
@@ -99,7 +95,6 @@ export default function PixModal({
 
     setEnviandoPix(true);
     try {
-      // USO DA API CENTRALIZADA
       const data = await apiAluno.transferirXP(
         aluno.matricula,
         pixSenha,
@@ -123,9 +118,9 @@ export default function PixModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[70] p-4 animate-in fade-in">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden flex flex-col max-h-[90vh]">
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 p-5 border-b flex justify-between items-center text-white shrink-0">
+    <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-[70] p-4 animate-in fade-in transition-colors duration-300">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border dark:border-slate-800 w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] transition-colors duration-300">
+        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 dark:from-emerald-700 dark:to-teal-800 p-5 border-b dark:border-slate-800 flex justify-between items-center text-white shrink-0 transition-colors duration-300">
           <div>
             <h2 className="font-black text-xl flex items-center gap-2">
               <span>💸</span> Pix de XP
@@ -151,18 +146,18 @@ export default function PixModal({
               className="text-center animate-in zoom-in"
             >
               <div className="text-5xl mb-4">🔐</div>
-              <h3 className="font-bold text-slate-800 text-lg mb-2">
+              <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg mb-2 transition-colors">
                 Crie sua Senha Pix
               </h3>
-              <p className="text-sm text-slate-500 mb-6">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 transition-colors">
                 Para sua segurança, crie uma senha numérica de{" "}
-                <strong>6 dígitos</strong>. Você vai usá-la sempre que quiser
-                enviar XP.
+                <strong className="dark:text-slate-300">6 dígitos</strong>. Você
+                vai usá-la sempre que quiser enviar XP.
               </p>
 
               <div className="space-y-4 text-left mb-6">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
                     Nova Senha (6 números)
                   </label>
                   <input
@@ -173,12 +168,12 @@ export default function PixModal({
                       setNovaSenhaPix(e.target.value.replace(/\D/g, ""))
                     }
                     required
-                    className="w-full text-center text-slate-800 text-2xl tracking-widest border-2 border-slate-300 rounded p-2 outline-none focus:border-emerald-500"
+                    className="w-full text-center text-slate-800 dark:text-slate-100 bg-transparent dark:bg-slate-800 text-2xl tracking-widest border-2 border-slate-300 dark:border-slate-700 rounded p-2 outline-none focus:border-emerald-500 transition-colors duration-300"
                     placeholder="••••••"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
                     Repita a Senha
                   </label>
                   <input
@@ -191,7 +186,7 @@ export default function PixModal({
                       )
                     }
                     required
-                    className="w-full text-center text-slate-800 text-2xl tracking-widest border-2 border-slate-300 rounded p-2 outline-none focus:border-emerald-500"
+                    className="w-full text-center text-slate-800 dark:text-slate-100 bg-transparent dark:bg-slate-800 text-2xl tracking-widest border-2 border-slate-300 dark:border-slate-700 rounded p-2 outline-none focus:border-emerald-500 transition-colors duration-300"
                     placeholder="••••••"
                   />
                 </div>
@@ -206,16 +201,16 @@ export default function PixModal({
             </form>
           ) : dadosPix && dadosPix.temSenhaPix ? (
             <div className="animate-in slide-in-from-bottom-4">
-              <div className="flex border-b border-slate-200 mb-5">
+              <div className="flex border-b border-slate-200 dark:border-slate-800 mb-5 transition-colors duration-300">
                 <button
                   onClick={() => setAbaAtiva("enviar")}
-                  className={`flex-1 py-3 font-bold text-sm transition-colors ${abaAtiva === "enviar" ? "border-b-2 border-emerald-500 text-emerald-600" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}
+                  className={`flex-1 py-3 font-bold text-sm transition-colors ${abaAtiva === "enviar" ? "border-b-2 border-emerald-500 text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
                 >
                   Transferir XP
                 </button>
                 <button
                   onClick={() => setAbaAtiva("extrato")}
-                  className={`flex-1 py-3 font-bold text-sm transition-colors ${abaAtiva === "extrato" ? "border-b-2 border-emerald-500 text-emerald-600" : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"}`}
+                  className={`flex-1 py-3 font-bold text-sm transition-colors ${abaAtiva === "extrato" ? "border-b-2 border-emerald-500 text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
                 >
                   Ver Extrato
                 </button>
@@ -223,20 +218,20 @@ export default function PixModal({
 
               {abaAtiva === "enviar" ? (
                 <form onSubmit={enviarPix}>
-                  <div className="flex justify-between items-center bg-slate-100 p-3 rounded-lg border border-slate-200 mb-5">
+                  <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700 mb-5 transition-colors duration-300">
                     <div>
-                      <p className="text-[10px] uppercase font-bold text-slate-500">
+                      <p className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">
                         Seu Saldo Total
                       </p>
-                      <p className="font-black text-emerald-600 text-lg">
+                      <p className="font-black text-emerald-600 dark:text-emerald-400 text-lg">
                         {dadosPix.meuXpTotal} XP
                       </p>
                     </div>
                     <div className="text-right">
-                      <p className="text-[10px] uppercase font-bold text-slate-500">
+                      <p className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">
                         Limite Diário Restante
                       </p>
-                      <p className="font-black text-blue-600 text-lg">
+                      <p className="font-black text-blue-600 dark:text-blue-400 text-lg">
                         {Math.max(
                           0,
                           dadosPix.limiteDiario - dadosPix.xpDoadoHoje,
@@ -248,14 +243,14 @@ export default function PixModal({
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
                         Para quem você quer enviar?
                       </label>
                       <select
                         value={pixColega}
                         onChange={(e) => setPixColega(e.target.value)}
                         required
-                        className="w-full bg-white border border-slate-300 text-slate-800 rounded p-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                        className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded p-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 transition-colors duration-300"
                       >
                         <option value="">Selecione um colega...</option>
                         {dadosPix.colegas.map((c) => (
@@ -268,7 +263,7 @@ export default function PixModal({
 
                     <div className="flex gap-4">
                       <div className="flex-1">
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
                           Valor (XP)
                         </label>
                         <input
@@ -283,19 +278,19 @@ export default function PixModal({
                             setPixQuantidade(Number(e.target.value))
                           }
                           required
-                          className="w-full bg-white border border-slate-300 text-emerald-700 font-black rounded p-2.5 outline-none focus:ring-2 focus:ring-emerald-500"
+                          className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-emerald-700 dark:text-emerald-400 font-black rounded p-2.5 outline-none focus:ring-2 focus:ring-emerald-500 transition-colors duration-300"
                           placeholder="Ex: 10"
                         />
                       </div>
                       <div className="flex-2">
-                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">
+                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
                           Motivo / Mensagem
                         </label>
                         <select
                           value={pixMotivo}
                           onChange={(e) => setPixMotivo(e.target.value)}
                           required
-                          className="w-full bg-white border border-slate-300 text-slate-800 rounded p-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500"
+                          className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded p-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 transition-colors duration-300"
                         >
                           <option>🤝 Parceria de Equipe</option>
                           <option>🧠 Mestre do Código (Me ajudou)</option>
@@ -306,8 +301,8 @@ export default function PixModal({
                       </div>
                     </div>
 
-                    <div className="pt-4 border-t border-slate-200 mt-2">
-                      <label className="block text-xs font-bold text-amber-600 uppercase mb-1 text-center">
+                    <div className="pt-4 border-t border-slate-200 dark:border-slate-800 mt-2 transition-colors duration-300">
+                      <label className="block text-xs font-bold text-amber-600 dark:text-amber-500 uppercase mb-1 text-center transition-colors">
                         Digite sua Senha Pix
                       </label>
                       <input
@@ -318,7 +313,7 @@ export default function PixModal({
                           setPixSenha(e.target.value.replace(/\D/g, ""))
                         }
                         required
-                        className="w-full max-w-200 text-slate-800 mx-auto block text-center text-xl tracking-widest border-2 border-amber-300 bg-amber-50 rounded p-2 outline-none focus:border-amber-500"
+                        className="w-full max-w-200 text-slate-800 dark:text-slate-100 mx-auto block text-center text-xl tracking-widest border-2 border-amber-300 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 rounded p-2 outline-none focus:border-amber-500 transition-colors duration-300"
                         placeholder="••••••"
                       />
                     </div>
@@ -342,10 +337,10 @@ export default function PixModal({
                   {dadosPix.extrato.length === 0 ? (
                     <div className="text-center py-10 opacity-60">
                       <div className="text-4xl mb-3">📭</div>
-                      <p className="text-sm font-bold text-slate-500">
+                      <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
                         Seu extrato está vazio.
                       </p>
-                      <p className="text-xs text-slate-400">
+                      <p className="text-xs text-slate-400 dark:text-slate-500">
                         Você ainda não fez nem recebeu PIX.
                       </p>
                     </div>
@@ -353,27 +348,27 @@ export default function PixModal({
                     dadosPix.extrato.map((item) => (
                       <div
                         key={item.id}
-                        className="flex justify-between items-center bg-slate-50 p-3 rounded-xl border border-slate-200"
+                        className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors duration-300"
                       >
                         <div className="flex items-center gap-3">
                           <div
-                            className={`p-2.5 rounded-full shrink-0 ${item.tipo === "RECEBEU" ? "bg-emerald-100 text-emerald-600" : "bg-slate-200 text-slate-600"}`}
+                            className={`p-2.5 rounded-full shrink-0 ${item.tipo === "RECEBEU" ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"}`}
                           >
                             {item.tipo === "RECEBEU" ? "↙️" : "↗️"}
                           </div>
                           <div>
-                            <p className="text-sm font-bold text-slate-800 leading-tight">
+                            <p className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight">
                               {item.tipo === "RECEBEU"
                                 ? "Pix Recebido"
                                 : "Pix Enviado"}
                             </p>
                             <p
-                              className="text-[10px] text-slate-500 mt-0.5 font-medium line-clamp-1"
+                              className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium line-clamp-1"
                               title={item.mensagem}
                             >
                               {item.mensagem}
                             </p>
-                            <p className="text-[10px] text-slate-400 mt-1 flex items-center gap-1 font-medium">
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 flex items-center gap-1 font-medium">
                               <span>🕒</span>{" "}
                               {new Date(item.tempo)
                                 .toLocaleString("pt-BR", {
@@ -388,7 +383,7 @@ export default function PixModal({
                           </div>
                         </div>
                         <div
-                          className={`font-black shrink-0 ml-2 ${item.tipo === "RECEBEU" ? "text-emerald-600" : "text-slate-700"}`}
+                          className={`font-black shrink-0 ml-2 ${item.tipo === "RECEBEU" ? "text-emerald-600 dark:text-emerald-400" : "text-slate-700 dark:text-slate-300"}`}
                         >
                           {item.tipo === "RECEBEU" ? "+" : ""}
                           {item.xp} XP

@@ -39,29 +39,45 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // Pega o ano atual dinamicamente direto do servidor
   const anoAtual = new Date().getFullYear();
 
   return (
     <html
       lang="pt-BR"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-slate-50 text-slate-900">
+      <head>
+        {/* 🔥 SCRIPT MÁGICO DO THEMA: Evita o "piscar" (FOUC) ao carregar a página */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              try {
+                if (localStorage.theme === 'dark' || (!('theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+                  document.documentElement.classList.add('dark')
+                } else {
+                  document.documentElement.classList.remove('dark')
+                }
+              } catch (_) {}
+            `,
+          }}
+        />
+      </head>
+      {/* Adicionamos a transição suave de cores no body e o suporte ao dark mode */}
+      <body className="min-h-full flex flex-col bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 transition-colors duration-300">
         
-        {/* O conteúdo das páginas (children) cresce para ocupar o espaço disponível */}
         <div className="flex-1 flex flex-col">
           {children}
         </div>
 
-        {/* FOOTER GLOBAL - COERENTE COM O TEMA */}
-        <footer className="w-full py-4 px-4 text-center text-[11px] md:text-xs text-slate-500 border-t border-slate-200 mt-auto bg-slate-50">
+        {/* FOOTER GLOBAL ATUALIZADO PARA DARK MODE */}
+        <footer className="w-full py-4 px-4 text-center text-[11px] md:text-xs text-slate-500 dark:text-slate-400 border-t border-slate-200 dark:border-slate-800 mt-auto bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
           &copy; {anoAtual} |{" Desenvolvido por "}
           <a 
             href="https://mariorenanofc.com.br" 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="font-black text-blue-600 hover:text-blue-800 transition-colors"
+            className="font-black text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 transition-colors"
           >
             Tutor Mário Renan - PFT 🌵
           </a>

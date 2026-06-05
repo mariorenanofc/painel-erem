@@ -7,7 +7,6 @@ import { calcularBadges } from "../utils/badges";
 import { Atividade, PerfilPublicoModalProps } from "../types";
 import { apiAluno } from "@/src/services/api";
 
-
 export default function PerfilPublicoModal({
   matriculaAlvo,
   matriculaVisualizador,
@@ -64,7 +63,7 @@ export default function PerfilPublicoModal({
 
   if (carregando) {
     return (
-      <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+      <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-pink-500"></div>
       </div>
     );
@@ -72,7 +71,6 @@ export default function PerfilPublicoModal({
 
   if (!perfil) return null;
 
-  // Avatar sempre será o emoji correto escolhido pelo aluno
   const avatar =
     perfil.avatar && perfil.avatar !== "avatar-padrao" ? perfil.avatar : "👨‍💻";
 
@@ -94,17 +92,13 @@ export default function PerfilPublicoModal({
     totalCurtidas: 999999,
   });
 
-  // ===== SISTEMA DE PLACAS VIP (BASEADO NO BD CORRETO) =====
   const badgesDoAluno = perfil.badges || [];
-
-  // Busca se o aluno tem a placa na aba entregas
   const isOuro = badgesDoAluno.some((b: string) => b.includes("Elite Ouro"));
   const isPrata = badgesDoAluno.some((b: string) => b.includes("Elite Prata"));
   const isBronze = badgesDoAluno.some((b: string) =>
     b.includes("Elite Bronze"),
   );
 
-  // Remove as placas VIP da lista de badges normais
   const badgesExibicao = badgesDoAluno
     .filter(
       (nome: string) =>
@@ -126,8 +120,8 @@ export default function PerfilPublicoModal({
     });
 
   return (
-    <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-[110] p-4 animate-in fade-in duration-200">
-      <div className="bg-slate-50 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[95vh] overflow-hidden flex flex-col border border-white/20 relative">
+    <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-[110] p-4 animate-in fade-in duration-200 transition-colors">
+      <div className="bg-slate-50 dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-3xl max-h-[95vh] overflow-hidden flex flex-col border border-white/20 dark:border-slate-800 relative transition-colors duration-300">
         <div className="bg-gradient-to-br from-indigo-700 via-purple-700 to-pink-600 p-6 md:p-8 relative overflow-hidden shrink-0">
           <button
             onClick={onClose}
@@ -169,7 +163,7 @@ export default function PerfilPublicoModal({
               <button
                 onClick={handleCurtir}
                 disabled={perfil.jaCurtiuHoje || curtindo}
-                className={`flex w-full justify-center items-center gap-2 px-6 py-3 rounded-full font-black shadow-lg transition-all border-2 ${perfil.jaCurtiuHoje ? "bg-pink-50 border-pink-200 text-pink-400 cursor-not-allowed" : "bg-pink-500 border-pink-400 text-white hover:bg-pink-600 hover:scale-105 active:scale-95"}`}
+                className={`flex w-full justify-center items-center gap-2 px-6 py-3 rounded-full font-black shadow-lg transition-all border-2 ${perfil.jaCurtiuHoje ? "bg-pink-50 dark:bg-pink-950 border-pink-200 dark:border-pink-800 text-pink-400 dark:text-pink-600 cursor-not-allowed" : "bg-pink-500 border-pink-400 text-white hover:bg-pink-600 hover:scale-105 active:scale-95"}`}
               >
                 <span
                   className={`text-xl ${perfil.jaCurtiuHoje ? "" : "animate-pulse"}`}
@@ -197,11 +191,10 @@ export default function PerfilPublicoModal({
           </div>
         </div>
 
-        <div className="p-6 bg-slate-50 flex-1 overflow-y-auto">
-          {/* SESSÃO VIP: PLACAS DE ELITE MENSAL */}
+        <div className="p-6 bg-slate-50 dark:bg-slate-900/50 flex-1 overflow-y-auto transition-colors duration-300">
           {(isOuro || isPrata || isBronze) && (
             <div className="mb-8 animate-in zoom-in duration-500">
-              <h3 className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-3 text-center">
+              <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 text-center transition-colors">
                 Hall da Fama - Conquistas de Elite
               </h3>
 
@@ -233,7 +226,6 @@ export default function PerfilPublicoModal({
                     </div>
                   </div>
                 )}
-
                 {isPrata && (
                   <div
                     className="relative overflow-hidden rounded-2xl border-2 border-slate-400 shadow-[0_10px_20px_rgba(148,163,184,0.4)] transform hover:scale-105 transition-all"
@@ -261,7 +253,6 @@ export default function PerfilPublicoModal({
                     </div>
                   </div>
                 )}
-
                 {isBronze && (
                   <div
                     className="relative overflow-hidden rounded-2xl border-2 border-orange-500 shadow-[0_10px_20px_rgba(249,115,22,0.4)] transform hover:scale-105 transition-all"
@@ -294,52 +285,52 @@ export default function PerfilPublicoModal({
           )}
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-            <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-sm hover:-translate-y-1 transition-transform">
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl text-center shadow-sm hover:-translate-y-1 transition-all duration-300">
               <div className="text-2xl mb-1">⭐</div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">
                 XP Total
               </p>
-              <p className="text-xl md:text-2xl font-black text-emerald-600">
+              <p className="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400">
                 {perfil.xpTotal}
               </p>
             </div>
-            <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-sm hover:-translate-y-1 transition-transform">
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl text-center shadow-sm hover:-translate-y-1 transition-all duration-300">
               <div className="text-2xl mb-1">🎯</div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">
                 Missões Feitas
               </p>
-              <p className="text-xl md:text-2xl font-black text-blue-600">
+              <p className="text-xl md:text-2xl font-black text-blue-600 dark:text-blue-400">
                 {perfil.missoesConcluidas}
               </p>
             </div>
-            <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-sm hover:-translate-y-1 transition-transform">
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl text-center shadow-sm hover:-translate-y-1 transition-all duration-300">
               <div className="text-2xl mb-1">💸</div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">
                 Pix Enviado
               </p>
-              <p className="text-xl md:text-2xl font-black text-amber-500">
+              <p className="text-xl md:text-2xl font-black text-amber-500 dark:text-amber-400">
                 {perfil.pixEnviado}
               </p>
             </div>
-            <div className="bg-white border border-slate-200 p-4 rounded-2xl text-center shadow-sm hover:-translate-y-1 transition-transform">
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl text-center shadow-sm hover:-translate-y-1 transition-all duration-300">
               <div className="text-2xl mb-1">🤝</div>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">
+              <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase">
                 Pix Recebido
               </p>
-              <p className="text-xl md:text-2xl font-black text-indigo-500">
+              <p className="text-xl md:text-2xl font-black text-indigo-500 dark:text-indigo-400">
                 {perfil.pixRecebido}
               </p>
             </div>
           </div>
 
           <div>
-            <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 border-b border-slate-200 pb-2">
+            <h3 className="text-xs font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-4 border-b border-slate-200 dark:border-slate-700 pb-2 transition-colors">
               Conquistas Regulares
             </h3>
             {badgesExibicao.length === 0 ? (
               <div className="text-center py-8">
                 <span className="text-4xl opacity-40 mb-2 block">📭</span>
-                <p className="text-sm text-slate-500 font-medium">
+                <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">
                   Este aluno não tem outras conquistas exibíveis.
                 </p>
               </div>
@@ -348,16 +339,16 @@ export default function PerfilPublicoModal({
                 {badgesExibicao.map((badge: any, idx: number) => (
                   <div
                     key={idx}
-                    className="bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200 p-3 rounded-xl flex items-center gap-3 shadow-sm hover:shadow-md transition-shadow"
+                    className="bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800/50 p-3 rounded-xl flex items-center gap-3 shadow-sm hover:shadow-md transition-all duration-300"
                   >
-                    <div className="bg-white p-2 rounded-lg text-2xl shadow-sm border border-amber-100 shrink-0">
+                    <div className="bg-white dark:bg-slate-800 p-2 rounded-lg text-2xl shadow-sm border border-amber-100 dark:border-amber-900/50 shrink-0">
                       {badge.icone}
                     </div>
                     <div>
-                      <h4 className="font-black text-amber-900 text-sm leading-tight">
+                      <h4 className="font-black text-amber-900 dark:text-amber-400 text-sm leading-tight">
                         {badge.nome}
                       </h4>
-                      <p className="text-[10px] font-bold text-amber-700/80 mt-0.5 line-clamp-2">
+                      <p className="text-[10px] font-bold text-amber-700/80 dark:text-amber-500/80 mt-0.5 line-clamp-2">
                         {badge.descricao}
                       </p>
                     </div>

@@ -123,7 +123,7 @@ export default function PortalDashboard() {
   const [alvoPix, setAlvoPix] = useState<string | null>(null);
   const [rankingAberto, setRankingAberto] = useState(false);
 
-  const VERSAO_ATUALIZACAO = "1.7.0";
+  const VERSAO_ATUALIZACAO = "1.8.0";
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
   // ================= EFEITOS =================
@@ -441,30 +441,24 @@ export default function PortalDashboard() {
     setAulasFechadas((prev) => ({ ...prev, [nomeAula]: !prev[nomeAula] }));
   };
 
-// ================= CÁLCULOS E FILTROS =================
+  // ================= CÁLCULOS E FILTROS =================
   const missoesPendentes = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
-    // 🔥 IGNORA SE O MÓDULO ESTIVER ENCERRADO OU FECHADO
-    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
-    if (stMod === "encerrado" || stMod === "em breve") return false;
-    
     return st === "pendente" || st === "devolvida";
   }).length;
 
   const qtdPendentes = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
-    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
-    if (stMod === "encerrado" || stMod === "em breve") return false;
-    
-    return (st === "pendente" || st === "devolvida") && a.statusPrazo !== "Atrasada";
+    return (
+      (st === "pendente" || st === "devolvida") && a.statusPrazo !== "Atrasada"
+    );
   }).length;
 
   const qtdAtrasadas = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
-    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
-    if (stMod === "encerrado" || stMod === "em breve") return false;
-    
-    return (st === "pendente" || st === "devolvida") && a.statusPrazo === "Atrasada";
+    return (
+      (st === "pendente" || st === "devolvida") && a.statusPrazo === "Atrasada"
+    );
   }).length;
 
   const qtdConcluidas = atividades.filter((a) => {
@@ -473,21 +467,24 @@ export default function PortalDashboard() {
   }).length;
 
   const atividadesFiltradas = atividades.filter((a) => {
-    const matchBusca = a.titulo.toLowerCase().includes(buscaAtividade.toLowerCase());
+    const matchBusca = a.titulo
+      .toLowerCase()
+      .includes(buscaAtividade.toLowerCase());
     if (!matchBusca) return false;
 
     const st = a.status?.toLowerCase().trim() || "pendente";
-    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
-
-    if (abaAtividade === "Pendentes") {
-      if (stMod === "encerrado" || stMod === "em breve") return false;
-      return (st === "pendente" || st === "devolvida") && a.statusPrazo !== "Atrasada";
-    }
-    if (abaAtividade === "Atrasadas") {
-      if (stMod === "encerrado" || stMod === "em breve") return false;
-      return (st === "pendente" || st === "devolvida") && a.statusPrazo === "Atrasada";
-    }
-    if (abaAtividade === "Concluidas") return st !== "pendente" && st !== "devolvida";
+    if (abaAtividade === "Pendentes")
+      return (
+        (st === "pendente" || st === "devolvida") &&
+        a.statusPrazo !== "Atrasada"
+      );
+    if (abaAtividade === "Atrasadas")
+      return (
+        (st === "pendente" || st === "devolvida") &&
+        a.statusPrazo === "Atrasada"
+      );
+    if (abaAtividade === "Concluidas")
+      return st !== "pendente" && st !== "devolvida";
     return true;
   });
 
@@ -566,9 +563,9 @@ export default function PortalDashboard() {
   // ================= RENDERIZAÇÃO =================
   if (!montado || !aluno || carregandoPortal)
     return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center transition-colors duration-300">
         <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-blue-600 mb-4"></div>
-        <p className="text-slate-500 font-bold animate-pulse">
+        <p className="text-slate-500 dark:text-slate-400 font-bold animate-pulse">
           Carregando seu progresso...
         </p>
       </div>
@@ -576,9 +573,11 @@ export default function PortalDashboard() {
 
   return (
     <main
-      className="min-h-screen relative bg-slate-50 font-sans pb-12"
+      className="min-h-screen relative bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-12 select-none transition-colors duration-300"
+      onContextMenu={(e) => e.preventDefault()}
+      onCopy={(e) => e.preventDefault()}
+      onCut={(e) => e.preventDefault()}
     >
-
       {/* MODAIS GLOBAIS */}
       {modalPixAberto && (
         <PixModal
@@ -640,14 +639,14 @@ export default function PortalDashboard() {
 
       {/* AVISO DO WHATSAPP */}
       {!zapConfirmado && zapLink && (
-        <div className="bg-emerald-600 text-white p-4 shadow-inner flex flex-col md:flex-row items-center justify-between gap-4 animate-in slide-in-from-top">
+        <div className="bg-emerald-600 dark:bg-emerald-900 text-white p-4 shadow-inner flex flex-col md:flex-row items-center justify-between gap-4 animate-in slide-in-from-top transition-colors duration-300">
           <div className="flex items-center gap-3">
             <span className="text-4xl animate-bounce">💬</span>
             <div>
               <h3 className="font-bold text-lg leading-tight">
                 Você ainda não está no nosso WhatsApp!
               </h3>
-              <p className="text-emerald-100 text-sm">
+              <p className="text-emerald-100 dark:text-emerald-200 text-sm">
                 É obrigatório entrar no grupo da sua turma para receber avisos e
                 não perder missões.
               </p>
@@ -658,14 +657,14 @@ export default function PortalDashboard() {
               href={zapLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="bg-white text-emerald-800 font-black py-2 px-6 rounded-lg text-center flex-1 md:flex-none shadow hover:bg-emerald-50 transition-colors"
+              className="bg-white dark:bg-emerald-800 text-emerald-800 dark:text-white font-black py-2 px-6 rounded-lg text-center flex-1 md:flex-none shadow hover:bg-emerald-50 dark:hover:bg-emerald-700 transition-colors"
             >
               1. Entrar no Grupo
             </a>
             <button
               onClick={confirmarEntradaGrupo}
               disabled={confirmandoZap}
-              className="bg-emerald-900 hover:bg-emerald-950 text-white font-bold py-2 px-6 rounded-lg shadow transition-colors disabled:opacity-50 flex-1 md:flex-none"
+              className="bg-emerald-900 hover:bg-emerald-950 dark:bg-emerald-950 dark:hover:bg-black text-white font-bold py-2 px-6 rounded-lg shadow transition-colors disabled:opacity-50 flex-1 md:flex-none"
             >
               {confirmandoZap ? "..." : "2. Já Entrei!"}
             </button>
@@ -674,22 +673,22 @@ export default function PortalDashboard() {
       )}
 
       {/* BOAS-VINDAS E STATUS DO ALUNO */}
-      <div className="bg-white/80 backdrop-blur-md border-b border-white/20">
+      <div className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border-b border-white/20 dark:border-slate-800 transition-colors duration-300">
         <div className="max-w-384 w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row justify-between items-start gap-8">
           <div className="flex flex-col items-center lg:items-start text-center lg:text-left w-full lg:flex-1">
-            <h2 className="text-2xl md:text-3xl font-black text-slate-800">
+            <h2 className="text-2xl md:text-3xl font-black text-slate-800 dark:text-slate-100 transition-colors duration-300">
               Bem-vindo, {aluno.nome.split(" ")[0]}!
             </h2>
-            <p className="text-slate-500 mt-1 flex flex-wrap items-center gap-2 lg:justify-start justify-center">
+            <p className="text-slate-500 dark:text-slate-400 mt-1 flex flex-wrap items-center gap-2 lg:justify-start justify-center transition-colors duration-300">
               <span>
                 Você tem{" "}
-                <strong className="text-amber-600">
+                <strong className="text-amber-600 dark:text-amber-500">
                   {missoesPendentes} missões pendentes
                 </strong>
                 .
               </span>
               {ofensivaDias > 0 && (
-                <span className="bg-orange-100 text-orange-700 text-[10px] uppercase tracking-widest font-black px-2.5 py-1 rounded-lg border border-orange-200 flex items-center gap-1 shadow-sm">
+                <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-400 text-[10px] uppercase tracking-widest font-black px-2.5 py-1 rounded-lg border border-orange-200 dark:border-orange-800 flex items-center gap-1 shadow-sm transition-colors duration-300">
                   🔥 {ofensivaDias} Dias de Ofensiva
                 </span>
               )}
@@ -700,7 +699,7 @@ export default function PortalDashboard() {
                 href="https://classroom.google.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 text-white font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 whitespace-nowrap"
+                className="inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 whitespace-nowrap"
               >
                 <span className="text-lg">🏫</span>{" "}
                 <span className="text-sm">Classroom</span>
@@ -710,7 +709,7 @@ export default function PortalDashboard() {
                   setModalPixAberto(true);
                   setAlvoPix(null);
                 }}
-                className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-emerald-400 whitespace-nowrap"
+                className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-emerald-400 dark:border-emerald-500 whitespace-nowrap"
               >
                 <span className="text-lg">💸</span>{" "}
                 <span className="text-sm">Pix de XP</span>
@@ -718,7 +717,7 @@ export default function PortalDashboard() {
               <button
                 onClick={() => setModalSenhaAberto(true)}
                 disabled={checkinRealizado}
-                className={`inline-flex items-center justify-center gap-2 font-bold py-3 px-5 rounded-xl shadow-sm transition-all whitespace-nowrap ${checkinRealizado ? "bg-slate-100 text-slate-400 cursor-not-allowed border border-slate-200" : taxaPresenca >= 90 ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white border-none animate-pulse shadow-orange-200" : "bg-blue-600 hover:bg-blue-700 text-white hover:-translate-y-0.5"}`}
+                className={`inline-flex items-center justify-center gap-2 font-bold py-3 px-5 rounded-xl shadow-sm transition-all whitespace-nowrap ${checkinRealizado ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700" : taxaPresenca >= 90 ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white border-none animate-pulse shadow-orange-200 dark:shadow-none" : "bg-blue-600 hover:bg-blue-700 text-white hover:-translate-y-0.5"}`}
               >
                 {checkinRealizado ? (
                   <>
@@ -748,7 +747,7 @@ export default function PortalDashboard() {
               </button>
               <button
                 onClick={() => router.push("/portal/gabaritos")}
-                className="inline-flex items-center justify-center gap-2 bg-indigo-100 hover:bg-indigo-200 text-indigo-800 font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-indigo-300 whitespace-nowrap"
+                className="inline-flex items-center justify-center gap-2 bg-indigo-100 dark:bg-indigo-900/50 hover:bg-indigo-200 dark:hover:bg-indigo-800/60 text-indigo-800 dark:text-indigo-300 font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-indigo-300 dark:border-indigo-700/50 whitespace-nowrap"
               >
                 <span className="text-lg">🗝️</span>{" "}
                 <span className="text-sm">Gabaritos e Códigos</span>
@@ -758,44 +757,44 @@ export default function PortalDashboard() {
 
           <div className="flex flex-col w-full lg:w-105 shrink-0 mt-6 lg:mt-0 gap-4">
             <div className="flex flex-row gap-3 w-full justify-center lg:justify-end">
-              <div className="bg-slate-50 border border-slate-200 p-4 rounded-2xl flex items-center gap-3 w-1/2 shadow-sm hover:shadow-md transition-shadow">
-                <div className="bg-blue-100 p-2.5 rounded-full text-xl shrink-0">
+              <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-4 rounded-2xl flex items-center gap-3 w-1/2 shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="bg-blue-100 dark:bg-blue-900/50 p-2.5 rounded-full text-xl shrink-0">
                   🎓
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                  <p className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
                     Nível Atual
                   </p>
-                  <p className="text-lg font-black text-blue-700 leading-none">
+                  <p className="text-lg font-black text-blue-700 dark:text-blue-400 leading-none">
                     {nivelSistema}
                   </p>
                 </div>
               </div>
-              <div className="bg-emerald-50 border border-emerald-200 p-4 rounded-2xl flex items-center gap-3 w-1/2 shadow-sm hover:shadow-md transition-shadow">
-                <div className="bg-emerald-200/50 p-2.5 rounded-full text-xl shrink-0">
+              <div className="bg-emerald-50 dark:bg-emerald-900/30 border border-emerald-200 dark:border-emerald-800/50 p-4 rounded-2xl flex items-center gap-3 w-1/2 shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="bg-emerald-200/50 dark:bg-emerald-800/50 p-2.5 rounded-full text-xl shrink-0">
                   ⭐
                 </div>
                 <div>
-                  <p className="text-[10px] font-bold text-emerald-800 uppercase tracking-widest">
+                  <p className="text-[10px] font-bold text-emerald-800 dark:text-emerald-400 uppercase tracking-widest">
                     Seu XP Total
                   </p>
-                  <p className="text-lg font-black text-emerald-600 leading-none">
+                  <p className="text-lg font-black text-emerald-600 dark:text-emerald-500 leading-none">
                     {xpTotalSistema} XP
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition-shadow w-full">
-              <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-slate-500 mb-2.5">
+            <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm hover:shadow-md transition-all duration-300 w-full">
+              <div className="flex justify-between text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2.5">
                 <span>Progresso</span>
-                <span className="text-blue-600">
+                <span className="text-blue-600 dark:text-blue-400">
                   {progressoNivel.isMaximo
                     ? "Nível Máximo!"
                     : `Rumo ao ${progressoNivel.nomeProximo}`}
                 </span>
               </div>
-              <div className="w-full bg-slate-200/70 rounded-full h-3 mb-2.5 overflow-hidden shadow-inner">
+              <div className="w-full bg-slate-200/70 dark:bg-slate-700/50 rounded-full h-3 mb-2.5 overflow-hidden shadow-inner">
                 <div
                   className="bg-gradient-to-r from-blue-500 to-indigo-600 h-full rounded-full transition-all duration-1000 ease-out relative"
                   style={{ width: `${progressoNivel.porcentagem}%` }}
@@ -803,13 +802,13 @@ export default function PortalDashboard() {
                   <div className="absolute top-0 left-0 w-full h-full bg-white/20 animate-pulse"></div>
                 </div>
               </div>
-              <p className="text-xs font-bold text-slate-500 text-center">
+              <p className="text-xs font-bold text-slate-500 dark:text-slate-400 text-center">
                 {progressoNivel.isMaximo ? (
                   "🏆 Você alcançou o topo do Trilha Tech!"
                 ) : (
                   <>
                     Faltam{" "}
-                    <strong className="text-indigo-600 font-black">
+                    <strong className="text-indigo-600 dark:text-indigo-400 font-black">
                       {progressoNivel.faltam} XP
                     </strong>{" "}
                     para subir de nível! 🚀
@@ -822,10 +821,10 @@ export default function PortalDashboard() {
       </div>
 
       {/* ÁREA DE CURSOS E MISSÕES */}
-      <div className="max-w-384 mx-auto p-4 md:p-8 mt-4 backdrop-blur-sm bg-white/80">
+      <div className="max-w-384 mx-auto p-4 md:p-8 mt-4 backdrop-blur-sm bg-white/80 dark:bg-slate-950/80 transition-colors duration-300">
         {/* Filtros e Busca */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2 transition-colors duration-300">
             🎯 Suas Missões e Cursos
           </h3>
           <div className="w-full md:w-64">
@@ -834,7 +833,7 @@ export default function PortalDashboard() {
               placeholder="Pesquisar..."
               value={buscaAtividade}
               onChange={(e) => setBuscaAtividade(e.target.value)}
-              className="w-full bg-white border border-slate-200 text-slate-800 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
+              className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-full px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-colors duration-300"
             />
           </div>
         </div>
@@ -842,26 +841,26 @@ export default function PortalDashboard() {
         <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
           <button
             onClick={() => setAbaAtividade("Pendentes")}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${abaAtividade === "Pendentes" ? "bg-amber-100 text-amber-800 border-amber-300 shadow-sm scale-105" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"}`}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${abaAtividade === "Pendentes" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-500 border-amber-300 dark:border-amber-700 shadow-sm scale-105" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
           >
             ⏳ No Prazo ({qtdPendentes})
           </button>
           <button
             onClick={() => setAbaAtividade("Atrasadas")}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${abaAtividade === "Atrasadas" ? "bg-red-100 text-red-800 border-red-300 shadow-sm scale-105" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"}`}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${abaAtividade === "Atrasadas" ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-500 border-red-300 dark:border-red-700 shadow-sm scale-105" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
           >
             🚨 Atrasadas ({qtdAtrasadas})
           </button>
           <button
             onClick={() => setAbaAtividade("Concluidas")}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${abaAtividade === "Concluidas" ? "bg-emerald-100 text-emerald-800 border-emerald-300 shadow-sm scale-105" : "bg-white text-slate-500 border-slate-200 hover:bg-slate-50"}`}
+            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${abaAtividade === "Concluidas" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-500 border-emerald-300 dark:border-emerald-700 shadow-sm scale-105" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
           >
             ✅ Concluídas ({qtdConcluidas})
           </button>
         </div>
 
         {atividadesFiltradas.length === 0 ? (
-          <div className="bg-white p-12 rounded-2xl border border-slate-200 text-center text-slate-500 shadow-sm flex flex-col items-center animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 p-12 rounded-2xl border border-slate-200 dark:border-slate-800 text-center text-slate-500 dark:text-slate-400 shadow-sm flex flex-col items-center animate-in fade-in transition-colors duration-300">
             <div className="text-5xl opacity-50 mb-3 animate-bounce">📭</div>
             <p className="font-bold">
               Nenhuma missão encontrada para esta categoria.
@@ -872,7 +871,7 @@ export default function PortalDashboard() {
             {!cursoSelecionado ? (
               // ================= TELA 1: GALERIA DE CURSOS =================
               <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                <h3 className="font-black text-2xl text-slate-800 mb-6 flex items-center gap-2">
+                <h3 className="font-black text-2xl text-slate-800 dark:text-slate-100 mb-6 flex items-center gap-2 transition-colors duration-300">
                   <span>🎓</span> Suas Trilhas de Estudo
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
@@ -896,7 +895,7 @@ export default function PortalDashboard() {
                     const tema = getTemaCurso(nomeCurso);
 
                     let selo = (
-                      <span className="bg-white/90 text-blue-800 text-[10px] font-black px-2.5 py-1 rounded-md uppercase shadow-sm">
+                      <span className="bg-white/90 dark:bg-slate-900/90 text-blue-800 dark:text-blue-400 text-[10px] font-black px-2.5 py-1 rounded-md uppercase shadow-sm">
                         🟢 Aberto
                       </span>
                     );
@@ -906,7 +905,7 @@ export default function PortalDashboard() {
                       corFiltro =
                         "grayscale-[80%] opacity-80 cursor-not-allowed";
                       selo = (
-                        <span className="bg-slate-800 text-white text-[10px] font-black px-2.5 py-1 rounded-md uppercase shadow-sm">
+                        <span className="bg-slate-800 dark:bg-slate-700 text-white dark:text-slate-300 text-[10px] font-black px-2.5 py-1 rounded-md uppercase shadow-sm">
                           🔒 Em Breve
                         </span>
                       );
@@ -914,22 +913,22 @@ export default function PortalDashboard() {
                       corFiltro =
                         "grayscale-[30%] opacity-90 cursor-pointer hover:-translate-y-1 hover:shadow-lg";
                       selo = (
-                        <span className="bg-red-600 text-white text-[10px] font-black px-2.5 py-1 rounded-md uppercase shadow-sm">
+                        <span className="bg-red-600 dark:bg-red-900/80 text-white dark:text-red-300 text-[10px] font-black px-2.5 py-1 rounded-md uppercase shadow-sm border dark:border-red-500/50">
                           🔴 Encerrado
                         </span>
                       );
                     } else if (isRecuperacao) {
                       corFiltro =
-                        "cursor-pointer hover:-translate-y-1 hover:shadow-lg hover:ring-2 hover:ring-amber-400 hover:ring-offset-2";
+                        "cursor-pointer hover:-translate-y-1 hover:shadow-lg hover:ring-2 hover:ring-amber-400 hover:ring-offset-2 dark:hover:ring-offset-slate-900";
                       selo = (
-                        <span className="bg-amber-400 text-amber-900 text-[10px] font-black px-2.5 py-1 rounded-md uppercase shadow-sm animate-pulse">
+                        <span className="bg-amber-400 dark:bg-amber-900/80 text-amber-900 dark:text-amber-400 text-[10px] font-black px-2.5 py-1 rounded-md uppercase shadow-sm border dark:border-amber-500/50 animate-pulse">
                           🟡 Recuperação
                         </span>
                       );
                     } else {
                       // Curso Aberto Normal
                       corFiltro =
-                        "cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:ring-2 hover:ring-blue-400 hover:ring-offset-2";
+                        "cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:ring-2 hover:ring-blue-400 hover:ring-offset-2 dark:hover:ring-offset-slate-900";
                     }
 
                     return (
@@ -938,7 +937,7 @@ export default function PortalDashboard() {
                         onClick={() =>
                           !isTrancado && setCursoSelecionado(nomeCurso)
                         }
-                        className={`bg-white/90 backdrop-blur-sm rounded-2xl border border-slate-200 shadow-md flex flex-col group overflow-hidden transition-all duration-300 ${corFiltro}`}
+                        className={`bg-white/90 dark:bg-slate-900/90 backdrop-blur-sm rounded-2xl border border-slate-200 dark:border-slate-800 shadow-md flex flex-col group overflow-hidden transition-all duration-300 ${corFiltro}`}
                       >
                         {/* 🌟 BANNER SUPERIOR COM TEMA */}
                         <div
@@ -959,28 +958,28 @@ export default function PortalDashboard() {
                         {/* INFORMAÇÕES INFERIORES */}
                         <div className="p-5 flex-1 flex flex-col">
                           <h4
-                            className={`font-black text-lg leading-tight mb-2 ${isTrancado ? "text-slate-500" : "text-slate-800"}`}
+                            className={`font-black text-lg leading-tight mb-2 ${isTrancado ? "text-slate-500 dark:text-slate-600" : "text-slate-800 dark:text-slate-100"}`}
                           >
                             {nomeCurso}
                           </h4>
 
                           <div className="mt-auto pt-4">
-                            <div className="flex justify-between text-xs font-bold text-slate-500 mb-1.5">
+                            <div className="flex justify-between text-xs font-bold text-slate-500 dark:text-slate-400 mb-1.5">
                               <span>Progresso do Módulo</span>
                               <span>{progressoPct}%</span>
                             </div>
-                            <div className="w-full bg-slate-200 rounded-full h-2.5 overflow-hidden shadow-inner">
+                            <div className="w-full bg-slate-200 dark:bg-slate-700/50 rounded-full h-2.5 overflow-hidden shadow-inner">
                               <div
-                                className={`h-full rounded-full transition-all duration-1000 ${progressoPct === 100 ? "bg-emerald-500" : isTrancado ? "bg-slate-400" : "bg-blue-500"}`}
+                                className={`h-full rounded-full transition-all duration-1000 ${progressoPct === 100 ? "bg-emerald-500" : isTrancado ? "bg-slate-400 dark:bg-slate-600" : "bg-blue-500"}`}
                                 style={{ width: `${progressoPct}%` }}
                               ></div>
                             </div>
-                            <div className="flex justify-between items-center mt-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                            <div className="flex justify-between items-center mt-3 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                               <span>
                                 {info.concluidas} / {info.todasMissoes.length}{" "}
                                 Aulas
                               </span>
-                              <span className="text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+                              <span className="text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full border border-emerald-100 dark:border-emerald-800/50">
                                 ⭐ {info.xpTotal} XP
                               </span>
                             </div>
@@ -996,7 +995,7 @@ export default function PortalDashboard() {
               <div className="animate-in slide-in-from-right-8 duration-300">
                 <button
                   onClick={() => setCursoSelecionado(null)}
-                  className="mb-6 inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 shadow-sm hover:shadow-md hover:bg-slate-50 text-slate-700 font-bold rounded-xl transition-all hover:-translate-x-1"
+                  className="mb-6 inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all hover:-translate-x-1"
                 >
                   <span>←</span> Voltar para Trilhas
                 </button>
@@ -1061,7 +1060,7 @@ export default function PortalDashboard() {
 
                 {trilhasDeEstudo[cursoSelecionado].missoesFiltradas.length ===
                 0 ? (
-                  <div className="bg-white p-8 rounded-2xl border border-slate-200 text-center text-slate-500 shadow-sm flex flex-col items-center">
+                  <div className="bg-white dark:bg-slate-900 p-8 rounded-2xl border border-slate-200 dark:border-slate-800 text-center text-slate-500 dark:text-slate-400 shadow-sm flex flex-col items-center">
                     <div className="text-4xl opacity-50 mb-3">📭</div>
                     <p className="font-bold">
                       Nenhuma missão nesta aba (Pendentes/Concluídas).
@@ -1093,27 +1092,27 @@ export default function PortalDashboard() {
                         return (
                           <div
                             key={nomeAula}
-                            className="bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition-shadow"
+                            className="bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden shadow-sm hover:shadow-md transition-all duration-300"
                           >
                             <div
                               onClick={() => toggleAula(nomeAula)}
-                              className="bg-white hover:bg-slate-50 border-b border-slate-200 p-5 flex justify-between items-center cursor-pointer transition-colors"
+                              className="bg-white dark:bg-slate-800/80 hover:bg-slate-50 dark:hover:bg-slate-800 border-b border-slate-200 dark:border-slate-700 p-5 flex justify-between items-center cursor-pointer transition-colors"
                             >
-                              <h3 className="font-black text-slate-800 flex items-center gap-3 text-lg">
+                              <h3 className="font-black text-slate-800 dark:text-slate-100 flex items-center gap-3 text-lg">
                                 <span className="text-2xl">
                                   {getTemaCurso(cursoSelecionado).icon}
                                 </span>{" "}
                                 {nomeAula}
                               </h3>
                               <div className="flex items-center gap-3">
-                                <span className="bg-slate-100 text-slate-600 text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm border border-slate-200">
+                                <span className="bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 text-xs font-bold px-3 py-1.5 rounded-lg shadow-sm border border-slate-200 dark:border-slate-700">
                                   {missoesDaAula.length}{" "}
                                   {missoesDaAula.length === 1
                                     ? "item"
                                     : "itens"}
                                 </span>
                                 <span
-                                  className={`text-slate-400 font-bold transition-transform duration-300 ${isAulaFechada ? "" : "rotate-180"}`}
+                                  className={`text-slate-400 dark:text-slate-500 font-bold transition-transform duration-300 ${isAulaFechada ? "" : "rotate-180"}`}
                                 >
                                   ▼
                                 </span>
@@ -1133,39 +1132,39 @@ export default function PortalDashboard() {
                                   return (
                                     <div
                                       key={ativ.id}
-                                      className={`bg-white rounded-2xl border-2 shadow-sm flex flex-col overflow-hidden relative transition-all hover:shadow-xl hover:-translate-y-1 ${isConcluida ? "border-emerald-200" : isDevolvida ? "border-red-300" : "border-slate-200"}`}
+                                      className={`bg-white dark:bg-slate-800 rounded-2xl border-2 shadow-sm flex flex-col overflow-hidden relative transition-all hover:shadow-xl hover:-translate-y-1 ${isConcluida ? "border-emerald-200 dark:border-emerald-500/30" : isDevolvida ? "border-red-300 dark:border-red-500/50" : "border-slate-200 dark:border-slate-700 dark:hover:border-slate-500"}`}
                                     >
                                       <div
                                         className={`h-2 w-full ${isConcluida ? "bg-emerald-500" : isDevolvida ? "bg-red-500" : ativ.tipo === "Quiz" ? "bg-amber-400" : ativ.tipo === "Material" ? "bg-emerald-400" : "bg-blue-500"}`}
                                       ></div>
                                       <div className="p-5 flex-1 flex flex-col">
                                         <div className="flex justify-between items-start mb-4">
-                                          <span className="bg-slate-100 text-slate-500 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border border-slate-200 shadow-sm">
+                                          <span className="bg-slate-100 dark:bg-slate-900 text-slate-500 dark:text-slate-400 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border border-slate-200 dark:border-slate-700 shadow-sm">
                                             {ativ.tipo}
                                           </span>
-                                          <span className="text-[10px] bg-slate-50 text-slate-400 font-bold px-2 py-1 rounded border border-slate-100">
+                                          <span className="text-[10px] bg-slate-50 dark:bg-slate-900/50 text-slate-400 dark:text-slate-500 font-bold px-2 py-1 rounded border border-slate-100 dark:border-slate-800">
                                             ID: {ativ.id.replace("ATIV-", "")}
                                           </span>
                                         </div>
-                                        <h4 className="font-bold text-slate-800 text-lg mb-3 leading-tight line-clamp-2">
+                                        <h4 className="font-bold text-slate-800 dark:text-slate-100 text-lg mb-3 leading-tight line-clamp-2">
                                           {ativ.titulo}
                                         </h4>
                                         <div className="mt-auto pt-4 space-y-3">
                                           {isConcluida ? (
-                                            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex justify-between items-center shadow-inner">
-                                              <span className="text-emerald-700 font-bold text-xs flex items-center gap-1.5">
+                                            <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 rounded-xl p-3 flex justify-between items-center shadow-inner">
+                                              <span className="text-emerald-700 dark:text-emerald-400 font-bold text-xs flex items-center gap-1.5">
                                                 <span className="text-base">
                                                   ✅
                                                 </span>{" "}
                                                 Concluída
                                               </span>
-                                              <span className="bg-emerald-200 text-emerald-800 text-[10px] font-black px-2 py-1 rounded uppercase shadow-sm">
+                                              <span className="bg-emerald-200 dark:bg-emerald-800 text-emerald-800 dark:text-emerald-200 text-[10px] font-black px-2 py-1 rounded uppercase shadow-sm">
                                                 ⭐ {ativ.xpGanho || ativ.xp} XP
                                               </span>
                                             </div>
                                           ) : isDevolvida ? (
-                                            <div className="bg-red-50 border border-red-200 rounded-xl p-3 shadow-inner">
-                                              <span className="text-red-700 font-bold text-xs flex items-center gap-1.5">
+                                            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl p-3 shadow-inner">
+                                              <span className="text-red-700 dark:text-red-400 font-bold text-xs flex items-center gap-1.5">
                                                 <span className="text-base">
                                                   ⚠️
                                                 </span>{" "}
@@ -1173,14 +1172,14 @@ export default function PortalDashboard() {
                                               </span>
                                             </div>
                                           ) : (
-                                            <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 flex justify-between items-center shadow-inner">
-                                              <span className="text-slate-500 font-bold text-xs flex items-center gap-1.5">
+                                            <div className="bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-3 flex justify-between items-center shadow-inner">
+                                              <span className="text-slate-500 dark:text-slate-400 font-bold text-xs flex items-center gap-1.5">
                                                 <span className="text-base">
                                                   ⏳
                                                 </span>{" "}
                                                 Pendente
                                               </span>
-                                              <span className="bg-slate-200 text-slate-600 text-[10px] font-black px-2 py-1 rounded uppercase shadow-sm">
+                                              <span className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 text-[10px] font-black px-2 py-1 rounded uppercase shadow-sm">
                                                 ⭐ {ativ.xp} XP
                                               </span>
                                             </div>
@@ -1194,7 +1193,7 @@ export default function PortalDashboard() {
                                                 ].status,
                                               )
                                             }
-                                            className={`w-full text-white text-sm font-black py-3.5 rounded-xl transition-all active:scale-95 shadow-md ${isConcluida ? "bg-slate-800 hover:bg-slate-900" : isDevolvida ? "bg-red-500 hover:bg-red-600" : "bg-blue-600 hover:bg-blue-700"}`}
+                                            className={`w-full text-white text-sm font-black py-3.5 rounded-xl transition-all active:scale-95 shadow-md ${isConcluida ? "bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600" : isDevolvida ? "bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}
                                           >
                                             {isConcluida
                                               ? "Ver Detalhes"
@@ -1246,12 +1245,12 @@ export default function PortalDashboard() {
 
       {modalSenhaAberto && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col p-6 text-center select-text">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border dark:border-slate-800 w-full max-w-sm overflow-hidden flex flex-col p-6 text-center select-text transition-colors duration-300">
             <div className="text-4xl mb-4">🔐</div>
-            <h2 className="font-black text-xl text-slate-800 mb-2">
+            <h2 className="font-black text-xl text-slate-800 dark:text-slate-100 mb-2">
               Presença em Sala
             </h2>
-            <p className="text-sm text-slate-500 mb-6">
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
               Digite a senha que o tutor escreveu na lousa para garantir os seus
               10 XP.
             </p>
@@ -1261,21 +1260,21 @@ export default function PortalDashboard() {
                 value={senhaDigitada}
                 onChange={(e) => setSenhaDigitada(e.target.value.toUpperCase())}
                 placeholder="SENHA DA LOUSA"
-                className="w-full text-center text-2xl font-black font-mono border-2 border-slate-300 rounded-lg p-3 mb-4 focus:border-emerald-500 outline-none uppercase tracking-widest text-slate-800"
+                className="w-full text-center text-2xl font-black font-mono border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-lg p-3 mb-4 focus:border-emerald-500 dark:focus:border-emerald-500 outline-none uppercase tracking-widest text-slate-800 dark:text-slate-100 transition-colors duration-300"
                 autoFocus
               />
               <div className="flex gap-3 mt-2">
                 <button
                   type="button"
                   onClick={() => setModalSenhaAberto(false)}
-                  className="flex-1 py-3 font-bold text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+                  className="flex-1 py-3 font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={fazendoCheckin}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-md transition-colors disabled:bg-emerald-400"
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-md transition-colors disabled:bg-emerald-400 dark:disabled:bg-emerald-800"
                 >
                   {fazendoCheckin ? "Validando..." : "Confirmar"}
                 </button>
@@ -1287,8 +1286,8 @@ export default function PortalDashboard() {
 
       {modalFrequenciaAberto && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-            <div className="bg-indigo-600 p-4 flex justify-between items-center text-white">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border dark:border-slate-800 w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col transition-colors duration-300">
+            <div className="bg-indigo-600 dark:bg-indigo-800 p-4 flex justify-between items-center text-white transition-colors duration-300">
               <h2 className="font-black text-lg md:text-xl flex items-center gap-2">
                 <span>📊</span> Meu Desempenho e Frequência
               </h2>
@@ -1299,61 +1298,61 @@ export default function PortalDashboard() {
                 &times;
               </button>
             </div>
-            <div className="p-4 md:p-6 overflow-y-auto flex-1 bg-slate-50">
+            <div className="p-4 md:p-6 overflow-y-auto flex-1 bg-slate-50 dark:bg-slate-950 transition-colors duration-300">
               {carregandoFrequencia ? (
                 <div className="flex flex-col justify-center items-center py-16 opacity-60">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-indigo-600 mb-4"></div>
-                  <p className="font-bold text-slate-600">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-indigo-600 dark:border-indigo-400 mb-4"></div>
+                  <p className="font-bold text-slate-600 dark:text-slate-400">
                     Buscando seu histórico...
                   </p>
                 </div>
               ) : dadosFrequencia ? (
                 <div className="space-y-6 animate-in slide-in-from-bottom-4">
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center">
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 text-center transition-colors">
                       <p className="text-[10px] font-bold text-slate-400 uppercase">
                         Aulas Totais
                       </p>
-                      <p className="text-2xl font-black text-slate-700">
+                      <p className="text-2xl font-black text-slate-700 dark:text-slate-200">
                         {dadosFrequencia.totalAulas}
                       </p>
                     </div>
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center">
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 text-center transition-colors">
                       <p className="text-[10px] font-bold text-slate-400 uppercase">
                         Presenças
                       </p>
-                      <p className="text-2xl font-black text-emerald-600">
+                      <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400">
                         {dadosFrequencia.totalPresencas}
                       </p>
                     </div>
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center">
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 text-center transition-colors">
                       <p className="text-[10px] font-bold text-slate-400 uppercase">
                         Faltas
                       </p>
-                      <p className="text-2xl font-black text-red-500">
+                      <p className="text-2xl font-black text-red-500 dark:text-red-400">
                         {dadosFrequencia.totalFaltas}
                       </p>
                     </div>
-                    <div className="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-center">
+                    <div className="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 text-center transition-colors">
                       <p className="text-[10px] font-bold text-slate-400 uppercase">
                         Sua Taxa
                       </p>
-                      <p className="text-2xl font-black text-indigo-600">
+                      <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400">
                         {dadosFrequencia.taxa}%
                       </p>
                     </div>
                   </div>
                   <div
-                    className={`p-4 rounded-xl font-medium shadow-inner text-sm md:text-base border ${dadosFrequencia.taxa >= 90 ? "bg-emerald-50 text-emerald-800 border-emerald-200" : dadosFrequencia.taxa >= 75 ? "bg-blue-50 text-blue-800 border-blue-200" : dadosFrequencia.taxa >= 60 ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-red-50 text-red-800 border-red-200 font-bold"}`}
+                    className={`p-4 rounded-xl font-medium shadow-inner text-sm md:text-base border ${dadosFrequencia.taxa >= 90 ? "bg-emerald-50 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50" : dadosFrequencia.taxa >= 75 ? "bg-blue-50 dark:bg-blue-900/30 text-blue-800 dark:text-blue-300 border-blue-200 dark:border-blue-800/50" : dadosFrequencia.taxa >= 60 ? "bg-amber-50 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/50" : "bg-red-50 dark:bg-red-900/30 text-red-800 dark:text-red-300 border-red-200 dark:border-red-800/50 font-bold"}`}
                   >
                     {dadosFrequencia.mensagem}
                   </div>
                   <div>
-                    <h3 className="font-bold text-slate-700 mb-3 border-b pb-2">
+                    <h3 className="font-bold text-slate-700 dark:text-slate-300 mb-3 border-b dark:border-slate-700 pb-2">
                       Histórico Resumido de Aulas
                     </h3>
                     {dadosFrequencia.historico.length === 0 ? (
-                      <p className="text-sm text-slate-500 italic text-center py-4">
+                      <p className="text-sm text-slate-500 dark:text-slate-400 italic text-center py-4">
                         Ainda não há registros de presença para a sua turma.
                       </p>
                     ) : (
@@ -1362,14 +1361,14 @@ export default function PortalDashboard() {
                           (reg: FrequenciaHistorico, idx: number) => (
                             <div
                               key={idx}
-                              className="bg-white border border-slate-200 p-2.5 rounded-lg flex justify-between items-center shadow-sm"
+                              className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-2.5 rounded-lg flex justify-between items-center shadow-sm transition-colors"
                             >
-                              <span className="text-[11px] font-bold text-slate-600">
+                              <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
                                 {reg.data.slice(0, 5)}
                               </span>
                               {reg.status === "presente" && (
                                 <span
-                                  className="bg-emerald-100 text-emerald-700 text-[10px] font-black px-1.5 py-0.5 rounded"
+                                  className="bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 text-[10px] font-black px-1.5 py-0.5 rounded"
                                   title="Presente"
                                 >
                                   P
@@ -1377,7 +1376,7 @@ export default function PortalDashboard() {
                               )}
                               {reg.status === "justificada" && (
                                 <span
-                                  className="bg-amber-100 text-amber-700 text-[10px] font-black px-1.5 py-0.5 rounded"
+                                  className="bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 text-[10px] font-black px-1.5 py-0.5 rounded"
                                   title="Falta Justificada"
                                 >
                                   J
@@ -1385,7 +1384,7 @@ export default function PortalDashboard() {
                               )}
                               {reg.status === "falta" && (
                                 <span
-                                  className="bg-red-100 text-red-600 text-[10px] font-black px-1.5 py-0.5 rounded"
+                                  className="bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-300 text-[10px] font-black px-1.5 py-0.5 rounded"
                                   title="Falta"
                                 >
                                   F
@@ -1399,7 +1398,7 @@ export default function PortalDashboard() {
                   </div>
                 </div>
               ) : (
-                <p className="text-center text-red-500 py-8 font-bold">
+                <p className="text-center text-red-500 dark:text-red-400 py-8 font-bold">
                   Erro ao carregar dados.
                 </p>
               )}
@@ -1411,20 +1410,22 @@ export default function PortalDashboard() {
       {/* MODAL DE PRESENTE DE ANIVERSÁRIO */}
       {modalPresenteAberto && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-100 p-4 animate-in fade-in zoom-in duration-300">
-          <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col text-center border-4 border-amber-400 relative">
-            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-amber-200/50 to-transparent"></div>
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col text-center border-4 border-amber-400 dark:border-amber-600 relative transition-colors duration-300">
+            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-amber-200/50 dark:from-amber-900/30 to-transparent"></div>
             <div className="p-8 relative z-10">
               <div className="text-7xl animate-bounce mb-4 drop-shadow-md">
                 🎁
               </div>
-              <h2 className="font-black text-2xl text-slate-800 mb-2 uppercase text-amber-600">
+              <h2 className="font-black text-2xl text-slate-800 dark:text-slate-100 mb-2 uppercase text-amber-600 dark:text-amber-500">
                 Feliz Aniversário!
               </h2>
-              <p className="text-sm text-slate-600 font-medium mb-6">
+              <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-6">
                 Parabéns, <strong>{aluno?.nome.split(" ")[0]}</strong>! Hoje é o
                 seu dia especial. Como presente do Tutor, você ganhou{" "}
-                <strong className="text-emerald-600">100 XP</strong> para
-                turbinar o seu nível!
+                <strong className="text-emerald-600 dark:text-emerald-400">
+                  100 XP
+                </strong>{" "}
+                para turbinar o seu nível!
               </p>
               <button
                 onClick={resgatarPresente}

@@ -37,7 +37,7 @@ export default function NovaConquistaModal({
           <button
             onClick={() => onResgatar(badge)}
             disabled={loading}
-            className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black py-4 rounded-xl shadow-lg transition-transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:transform-none"
+            className="cursor-pointer w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black py-4 rounded-xl shadow-lg transition-transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 disabled:transform-none"
           >
             {loading ? "A PROCESSAR..." : "🏆 RESGATAR RECOMPENSA"}
           </button>

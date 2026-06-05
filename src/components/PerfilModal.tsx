@@ -65,7 +65,7 @@ export default function PerfilModal({
         <div className="bg-blue-900 dark:bg-slate-800 p-6 text-white flex flex-col md:flex-row items-center md:items-start gap-6 relative shrink-0 transition-colors duration-300">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-3xl leading-none hover:text-blue-200 transition-colors"
+            className="cursor-pointer absolute top-4 right-4 text-3xl leading-none hover:text-blue-200 transition-colors"
           >
             &times;
           </button>
@@ -100,19 +100,19 @@ export default function PerfilModal({
         <div className="flex border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 shrink-0 transition-colors duration-300">
           <button
             onClick={() => setAbaAtiva("dados")}
-            className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${abaAtiva === "dados" ? "border-blue-600 text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-800" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"}`}
+            className={`cursor-pointer flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${abaAtiva === "dados" ? "border-blue-600 text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-800" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"}`}
           >
             👤 Meus Dados
           </button>
           <button
             onClick={() => setAbaAtiva("avatar")}
-            className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${abaAtiva === "avatar" ? "border-blue-600 text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-800" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"}`}
+            className={`cursor-pointer flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${abaAtiva === "avatar" ? "border-blue-600 text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-800" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"}`}
           >
             🎭 Avatar
           </button>
           <button
             onClick={() => setAbaAtiva("badges")}
-            className={`flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${abaAtiva === "badges" ? "border-blue-600 text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-800" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"}`}
+            className={`cursor-pointer flex-1 py-3 text-sm font-bold border-b-2 transition-colors ${abaAtiva === "badges" ? "border-blue-600 text-blue-600 dark:text-blue-400 bg-white dark:bg-slate-800" : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800/50"}`}
           >
             🏆 Conquistas
           </button>
@@ -159,7 +159,7 @@ export default function PerfilModal({
                         type="text"
                         value={dadosPerfil.matricula}
                         disabled
-                        className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-lg p-2.5 text-sm cursor-not-allowed font-mono transition-colors"
+                        className="block w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-lg p-2.5 text-sm cursor-not-allowed font-mono transition-colors"
                       />
                     </div>
                     <div className="md:col-span-2">
@@ -170,7 +170,7 @@ export default function PerfilModal({
                         type="text"
                         value={dadosPerfil.email}
                         disabled
-                        className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-lg p-2.5 text-sm cursor-not-allowed font-mono transition-colors"
+                        className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-lg p-2.5 text-sm cursor-e-resize font-mono transition-colors"
                       />
                     </div>
                     <div>
@@ -181,7 +181,7 @@ export default function PerfilModal({
                         type="text"
                         value={dadosPerfil.dataNasc}
                         disabled
-                        className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-lg p-2.5 text-sm cursor-not-allowed transition-colors"
+                        className="w-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 rounded-lg p-2.5 text-sm  transition-colors"
                       />
                     </div>
                     <div>
@@ -238,9 +238,9 @@ export default function PerfilModal({
                     <button
                       type="submit"
                       disabled={salvando}
-                      className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg font-bold shadow-md disabled:bg-slate-400 dark:disabled:bg-slate-600 transition-colors"
+                      className="bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white px-6 py-2.5 rounded-lg font-bold shadow-md disabled:bg-slate-400 dark:disabled:bg-slate-600 transition-colors cursor-pointer"
                     >
-                      {salvando ? "Salvando..." : "Atualizar Contactos"}
+                      {salvando ? "Salvando..." : "Atualizar Contato"}
                     </button>
                   </div>
                 </form>

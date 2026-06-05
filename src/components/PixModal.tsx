@@ -129,7 +129,7 @@ export default function PixModal({
           </div>
           <button
             onClick={onClose}
-            className="text-3xl leading-none hover:text-emerald-200 transition-colors"
+            className="cursor-pointer text-3xl leading-none hover:text-emerald-200 transition-colors"
           >
             &times;
           </button>
@@ -204,13 +204,13 @@ export default function PixModal({
               <div className="flex border-b border-slate-200 dark:border-slate-800 mb-5 transition-colors duration-300">
                 <button
                   onClick={() => setAbaAtiva("enviar")}
-                  className={`flex-1 py-3 font-bold text-sm transition-colors ${abaAtiva === "enviar" ? "border-b-2 border-emerald-500 text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
+                  className={`cursor-pointer flex-1 py-3 font-bold text-sm transition-colors ${abaAtiva === "enviar" ? "border-b-2 border-emerald-500 text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
                 >
                   Transferir XP
                 </button>
                 <button
                   onClick={() => setAbaAtiva("extrato")}
-                  className={`flex-1 py-3 font-bold text-sm transition-colors ${abaAtiva === "extrato" ? "border-b-2 border-emerald-500 text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
+                  className={`cursor-pointer flex-1 py-3 font-bold text-sm transition-colors ${abaAtiva === "extrato" ? "border-b-2 border-emerald-500 text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
                 >
                   Ver Extrato
                 </button>
@@ -297,6 +297,8 @@ export default function PixModal({
                           <option>🍕 Pagando uma aposta/lanche</option>
                           <option>🎁 Presente de Aniversário</option>
                           <option>🚀 Incentivo para não desistir</option>
+                          <option>🏅 Recompensa por ajudar</option>
+                          <option>🪙 Negocios são negocios</option>
                         </select>
                       </div>
                     </div>
@@ -325,7 +327,7 @@ export default function PixModal({
                       enviandoPix ||
                       dadosPix.limiteDiario - dadosPix.xpDoadoHoje <= 0
                     }
-                    className="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-lg shadow-md transition-all disabled:opacity-50 hover:-translate-y-0.5"
+                    className="cursor-pointer w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-lg shadow-md transition-all disabled:opacity-50 hover:-translate-y-0.5"
                   >
                     {enviandoPix
                       ? "Transferindo..."

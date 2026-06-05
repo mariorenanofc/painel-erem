@@ -129,13 +129,21 @@ export default function ResponderMissaoModal({
           </h2>
           <button
             onClick={onClose}
-            className="text-2xl leading-none hover:text-slate-200 transition-colors"
+            className="cursor-pointer text-2xl leading-none hover:text-slate-200 transition-colors"
           >
             &times;
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto bg-slate-50 dark:bg-slate-900/50 transition-colors duration-300">
+        <div
+          className={`"p-6 overflow-y-auto bg-slate-50 dark:bg-slate-900/50 transition-colors duration-300 ${missaoAberta.tipo === "Quiz" ? "select-none" : ""}`}
+          onContextMenu={
+            missaoAberta.tipo === "Quiz" ? (e) => e.preventDefault() : undefined
+          }
+          onCopy={
+            missaoAberta.tipo === "Quiz" ? (e) => e.preventDefault() : undefined
+          }
+        >
           <div className="flex flex-wrap gap-2 mb-4 text-sm font-bold">
             <span className="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm transition-colors">
               ID: {missaoAberta.id}
@@ -233,7 +241,7 @@ export default function ResponderMissaoModal({
                       onClick={() =>
                         dispararIdaAoClassroom(missaoAberta.linkClassroom!)
                       }
-                      className="bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 text-white font-black py-3 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2"
+                      className="cursor-pointer bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 text-white font-black py-3 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2"
                     >
                       1. ABRIR O GOOGLE CLASSROOM 🔗
                     </button>
@@ -332,18 +340,18 @@ export default function ResponderMissaoModal({
               </div>
             )}
 
-            <div className="mt-8 flex justify-end gap-3 border-t border-slate-200 dark:border-slate-700 pt-4 transition-colors">
+            <div className="mt-8 flex justify-end gap-3 border-t border-slate-200 dark:border-slate-700 pt-4 transition-colors pb-4">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-6 py-3 rounded-xl text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
+                className="cursor-pointer px-6 py-3 rounded-xl text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={inputDesabilitado}
-                className={`text-white px-8 py-3 rounded-xl font-black shadow-md transition-all ${inputDesabilitado ? "bg-slate-400 dark:bg-slate-700" : prazoEncerrado ? "bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 active:scale-95" : "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 active:scale-95"}`}
+                className={`cursor-pointer text-white px-8 py-3 rounded-xl font-black shadow-md transition-all ${inputDesabilitado ? "bg-slate-400 dark:bg-slate-700" : prazoEncerrado ? "bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 active:scale-95" : "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 active:scale-95"}`}
               >
                 {enviando
                   ? "Processando..."

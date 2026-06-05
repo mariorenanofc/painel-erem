@@ -125,7 +125,7 @@ export default function PerfilPublicoModal({
         <div className="bg-gradient-to-br from-indigo-700 via-purple-700 to-pink-600 p-6 md:p-8 relative overflow-hidden shrink-0">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 text-3xl leading-none text-white hover:text-pink-200 transition-colors z-20"
+            className="cursor-pointer absolute top-4 right-4 text-3xl leading-none text-white hover:text-pink-200 transition-colors z-20"
           >
             &times;
           </button>
@@ -159,11 +159,11 @@ export default function PerfilPublicoModal({
               </div>
             </div>
 
-            <div className="shrink-0 mt-4 md:mt-0 flex flex-col items-center justify-center gap-3">
+            <div className="shrink-0 mt-4 md:mt-0 pt-5 flex flex-col items-center justify-center gap-3">
               <button
                 onClick={handleCurtir}
                 disabled={perfil.jaCurtiuHoje || curtindo}
-                className={`flex w-full justify-center items-center gap-2 px-6 py-3 rounded-full font-black shadow-lg transition-all border-2 ${perfil.jaCurtiuHoje ? "bg-pink-50 dark:bg-pink-950 border-pink-200 dark:border-pink-800 text-pink-400 dark:text-pink-600 cursor-not-allowed" : "bg-pink-500 border-pink-400 text-white hover:bg-pink-600 hover:scale-105 active:scale-95"}`}
+                className={`cursor-pointer flex w-full justify-center items-center gap-2 px-6 py-3 rounded-full font-black shadow-lg transition-all border-2 ${perfil.jaCurtiuHoje ? "bg-pink-50 dark:bg-pink-950 border-pink-200 dark:border-pink-800 text-pink-400 dark:text-pink-600 cursor-not-allowed" : "bg-pink-500 border-pink-400 text-white hover:bg-pink-600 hover:scale-105 active:scale-95"}`}
               >
                 <span
                   className={`text-xl ${perfil.jaCurtiuHoje ? "" : "animate-pulse"}`}
@@ -182,7 +182,7 @@ export default function PerfilPublicoModal({
                   );
                   onClose();
                 }}
-                className="flex w-full justify-center items-center gap-2 px-6 py-3 rounded-full font-black shadow-lg transition-all border-2 bg-gradient-to-r from-emerald-400 to-teal-500 border-emerald-300 text-white hover:from-emerald-500 hover:to-teal-600 hover:scale-105 active:scale-95"
+                className="cursor-pointer flex w-full justify-center items-center gap-2 px-6 py-3 rounded-full font-black shadow-lg transition-all border-2 bg-gradient-to-r from-emerald-400 to-teal-500 border-emerald-300 text-white hover:from-emerald-500 hover:to-teal-600 hover:scale-105 active:scale-95"
               >
                 <span className="text-xl">💸</span>
                 Enviar Pix de XP

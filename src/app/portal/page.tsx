@@ -123,7 +123,7 @@ export default function PortalDashboard() {
   const [alvoPix, setAlvoPix] = useState<string | null>(null);
   const [rankingAberto, setRankingAberto] = useState(false);
 
-  const VERSAO_ATUALIZACAO = "1.8.0";
+  const VERSAO_ATUALIZACAO = "1.8.1";
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
   // ================= EFEITOS =================
@@ -441,24 +441,30 @@ export default function PortalDashboard() {
     setAulasFechadas((prev) => ({ ...prev, [nomeAula]: !prev[nomeAula] }));
   };
 
-  // ================= CÁLCULOS E FILTROS =================
+// ================= CÁLCULOS E FILTROS =================
   const missoesPendentes = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
+    // 🔥 IGNORA SE O MÓDULO ESTIVER ENCERRADO OU FECHADO
+    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
+    if (stMod === "encerrado" || stMod === "em breve") return false;
+    
     return st === "pendente" || st === "devolvida";
   }).length;
 
   const qtdPendentes = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
-    return (
-      (st === "pendente" || st === "devolvida") && a.statusPrazo !== "Atrasada"
-    );
+    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
+    if (stMod === "encerrado" || stMod === "em breve") return false;
+    
+    return (st === "pendente" || st === "devolvida") && a.statusPrazo !== "Atrasada";
   }).length;
 
   const qtdAtrasadas = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
-    return (
-      (st === "pendente" || st === "devolvida") && a.statusPrazo === "Atrasada"
-    );
+    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
+    if (stMod === "encerrado" || stMod === "em breve") return false;
+    
+    return (st === "pendente" || st === "devolvida") && a.statusPrazo === "Atrasada";
   }).length;
 
   const qtdConcluidas = atividades.filter((a) => {
@@ -467,24 +473,21 @@ export default function PortalDashboard() {
   }).length;
 
   const atividadesFiltradas = atividades.filter((a) => {
-    const matchBusca = a.titulo
-      .toLowerCase()
-      .includes(buscaAtividade.toLowerCase());
+    const matchBusca = a.titulo.toLowerCase().includes(buscaAtividade.toLowerCase());
     if (!matchBusca) return false;
 
     const st = a.status?.toLowerCase().trim() || "pendente";
-    if (abaAtividade === "Pendentes")
-      return (
-        (st === "pendente" || st === "devolvida") &&
-        a.statusPrazo !== "Atrasada"
-      );
-    if (abaAtividade === "Atrasadas")
-      return (
-        (st === "pendente" || st === "devolvida") &&
-        a.statusPrazo === "Atrasada"
-      );
-    if (abaAtividade === "Concluidas")
-      return st !== "pendente" && st !== "devolvida";
+    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
+
+    if (abaAtividade === "Pendentes") {
+      if (stMod === "encerrado" || stMod === "em breve") return false;
+      return (st === "pendente" || st === "devolvida") && a.statusPrazo !== "Atrasada";
+    }
+    if (abaAtividade === "Atrasadas") {
+      if (stMod === "encerrado" || stMod === "em breve") return false;
+      return (st === "pendente" || st === "devolvida") && a.statusPrazo === "Atrasada";
+    }
+    if (abaAtividade === "Concluidas") return st !== "pendente" && st !== "devolvida";
     return true;
   });
 
@@ -573,10 +576,8 @@ export default function PortalDashboard() {
 
   return (
     <main
-      className="min-h-screen relative bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-12 select-none transition-colors duration-300"
-      onContextMenu={(e) => e.preventDefault()}
-      onCopy={(e) => e.preventDefault()}
-      onCut={(e) => e.preventDefault()}
+      className="min-h-screen relative bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-12 transition-colors duration-300"
+      
     >
       {/* MODAIS GLOBAIS */}
       {modalPixAberto && (
@@ -664,7 +665,7 @@ export default function PortalDashboard() {
             <button
               onClick={confirmarEntradaGrupo}
               disabled={confirmandoZap}
-              className="bg-emerald-900 hover:bg-emerald-950 dark:bg-emerald-950 dark:hover:bg-black text-white font-bold py-2 px-6 rounded-lg shadow transition-colors disabled:opacity-50 flex-1 md:flex-none"
+              className="cursor-pointer bg-emerald-900 hover:bg-emerald-950 dark:bg-emerald-950 dark:hover:bg-black text-white font-bold py-2 px-6 rounded-lg shadow transition-colors disabled:opacity-50 flex-1 md:flex-none"
             >
               {confirmandoZap ? "..." : "2. Já Entrei!"}
             </button>
@@ -709,7 +710,7 @@ export default function PortalDashboard() {
                   setModalPixAberto(true);
                   setAlvoPix(null);
                 }}
-                className="inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-emerald-400 dark:border-emerald-500 whitespace-nowrap"
+                className="cursor-pointer inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-emerald-400 dark:border-emerald-500 whitespace-nowrap"
               >
                 <span className="text-lg">💸</span>{" "}
                 <span className="text-sm">Pix de XP</span>
@@ -717,7 +718,7 @@ export default function PortalDashboard() {
               <button
                 onClick={() => setModalSenhaAberto(true)}
                 disabled={checkinRealizado}
-                className={`inline-flex items-center justify-center gap-2 font-bold py-3 px-5 rounded-xl shadow-sm transition-all whitespace-nowrap ${checkinRealizado ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700" : taxaPresenca >= 90 ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white border-none animate-pulse shadow-orange-200 dark:shadow-none" : "bg-blue-600 hover:bg-blue-700 text-white hover:-translate-y-0.5"}`}
+                className={`cursor-pointer inline-flex items-center justify-center gap-2 font-bold py-3 px-5 rounded-xl shadow-sm transition-all whitespace-nowrap ${checkinRealizado ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700" : taxaPresenca >= 90 ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white border-none animate-pulse shadow-orange-200 dark:shadow-none" : "bg-blue-600 hover:bg-blue-700 text-white hover:-translate-y-0.5"}`}
               >
                 {checkinRealizado ? (
                   <>
@@ -747,7 +748,7 @@ export default function PortalDashboard() {
               </button>
               <button
                 onClick={() => router.push("/portal/gabaritos")}
-                className="inline-flex items-center justify-center gap-2 bg-indigo-100 dark:bg-indigo-900/50 hover:bg-indigo-200 dark:hover:bg-indigo-800/60 text-indigo-800 dark:text-indigo-300 font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-indigo-300 dark:border-indigo-700/50 whitespace-nowrap"
+                className="cursor-pointer inline-flex items-center justify-center gap-2 bg-indigo-100 dark:bg-indigo-900/50 hover:bg-indigo-200 dark:hover:bg-indigo-800/60 text-indigo-800 dark:text-indigo-300 font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-indigo-300 dark:border-indigo-700/50 whitespace-nowrap"
               >
                 <span className="text-lg">🗝️</span>{" "}
                 <span className="text-sm">Gabaritos e Códigos</span>
@@ -841,19 +842,19 @@ export default function PortalDashboard() {
         <div className="flex gap-2 overflow-x-auto pb-2 mb-4 no-scrollbar">
           <button
             onClick={() => setAbaAtividade("Pendentes")}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${abaAtividade === "Pendentes" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-500 border-amber-300 dark:border-amber-700 shadow-sm scale-105" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
+            className={`cursor-pointer whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${abaAtividade === "Pendentes" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-500 border-amber-300 dark:border-amber-700 shadow-sm scale-105" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
           >
             ⏳ No Prazo ({qtdPendentes})
           </button>
           <button
             onClick={() => setAbaAtividade("Atrasadas")}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${abaAtividade === "Atrasadas" ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-500 border-red-300 dark:border-red-700 shadow-sm scale-105" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
+            className={`cursor-pointer whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${abaAtividade === "Atrasadas" ? "bg-red-100 dark:bg-red-900/30 text-red-800 dark:text-red-500 border-red-300 dark:border-red-700 shadow-sm scale-105" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
           >
             🚨 Atrasadas ({qtdAtrasadas})
           </button>
           <button
             onClick={() => setAbaAtividade("Concluidas")}
-            className={`whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${abaAtividade === "Concluidas" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-500 border-emerald-300 dark:border-emerald-700 shadow-sm scale-105" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
+            className={`cursor-pointer whitespace-nowrap px-4 py-2 rounded-full text-sm font-bold transition-all border ${abaAtividade === "Concluidas" ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-800 dark:text-emerald-500 border-emerald-300 dark:border-emerald-700 shadow-sm scale-105" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
           >
             ✅ Concluídas ({qtdConcluidas})
           </button>
@@ -995,7 +996,7 @@ export default function PortalDashboard() {
               <div className="animate-in slide-in-from-right-8 duration-300">
                 <button
                   onClick={() => setCursoSelecionado(null)}
-                  className="mb-6 inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all hover:-translate-x-1"
+                  className="cursor-pointer mb-6 inline-flex items-center gap-2 px-5 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm hover:shadow-md hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold rounded-xl transition-all hover:-translate-x-1"
                 >
                   <span>←</span> Voltar para Trilhas
                 </button>
@@ -1193,7 +1194,7 @@ export default function PortalDashboard() {
                                                 ].status,
                                               )
                                             }
-                                            className={`w-full text-white text-sm font-black py-3.5 rounded-xl transition-all active:scale-95 shadow-md ${isConcluida ? "bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600" : isDevolvida ? "bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}
+                                            className={`cursor-pointer w-full text-white text-sm font-black py-3.5 rounded-xl transition-all active:scale-95 shadow-md ${isConcluida ? "bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600" : isDevolvida ? "bg-red-500 hover:bg-red-600 dark:bg-red-600 dark:hover:bg-red-700" : "bg-blue-600 hover:bg-blue-700"}`}
                                           >
                                             {isConcluida
                                               ? "Ver Detalhes"
@@ -1267,14 +1268,14 @@ export default function PortalDashboard() {
                 <button
                   type="button"
                   onClick={() => setModalSenhaAberto(false)}
-                  className="flex-1 py-3 font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
+                  className="cursor-pointer flex-1 py-3 font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={fazendoCheckin}
-                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-md transition-colors disabled:bg-emerald-400 dark:disabled:bg-emerald-800"
+                  className="cursor-pointer flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-md transition-colors disabled:bg-emerald-400 dark:disabled:bg-emerald-800"
                 >
                   {fazendoCheckin ? "Validando..." : "Confirmar"}
                 </button>
@@ -1293,7 +1294,7 @@ export default function PortalDashboard() {
               </h2>
               <button
                 onClick={() => setModalFrequenciaAberto(false)}
-                className="text-3xl leading-none hover:text-indigo-200"
+                className="cursor-pointer text-3xl leading-none hover:text-indigo-200"
               >
                 &times;
               </button>
@@ -1430,7 +1431,7 @@ export default function PortalDashboard() {
               <button
                 onClick={resgatarPresente}
                 disabled={resgatandoPresente}
-                className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black py-4 rounded-xl shadow-lg transition-transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 cursor-pointer"
+                className="cursor-pointer w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black py-4 rounded-xl shadow-lg transition-transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 cursor-pointer"
               >
                 {resgatandoPresente
                   ? "Abrindo Presente..."

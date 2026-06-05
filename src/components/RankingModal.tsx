@@ -64,7 +64,7 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
           </div>
           <button
             onClick={onClose}
-            className="text-3xl leading-none hover:text-amber-200 transition-colors"
+            className="cursor-pointer text-3xl leading-none hover:text-amber-200 transition-colors"
           >
             &times;
           </button>
@@ -73,13 +73,13 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
         <div className="flex bg-slate-100 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-700 shrink-0 transition-colors duration-300">
           <button
             onClick={() => setAbaRanking("Geral")}
-            className={`flex-1 py-3 text-xs md:text-sm font-bold transition-colors ${abaRanking === "Geral" ? "bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-500 border-b-2 border-amber-500" : "text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"}`}
+            className={`cursor-pointer flex-1 py-3 text-xs md:text-sm font-bold transition-colors ${abaRanking === "Geral" ? "bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-500 border-b-2 border-amber-500" : "text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"}`}
           >
             🌎 Ranking Geral
           </button>
           <button
             onClick={() => setAbaRanking("Turma")}
-            className={`flex-1 py-3 text-xs md:text-sm font-bold transition-colors ${abaRanking === "Turma" ? "bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-500 border-b-2 border-amber-500" : "text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"}`}
+            className={`cursor-pointer flex-1 py-3 text-xs md:text-sm font-bold transition-colors ${abaRanking === "Turma" ? "bg-white dark:bg-slate-900 text-amber-600 dark:text-amber-500 border-b-2 border-amber-500" : "text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"}`}
           >
             👥 Minha Turma
           </button>
@@ -88,19 +88,19 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
         <div className="bg-white dark:bg-slate-900 px-4 py-3 flex justify-center gap-2 border-b border-slate-100 dark:border-slate-800 shadow-sm z-10 shrink-0 transition-colors duration-300">
           <button
             onClick={() => mudarFiltroTempo("geral")}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${filtroTempo === "geral" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700 shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-transparent"}`}
+            className={`cursor-pointer px-4 py-1.5 rounded-full text-xs font-bold transition-all ${filtroTempo === "geral" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700 shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-transparent"}`}
           >
             Histórico Total
           </button>
           <button
             onClick={() => mudarFiltroTempo("mensal")}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${filtroTempo === "mensal" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700 shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-transparent"}`}
+            className={`cursor-pointer px-4 py-1.5 rounded-full text-xs font-bold transition-all ${filtroTempo === "mensal" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700 shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-transparent"}`}
           >
             Este Mês
           </button>
           <button
             onClick={() => mudarFiltroTempo("semanal")}
-            className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${filtroTempo === "semanal" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700 shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-transparent"}`}
+            className={`cursor-pointer px-4 py-1.5 rounded-full text-xs font-bold transition-all ${filtroTempo === "semanal" ? "bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-700 shadow-sm" : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 border border-transparent"}`}
           >
             Esta Semana
           </button>

@@ -34,7 +34,7 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
             Atualização v1.8.0
           </h2>
           <p className="text-emerald-100 text-xs font-black mt-1 relative z-10 tracking-wider">
-            O MODO ESCURO CHEGOU!
+            O MODO ESCURO E + AGILIDADE!
           </p>
         </div>
 
@@ -45,9 +45,7 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
             </p>
 
             <div className="bg-gradient-to-br from-slate-800 to-slate-900 dark:from-slate-950 dark:to-black border-2 border-slate-700 p-5 rounded-xl shadow-md relative overflow-hidden transition-colors duration-300">
-              <div className="absolute -right-4 -top-4 text-7xl opacity-20">
-                🌓
-              </div>
+              <div className="absolute -right-4 -top-4 text-7xl opacity-20">🌓</div>
               <h3 className="font-black text-white text-sm md:text-base flex items-center gap-2 mb-2 transition-colors">
                 <span>🌓</span> Novo Tema Escuro (Dark Mode)
               </h3>
@@ -56,23 +54,25 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
                 podes alternar entre o tema <strong>Claro e Escuro</strong>{" "}
                 clicando no botão do Sol/Lua no topo do portal.
               </p>
-              <div className="bg-slate-700/50 p-3 rounded-lg border border-slate-600 transition-colors">
-                <p className="text-xs text-slate-200 font-bold transition-colors">
-                  💡 Dica: A tua preferência de cor fica guardada
-                  automaticamente para o teu próximo acesso!
-                </p>
-              </div>
             </div>
 
-            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-2 border-emerald-200 dark:border-emerald-800/50 p-4 rounded-xl shadow-sm relative overflow-hidden transition-colors duration-300">
+            <div className="bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 border-2 border-emerald-200 dark:border-emerald-800/50 p-4 rounded-xl shadow-sm relative transition-colors duration-300">
               <h3 className="font-black text-emerald-900 dark:text-emerald-400 text-sm md:text-base flex items-center gap-2 mb-1 transition-colors">
-                <span>🗝️</span> Central de Gabaritos
+                <span>⏳</span> Validação em 10 Segundos
               </h3>
               <p className="text-xs md:text-sm text-emerald-800 dark:text-emerald-300 leading-relaxed transition-colors">
-                O teu Hub exclusivo para consultar as{" "}
-                <strong>Resoluções Oficiais e Códigos-Fonte</strong> dos módulos
-                finalizados. Com links mágicos clicáveis e botão direto para o
-                Classroom!
+                Otimizamos o sistema! Agora, o tempo de espera para confirmar a 
+                sua entrega e recebimento de XP no Classroom foi reduzido para 
+                apenas <strong>10 segundos</strong>. Mais agilidade para você!
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-indigo-50 to-blue-50 dark:from-indigo-900/20 dark:to-blue-900/20 border-2 border-indigo-200 dark:border-indigo-800/50 p-4 rounded-xl shadow-sm relative transition-colors duration-300">
+              <h3 className="font-black text-indigo-900 dark:text-indigo-400 text-sm md:text-base flex items-center gap-2 mb-1 transition-colors">
+                <span>🗝️</span> Central de Gabaritos
+              </h3>
+              <p className="text-xs md:text-sm text-indigo-800 dark:text-indigo-300 leading-relaxed transition-colors">
+                Acesso rápido às <strong>Resoluções Oficiais e Códigos-Fonte</strong> dos módulos finalizados. Links clicáveis e botão direto para o Classroom!
               </p>
             </div>
           </div>
@@ -81,7 +81,7 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
         <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 transition-colors duration-300">
           <button
             onClick={onClose}
-            className="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 dark:from-emerald-600 dark:to-teal-800 text-white font-black py-4 rounded-xl shadow-md transition-all active:scale-95 text-lg"
+            className="cursor-pointer w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 dark:from-emerald-600 dark:to-teal-800 text-white font-black py-4 rounded-xl shadow-md transition-all active:scale-95 text-lg"
           >
             BORA ESTUDAR! 🚀
           </button>

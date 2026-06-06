@@ -99,10 +99,10 @@ export default function AnalyticsPage() {
   });
 
   if (!montado || !nomeUsuario)
-    return <div className="min-h-screen bg-slate-50"></div>;
+    return <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300"></div>;
 
   return (
-    <main className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 font-sans transition-colors duration-300">
       <div className="max-w-7xl mx-auto">
         <Header
           carregando={false}
@@ -116,28 +116,28 @@ export default function AnalyticsPage() {
         <div className="flex items-center gap-4 mb-6 mt-4">
           <button
             onClick={() => router.push("/trilhatech/aulas")}
-            className="text-slate-500 hover:text-slate-700 font-bold px-3 py-1.5 bg-white border border-slate-200 rounded-lg shadow-sm transition-colors"
+            className="cursor-pointer text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 font-bold px-3 py-1.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-sm transition-colors duration-300"
           >
             ← Voltar
           </button>
-          <h2 className="text-2xl font-black text-slate-800 border-l-4 border-indigo-500 pl-3">
+          <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 border-l-4 border-indigo-500 pl-3 transition-colors duration-300">
             Analytics & CRM
           </h2>
         </div>
 
-        <div className="flex gap-2 mb-6 border-b border-slate-200 pb-2 overflow-x-auto">
+        <div className="flex gap-2 mb-6 border-b border-slate-200 dark:border-slate-800 pb-2 overflow-x-auto transition-colors duration-300">
           <button
             onClick={() => {
               setAbaAtiva("geral");
               voltarParaLista();
             }}
-            className={`px-6 py-3 rounded-t-lg font-bold transition-all whitespace-nowrap ${abaAtiva === "geral" ? "bg-indigo-600 text-white shadow-md" : "bg-white text-slate-500 hover:bg-slate-100"}`}
+            className={`px-6 py-3 rounded-t-lg font-bold transition-all whitespace-nowrap ${abaAtiva === "geral" ? "bg-indigo-600 text-white shadow-md" : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
           >
             📊 Visão Geral da Escola
           </button>
           <button
             onClick={() => setAbaAtiva("ficha")}
-            className={`px-6 py-3 rounded-t-lg font-bold transition-all whitespace-nowrap ${abaAtiva === "ficha" ? "bg-amber-500 text-white shadow-md" : "bg-white text-slate-500 hover:bg-slate-100"}`}
+            className={`px-6 py-3 rounded-t-lg font-bold transition-all whitespace-nowrap ${abaAtiva === "ficha" ? "bg-amber-500 text-white shadow-md" : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
           >
             🔍 Ficha 360º do Aluno
           </button>
@@ -153,25 +153,25 @@ export default function AnalyticsPage() {
             ) : (
               <>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
-                    <div className="bg-blue-100 p-4 rounded-full text-3xl">
+                  <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4 transition-colors duration-300">
+                    <div className="bg-blue-100 dark:bg-blue-900/20 p-4 rounded-full text-3xl">
                       👥
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                         Alunos Ativos
                       </p>
-                      <p className="text-3xl font-black text-slate-800">
+                      <p className="text-3xl font-black text-slate-800 dark:text-slate-100">
                         {dadosGerais.totalAlunos}
                       </p>
                     </div>
                   </div>
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
-                    <div className="bg-emerald-100 p-4 rounded-full text-3xl">
+                  <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4 transition-colors duration-300">
+                    <div className="bg-emerald-100 dark:bg-emerald-900/20 p-4 rounded-full text-3xl">
                       ⭐
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                         Economia (XP Gerado)
                       </p>
                       <p className="text-3xl font-black text-emerald-600">
@@ -179,12 +179,12 @@ export default function AnalyticsPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex items-center gap-4">
-                    <div className="bg-purple-100 p-4 rounded-full text-3xl">
+                  <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex items-center gap-4 transition-colors duration-300">
+                    <div className="bg-purple-100 dark:bg-purple-900/20 p-4 rounded-full text-3xl">
                       💸
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                         Volume de Pix de XP
                       </p>
                       <p className="text-3xl font-black text-purple-600">
@@ -194,36 +194,36 @@ export default function AnalyticsPage() {
                   </div>
                 </div>
 
-                <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
                   <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
                     <div>
-                      <h3 className="font-bold text-slate-800 text-xl flex items-center gap-2">
+                      <h3 className="font-bold text-slate-800 dark:text-slate-100 text-xl flex items-center gap-2">
                         <span className="text-red-500 animate-pulse">🚨</span>{" "}
                         Radar de Risco
                       </h3>
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         Alunos com frequência crítica (&lt;70%) ou com 2+
                         missões atrasadas.
                       </p>
                     </div>
-                    <span className="bg-red-100 text-red-700 text-xs font-bold px-3 py-1.5 rounded-full border border-red-200 shadow-sm">
+                    <span className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 text-xs font-bold px-3 py-1.5 rounded-full border border-red-200 dark:border-red-800/50 shadow-sm">
                       {dadosGerais.radarRisco.length} Alunos em Alerta
                     </span>
                   </div>
 
                   {dadosGerais.radarRisco.length === 0 ? (
-                    <div className="text-center py-10 bg-emerald-50 rounded-xl border border-emerald-100">
+                    <div className="text-center py-10 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-100 dark:border-emerald-800/50">
                       <span className="text-5xl block mb-3">🎉</span>
-                      <p className="font-bold text-emerald-800 text-lg">
+                      <p className="font-bold text-emerald-800 dark:text-emerald-300 text-lg">
                         Tudo sob controlo!
                       </p>
-                      <p className="text-sm text-emerald-600">
+                      <p className="text-sm text-emerald-600 dark:text-emerald-400">
                         Nenhum aluno apresenta risco crítico de evasão neste
                         momento.
                       </p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[500px] overflow-y-auto pr-2 pb-2">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-125 overflow-y-auto pr-2 pb-2">
                       {dadosGerais.radarRisco.map((aluno, idx) => {
                         const numeroLimpo = aluno.telefone.replace(/\D/g, "");
                         const linkZap = numeroLimpo
@@ -233,14 +233,14 @@ export default function AnalyticsPage() {
                         return (
                           <div
                             key={idx}
-                            className="border border-red-200 bg-red-50/50 rounded-xl p-4 flex flex-col gap-3 hover:bg-white hover:shadow-md transition-all group"
+                            className="border border-red-200 dark:border-red-800/50 bg-red-50/50 dark:bg-red-900/20 rounded-xl p-4 flex flex-col gap-3 hover:bg-white dark:hover:bg-slate-800 hover:shadow-md transition-all group"
                           >
                             <div className="flex justify-between items-start">
                               <div className="pr-2">
-                                <h4 className="font-bold text-slate-800 text-sm line-clamp-1">
+                                <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm line-clamp-1">
                                   {aluno.nome}
                                 </h4>
-                                <p className="text-[10px] font-mono text-slate-500">
+                                <p className="text-[10px] font-mono text-slate-500 dark:text-slate-400">
                                   {aluno.turma} • {aluno.matricula}
                                 </p>
                               </div>
@@ -249,14 +249,14 @@ export default function AnalyticsPage() {
                                   href={linkZap}
                                   target="_blank"
                                   rel="noreferrer"
-                                  className="bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded-lg shadow-sm transition-colors text-xs flex items-center justify-center flex-shrink-0"
+                                  className="bg-emerald-500 hover:bg-emerald-600 text-white p-2 rounded-lg shadow-sm transition-colors text-xs flex items-center justify-center shrink-0"
                                   title="Chamar no WhatsApp"
                                 >
                                   💬
                                 </a>
                               ) : (
                                 <span
-                                  className="bg-slate-200 text-slate-500 p-2 rounded-lg text-xs font-bold flex-shrink-0"
+                                  className="bg-slate-200 dark:bg-slate-700 text-slate-500 dark:text-slate-400 p-2 rounded-lg text-xs font-bold shrink-0"
                                   title="Sem telefone"
                                 >
                                   📵
@@ -266,12 +266,12 @@ export default function AnalyticsPage() {
 
                             <div className="flex flex-wrap gap-1.5 mt-auto">
                               {aluno.taxaPresenca < 70 && (
-                                <span className="bg-red-100 text-red-700 border border-red-200 text-[9px] font-bold px-2 py-1 rounded-md flex items-center gap-1 shadow-sm">
+                                <span className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/50 text-[9px] font-bold px-2 py-1 rounded-md flex items-center gap-1 shadow-sm">
                                   📉 Freq: {aluno.taxaPresenca}%
                                 </span>
                               )}
                               {aluno.missoesAtrasadas >= 2 && (
-                                <span className="bg-orange-100 text-orange-800 border border-orange-200 text-[9px] font-bold px-2 py-1 rounded-md flex items-center gap-1 shadow-sm">
+                                <span className="bg-orange-100 dark:bg-orange-900/30 text-orange-800 dark:text-orange-400 border border-orange-200 dark:border-orange-800/50 text-[9px] font-bold px-2 py-1 rounded-md flex items-center gap-1 shadow-sm">
                                   ⚠️ {aluno.missoesAtrasadas} Atrasadas
                                 </span>
                               )}
@@ -279,7 +279,7 @@ export default function AnalyticsPage() {
 
                             <button
                               onClick={() => investigarAluno(aluno.matricula)}
-                              className="w-full mt-2 text-[10px] font-bold text-slate-600 bg-white border border-slate-200 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+                              className="w-full mt-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                             >
                               Ver Ficha Completa
                             </button>
@@ -299,7 +299,7 @@ export default function AnalyticsPage() {
           <div className="animate-in fade-in">
             {!alunoSelecionado ? (
               <div className="space-y-6">
-                <div className="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row gap-4 justify-between items-center">
+                <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row gap-4 justify-between items-center transition-colors duration-300">
                   <div className="w-full md:w-1/2 relative">
                     <span className="absolute left-3 top-3 text-slate-400">
                       🔍
@@ -309,14 +309,14 @@ export default function AnalyticsPage() {
                       placeholder="Buscar por nome ou matrícula..."
                       value={buscaAluno}
                       onChange={(e) => setBuscaAluno(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border border-slate-300 rounded-xl text-slate-800 outline-none focus:border-amber-500 focus:ring-2 focus:ring-amber-200 transition-all"
+                      className="w-full pl-10 pr-4 py-3 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl text-slate-800 dark:text-slate-100 outline-none focus:border-amber-500 dark:focus:border-amber-500 focus:ring-2 focus:ring-amber-200 dark:focus:ring-amber-500/50 transition-all"
                     />
                   </div>
                   <div className="w-full md:w-auto">
                     <select
                       value={filtroTurmaAluno}
                       onChange={(e) => setFiltroTurmaAluno(e.target.value)}
-                      className="w-full border border-slate-300 rounded-xl p-3 text-slate-700 font-bold outline-none focus:border-amber-500 bg-white"
+                      className="w-full border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-slate-700 dark:text-slate-300 font-bold outline-none focus:border-amber-500 bg-white dark:bg-slate-900 transition-colors duration-300"
                     >
                       <option value="Todas">Todas as Turmas</option>
                       <option value="Turma 1 - 1º Ano">Turma 1 - 1º Ano</option>
@@ -327,7 +327,7 @@ export default function AnalyticsPage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {alunosFiltrados.length === 0 ? (
-                    <div className="col-span-full py-12 text-center text-slate-500 bg-white rounded-2xl border border-slate-200">
+                    <div className="col-span-full py-12 text-center text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 transition-colors duration-300">
                       Nenhum aluno encontrado com estes filtros.
                     </div>
                   ) : (
@@ -335,22 +335,22 @@ export default function AnalyticsPage() {
                       <div
                         key={aluno.matricula}
                         onClick={() => buscarFichaAluno(aluno.matricula)}
-                        className="bg-white p-4 rounded-xl border border-slate-200 flex justify-between items-center hover:shadow-md hover:border-amber-300 cursor-pointer transition-all group"
+                        className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-800 flex justify-between items-center hover:shadow-md hover:border-amber-300 dark:hover:border-amber-500 dark:hover:bg-slate-800 cursor-pointer transition-all group"
                       >
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center text-lg border border-slate-200 group-hover:bg-amber-50 group-hover:border-amber-200 transition-colors">
+                          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-lg border border-slate-200 dark:border-slate-700 group-hover:bg-amber-50 dark:group-hover:bg-amber-900/30 group-hover:border-amber-200 dark:group-hover:border-amber-700 transition-colors">
                             👤
                           </div>
                           <div>
-                            <h4 className="font-bold text-slate-800 text-sm line-clamp-1">
+                            <h4 className="font-bold text-slate-800 dark:text-slate-100 text-sm line-clamp-1">
                               {aluno.nome}
                             </h4>
-                            <p className="text-xs text-slate-500">
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
                               {aluno.turma} • {aluno.matricula}
                             </p>
                           </div>
                         </div>
-                        <div className="bg-amber-100 text-amber-700 w-8 h-8 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <div className="bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 w-8 h-8 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                           ❯
                         </div>
                       </div>
@@ -362,19 +362,19 @@ export default function AnalyticsPage() {
               <div className="space-y-6">
                 <button
                   onClick={voltarParaLista}
-                  className="bg-white border border-slate-200 text-slate-600 font-bold px-4 py-2 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-2 shadow-sm"
+                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold px-4 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2 shadow-sm"
                 >
                   ← Voltar para o Diretório
                 </button>
 
                 {carregandoFicha ? (
-                  <div className="flex justify-center py-20 bg-white rounded-2xl border border-slate-200 shadow-sm">
+                  <div className="flex justify-center py-20 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm">
                     <div className="animate-spin rounded-full h-12 w-12 border-b-4 border-amber-500"></div>
                   </div>
                 ) : ficha360 ? (
                   <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                     <div className="lg:col-span-1 space-y-6">
-                      <div className="bg-linear-to-b from-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-xl">
+                      <div className="bg-gradient-to-b from-slate-800 to-slate-900 rounded-2xl p-6 text-white shadow-xl">
                         <div className="w-20 h-20 bg-slate-700 rounded-full flex items-center justify-center text-3xl mb-4 border-4 border-slate-600">
                           👤
                         </div>
@@ -434,11 +434,11 @@ export default function AnalyticsPage() {
                         </div>
                       </div>
 
-                      <div className="bg-amber-50 p-5 rounded-2xl border border-amber-200">
-                        <h3 className="font-bold text-amber-900 mb-2 uppercase text-xs tracking-widest flex items-center gap-1">
+                      <div className="bg-amber-50 dark:bg-amber-900/20 p-5 rounded-2xl border border-amber-200 dark:border-amber-800/50">
+                        <h3 className="font-bold text-amber-900 dark:text-amber-300 mb-2 uppercase text-xs tracking-widest flex items-center gap-1">
                           <span>⚠️</span> Observações da Gestão
                         </h3>
-                        <p className="text-sm text-amber-800 bg-white p-3 rounded border border-amber-100 whitespace-pre-wrap">
+                        <p className="text-sm text-amber-800 dark:text-amber-200 bg-white dark:bg-slate-800/50 p-3 rounded border border-amber-100 dark:border-amber-800/50 whitespace-pre-wrap">
                           {ficha360.dadosPessoais?.obs ||
                             "Nenhuma observação registrada."}
                         </p>
@@ -447,10 +447,10 @@ export default function AnalyticsPage() {
 
                     <div className="lg:col-span-2 space-y-6">
                       {ficha360.statusProjeto?.toLowerCase() === "reserva" && (
-                        <div className="bg-slate-100 border border-slate-300 text-slate-700 px-5 py-4 rounded-xl shadow-sm flex items-center gap-4 animate-pulse">
+                        <div className="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300 px-5 py-4 rounded-xl shadow-sm flex items-center gap-4 animate-pulse">
                           <span className="text-3xl">🪑</span>
                           <div>
-                            <h3 className="font-bold text-sm uppercase tracking-tight text-slate-800">
+                            <h3 className="font-bold text-sm uppercase tracking-tight text-slate-800 dark:text-slate-100">
                               Aluno Reserva
                             </h3>
                             <p className="text-xs md:text-sm mt-0.5">
@@ -464,10 +464,10 @@ export default function AnalyticsPage() {
                       )}
 
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
                           <div className="text-4xl">⭐</div>
                           <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                               XP Total
                             </p>
                             <p className="text-2xl font-black text-emerald-600">
@@ -475,22 +475,22 @@ export default function AnalyticsPage() {
                             </p>
                           </div>
                         </div>
-                        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
                           <div className="text-4xl">🎓</div>
                           <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                               Nível Atual
                             </p>
-                            <p className="text-2xl font-black text-blue-600">
+                            <p className="text-2xl font-black text-blue-600 dark:text-blue-400">
                               {ficha360.nivel || "Iniciante"}
                             </p>
                           </div>
                         </div>
 
-                        <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                        <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex items-center gap-4">
                           <div className="text-4xl">📍</div>
                           <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                            <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                               Frequência
                             </p>
                             <p
@@ -498,7 +498,7 @@ export default function AnalyticsPage() {
                             >
                               {ficha360.frequencia?.taxa ?? 100}%
                             </p>
-                            <p className="text-[9px] text-slate-400 font-bold">
+                            <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold">
                               {ficha360.frequencia?.totalPresencas ?? 0} de{" "}
                               {ficha360.frequencia?.totalAulas ?? 0} aulas
                             </p>
@@ -506,16 +506,16 @@ export default function AnalyticsPage() {
                         </div>
                       </div>
 
-                      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-                        <div className="bg-slate-50 p-4 border-b border-slate-200">
-                          <h3 className="font-bold text-slate-700 text-sm">
+                      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm overflow-hidden">
+                        <div className="bg-slate-50 dark:bg-slate-800/50 p-4 border-b border-slate-200 dark:border-slate-800">
+                          <h3 className="font-bold text-slate-700 dark:text-slate-200 text-sm">
                             Histórico de Atividades e Economia
                           </h3>
                         </div>
                         <div className="max-h-[400px] overflow-y-auto p-4">
                           {!ficha360.historicoXP ||
                           ficha360.historicoXP.length === 0 ? (
-                            <p className="text-center text-slate-500 py-8">
+                            <p className="text-center text-slate-500 dark:text-slate-400 py-8">
                               Nenhum registro de atividade encontrado.
                             </p>
                           ) : (
@@ -530,21 +530,21 @@ export default function AnalyticsPage() {
                                   return (
                                     <div
                                       key={idx}
-                                      className="flex items-center justify-between p-3 rounded-lg border border-slate-100 hover:bg-slate-50 transition-colors"
+                                      className="flex items-center justify-between p-3 rounded-lg border border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
                                     >
                                       <div className="flex items-center gap-3">
                                         <div className="text-2xl">
                                           {isPix ? "💸" : isBadge ? "🏆" : "📝"}
                                         </div>
                                         <div>
-                                          <p className="font-bold text-slate-700 text-sm">
+                                          <p className="font-bold text-slate-700 dark:text-slate-200 text-sm">
                                             {isPix
                                               ? "Transferência Pix"
                                               : isBadge
                                                 ? "Conquista Desbloqueada"
                                                 : `Missão: ${item.atividade}`}
                                           </p>
-                                          <p className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1 font-bold">
+                                          <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5 flex items-center gap-1 font-bold">
                                             <span>🕒</span>{" "}
                                             {new Date(item.data)
                                               .toLocaleString("pt-BR", {

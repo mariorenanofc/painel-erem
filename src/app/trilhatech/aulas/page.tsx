@@ -54,7 +54,6 @@ export default function GestaoAulasPage() {
   const [carregandoReposicao, setCarregandoReposicao] = useState(false);
   const [senhaLousa, setSenhaLousa] = useState("");
   const [salvandoSenha, setSalvandoSenha] = useState(false);
-  const [modalZapAberto, setModalZapAberto] = useState(false);
   const [modalFechamentoAberto, setModalFechamentoAberto] = useState(false);
 
   const [modalNovaMissaoAberto, setModalNovaMissaoAberto] = useState(false);
@@ -524,7 +523,9 @@ export default function GestaoAulasPage() {
   }, [dadosFreqHoje, filtroStatusHoje, ordenacaoFreq]);
 
   if (!montado || !nomeUsuario)
-    return <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300"></div>;
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300"></div>
+    );
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-24 transition-colors duration-300">
@@ -590,29 +591,7 @@ export default function GestaoAulasPage() {
           onSuccess={() => carregarRankingTutor("geral")}
         />
       )}
-      {modalZapAberto && (
-        <div className="fixed inset-0 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm z-100 flex items-center justify-center p-4 transition-colors duration-300">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-xl w-full max-w-md overflow-hidden p-6 border dark:border-slate-800 transition-colors">
-            <h2 className="font-bold text-xl text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-4 transition-colors">
-              <span>💬</span> Configurar Grupos
-            </h2>
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 p-4 rounded-lg mb-4 text-sm text-blue-800 dark:text-blue-300 font-medium transition-colors">
-              As configurações de WhatsApp agora devem ser alteradas diretamente
-              na aba <strong>&ldquo;configuracoes&quot;</strong> da sua Planilha
-              do Google!
-            </div>
-            <div className="flex justify-end gap-2 mt-4 pt-4 border-t border-slate-200 dark:border-slate-800 transition-colors">
-              <button
-                type="button"
-                onClick={() => setModalZapAberto(false)}
-                className="cursor-pointer px-6 py-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 rounded font-bold text-slate-700 dark:text-slate-300 transition-colors"
-              >
-                Entendido, Fechar
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+
       {modalNovaMissaoAberto && (
         <FormularioMissaoModal
           idEditando={idEditando}
@@ -681,8 +660,14 @@ export default function GestaoAulasPage() {
               </h2>
             </div>
 
-            {/* DASHBOARD SUPERIOR (SHORTCUTS) */}
+            {/* DASHBOARD SUPERIOR (SHORTCUTS) - AGORA COM O BOTÃO DE CONFIGURAÇÕES */}
             <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => router.push("/trilhatech/configuracoes")}
+                className="cursor-pointer px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300 hover:border-fuchsia-400 dark:hover:border-fuchsia-500 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-900/30 hover:text-fuchsia-800 dark:hover:text-fuchsia-400 shadow-sm transition-colors flex items-center gap-2"
+              >
+                ⚙️ Configurações
+              </button>
               <button
                 onClick={() => {
                   setModalRankingAberto(true);
@@ -709,7 +694,7 @@ export default function GestaoAulasPage() {
         </div>
       </div>
 
-      <div className="max-w-384 w-full mx-auto px-4 lg:px-8">
+      <div className="max-w-[1536px] w-full mx-auto px-4 lg:px-8">
         {/* BARRA DE LINKS EXTERNOS COMPACTA */}
         <div className="flex flex-wrap gap-2 mb-6">
           <a
@@ -821,12 +806,13 @@ export default function GestaoAulasPage() {
                 </div>
               </div>
 
+              {/* AQUI NÓS LIMPAMOS O AVISO DO WHATSAPP E REDIRECIONAMOS PARA O PAINEL DE CONFIGURAÇÕES */}
               <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800 transition-colors">
                 <button
-                  onClick={() => setModalZapAberto(true)}
+                  onClick={() => router.push("/trilhatech/configuracoes")}
                   className="cursor-pointer w-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700"
                 >
-                  <span>💬</span> WhatsApp
+                  <span>⚙️</span> Painel de Configurações
                 </button>
                 <button
                   onClick={() => setModalGodModeAberto(true)}
@@ -887,7 +873,7 @@ export default function GestaoAulasPage() {
               </div>
 
               {/* LISTA COMPACTA */}
-              <div className="p-4 md:p-6 bg-slate-50/50 dark:bg-slate-950/50 rounded-b-2xl min-h-[500px] transition-colors duration-300">
+              <div className="p-4 md:p-6 bg-slate-50/50 dark:bg-slate-950/50 rounded-b-2xl min-h-125 transition-colors duration-300">
                 <MissoesList
                   atividades={atividades}
                   isLoading={isLoading}

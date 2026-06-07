@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
 
 // 🔥 A SUA IDEIA GENIAL APLICADA AQUI:
@@ -152,7 +153,8 @@ export const apiTutor = {
   buscarRanking: (filtroTempo: "geral" | "semanal" | "mensal") =>
     fetchApi({ action: "buscar_ranking", filtroTempo, token: TUTOR_TOKEN }),
 
-  buscarAnalyticsGeral: () => fetchApi({ action: "buscar_analytics_geral", token: TUTOR_TOKEN }),
+  buscarAnalyticsGeral: () =>
+    fetchApi({ action: "buscar_analytics_geral", token: TUTOR_TOKEN }),
 
   buscarFicha360: (matricula: string) =>
     fetchApi({ action: "buscar_ficha_360", matricula, token: TUTOR_TOKEN }),
@@ -161,7 +163,13 @@ export const apiTutor = {
   buscarTodasAtividades: (
     filtroTurma: string = "Todas",
     filtroTipo: string = "Todos",
-  ) => fetchApi({ action: "buscar_todas_atividades", filtroTurma, filtroTipo, token: TUTOR_TOKEN }),
+  ) =>
+    fetchApi({
+      action: "buscar_todas_atividades",
+      filtroTurma,
+      filtroTipo,
+      token: TUTOR_TOKEN,
+    }),
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   salvarAtividade: (dados: any) =>
@@ -171,7 +179,11 @@ export const apiTutor = {
     fetchApi({ action: "excluir_atividade", idAtividade, token: TUTOR_TOKEN }),
 
   buscarEntregas: (idAtividade: string) =>
-    fetchApi({ action: "buscar_entregas_atividade", idAtividade, token: TUTOR_TOKEN }),
+    fetchApi({
+      action: "buscar_entregas_atividade",
+      idAtividade,
+      token: TUTOR_TOKEN,
+    }),
 
   avaliarEntrega: (
     idEntrega: string,
@@ -192,7 +204,13 @@ export const apiTutor = {
 
   // --- FREQUÊNCIA ---
   buscarDiarioClasse: (turma: string, mes: string, ano: string) =>
-    fetchApi({ action: "buscar_diario_classe", turma, mes, ano, token: TUTOR_TOKEN }),
+    fetchApi({
+      action: "buscar_diario_classe",
+      turma,
+      mes,
+      ano,
+      token: TUTOR_TOKEN,
+    }),
 
   buscarFrequenciaHoje: (turma: string) =>
     fetchApi({ action: "buscar_frequencia_hoje", turma, token: TUTOR_TOKEN }),
@@ -213,7 +231,8 @@ export const apiTutor = {
     }),
 
   // --- GOD MODE ---
-  listarAlunosGodMode: () => fetchApi({ action: "listar_alunos_godmode", token: TUTOR_TOKEN }),
+  listarAlunosGodMode: () =>
+    fetchApi({ action: "listar_alunos_godmode", token: TUTOR_TOKEN }),
 
   injetarXP: (matriculaAlvo: string, quantidadeXP: number, motivo: string) =>
     fetchApi({
@@ -225,17 +244,31 @@ export const apiTutor = {
     }),
 
   coroarElite: (matricula: string, tipoPlaca: string) =>
-    fetchApi({ action: "coroar_elite", matricula, tipoPlaca, token: TUTOR_TOKEN }),
+    fetchApi({
+      action: "coroar_elite",
+      matricula,
+      tipoPlaca,
+      token: TUTOR_TOKEN,
+    }),
 
   // --- CONFIGURAÇÕES ---
-  buscarSenhaCheckin: () => fetchApi({ action: "buscar_senha_checkin", token: TUTOR_TOKEN }),
+  buscarSenhaCheckin: () =>
+    fetchApi({ action: "buscar_senha_checkin", token: TUTOR_TOKEN }),
 
   atualizarSenhaCheckin: (novaSenha: string) =>
-    fetchApi({ action: "atualizar_senha_checkin", novaSenha, token: TUTOR_TOKEN }),
+    fetchApi({
+      action: "atualizar_senha_checkin",
+      novaSenha,
+      token: TUTOR_TOKEN,
+    }),
 
   toggleModoReposicao: (status: "LIGADO" | "DESLIGADO") =>
     fetchApi({ action: "toggle_modo_reposicao", status, token: TUTOR_TOKEN }),
 
   buscarAniversariantes: () =>
     fetchApi({ action: "buscar_aniversariantes_dia", token: TUTOR_TOKEN }),
+
+  // 🔥 NOVA ROTA DE CONFIGURAÇÕES INTEGRADAS
+  salvarConfiguracoes: (configs: Record<string, any>) =>
+    fetchApi({ action: "salvar_configuracoes", configs, token: TUTOR_TOKEN }),
 };

@@ -65,7 +65,8 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
     const ROTAS_PROTEGIDAS = [
       "salvar_atividade", "excluir_atividade", "avaliar_entrega",
       "injetar_xp_manual", "cadastrar_aluno", "inscrever_trilhatech",
-      "mudar_status_trilha", "atualizar_senha_lousa", "alternar_modo_reposicao"
+      "mudar_status_trilha", "atualizar_senha_lousa", "alternar_modo_reposicao",
+      "salvar_configuracoes"
     ];
 
     // A nossa "Chave Mestra" que só o Painel do Tutor conhece
@@ -2472,12 +2473,20 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         let turmaDoAlunoNoProjeto = "";
 
         const niveisGamificacao = [
-          { nome: "Hello World", min: 0, max: 499 },
-          { nome: "Bug Hunter", min: 500, max: 1499 },
-          { nome: "Coder Ninja", min: 1500, max: 2999 },
-          { nome: "Tech Hacker", min: 3000, max: 4999 },
-          { nome: "Dev Supremo", min: 5000, max: 7499 },
-          { nome: "Lenda Binária", min: 7500, max: 999999 }
+          { nome: "Hello World", min: 0, max: 499 },           // Gap: 500
+          { nome: "Bug Hunter", min: 500, max: 1499 },         // Gap: 1.000
+          { nome: "Coder Ninja", min: 1500, max: 2999 },       // Gap: 1.500
+          { nome: "Tech Hacker", min: 3000, max: 4999 },       // Gap: 2.000
+          { nome: "Dev Supremo", min: 5000, max: 7499 },       // Gap: 2.500
+          { nome: "Lenda Binária", min: 7500, max: 9999 },     // Gap: 2.500
+
+          // 🔥 OS NOVOS NÍVEIS DE ELITE 🔥
+          { nome: "Mestre do Código", min: 10000, max: 13999 }, // Gap: 4.000
+          { nome: "Arquiteto de Sistemas", min: 14000, max: 18999 }, // Gap: 5.000
+          { nome: "Hacker Quântico", min: 19000, max: 24999 },  // Gap: 6.000
+          { nome: "Oráculo Digital", min: 25000, max: 34999 },  // Gap: 10.000 (Fim de ano letivo provável)
+          { nome: "Titã da Nuvem", min: 35000, max: 49999 },    // Gap: 15.000 (Para os alunos absurdamente focados)
+          { nome: "Deus da Lógica", min: 50000, max: 999999 }   // Infinito
         ];
 
         if (abaTrilha) {
@@ -3045,18 +3054,17 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
       if (action === "buscar_configuracoes") {
         const abaConfig = planilha.getSheetByName("configuracoes");
 
-        // Valores padrão caso a aba esteja vazia ou incompleta
+        // Valores padrão caso a aba esteja vazia ou incompleta (Mantém compatibilidade com a página de Aulas)
         let configuracoes = {
           nomeEscola: "Escola Padrão",
           nomeProjeto: "Trilha Tech",
           turmas: ["Turma 1 - 1º Ano", "Turma 2 - 2º Ano"],
           linkPlanilha: "https://docs.google.com/spreadsheets",
           linkClassroom: "https://classroom.google.com/",
-          linkMatriz: "#",
-          linkAjuda: "#",
-          linkCronograma: "#",
-          modoReposicao: "DESLIGADO",
-
+          linkMatriz: "",
+          linkAjuda: "",
+          linkCronograma: "",
+          modoReposicao: "DESLIGADO"
         };
 
         if (abaConfig) {
@@ -3065,12 +3073,15 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             let chave = String(dadosConf[i][0]).trim();
             let valor = String(dadosConf[i][1]).trim();
 
+            if (!chave) continue;
+
+            // 🔥 1. A MÁGICA NOVA: Injeta a chave EXATA da planilha no JSON enviado ao portal
+            configuracoes[chave] = valor;
+
+            // 2. MANTÉM AS TRADUÇÕES ANTIGAS (Para não quebrar o "Gestão Aulas")
             if (chave === "NOME_ESCOLA") configuracoes.nomeEscola = valor;
             if (chave === "NOME_PROJETO") configuracoes.nomeProjeto = valor;
-            if (chave === "TURMAS_PROJETO") {
-              configuracoes.turmas = valor.split(",").map(t => t.trim()).filter(t => t !== "");
-            }
-            // Lendo os novos links dinâmicos
+            if (chave === "TURMAS_PROJETO") configuracoes.turmas = valor.split(",").map(t => t.trim()).filter(t => t !== "");
             if (chave === "LINK_PLANILHA") configuracoes.linkPlanilha = valor;
             if (chave === "LINK_CLASSROOM") configuracoes.linkClassroom = valor;
             if (chave === "LINK_MATRIZ") configuracoes.linkMatriz = valor;
@@ -3084,7 +3095,43 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
       }
 
     // ==========================================
-    // ROTA 33: LIGAR/DESLIGAR MODO DE REPOSIÇÃO
+    // ROTA 33: SALVAR CONFIGURAÇÕES GERAIS (TUTOR)
+    // ==========================================
+      if (action === "salvar_configuracoes") {
+        const configs = dadosApp.configs; // Objeto no formato { CHAVE: "VALOR", CHAVE2: "VALOR2" }
+        const abaConfig = planilha.getSheetByName("configuracoes");
+
+        if (!abaConfig) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aba configuracoes não encontrada." })).setMimeType(ContentService.MimeType.JSON);
+        }
+
+        const dadosConf = abaConfig.getDataRange().getValues();
+        let chavesPlanilha = {};
+
+        // 1. Mapeia em qual linha está cada chave atual (para não duplicar)
+        for (let i = 1; i < dadosConf.length; i++) {
+          let chave = String(dadosConf[i][0]).trim();
+          if (chave) chavesPlanilha[chave] = i + 1; // Guarda o número da linha
+        }
+
+        // 2. Percorre as configurações que chegaram do Frontend
+        for (let chave in configs) {
+          let valor = String(configs[chave]);
+
+          if (chavesPlanilha[chave]) {
+            // Se a chave já existe, atualiza a Coluna B (Valor)
+            abaConfig.getRange(chavesPlanilha[chave], 2).setValue(valor);
+          } else {
+            // Se a chave não existir, adiciona uma nova linha no final
+            abaConfig.appendRow([chave, valor]);
+          }
+        }
+
+        return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Configurações salvas com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
+      }
+
+    // ==========================================
+    // ROTA 34: LIGAR/DESLIGAR MODO DE REPOSIÇÃO
     // ==========================================
       if (action === "toggle_modo_reposicao") {
         const abaConfig = planilha.getSheetByName("configuracoes");
@@ -3121,7 +3168,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
 
     // ==========================================
-    // ROTA 34: SALVAR AVATAR DO ALUNO
+    // ROTA 35: SALVAR AVATAR DO ALUNO
     // ==========================================
       if (action === "salvar_avatar") {
         const matricula = String(dadosApp.matricula).trim();
@@ -3142,7 +3189,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
       }
 
     // ==========================================
-    // ROTA 35: CURTIR PERFIL DO COLEGA (1x ao dia)
+    // ROTA 36: CURTIR PERFIL DO COLEGA (1x ao dia)
     // ==========================================
       if (action === "curtir_perfil") {
         const matriculaRemetente = String(dadosApp.matriculaRemetente).trim();
@@ -3196,7 +3243,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
       }
 
     // ==========================================
-    // ROTA 36: BUSCAR PERFIL PÚBLICO (O Mural do Aluno)
+    // ROTA 37: BUSCAR PERFIL PÚBLICO (O Mural do Aluno)
     // ==========================================
       if (action === "buscar_perfil_publico") {
         const matriculaAlvo = String(dadosApp.matriculaAlvo).trim();
@@ -3323,7 +3370,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", perfil: perfil })).setMimeType(ContentService.MimeType.JSON);
       }
     // ==========================================
-    // ROTA 37: LISTAR ALUNOS PARA O GOD MODE
+    // ROTA 38: LISTAR ALUNOS PARA O GOD MODE
     // ==========================================
       if (action === "listar_alunos_godmode") {
         const planBase = planilha.getSheetByName("basededados");
@@ -3353,7 +3400,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
       }
 
     // ==========================================
-    // ROTA 38: INJETAR XP MANUAL (GOD MODE)
+    // ROTA 39: INJETAR XP MANUAL (GOD MODE)
     // ==========================================
       if (action === "injetar_xp_manual") {
         const lock = LockService.getScriptLock();
@@ -3407,7 +3454,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
       }
 
     // ==========================================
-    // ROTA 39: COROAR ELITE (TROFÉU ROTATIVO)
+    // ROTA 40: COROAR ELITE (TROFÉU ROTATIVO)
     // ==========================================
       if (action === "coroar_elite") {
         try {

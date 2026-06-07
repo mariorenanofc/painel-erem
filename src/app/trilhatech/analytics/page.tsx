@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
@@ -7,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { AlunoRisco, AlunoSimples } from "@/src/types/index";
 import { apiTutor } from "@/src/services/api"; // 🔥 API CENTRALIZADA
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+
 type FichaAluno = any;
 
 export default function AnalyticsPage() {
@@ -512,7 +513,7 @@ export default function AnalyticsPage() {
                             Histórico de Atividades e Economia
                           </h3>
                         </div>
-                        <div className="max-h-[400px] overflow-y-auto p-4">
+                        <div className="max-h-100 overflow-y-auto p-4">
                           {!ficha360.historicoXP ||
                           ficha360.historicoXP.length === 0 ? (
                             <p className="text-center text-slate-500 dark:text-slate-400 py-8">
@@ -520,7 +521,7 @@ export default function AnalyticsPage() {
                             </p>
                           ) : (
                             <div className="space-y-3">
-                              {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                              
                               {ficha360.historicoXP.map(
                                 (item: any, idx: number) => {
                                   const isPix = item.id.includes("PIX");

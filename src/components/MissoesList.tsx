@@ -1,7 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo } from "react";
 import { Atividade, MissoesListProps } from "../types";
-import Image from "next/image";
 
 export default function MissoesList({
   atividades,
@@ -15,6 +14,7 @@ export default function MissoesList({
   const [filtroTurma, setFiltroTurma] = useState("Todas");
   const [filtroTipo, setFiltroTipo] = useState("Todos");
   const [filtroStatusPub, setFiltroStatusPub] = useState("Todos");
+  const [filtroPendentes, setFiltroPendentes] = useState(false); // 🔥 NOVO ESTADO DE PENDÊNCIAS
 
   const [filtrosAvançadosAbertos, setFiltrosAvançadosAbertos] = useState(false);
   const [missaoPreview, setMissaoPreview] = useState<Atividade | null>(null);
@@ -47,9 +47,22 @@ export default function MissoesList({
         filtroStatusPub === "Todos" ||
         ativ.statusPublicacao === filtroStatusPub;
 
-      return matchBusca && matchTurma && matchTipo && matchStatus;
+      // 🔥 LÓGICA DO FILTRO DE PENDÊNCIAS
+      const qtdPendentes = (ativ as any).pendentes || 0;
+      const matchPendentes = filtroPendentes ? qtdPendentes > 0 : true;
+
+      return (
+        matchBusca && matchTurma && matchTipo && matchStatus && matchPendentes
+      );
     });
-  }, [atividades, busca, filtroTurma, filtroTipo, filtroStatusPub]);
+  }, [
+    atividades,
+    busca,
+    filtroTurma,
+    filtroTipo,
+    filtroStatusPub,
+    filtroPendentes,
+  ]);
 
   // Agrupamento Duplo: Módulo -> Aula -> Missões
   const arvoreDeMissoes = useMemo(() => {
@@ -112,6 +125,15 @@ export default function MissoesList({
               </option>
             ))}
           </select>
+
+          {/* 🔥 NOVO BOTÃO DE PENDÊNCIAS RÁPIDO */}
+          <button
+            onClick={() => setFiltroPendentes(!filtroPendentes)}
+            className={`cursor-pointer px-4 py-2 rounded-lg text-sm font-bold border transition-colors whitespace-nowrap ${filtroPendentes ? "bg-red-500 dark:bg-red-600 text-white border-red-600 dark:border-red-500 shadow-inner" : "bg-white dark:bg-slate-900 text-red-500 dark:text-red-400 border-red-200 dark:border-red-800/50 hover:bg-red-50 dark:hover:bg-red-900/20"}`}
+          >
+            {filtroPendentes ? "🚨 Limpar Filtro" : "🚨 Só Pendentes"}
+          </button>
+
           <button
             onClick={() => setFiltrosAvançadosAbertos(!filtrosAvançadosAbertos)}
             className={`cursor-pointer px-4 py-2 rounded-lg text-sm font-bold border transition-colors ${filtrosAvançadosAbertos ? "bg-slate-800 dark:bg-slate-700 text-white border-slate-800 dark:border-slate-700" : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"}`}
@@ -167,7 +189,9 @@ export default function MissoesList({
       ) : (
         <div className="space-y-4">
           {Object.entries(arvoreDeMissoes).map(([nomeModulo, aulas]) => {
-            const isModuloAberto = modulosAbertos[nomeModulo] || false;
+            // 🔥 AUTO-EXPANSÃO: Se o filtro de pendentes estiver ativo, abre tudo automaticamente!
+            const isModuloAberto =
+              filtroPendentes || modulosAbertos[nomeModulo] || false;
             const qtdMissoesModulo = Object.values(aulas).reduce(
               (acc, miss) => acc + miss.length,
               0,
@@ -212,7 +236,9 @@ export default function MissoesList({
                       )
                       .map(([nomeAula, missoes]) => {
                         const aulaChave = `${nomeModulo}-${nomeAula}`;
-                        const isAulaAberta = aulasAbertas[aulaChave] || false;
+                        // 🔥 AUTO-EXPANSÃO DAS AULAS
+                        const isAulaAberta =
+                          filtroPendentes || aulasAbertas[aulaChave] || false;
 
                         return (
                           <div
@@ -248,10 +274,13 @@ export default function MissoesList({
                                 {missoes.map((ativ) => {
                                   const isRascunho =
                                     ativ.statusPublicacao === "Rascunho";
+                                  const qtdPendentes =
+                                    (ativ as any).pendentes || 0;
+
                                   return (
                                     <div
                                       key={ativ.id}
-                                      className={`flex flex-col md:flex-row md:items-center justify-between p-3 rounded-lg border transition-all hover:shadow-md ${isRascunho ? "border-amber-200 dark:border-amber-800/50 bg-amber-50/30 dark:bg-amber-900/10" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-blue-300 dark:hover:border-blue-500"}`}
+                                      className={`flex flex-col md:flex-row md:items-center justify-between p-3 rounded-lg border transition-all hover:shadow-md ${isRascunho ? "border-amber-200 dark:border-amber-800/50 bg-amber-50/30 dark:bg-amber-900/10" : qtdPendentes > 0 ? "border-red-200 dark:border-red-800/50 bg-red-50/10 dark:bg-red-900/10 hover:border-red-400" : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-blue-300 dark:hover:border-blue-500"}`}
                                     >
                                       <div className="flex-1 min-w-0 pr-4">
                                         <div className="flex items-center gap-2 mb-1">
@@ -263,6 +292,12 @@ export default function MissoesList({
                                           {isRascunho && (
                                             <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-slate-700 dark:bg-slate-600 text-white shadow-sm transition-colors">
                                               Rascunho
+                                            </span>
+                                          )}
+                                          {/* 🔥 BADGE DE PENDÊNCIAS COM ANIMAÇÃO */}
+                                          {qtdPendentes > 0 && (
+                                            <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/50 shadow-sm animate-pulse transition-colors">
+                                              {qtdPendentes} Para Corrigir
                                             </span>
                                           )}
                                           <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
@@ -298,10 +333,13 @@ export default function MissoesList({
                                         </button>
                                         <button
                                           onClick={() => onViewEntregas(ativ)}
-                                          className="cursor-pointer p-2 text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors"
+                                          className="cursor-pointer p-2 text-blue-500 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-md transition-colors relative"
                                           title="Corrigir Entregas"
                                         >
                                           📝
+                                          {qtdPendentes > 0 && (
+                                            <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full animate-ping"></span>
+                                          )}
                                         </button>
                                         <button
                                           onClick={() => onEdit(ativ)}

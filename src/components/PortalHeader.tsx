@@ -242,7 +242,11 @@ export default function PortalHeader({
                 </div>
                 <div className="border-t border-slate-100 dark:border-slate-700 p-2 transition-colors duration-300">
                   <button
-                    onClick={onLogout}
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      onLogout();
+                    }}
                     className="cursor-pointer w-full text-left px-3 py-2 text-sm text-red-600 dark:text-red-400 font-bold hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-2"
                   >
                     <span>🚪</span> Sair

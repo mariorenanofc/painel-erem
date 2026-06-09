@@ -113,7 +113,11 @@ export default function Header({
               {/* BOTÃO DE SAIR */}
               {onLogout && (
                 <button
-                  onClick={onLogout}
+                  type="button"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    onLogout();
+                  }}
                   className="cursor-pointer bg-slate-700 dark:bg-slate-800 hover:bg-red-500 dark:hover:bg-red-600 text-white p-2 rounded-lg transition-colors border border-slate-600 dark:border-slate-700 hover:border-red-400 flex items-center justify-center w-10 h-10"
                   title="Sair do Sistema"
                 >

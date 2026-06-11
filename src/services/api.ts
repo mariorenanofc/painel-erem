@@ -162,6 +162,10 @@ export const apiTutor = {
   toggleGabaritoRápido: (idAtividade: string) =>
     fetchApi({ action: "toggle_gabarito", idAtividade, token: TUTOR_TOKEN }),
 
+  // --- GESTÃO DE GABARITOS EM LOTE ---
+  salvarGabaritosLote: (atualizacoes: any[]) =>
+    fetchApi({ action: "salvar_gabaritos_lote", atualizacoes, token: TUTOR_TOKEN }),
+
   // --- MISSÕES ---
   buscarTodasAtividades: (
     filtroTurma: string = "Todas",

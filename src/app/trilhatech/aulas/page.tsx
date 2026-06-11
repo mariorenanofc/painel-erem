@@ -689,6 +689,13 @@ export default function GestaoAulasPage() {
               >
                 📈 Analytics
               </button>
+
+              <button
+                onClick={() => router.push("/trilhatech/gabaritos")}
+                className="cursor-pointer px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300 hover:border-emerald-400 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-800 dark:hover:text-emerald-400 shadow-sm transition-colors flex items-center gap-2"
+              >
+                📋 Editar Gabaritos
+              </button>
             </div>
           </div>
         </div>

@@ -4,22 +4,22 @@ const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
       {
-        protocol: 'https',
-        hostname: 'drive.google.com',
+        protocol: "https",
+        hostname: "drive.google.com",
       },
       {
-        protocol: 'https',
-        hostname: '*.googleusercontent.com',
+        protocol: "https",
+        hostname: "*.googleusercontent.com",
       },
       // Adicionei este caso você queira usar o Imgur no futuro (altamente recomendado!)
       {
-        protocol: 'https',
-        hostname: 'i.imgur.com',
-      }
+        protocol: "https",
+        hostname: "i.imgur.com",
+      },
     ],
   },
   /* config options here */
-  allowedDevOrigins: ["192.168.1.108:3000", "localhost:3000"],
+  allowedDevOrigins: ["localhost:3000", "192.168.1.106"],
   reactStrictMode: true,
 };
 

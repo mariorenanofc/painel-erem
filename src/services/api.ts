@@ -159,6 +159,9 @@ export const apiTutor = {
   buscarFicha360: (matricula: string) =>
     fetchApi({ action: "buscar_ficha_360", matricula, token: TUTOR_TOKEN }),
 
+  toggleGabaritoRápido: (idAtividade: string) =>
+    fetchApi({ action: "toggle_gabarito", idAtividade, token: TUTOR_TOKEN }),
+
   // --- MISSÕES ---
   buscarTodasAtividades: (
     filtroTurma: string = "Todas",

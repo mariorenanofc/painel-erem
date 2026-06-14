@@ -102,6 +102,7 @@ export default function GestaoAulasPage() {
   const [carregandoFreq, setCarregandoFreq] = useState(false);
   const [diasComAula, setDiasComAula] = useState<number[]>([]);
   const [alunosDiario, setAlunosDiario] = useState<any[]>([]);
+  const [sincronizando, setSincronizando] = useState(false);
 
   const [turmaDiario, setTurmaDiario] = useState("");
   const [mesDiario, setMesDiario] = useState(String(new Date().getMonth() + 1));
@@ -324,7 +325,6 @@ export default function GestaoAulasPage() {
     setImagemUrl(String(ativ.imagemUrl || ""));
     setModulo(String(ativ.modulo || "Geral"));
     setGabarito(String(ativ.gabarito || ""));
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     setGabaritoLiberado((ativ as any).gabaritoLiberado || false);
     setModalNovaMissaoAberto(true);
   };
@@ -667,6 +667,29 @@ export default function GestaoAulasPage() {
                 className="cursor-pointer px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300 hover:border-fuchsia-400 dark:hover:border-fuchsia-500 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-900/30 hover:text-fuchsia-800 dark:hover:text-fuchsia-400 shadow-sm transition-colors flex items-center gap-2"
               >
                 ⚙️ Configurações
+              </button>
+
+              <button
+                onClick={async () => {
+                  setSincronizando(true);
+                  try {
+                    const res = await (apiTutor as any).sincronizarAVA();
+                    if (res.status === "sucesso") {
+                      alert("✅ " + res.mensagem);
+                      mutate(); // Atualiza a tela com os novos dados
+                    } else {
+                      alert("⚠️ Erro: " + res.mensagem);
+                    }
+                  } catch (e) {
+                    alert("❌ Erro de conexão ao sincronizar.");
+                  } finally {
+                    setSincronizando(false);
+                  }
+                }}
+                disabled={sincronizando}
+                className="cursor-pointer px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-black shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50 border border-blue-700"
+              >
+                {sincronizando ? "⏳ Sincronizando..." : "🔄 Sincronizar AVA"}
               </button>
               <button
                 onClick={() => {

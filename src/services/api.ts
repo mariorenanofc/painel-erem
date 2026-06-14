@@ -149,6 +149,10 @@ export const apiAluno = {
 // 3. API DO TUTOR E GESTÃO - BLINDADA COM O TOKEN
 // ==========================================
 export const apiTutor = {
+  // --- SINCRONIZAÇÃO CLASSROOM ---
+  sincronizarAVA: () =>
+    fetchApi({ action: "sincronizar_ava", token: TUTOR_TOKEN }),
+
   // --- RANKING E ANALYTICS ---
   buscarRanking: (filtroTempo: "geral" | "semanal" | "mensal") =>
     fetchApi({ action: "buscar_ranking", filtroTempo, token: TUTOR_TOKEN }),
@@ -164,7 +168,11 @@ export const apiTutor = {
 
   // --- GESTÃO DE GABARITOS EM LOTE ---
   salvarGabaritosLote: (atualizacoes: any[]) =>
-    fetchApi({ action: "salvar_gabaritos_lote", atualizacoes, token: TUTOR_TOKEN }),
+    fetchApi({
+      action: "salvar_gabaritos_lote",
+      atualizacoes,
+      token: TUTOR_TOKEN,
+    }),
 
   // --- MISSÕES ---
   buscarTodasAtividades: (
@@ -178,7 +186,6 @@ export const apiTutor = {
       token: TUTOR_TOKEN,
     }),
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   salvarAtividade: (dados: any) =>
     fetchApi({ action: "salvar_atividade", ...dados, token: TUTOR_TOKEN }),
 

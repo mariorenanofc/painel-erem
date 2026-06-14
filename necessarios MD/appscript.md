@@ -1,38 +1,38 @@
-function doGet(e) {
-const planilha = SpreadsheetApp.getActiveSpreadsheet();
-const bd = planilha.getSheetByName("basededados");
-const dados = bd.getDataRange().getValues();
-
-// 1. LER OS DADOS DO PROJETO TRILHA TECH
-const abaTrilha = planilha.getSheetByName("trilhatech");
-let trilhaMap = {}; // Dicionário inteligente para busca rápida
-
-if (abaTrilha) {
-const dadosTrilha = abaTrilha.getDataRange().getValues();
-// Pula o cabeçalho (i=1)
-for (let j = 1; j < dadosTrilha.length; j++) {
-let mat = String(dadosTrilha[j][0]).trim();
-trilhaMap[mat] = {
-turmaTrilha: String(dadosTrilha[j][1] || ""),
-statusTrilha: String(dadosTrilha[j][2] || ""),
-whatsapp: String(dadosTrilha[j][6] || "").trim() === "SIM"
-};
-}
-}
-
-const alunos = [];
-
-// 2. CRUZAR ESCOLA COM CURSO
-for (let i = 1; i < dados.length; i++) {
-let dataNascFormatada = dados[i][1];
-if (dataNascFormatada instanceof Date) {
-dataNascFormatada = dataNascFormatada.toISOString().split('T')[0];
-}
-
+  function doGet(e) {
+  const planilha = SpreadsheetApp.getActiveSpreadsheet();
+  const bd = planilha.getSheetByName("basededados");
+  const dados = bd.getDataRange().getValues();
+  
+  // 1. LER OS DADOS DO PROJETO TRILHA TECH
+  const abaTrilha = planilha.getSheetByName("trilhatech");
+  let trilhaMap = {}; // Dicionário inteligente para busca rápida
+  
+  if (abaTrilha) {
+    const dadosTrilha = abaTrilha.getDataRange().getValues();
+    // Pula o cabeçalho (i=1)
+    for (let j = 1; j < dadosTrilha.length; j++) {
+      let mat = String(dadosTrilha[j][0]).trim();
+      trilhaMap[mat] = {
+        turmaTrilha: String(dadosTrilha[j][1] || ""),
+        statusTrilha: String(dadosTrilha[j][2] || ""),
+        whatsapp: String(dadosTrilha[j][6] || "").trim() === "SIM"
+      };
+    }
+  }
+  
+  const alunos = [];
+  
+  // 2. CRUZAR ESCOLA COM CURSO
+  for (let i = 1; i < dados.length; i++) {
+    let dataNascFormatada = dados[i][1];
+    if (dataNascFormatada instanceof Date) {
+      dataNascFormatada = dataNascFormatada.toISOString().split('T')[0];
+    }
+    
     let matricula = String(dados[i][2] || "").trim();
     // Procura se esse aluno está no dicionário do Trilha Tech
     let infoTrilha = trilhaMap[matricula] || { turmaTrilha: "", statusTrilha: "" };
-
+    
     alunos.push({
       nome: String(dados[i][0] || ""),
       dataNasc: String(dataNascFormatada || ""),
@@ -46,42 +46,41 @@ dataNascFormatada = dataNascFormatada.toISOString().split('T')[0];
       statusTrilha: infoTrilha.statusTrilha,  // <-- INFORMAÇÃO TRILHA
       whatsapp: infoTrilha.whatsapp
     });
-
-}
-
-return ContentService.createTextOutput(JSON.stringify(alunos))
-.setMimeType(ContentService.MimeType.JSON);
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify(alunos))
+    .setMimeType(ContentService.MimeType.JSON);
 }
 
 function doPost(e) {
-try {
-const dadosApp = JSON.parse(e.postData.contents);
-const action = dadosApp.action;
-const planilha = SpreadsheetApp.getActiveSpreadsheet();
+  try {
+    const dadosApp = JSON.parse(e.postData.contents);
+    const action = dadosApp.action;
+    const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
     // ==========================================
     // 🛡️ SISTEMA DE SEGURANÇA (FIREWALL)
     // ==========================================
     const ROTAS_PROTEGIDAS = [
-      "salvar_atividade", "excluir_atividade", "avaliar_entrega",
-      "injetar_xp_manual", "cadastrar_aluno", "inscrever_trilhatech",
+      "salvar_atividade", "excluir_atividade", "avaliar_entrega", 
+      "injetar_xp_manual", "cadastrar_aluno", "inscrever_trilhatech", 
       "mudar_status_trilha", "atualizar_senha_lousa", "alternar_modo_reposicao",
-      "salvar_configuracoes"
+      "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "sincronizar_ava"
     ];
-
+    
     // A nossa "Chave Mestra" que só o Painel do Tutor conhece
-    const TOKEN_TUTOR = "TrilhaTech_Seguranca_Total_2026";
+    const TOKEN_TUTOR = "TrilhaTech_Seguranca_Total_2026"; 
 
     // Se a ação for uma rota de professor, exige a chave!
     if (ROTAS_PROTEGIDAS.includes(action)) {
       if (dadosApp.token !== TOKEN_TUTOR) {
-        return ContentService.createTextOutput(JSON.stringify({
-          status: "erro",
-          mensagem: "⛔ ALERTA DE SEGURANÇA: Tentativa de fraude bloqueada! O seu IP foi registado."
+        return ContentService.createTextOutput(JSON.stringify({ 
+          status: "erro", 
+          mensagem: "⛔ ALERTA DE SEGURANÇA: Tentativa de fraude bloqueada! O seu IP foi registado." 
         })).setMimeType(ContentService.MimeType.JSON);
       }
     }
-
+    
     // ==========================================
     // ROTA 1: LOGIN DA GESTÃO
     // ==========================================
@@ -90,7 +89,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         const dadosUsuarios = abaUsuarios.getDataRange().getValues();
         const usuarioDigitado = String(dadosApp.usuario).trim().toLowerCase();
         const senhaDigitada = String(dadosApp.senha).trim();
-
+        
         for (let i = 1; i < dadosUsuarios.length; i++) {
           if (String(dadosUsuarios[i][0]).trim().toLowerCase() === usuarioDigitado && String(dadosUsuarios[i][1]).trim() === senhaDigitada) {
             return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", nome: dadosUsuarios[i][2] })).setMimeType(ContentService.MimeType.JSON);
@@ -104,36 +103,36 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
     // ==========================================
       if (action === "login_aluno") {
         var matriculaDigitada = String(dadosApp.matricula).trim();
-        var dataNascDigitada = String(dadosApp.dataNasc).trim();
-
-        var planBase = planilha.getSheetByName("basededados");
+        var dataNascDigitada = String(dadosApp.dataNasc).trim(); 
+        
+        var planBase = planilha.getSheetByName("basededados"); 
         var dadosBase = planBase.getDataRange().getValues();
-
+        
         var alunoEncontrado = false;
         var dadosDoAluno = null;
 
         // Pula o cabeçalho (i=1) e procura a matrícula na escola
         for (var i = 1; i < dadosBase.length; i++) {
-          var matriculaPlanilha = String(dadosBase[i][2]).trim();
-
+          var matriculaPlanilha = String(dadosBase[i][2]).trim(); 
+          
           if (matriculaPlanilha === matriculaDigitada) {
             alunoEncontrado = true;
-
+            
             var dataNascBruta = dadosBase[i][1];
             var dataNascPlanilha = "";
-
+            
             if (dataNascBruta instanceof Date) {
               var timezone = Session.getScriptTimeZone();
               dataNascPlanilha = Utilities.formatDate(dataNascBruta, timezone, "yyyy-MM-dd");
             } else {
               dataNascPlanilha = String(dataNascBruta).trim();
             }
-
+            
             if (dataNascPlanilha === dataNascDigitada || dataNascPlanilha.includes(dataNascDigitada)) {
               dadosDoAluno = {
                 matricula: matriculaPlanilha,
-                nome: dadosBase[i][0],
-                turma: dadosBase[i][4]
+                nome: dadosBase[i][0], 
+                turma: dadosBase[i][4] 
               };
               break;
             }
@@ -144,7 +143,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         if (alunoEncontrado && dadosDoAluno) {
           var abaTrilha = planilha.getSheetByName("trilhatech");
           var statusNoProjeto = ""; // Começa vazio
-
+          
           if (abaTrilha) {
             var dadosTrilha = abaTrilha.getDataRange().getValues();
             for (var t = 1; t < dadosTrilha.length; t++) {
@@ -158,15 +157,15 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           // A BARREIRA: Só entra se for "Ativo"
           if (statusNoProjeto === "Ativo") {
             return ContentService.createTextOutput(JSON.stringify({
-              status: "sucesso",
-              mensagem: "Login aprovado!",
+              status: "sucesso", 
+              mensagem: "Login aprovado!", 
               aluno: dadosDoAluno
             })).setMimeType(ContentService.MimeType.JSON);
           } else {
             // O aluno existe, mas NÃO está aprovado no projeto
             return ContentService.createTextOutput(JSON.stringify({
-              status: "nao_autorizado",
-              mensagem: "Aluno não faz parte do projeto.",
+              status: "nao_autorizado", 
+              mensagem: "Aluno não faz parte do projeto.", 
               nomeAluno: dadosDoAluno.nome
             })).setMimeType(ContentService.MimeType.JSON);
           }
@@ -177,7 +176,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Matrícula não encontrada na escola."})).setMimeType(ContentService.MimeType.JSON);
         }
       }
-
+      
     // ==========================================
     // ROTA 3: SALVAR/EDITAR ALUNO (Gestão Escolar)
     // ==========================================
@@ -190,11 +189,11 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         const telefoneAluno = String(dadosApp.telefoneAluno || "").trim();
         const telefoneResponsavel = String(dadosApp.telefoneResponsavel || "").trim();
         const obs = dadosApp.obs;
-
+        
         if (!matriculaDigitada || !nome || !turma) {
           return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Matrícula, Nome e Turma são obrigatórios." })).setMimeType(ContentService.MimeType.JSON);
         }
-
+        
         const bd = planilha.getSheetByName("basededados");
         const dadosBD = bd.getDataRange().getValues();
         let linhaBD = -1;
@@ -203,9 +202,9 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           let matLinha = String(dadosBD[i][2]).trim();
           let emailLinha = String(dadosBD[i][3]).trim().toLowerCase();
           let telAlunoLinha = String(dadosBD[i][5]).trim();
-
+          
           if (matLinha === matriculaDigitada) {
-            linhaBD = i + 1;
+            linhaBD = i + 1; 
           } else {
             if (email && email.toLowerCase() !== "sem email" && email.toLowerCase() !== "não encontrado" && emailLinha === email.toLowerCase()) {
               return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: `Este e-mail já está cadastrado na matrícula: ${matLinha}` })).setMimeType(ContentService.MimeType.JSON);
@@ -215,7 +214,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             }
           }
         }
-
+        
         if (linhaBD > 0) {
           bd.getRange(linhaBD, 1).setValue(nome);
           bd.getRange(linhaBD, 2).setValue(dataNasc);
@@ -229,9 +228,9 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           bd.appendRow([nome, dataNasc, matriculaDigitada, email, turma, telefoneAluno, telefoneResponsavel, obs]);
         }
 
-        const nomeAbaTurma = turma.replace(" ANO ", " ");
+        const nomeAbaTurma = turma.replace(" ANO ", " "); 
         const abaTurma = planilha.getSheetByName(nomeAbaTurma);
-
+        
         if (abaTurma) {
           const dadosTurma = abaTurma.getDataRange().getValues();
           let linhaTurma = -1;
@@ -240,7 +239,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
               linhaTurma = i + 1; break;
             }
           }
-
+          
           if (linhaTurma > 0) {
             abaTurma.getRange(linhaTurma, 2).setValue(nome);
             abaTurma.getRange(linhaTurma, 3).setValue(dataNasc);
@@ -251,7 +250,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             abaTurma.getRange(linhaTurma, 8).setValue(telefoneResponsavel);
             abaTurma.getRange(linhaTurma, 9).setValue(obs);
           } else {
-            const proximoNumero = dadosTurma.length;
+            const proximoNumero = dadosTurma.length; 
             abaTurma.appendRow([proximoNumero, nome, dataNasc, matriculaDigitada, email, turma, telefoneAluno, telefoneResponsavel, obs]);
           }
         }
@@ -265,20 +264,20 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         const matricula = String(dadosApp.matricula).trim();
         const turmaCurso = dadosApp.turmaCurso;
         const statusCurso = dadosApp.statusCurso;
-
+        
         // Formata a data atual do Brasil
-        const dataAtual = new Date().toLocaleString("pt-BR", {timeZone: "America/Sao_Paulo"}).split(',')[0];
-
+        const dataAtual = new Date().toLocaleString("pt-BR", {timeZone: "America/Sao_Paulo"}).split(',')[0]; 
+        
         const abaTrilha = planilha.getSheetByName("trilhatech");
         const dadosTrilha = abaTrilha.getDataRange().getValues();
-
+        
         // 1. Verifica se já não foi inscrito antes
         for (let i = 1; i < dadosTrilha.length; i++) {
           if (String(dadosTrilha[i][0]).trim() === matricula) {
               return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Esta matrícula já está inscrita no projeto." })).setMimeType(ContentService.MimeType.JSON);
           }
         }
-
+        
         // 2. Registra na aba
         abaTrilha.appendRow([matricula, turmaCurso, statusCurso, dataAtual]);
         return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Inscrição realizada com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
@@ -291,10 +290,10 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         const matricula = String(dadosApp.matricula).trim();
         const novoStatus = dadosApp.novoStatus; // Ex: "Ativo", "Reserva", "Desistente"
         const dataAtual = new Date().toLocaleString("pt-BR", {timeZone: "America/Sao_Paulo"}).split(',')[0];
-
+        
         const abaTrilha = planilha.getSheetByName("trilhatech");
         const dadosTrilha = abaTrilha.getDataRange().getValues();
-
+        
         let linha = -1;
         for (let i = 1; i < dadosTrilha.length; i++) {
             if (String(dadosTrilha[i][0]).trim() === matricula) {
@@ -302,7 +301,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
               break;
             }
         }
-
+        
         if (linha > 0) {
             abaTrilha.getRange(linha, 3).setValue(novoStatus); // Atualiza o status
             abaTrilha.getRange(linha, 4).setValue(dataAtual);  // Atualiza a data da mudança
@@ -324,7 +323,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
         const abaAtividades = planilha.getSheetByName("atividades");
         const abaEntregas = planilha.getSheetByName("entregas");
-        const abaTrilha = planilha.getSheetByName("trilhatech");
+        const abaTrilha = planilha.getSheetByName("trilhatech"); 
 
         let atividades = [];
         let entregasMap = {};
@@ -338,8 +337,8 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           for (let t = 1; t < dadosTrilha.length; t++) {
             if (String(dadosTrilha[t][0]).trim() === matricula) {
               turmaDoAlunoNoProjeto = String(dadosTrilha[t][1]).trim();
-              xpTotalDoAluno = Number(dadosTrilha[t][4]) || 0;
-              nivelDoAluno = String(dadosTrilha[t][5]) || "Iniciante";
+              xpTotalDoAluno = Number(dadosTrilha[t][4]) || 0; 
+              nivelDoAluno = String(dadosTrilha[t][5]) || "Iniciante"; 
               break;
             }
           }
@@ -355,8 +354,8 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                 resposta: String(dadosEntregas[i][3]).trim(),
                 status: String(dadosEntregas[i][4]).trim() || "Aguardando Correção",
                 xpGanho: dadosEntregas[i][5] || 0,
-                dataEnvio: Number(dadosEntregas[i][6]) || 0,
-                feedback: String(dadosEntregas[i][7] || "").trim()
+                dataEnvio: Number(dadosEntregas[i][6]) || 0, 
+                feedback: String(dadosEntregas[i][7] || "").trim() 
               };
             }
           }
@@ -365,7 +364,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         if (abaAtividades) {
           const dadosAtiv = abaAtividades.getDataRange().getValues();
           for (let i = 1; i < dadosAtiv.length; i++) {
-
+            
             // --- MÁGICA 1: OCULTA OS RASCUNHOS ---
             let statusPublicacao = String(dadosAtiv[i][13] || "Publicada").trim();
             if (statusPublicacao !== "Publicada") continue;
@@ -428,7 +427,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
     // ROTA 7: SALVAR OU EDITAR ATIVIDADE (Professor)
     // ==========================================
       if (action === "salvar_atividade") {
-            const idAtividadeEdit = dadosApp.idAtividadeEdit;
+            const idAtividadeEdit = dadosApp.idAtividadeEdit; 
             const titulo = dadosApp.titulo;
             const descricao = dadosApp.descricao;
             const dataLimite = dadosApp.dataLimite;
@@ -440,8 +439,8 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             const opcaoC = dadosApp.opcaoC || "";
             const opcaoD = dadosApp.opcaoD || "";
             const respostaCorreta = dadosApp.respostaCorreta || "";
-            const linkClassroom = String(dadosApp.linkClassroom || "").trim();
-            const statusPublicacao = String(dadosApp.statusPublicacao || "Publicada").trim();
+            const linkClassroom = String(dadosApp.linkClassroom || "").trim(); 
+            const statusPublicacao = String(dadosApp.statusPublicacao || "Publicada").trim(); 
             const imagemUrl = String(dadosApp.imagemUrl || "").trim();
             const modulo = String(dadosApp.modulo || "Geral").trim();
 
@@ -512,14 +511,14 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
       if (action === "buscar_todas_atividades") {
           const filtroTurma = String(dadosApp.filtroTurma || "Todas").trim();
           const filtroTipo = String(dadosApp.filtroTipo || "Todos").trim();
-
+          
           const abaAtividades = planilha.getSheetByName("atividades");
           const abaEntregas = planilha.getSheetByName("entregas");
 
           // 🔥 1. LÊ A NOVA ABA DE MÓDULOS (E CRIA A LISTA)
           const abaModulos = planilha.getSheetByName("controle_modulos");
           let statusModulosMap = {};
-          let listaModulos = [];
+          let listaModulos = []; 
           if (abaModulos) {
             const dadosModulos = abaModulos.getDataRange().getValues();
             for (let i = 1; i < dadosModulos.length; i++) {
@@ -563,7 +562,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
               let dataLimiteBruta = dadosAtiv[i][3];
               let dataLimiteStr = dataLimiteBruta instanceof Date ? Utilities.formatDate(dataLimiteBruta, Session.getScriptTimeZone(), "yyyy-MM-dd") : String(dataLimiteBruta);
-
+              
               let statusPub = String(dadosAtiv[i][13] || "Publicada").trim();
               let nomeModulo = String(dadosAtiv[i][15] || "Geral").trim();
 
@@ -593,12 +592,12 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           }
 
           // 🔥 4. DEVOLVE A LISTA DE ATIVIDADES E OS MÓDULOS!
-          return ContentService.createTextOutput(JSON.stringify({
-            status: "sucesso",
+          return ContentService.createTextOutput(JSON.stringify({ 
+            status: "sucesso", 
             atividades: atividades,
             modulosMatriz: listaModulos
           })).setMimeType(ContentService.MimeType.JSON);
-        }
+        }  
     // ==========================================
     // ROTA 9: ENVIAR ATIVIDADE (BLINDADA ANTI-DUPLICAÇÃO E LOCK)
     // ==========================================
@@ -643,7 +642,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           let ativTipo = "Projeto";
           let ativXp = 0;
           let ativRespostaCorreta = "";
-          let dataLimObj = null;
+          let dataLimObj = null; 
 
           if (abaAtividades) {
             const dadosAtiv = abaAtividades.getDataRange().getValues();
@@ -672,7 +671,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             }
           }
 
-          // 2. CÁLCULO DE ATRASO
+          // 2. CÁLCULO DE ATRASO 
           let atrasoDias = 0;
           if (dataLimObj) {
             let hoje = new Date();
@@ -691,9 +690,9 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           if (ativTipo === "Quiz" || ativTipo === "Material") {
             // Se for Material, a resposta está sempre "correta" automaticamente!
             let isCorreto = (ativTipo === "Material") ? true : (resposta === ativRespostaCorreta);
-
+            
             statusFinal = "Avaliado";
-
+            
             if (isCorreto) {
                 let desconto = 0;
                 if (atrasoDias > 0) {
@@ -769,7 +768,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           const abaEntregas = planilha.getSheetByName("entregas");
           const planBase = planilha.getSheetByName("basededados");
 
-          let alunosMap = {};
+          let alunosMap = {}; 
           if (planBase) {
             const dadosBase = planBase.getDataRange().getValues();
             for (let i = 1; i < dadosBase.length; i++) {
@@ -865,7 +864,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           let msgDesconto = "";
           if (atrasoDias > 0 && xpGanhoTutor > 0) {
               let teto = Math.floor(xpGanhoTutor / 2);
-              let desconto = atrasoDias;
+              let desconto = atrasoDias; 
               if (desconto > teto) desconto = teto;
               xpGanhoFinal = xpGanhoTutor - desconto;
               if (desconto > 0) msgDesconto = ` (Desconto automático de -${desconto} XP pelo atraso)`;
@@ -878,11 +877,11 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
             // GERA A NOTIFICAÇÃO NO SININHO DO ALUNO
             let timestampAtual = new Date().getTime();
-            let msgNotif = novoStatus === "Devolvida"
-              ? `⚠️ Sua missão foi devolvida! Verifique o feedback do tutor.`
+            let msgNotif = novoStatus === "Devolvida" 
+              ? `⚠️ Sua missão foi devolvida! Verifique o feedback do tutor.` 
               : `⭐ Sua missão foi aprovada!`;
             let tipoNotif = novoStatus === "Devolvida" ? "DEVOLVIDA" : "AVALIADA";
-
+            
             abaEntregas.appendRow([`NOTIF-${timestampAtual}`, matricula, "SISTEMA", msgNotif, tipoNotif, xpGanhoFinal, timestampAtual]);
         }
 
@@ -905,12 +904,12 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           const idAtiv = String(dadosApp.idAtividade).trim();
           const abaEntregas = planilha.getSheetByName("entregas");
           const planBase = planilha.getSheetByName("basededados");
-
+          
           let alunosMap = {}; // Dicionário para buscar o Nome pela Matrícula
           if (planBase) {
             const dadosBase = planBase.getDataRange().getValues();
             for (let i = 1; i < dadosBase.length; i++) {
-              alunosMap[String(dadosBase[i][2]).trim()] = String(dadosBase[i][0]);
+              alunosMap[String(dadosBase[i][2]).trim()] = String(dadosBase[i][0]); 
             }
           }
 
@@ -967,7 +966,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                   if (String(dadosAtiv[i][0]).trim() === idAtiv) {
                       let dataLimObj = null;
                       let rawDate = dadosAtiv[i][3];
-
+                      
                       // Tradutor Universal de Data
                       if (rawDate instanceof Date) {
                           dataLimObj = new Date(rawDate.getFullYear(), rawDate.getMonth(), rawDate.getDate());
@@ -981,12 +980,12 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                               if (p.length === 3) dataLimObj = new Date(Number(p[2]), Number(p[1])-1, Number(p[0]));
                           }
                       }
-
+                      
                       if (dataLimObj) {
                           dataLimObj.setHours(0,0,0,0);
                           let dataEnvio = new Date(dataEnvioTime);
                           dataEnvio.setHours(0,0,0,0);
-
+                          
                           // Verifica se entregou atrasado
                           if (dataEnvio > dataLimObj) {
                               let diffTime = Math.abs(dataEnvio - dataLimObj);
@@ -1009,8 +1008,8 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           }
 
           if (linhaEntrega > -1) {
-              abaEntregas.getRange(linhaEntrega, 5).setValue(novoStatus);
-              abaEntregas.getRange(linhaEntrega, 6).setValue(xpGanhoFinal);
+              abaEntregas.getRange(linhaEntrega, 5).setValue(novoStatus); 
+              abaEntregas.getRange(linhaEntrega, 6).setValue(xpGanhoFinal); 
           }
 
           // Adiciona o XP na aba TrilhaTech (Cobrindo as diferenças)
@@ -1019,9 +1018,9 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             const dadosTrilha = abaTrilha.getDataRange().getValues();
             for (let i = 1; i < dadosTrilha.length; i++) {
               if (String(dadosTrilha[i][0]).trim() === matricula) {
-                let xpTotalAtual = Number(dadosTrilha[i][4]) || 0;
+                let xpTotalAtual = Number(dadosTrilha[i][4]) || 0; 
                 let novoXpTotal = xpTotalAtual - xpAnterior + xpGanhoFinal;
-                abaTrilha.getRange(i + 1, 5).setValue(novoXpTotal);
+                abaTrilha.getRange(i + 1, 5).setValue(novoXpTotal); 
                 break;
               }
             }
@@ -1035,7 +1034,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
       if (action === "buscar_perfil_aluno") {
         const matricula = String(dadosApp.matricula).trim();
         const planBase = planilha.getSheetByName("basededados");
-
+        
         if (!planBase) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aba basededados não encontrada." })).setMimeType(ContentService.MimeType.JSON);
 
         const dadosBase = planBase.getDataRange().getValues();
@@ -1043,7 +1042,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
         for (let i = 1; i < dadosBase.length; i++) {
           if (String(dadosBase[i][2]).trim() === matricula) {
-
+            
             // Formata a data de nascimento se for um objeto nativo
             let dataNascBruta = dadosBase[i][1];
             let dataNascStr = dataNascBruta instanceof Date ? Utilities.formatDate(dataNascBruta, Session.getScriptTimeZone(), "dd/MM/yyyy") : String(dataNascBruta);
@@ -1094,7 +1093,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         }
 
         // 2. Atualiza na aba Específica da Turma (Ex: "1º ANO A")
-        const nomeAbaTurma = turma.replace(" ANO ", " ");
+        const nomeAbaTurma = turma.replace(" ANO ", " "); 
         const abaTurma = planilha.getSheetByName(nomeAbaTurma);
         if (abaTurma) {
           const dadosTurma = abaTurma.getDataRange().getValues();
@@ -1122,7 +1121,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         const lock = LockService.getScriptLock();
         try {
           // 🔒 Tranca o servidor por até 10 segundos para processar 1 aluno de cada vez
-          lock.waitLock(5000);
+          lock.waitLock(5000); 
 
           const matricula = String(dadosApp.matricula).trim();
           const senhaInformada = String(dadosApp.senha).trim();
@@ -1304,9 +1303,9 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         const dataHojeStr = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
 
         // 2. Mapear Alunos Ativos da Turma
-        let alunosDaTurma = {};
+        let alunosDaTurma = {}; 
         let nomesMap = {};
-
+        
         const dadosBase = planBase.getDataRange().getValues();
         for(let i = 1; i < dadosBase.length; i++) {
             nomesMap[String(dadosBase[i][2]).trim()] = String(dadosBase[i][0]).trim();
@@ -1317,7 +1316,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           let mat = String(dadosTrilha[i][0]).trim();
           let t = String(dadosTrilha[i][1]).trim();
           let status = String(dadosTrilha[i][3]).trim().toLowerCase();
-
+          
           // Somente alunos ativos que pertencem à turma selecionada
           if (mat && t === turma && status === "Ativo") {
               alunosDaTurma[mat] = {
@@ -1334,12 +1333,12 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         // 3. Varre a Frequência para calcular totais e presenças de hoje
         let diasDeAulaSet = new Set();
         const dadosFreq = abaFrequencia.getDataRange().getValues();
-
+        
         for(let i = 1; i < dadosFreq.length; i++) {
           let mat = String(dadosFreq[i][1]).trim();
           let dataBruta = dadosFreq[i][3];
           let dataFormatada = "";
-
+          
           if (dataBruta instanceof Date) {
               dataFormatada = Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy");
           } else {
@@ -1348,9 +1347,9 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
           if (alunosDaTurma[mat]) {
               // Conta os dias únicos de aula da turma
-              diasDeAulaSet.add(dataFormatada);
+              diasDeAulaSet.add(dataFormatada); 
               alunosDaTurma[mat].presencasTotais++;
-
+              
               // Verifica se o aluno fez check-in HOJE
               if (dataFormatada === dataHojeStr) {
                 alunosDaTurma[mat].presenteHoje = true;
@@ -1483,7 +1482,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
       if (action === "buscar_senha_checkin") {
         const abaConfig = planilha.getSheetByName("configuracoes");
         let senha = "";
-
+        
         if (abaConfig) {
           const dados = abaConfig.getDataRange().getValues();
           for (let i = 1; i < dados.length; i++) {
@@ -1493,9 +1492,9 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             }
           }
         }
-
-        return ContentService.createTextOutput(JSON.stringify({
-          status: "sucesso", senha: senha
+        
+        return ContentService.createTextOutput(JSON.stringify({ 
+          status: "sucesso", senha: senha 
         })).setMimeType(ContentService.MimeType.JSON);
       }
 
@@ -1506,20 +1505,20 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         if (abaConfig) {
           const dados = abaConfig.getDataRange().getValues();
           let achou = false;
-
+          
           for (let i = 1; i < dados.length; i++) {
             if (String(dados[i][0]).trim() === "SENHA_CHECKIN") {
-              abaConfig.getRange(i + 1, 2).setValue(novaSenha);
+              abaConfig.getRange(i + 1, 2).setValue(novaSenha); 
               achou = true;
               break;
             }
           }
-
+          
           if (!achou) abaConfig.appendRow(["SENHA_CHECKIN", novaSenha]);
         }
-
-        return ContentService.createTextOutput(JSON.stringify({
-          status: "sucesso", mensagem: "Senha atualizada com sucesso!"
+        
+        return ContentService.createTextOutput(JSON.stringify({ 
+          status: "sucesso", mensagem: "Senha atualizada com sucesso!" 
         })).setMimeType(ContentService.MimeType.JSON);
       }
 
@@ -1534,7 +1533,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         if (!planBase || !abaTrilha) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Abas não encontradas." })).setMimeType(ContentService.MimeType.JSON);
 
         let dadosBase = planBase.getDataRange().getValues();
-        let mapBase = {};
+        let mapBase = {}; 
         for(let i = 1; i < dadosBase.length; i++) { mapBase[String(dadosBase[i][2]).trim()] = i + 1; }
 
         let dadosTrilha = abaTrilha.getDataRange().getValues();
@@ -1554,7 +1553,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             // 1. ATUALIZA OU INSERE NA BASE GERAL (basededados)
             if (mapBase[matricula]) {
               let linha = mapBase[matricula];
-              planBase.getRange(linha, 1).setValue(nome);
+              planBase.getRange(linha, 1).setValue(nome); 
               planBase.getRange(linha, 2).setValue(dataNasc);
               planBase.getRange(linha, 5).setValue(turmaEscola);
               atualizados++;
@@ -1572,8 +1571,8 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             // Se não existe na trilha, não fazemos nada. O aluno fica apenas na base geral.
         });
 
-        return ContentService.createTextOutput(JSON.stringify({
-          status: "sucesso", inseridos: inseridos, atualizados: atualizados
+        return ContentService.createTextOutput(JSON.stringify({ 
+          status: "sucesso", inseridos: inseridos, atualizados: atualizados 
         })).setMimeType(ContentService.MimeType.JSON);
       }
 
@@ -1594,7 +1593,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         }
 
         // 1. Encontrar todos os alunos ativos da turma selecionada
-        let alunosMap = {};
+        let alunosMap = {}; 
         let nomesMap = {};
 
         const dadosBase = planBase.getDataRange().getValues();
@@ -1613,7 +1612,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             alunosMap[mat] = {
               matricula: mat,
               nome: nomesMap[mat] || "Aluno " + mat,
-              frequencia: {}
+              frequencia: {} 
             };
           }
         }
@@ -1853,7 +1852,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
               if (celulaDataNasc instanceof Date) {
                 diaNasc = Utilities.formatDate(celulaDataNasc, timezone, "dd");
                 mesNasc = Utilities.formatDate(celulaDataNasc, timezone, "MM");
-              }
+              } 
               // 2. Se o Google Sheets leu como um simples Texto (String) "10/04/1997" ou "10/4/1997"
               else {
                 let partesNasc = String(celulaDataNasc).trim().split("/");
@@ -1915,7 +1914,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
               }
             }
             return ContentService.createTextOutput(JSON.stringify({ status: "sucesso" })).setMimeType(ContentService.MimeType.JSON);
-
+            
           } catch (e) {
             return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aguarde um momento e tente de novo." })).setMimeType(ContentService.MimeType.JSON);
           } finally {
@@ -1929,7 +1928,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
       if (action === "buscar_aniversariantes_dia") {
         const planBase = planilha.getSheetByName("basededados");
         const abaTrilha = planilha.getSheetByName("trilhatech"); // <-- Lemos a aba do Trilha Tech
-
+        
         if (!planBase || !abaTrilha) {
           return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Abas não encontradas" })).setMimeType(ContentService.MimeType.JSON);
         }
@@ -1937,11 +1936,11 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         // 1. Criar um "Dicionário" apenas com alunos ATIVOS no projeto
         const dadosTrilha = abaTrilha.getDataRange().getValues();
         let alunosAtivosTrilha = new Set();
-
+        
         for (let i = 1; i < dadosTrilha.length; i++) {
           let mat = String(dadosTrilha[i][0]).trim(); // Coluna A (Matrícula)
           let status = String(dadosTrilha[i][2]).trim().toLowerCase(); // Coluna C (Status)
-
+          
           // Se tem matrícula e está ativo, adiciona à nossa lista VIP
           if (mat && status === "ativo") {
             alunosAtivosTrilha.add(mat);
@@ -1949,7 +1948,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         }
 
         const dadosBase = planBase.getDataRange().getValues();
-
+        
         // Usa o fuso horário oficial do Script para evitar bugs de virada de noite
         const timezone = Session.getScriptTimeZone();
         const hoje = new Date();
@@ -1961,7 +1960,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
         for (let i = 1; i < dadosBase.length; i++) {
           let nomeCompleto = String(dadosBase[i][0]).trim();
-          let dataBruta = dadosBase[i][1];
+          let dataBruta = dadosBase[i][1]; 
           let matriculaBase = String(dadosBase[i][2]).trim(); // Coluna C (Matrícula na Base)
           let turmaEscola = String(dadosBase[i][4]).trim();
 
@@ -1988,9 +1987,9 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
             // Agora a comparação será justa!
             if (dataFormatada === dataBuscada && nomeCompleto) {
-              listaAniversariantes.push({
+              listaAniversariantes.push({ 
                 nome: nomeCompleto.split(" ")[0], // Apenas o primeiro nome
-                turma: turmaEscola
+                turma: turmaEscola 
               });
             }
           }
@@ -2003,14 +2002,14 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
       }
         if (action === "buscar_aniversariantes_dia") {
           const planBase = planilha.getSheetByName("basededados");
-
+          
           if (!planBase) {
             return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aba não encontrada" })).setMimeType(ContentService.MimeType.JSON);
           }
 
           const dadosBase = planBase.getDataRange().getValues();
           const hoje = new Date();
-
+          
           // Formata o dia e mês de hoje para "DD/MM" (ex: 15/04)
           const diaHoje = String(hoje.getDate()).padStart(2, '0');
           const mesHoje = String(hoje.getMonth() + 1).padStart(2, '0');
@@ -2038,9 +2037,9 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
             // Agora a comparação será justa! (Ex: "15/04" === "15/04")
             if (dataFormatada === dataBuscada && nomeCompleto) {
-              listaAniversariantes.push({
+              listaAniversariantes.push({ 
                 nome: nomeCompleto.split(" ")[0], // Apenas o primeiro nome
-                turma: turmaEscola
+                turma: turmaEscola 
               });
             }
           }
@@ -2067,7 +2066,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           const nomeBusca = normalizar(nomeDigitado);
 
           const dadosBase = planBase.getDataRange().getValues();
-
+          
           for (let i = 1; i < dadosBase.length; i++) {
             let nomeBanco = normalizar(String(dadosBase[i][0]).trim());
             let dataBruta = dadosBase[i][1];
@@ -2119,12 +2118,12 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             if (chave === "LINK_WPP_T2") link2Ano = String(dados[i][1]).trim();
           }
         }
-
-        return ContentService.createTextOutput(JSON.stringify({
-          status: "sucesso", link1Ano, link2Ano
+        
+        return ContentService.createTextOutput(JSON.stringify({ 
+          status: "sucesso", link1Ano, link2Ano 
         })).setMimeType(ContentService.MimeType.JSON);
       }
-
+      
       // ROTA: Salvar os Links (Tutor)
       if (action === "salvar_links_whatsapp") {
         const link1Ano = String(dadosApp.link1Ano || "").trim();
@@ -2148,8 +2147,8 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           if (!achouT2) abaConfig.appendRow(["LINK_WPP_T2", link2Ano]);
         }
 
-        return ContentService.createTextOutput(JSON.stringify({
-          status: "sucesso", mensagem: "Links atualizados!"
+        return ContentService.createTextOutput(JSON.stringify({ 
+          status: "sucesso", mensagem: "Links atualizados!" 
         })).setMimeType(ContentService.MimeType.JSON);
       }
 
@@ -2243,7 +2242,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           if(String(dadosTrilha[i][0]).trim() === matricula) {
               minhaTurma = String(dadosTrilha[i][1]).trim();
               meuXpTotal = Number(dadosTrilha[i][4]) || 0;
-              temSenhaPix = String(dadosTrilha[i][7] || "").trim().length >= 4;
+              temSenhaPix = String(dadosTrilha[i][7] || "").trim().length >= 4; 
               break;
           }
         }
@@ -2257,7 +2256,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           let mat = String(dadosTrilha[i][0]).trim();
           let t = String(dadosTrilha[i][1]).trim();
           let status = String(dadosTrilha[i][2]).trim().toLowerCase();
-
+          
           // MÁGICA: Removida a trava de turma! Agora qualquer aluno Ativo aparece na lista
           if(mat !== matricula && status !== "desclassificado" && status !== "desistente") {
               // Mostra a turma ao lado do nome para todo mundo, ajudando na identificação
@@ -2278,7 +2277,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         for(let i=1; i<dadosEntregas.length; i++) {
           let id = String(dadosEntregas[i][0]).trim();
           let matRow = String(dadosEntregas[i][1]).trim();
-
+          
           if(matRow === matricula) {
               if(id.startsWith(prefixoHoje) && id.includes("-ENVIOU")) {
                 xpDoadoHoje += Math.abs(Number(dadosEntregas[i][5]) || 0);
@@ -2320,7 +2319,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
         for(let i=1; i<dadosTrilha.length; i++) {
           if(String(dadosTrilha[i][0]).trim() === matricula) {
-              abaTrilha.getRange(i+1, 8).setValue(senha);
+              abaTrilha.getRange(i+1, 8).setValue(senha); 
               return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON);
           }
         }
@@ -2360,7 +2359,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
         if (linhaOrigem === -1 || linhaDestino === -1) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Contas não encontradas."})).setMimeType(ContentService.MimeType.JSON);
         if (senhaDigitada !== senhaReal) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Senha PIN incorreta."})).setMimeType(ContentService.MimeType.JSON);
-
+        
         // Se não for o Mestre, verifica se tem saldo
         if (!ehMestre && xpOrigem < quantidade) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Você não tem XP suficiente."})).setMimeType(ContentService.MimeType.JSON);
 
@@ -2409,7 +2408,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
         // Se não for o Mestre, desconta do remetente. O Mestre cria XP do nada!
         if (!ehMestre) { abaTrilha.getRange(linhaOrigem, 5).setValue(xpOrigem - quantidade); }
-
+        
         // Paga ao destino
         abaTrilha.getRange(linhaDestino, 5).setValue(xpDestino + quantidade);
 
@@ -2444,8 +2443,8 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             for (let i = 1; i < dadosModulos.length; i++) {
               let nomeMod = String(dadosModulos[i][0]).trim();
               let statusMod = String(dadosModulos[i][1]).trim();
-              let turmaMod = String(dadosModulos[i][2] || "Todas").trim();
-
+              let turmaMod = String(dadosModulos[i][2] || "Todas").trim(); 
+              
               if (nomeMod) {
                 // Cria uma chave única: "Nome do Módulo|Turma"
                 statusModulosMap[nomeMod + "|" + turmaMod] = statusMod;
@@ -2479,7 +2478,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           { nome: "Tech Hacker", min: 3000, max: 4999 },       // Gap: 2.000
           { nome: "Dev Supremo", min: 5000, max: 7499 },       // Gap: 2.500
           { nome: "Lenda Binária", min: 7500, max: 9999 },     // Gap: 2.500
-
+          
           // 🔥 OS NOVOS NÍVEIS DE ELITE 🔥
           { nome: "Mestre do Código", min: 10000, max: 13999 }, // Gap: 4.000
           { nome: "Arquiteto de Sistemas", min: 14000, max: 18999 }, // Gap: 5.000
@@ -2563,7 +2562,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                 if (strNasc.includes("/")) {
                   let partesNasc = strNasc.split("/");
                   if (partesNasc.length === 3) { diaNasc = partesNasc[0].padStart(2, '0'); mesNasc = partesNasc[1].padStart(2, '0'); }
-                }
+                } 
                 // 2. Tenta quebrar por hífen (YYYY-MM-DD) do formulário web
                 else if (strNasc.includes("-")) {
                   let partesNasc = strNasc.split("T")[0].split("-");
@@ -2585,12 +2584,12 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             if (mat === matricula) {
               if (idEntrega.startsWith("NOTIF-")) {
                   let timestampEnvio = Number(dadosEntregas[i][6]) || 0;
-                  dadosRetorno.notificacoes.push({
-                    id: idEntrega,
-                    mensagem: String(dadosEntregas[i][3]),
-                    xp: Number(dadosEntregas[i][5]) || 0,
-                    tempo: timestampEnvio,
-                    tipo: String(dadosEntregas[i][4])
+                  dadosRetorno.notificacoes.push({ 
+                    id: idEntrega, 
+                    mensagem: String(dadosEntregas[i][3]), 
+                    xp: Number(dadosEntregas[i][5]) || 0, 
+                    tempo: timestampEnvio, 
+                    tipo: String(dadosEntregas[i][4]) 
                   });
                   continue; // Pula o resto para não ler como entrega normal
               }
@@ -2601,7 +2600,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
                   resposta: String(dadosEntregas[i][3]).trim(),
                   status: String(dadosEntregas[i][4]).trim() || "Aguardando Correção",
                   xpGanho: dadosEntregas[i][5] || 0,
-                  dataEnvio: Number(dadosEntregas[i][6]) || 0,
+                  dataEnvio: Number(dadosEntregas[i][6]) || 0, 
                   feedback: String(dadosEntregas[i][7] || "").trim()
                 };
               }
@@ -2705,7 +2704,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           let hojeTime = new Date(); hojeTime.setHours(0,0,0,0);
 
           for (let i = 1; i < dadosAtiv.length; i++) {
-
+            
             // --- MÁGICA 1: OCULTA OS RASCUNHOS ---
             let statusPublicacao = String(dadosAtiv[i][13] || "Publicada").trim();
             if (statusPublicacao !== "Publicada") continue;
@@ -2797,7 +2796,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
               }
           }
           return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: `+${xpGanho} XP Resgatado!` })).setMimeType(ContentService.MimeType.JSON);
-
+          
         } catch (e) {
           return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Processando conquista. Tente de novo em 2 segundos." })).setMimeType(ContentService.MimeType.JSON);
         } finally {
@@ -2838,7 +2837,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             let mat = String(dadosTrilha[i][0]).trim();
             let turma = String(dadosTrilha[i][1]).trim();
             // CORREÇÃO: Status está na Coluna C (Índice 2)
-            let status = String(dadosTrilha[i][2]).trim().toLowerCase();
+            let status = String(dadosTrilha[i][2]).trim().toLowerCase(); 
             let xp = Number(dadosTrilha[i][4]) || 0;
 
             if (mat && status === "ativo") {
@@ -2976,7 +2975,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             if (String(dadosTrilha[i][0]).trim() === matricula) {
               ficha.turmaProjeto = String(dadosTrilha[i][1]).trim();
               // CORREÇÃO: Status está na Coluna C (Índice 2)
-              ficha.statusProjeto = String(dadosTrilha[i][2]).trim();
+              ficha.statusProjeto = String(dadosTrilha[i][2]).trim(); 
               ficha.xpTotal = Number(dadosTrilha[i][4]) || 0;
               ficha.nivel = String(dadosTrilha[i][5]);
             }
@@ -3043,7 +3042,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
             }
           }
         }
-        ficha.historicoXP.sort((a,b) => b.data - a.data);
+        ficha.historicoXP.sort((a,b) => b.data - a.data); 
 
         return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", ficha })).setMimeType(ContentService.MimeType.JSON);
       }
@@ -3117,7 +3116,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         // 2. Percorre as configurações que chegaram do Frontend
         for (let chave in configs) {
           let valor = String(configs[chave]);
-
+          
           if (chavesPlanilha[chave]) {
             // Se a chave já existe, atualiza a Coluna B (Valor)
             abaConfig.getRange(chavesPlanilha[chave], 2).setValue(valor);
@@ -3140,7 +3139,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         if (abaConfig) {
           const dadosConf = abaConfig.getDataRange().getValues();
           let encontrou = false;
-
+          
           for (let i = 1; i < dadosConf.length; i++) {
             if (String(dadosConf[i][0]).trim() === "MODO_REPOSICAO") {
               abaConfig.getRange(i + 1, 2).setValue(novoStatus);
@@ -3148,21 +3147,21 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
               break;
             }
           }
-
+          
           // Se a chave não existir na planilha, ele cria automaticamente
           if (!encontrou) {
             abaConfig.appendRow(["MODO_REPOSICAO", novoStatus]);
           }
-
-          return ContentService.createTextOutput(JSON.stringify({
-            status: "sucesso",
+          
+          return ContentService.createTextOutput(JSON.stringify({ 
+            status: "sucesso", 
             mensagem: "Modo Reposição " + (novoStatus === "LIGADO" ? "Ativado" : "Desativado") + "!"
           })).setMimeType(ContentService.MimeType.JSON);
         }
-
-        return ContentService.createTextOutput(JSON.stringify({
-          status: "erro",
-          mensagem: "Aba de configurações não encontrada."
+        
+        return ContentService.createTextOutput(JSON.stringify({ 
+          status: "erro", 
+          mensagem: "Aba de configurações não encontrada." 
         })).setMimeType(ContentService.MimeType.JSON);
       }
 
@@ -3180,7 +3179,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           for (let i = 1; i < dadosTrilha.length; i++) {
             if (String(dadosTrilha[i][0]).trim() === matricula) {
               // Salva o ID do Avatar na Coluna I (índice 9)
-              abaTrilha.getRange(i + 1, 9).setValue(avatarId);
+              abaTrilha.getRange(i + 1, 9).setValue(avatarId); 
               return ContentService.createTextOutput(JSON.stringify({ status: "sucesso" })).setMimeType(ContentService.MimeType.JSON);
             }
           }
@@ -3247,7 +3246,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
     // ==========================================
       if (action === "buscar_perfil_publico") {
         const matriculaAlvo = String(dadosApp.matriculaAlvo).trim();
-        const matriculaVisualizador = String(dadosApp.matriculaVisualizador).trim();
+        const matriculaVisualizador = String(dadosApp.matriculaVisualizador).trim(); 
 
         const planBase = planilha.getSheetByName("basededados");
         const abaTrilha = planilha.getSheetByName("trilhatech");
@@ -3310,7 +3309,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
         // 4. Verifica o botão de curtir (Para desabilitar se já curtiu hoje ou se for ele mesmo)
         if (matriculaVisualizador === matriculaAlvo) {
-          perfil.jaCurtiuHoje = true;
+          perfil.jaCurtiuHoje = true; 
         } else if (abaCurtidas) {
           const timezone = Session.getScriptTimeZone();
           const dataHoje = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
@@ -3388,7 +3387,7 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           let mat = String(dadosTrilha[i][0]).trim();
           let turma = String(dadosTrilha[i][1]).trim();
           let status = String(dadosTrilha[i][2]).trim().toLowerCase();
-
+          
           if (mat && status === "ativo") {
             alunos.push({ matricula: mat, nome: nomesMap[mat] || "Aluno " + mat, turma: turma });
           }
@@ -3409,10 +3408,10 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
           const matriculaAlvo = String(dadosApp.matriculaAlvo).trim();
           const quantidadeXP = Number(dadosApp.quantidadeXP) || 0;
           const motivo = String(dadosApp.motivo).trim() || "Ajuste manual do Mestre.";
-
+          
           const abaTrilha = planilha.getSheetByName("trilhatech");
           const abaEntregas = planilha.getSheetByName("entregas");
-
+          
           if (!abaTrilha || !abaEntregas) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Abas base não encontradas" })).setMimeType(ContentService.MimeType.JSON);
 
           let linhaTrilha = -1;
@@ -3484,8 +3483,8 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
 
           // 2. Dar a Placa Ativa para o novo Campeão
           // 🔥 CORREÇÃO: Adicionado 'BADGE-' na frente do VIP para o frontend reconhecer!
-          const newId = "BADGE-VIP-" + new Date().getTime();
-
+          const newId = "BADGE-VIP-" + new Date().getTime(); 
+          
           sheetEntregas.appendRow([
             newId,
             matriculaNova,
@@ -3506,66 +3505,263 @@ const planilha = SpreadsheetApp.getActiveSpreadsheet();
         }
       }
 
-} catch (erro) {
-return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: erro.toString() })).setMimeType(ContentService.MimeType.JSON);
-}
-}
+
+
+       // ==========================================
+    // ROTA 41: SALVAR GABARITOS EM LOTE (TUTOR)
+    // ==========================================
+      if (action === "salvar_gabaritos_lote") {
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(5000);
+          const atualizacoes = dadosApp.atualizacoes; // Array de { id, gabarito, linkClassroom, gabaritoLiberado }
+          const abaAtividades = planilha.getSheetByName("atividades");
+
+          if (abaAtividades && atualizacoes && atualizacoes.length > 0) {
+            const dados = abaAtividades.getDataRange().getValues();
+            // Mapeia onde está cada ID para atualizar super rápido
+            let mapLinhas = {};
+            for (let i = 1; i < dados.length; i++) {
+              mapLinhas[String(dados[i][0]).trim()] = i + 1;
+            }
+
+            atualizacoes.forEach(update => {
+              const linha = mapLinhas[update.id];
+              if (linha) {
+                if (update.gabarito !== undefined) abaAtividades.getRange(linha, 17).setValue(String(update.gabarito)); // Coluna Q
+                if (update.linkClassroom !== undefined) abaAtividades.getRange(linha, 13).setValue(String(update.linkClassroom)); // Coluna M
+                if (update.gabaritoLiberado !== undefined) abaAtividades.getRange(linha, 18).setValue(update.gabaritoLiberado ? true : false); // Coluna R
+              }
+            });
+
+            return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Gabaritos atualizados em lote com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
+          }
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Nenhuma atualização recebida." })).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Erro ao processar o lote." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
+        }
+      }
+
+    // ==========================================
+    // ROTA 42: SINCRONIZAR COM O GOOGLE CLASSROOM (CORRIGIDA)
+    // ========================================== 
+      if (action === "sincronizar_ava") {
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(30000); 
+          
+          const abaAtividades = planilha.getSheetByName("atividades");
+          const abaBase = planilha.getSheetByName("basededados"); // <-- CORRIGIDO
+          const abaTrilha = planilha.getSheetByName("trilhatech"); // <-- CORRIGIDO
+          const abaEntregas = planilha.getSheetByName("entregas");
+          
+          if (!abaAtividades || !abaBase || !abaTrilha || !abaEntregas) {
+            throw new Error("Abas necessárias não encontradas no BD.");
+          }
+
+          // 1. Mapear E-mails da Base de Dados (E-mail -> Matrícula)
+          const dadosBase = abaBase.getDataRange().getValues();
+          const emailParaMatricula = {}; 
+          for (let i = 1; i < dadosBase.length; i++) {
+            let matricula = String(dadosBase[i][2]).trim(); // Coluna C
+            let email = String(dadosBase[i][3]).toLowerCase().trim(); // Coluna D
+            if (email && matricula) {
+              emailParaMatricula[email] = matricula;
+            }
+          }
+
+          // 2. Mapear Alunos Ativos do TrilhaTech (Matrícula -> Linha e XP)
+          const dadosTrilha = abaTrilha.getDataRange().getValues();
+          const mapaAlunos = {}; // Vai cruzar o e-mail com os dados do Trilha
+          for (let i = 1; i < dadosTrilha.length; i++) {
+            let matricula = String(dadosTrilha[i][0]).trim(); // Coluna A
+            let status = String(dadosTrilha[i][2]).trim().toLowerCase(); // Coluna C
+            
+            if (matricula && (status === "ativo" || status === "reserva")) {
+              // Descobre o e-mail dessa matrícula
+              let emailDoAluno = Object.keys(emailParaMatricula).find(key => emailParaMatricula[key] === matricula);
+              
+              if (emailDoAluno) {
+                mapaAlunos[emailDoAluno] = {
+                  matricula: matricula,
+                  linhaTrilha: i + 1,
+                  xpAtual: Number(dadosTrilha[i][4]) || 0 // Coluna E
+                };
+              }
+            }
+          }
+
+          // 3. Coletar Entregas já feitas (para não dar XP duplo)
+          const dadosEntregas = abaEntregas.getDataRange().getValues();
+          const entregasFeitas = new Set();
+          
+          for (let i = 1; i < dadosEntregas.length; i++) {
+            let matriculaEnt = String(dadosEntregas[i][1]).trim();
+            let idAtivEnt = String(dadosEntregas[i][2]).trim();
+            let statusEnt = String(dadosEntregas[i][4]).trim();
+            
+            if (statusEnt === "Avaliado" || statusEnt === "Concluída") {
+              entregasFeitas.add(matriculaEnt + "_" + idAtivEnt);
+            }
+          }
+
+          // 4. Varredura dos Links do Classroom nas Atividades
+          const dadosAtiv = abaAtividades.getDataRange().getValues();
+          let entregasNovas = 0;
+          const cacheUsuarios = {}; // Evita chamar a API do Google repetidamente
+
+          for (let i = 1; i < dadosAtiv.length; i++) {
+            let idAtiv = String(dadosAtiv[i][0]).trim();
+            let xpAtiv = Number(dadosAtiv[i][4]) || 0;
+            let link = String(dadosAtiv[i][12]).trim(); // Coluna M (Link Classroom)
+
+            // Se for um link de atividade válido
+            if (link.includes("classroom.google.com/c/")) {
+              const match = link.match(/\/c\/([^\/]+)\/a\/([^\/]+)/i);
+              if (match && match[1] && match[2]) {
+                let courseId = match[1];
+                let courseWorkId = match[2];
+
+                try {
+                  // Consulta o Google Classroom
+                  let submissions = Classroom.Courses.CourseWork.StudentSubmissions.list(courseId, courseWorkId).studentSubmissions || [];
+                  
+                  for (let sub of submissions) {
+                    // Se estiver Entregue ou Devolvido pelo professor
+                    if (sub.state === "TURNED_IN" || sub.state === "RETURNED") {
+                      let userId = sub.userId;
+                      let emailAluno = "";
+                      
+                      // Resolve o e-mail do aluno via API
+                      if (cacheUsuarios[userId]) {
+                        emailAluno = cacheUsuarios[userId];
+                      } else {
+                        try {
+                          let profile = Classroom.UserProfiles.get(userId);
+                          emailAluno = (profile.emailAddress || "").toLowerCase();
+                        } catch(e) {}
+                        
+                        if (!emailAluno) {
+                          try {
+                            const files = DriveApp.searchFiles(`'${userId}' in owners`);
+                            if (files.hasNext()) emailAluno = (files.next().getOwner().getEmail() || "").toLowerCase();
+                          } catch(e) {}
+                        }
+                        cacheUsuarios[userId] = emailAluno;
+                      }
+
+                      // Se achou o aluno no nosso BD do Trilha Tech
+                      if (emailAluno && mapaAlunos[emailAluno]) {
+                        let alunoDb = mapaAlunos[emailAluno];
+                        let chaveEntrega = alunoDb.matricula + "_" + idAtiv;
+
+                        // Se o aluno AINDA NÃO foi avaliado nesta missão no nosso portal
+                        if (!entregasFeitas.has(chaveEntrega)) {
+                          let timestampAtual = new Date().getTime();
+                          let idUnico = "SYNC-" + timestampAtual + "-" + Math.floor(Math.random() * 1000);
+                          
+                          // 1. Regista a entrega na aba "entregas"
+                          abaEntregas.appendRow([
+                            idUnico, 
+                            alunoDb.matricula, 
+                            idAtiv, 
+                            "Entrega validada pelo AVA.", 
+                            "Avaliado", 
+                            xpAtiv, 
+                            timestampAtual, 
+                            "Sincronizado via Google Classroom"
+                          ]);
+                          
+                          // 2. Injeta o XP direto na aba "trilhatech"
+                          alunoDb.xpAtual += xpAtiv;
+                          abaTrilha.getRange(alunoDb.linhaTrilha, 5).setValue(alunoDb.xpAtual);
+                          
+                          entregasFeitas.add(chaveEntrega);
+                          entregasNovas++;
+                        }
+                      }
+                    }
+                  }
+                } catch(e) {
+                  Logger.log(`Aviso ao ler Classroom na ativ ${idAtiv}. Turma arquivada ou sem permissão.`);
+                }
+              }
+            }
+          }
+
+          return ContentService.createTextOutput(JSON.stringify({ 
+            status: "sucesso", 
+            mensagem: `Sincronização concluída! ${entregasNovas} novas entregas validadas e pontuadas automaticamente.`
+          })).setMimeType(ContentService.MimeType.JSON);
+
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Erro no servidor: " + e.message })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
+        }
+      }
+
+  } catch (erro) {
+    return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: erro.toString() })).setMimeType(ContentService.MimeType.JSON);
+  }
+  }
 
 // ==========================================
 // GATILHO AUTOMÁTICO (Vigia edições manuais na Planilha)
 // ==========================================
 function onEdit(e) {
-if (!e) return;
-const aba = e.source.getActiveSheet();
-
-// Verifica se a edição foi na aba "trilhatech" e na Coluna C (Status = Coluna 3)
-if (aba.getName() === "trilhatech" && e.range.getColumn() === 3) {
-const linha = e.range.getRow();
-
+  if (!e) return;
+  const aba = e.source.getActiveSheet();
+  
+  // Verifica se a edição foi na aba "trilhatech" e na Coluna C (Status = Coluna 3)
+  if (aba.getName() === "trilhatech" && e.range.getColumn() === 3) {
+    const linha = e.range.getRow();
+    
     // Ignora a linha 1 (Cabeçalho)
     if (linha > 1) {
       const novoStatus = String(e.value).trim().toLowerCase();
-
+      
       // Se você digitar "Desistente" (com maiúscula ou minúscula, não importa)
       if (novoStatus === "desistente") {
-
+        
         // 1. Zera o XP do aluno na Coluna E (Coluna 5)
         aba.getRange(linha, 5).setValue(0);
-
+        
         // 2. Já preenche a Data de Mudança de Status na Coluna D (Coluna 4) automaticamente!
         const dataAtual = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy");
         aba.getRange(linha, 4).setValue(dataAtual);
       }
     }
-
-}
+  }
 }
 
 // ========================================================
 // 🤖 ROBÔ MIGRADOR DE DADOS LEGADOS (TRILHA TECH)
 // ========================================================
 function migrarAtividadesInteligente() {
-const planilha = SpreadsheetApp.getActiveSpreadsheet();
-const abaAtividades = planilha.getSheetByName("atividades");
+  const planilha = SpreadsheetApp.getActiveSpreadsheet();
+  const abaAtividades = planilha.getSheetByName("atividades");
+  
+  if (!abaAtividades) {
+    SpreadsheetApp.getUi().alert("Aba 'atividades' não encontrada!");
+    return;
+  }
 
-if (!abaAtividades) {
-SpreadsheetApp.getUi().alert("Aba 'atividades' não encontrada!");
-return;
-}
+  const dados = abaAtividades.getDataRange().getValues();
+  let alteradas = 0;
 
-const dados = abaAtividades.getDataRange().getValues();
-let alteradas = 0;
+  // 🔥 MAPEAMENTO INTELIGENTE: Liga a turma antiga ao Curso Novo Oficial
+  const mapeamentoModulos = {
+    "Turma 1 - 1º Ano": "Módulo 1 - Lógica Matemática e Programação em Python",
+    "Turma 2 - 2º Ano": "Módulo 3.1 - HTML" // As antigas da T2 eram de HTML
+  };
 
-// 🔥 MAPEAMENTO INTELIGENTE: Liga a turma antiga ao Curso Novo Oficial
-const mapeamentoModulos = {
-"Turma 1 - 1º Ano": "Módulo 1 - Lógica Matemática e Programação em Python",
-"Turma 2 - 2º Ano": "Módulo 3.1 - HTML" // As antigas da T2 eram de HTML
-};
-
-// Começa do 1 para pular o cabeçalho
-for (let i = 1; i < dados.length; i++) {
-let idAtiv = String(dados[i][0]).trim();
-if (!idAtiv || idAtiv === "ID") continue;
+  // Começa do 1 para pular o cabeçalho
+  for (let i = 1; i < dados.length; i++) {
+    let idAtiv = String(dados[i][0]).trim();
+    if (!idAtiv || idAtiv === "ID") continue;
 
     let tituloAtual = String(dados[i][1]).trim();   // Coluna B
     let turmaAlvo = String(dados[i][5]).trim();     // Coluna F
@@ -3573,7 +3769,7 @@ if (!idAtiv || idAtiv === "ID") continue;
 
     // 1. Procura o número da aula no módulo atual ou no título
     let matchAula = moduloAtual.match(/Aula\s*(\d+)/i) || tituloAtual.match(/Aula\s*(\d+)/i);
-
+    
     if (matchAula) {
       let numeroAula = matchAula[1].padStart(2, '0'); // Transforma "1" em "01"
       let prefixo = "[Aula " + numeroAula + "] ";
@@ -3581,7 +3777,7 @@ if (!idAtiv || idAtiv === "ID") continue;
       // 2. Limpa o título atual para não ficar com "Aula 01" duplicado
       // Isso remove coisas como "Aula 01 - ", "Aula 01- ", "Aula 01" do início
       let tituloLimpo = tituloAtual.replace(/^(Aula\s*\d+\s*[-–]*\s*)/i, "").trim();
-
+      
       // Monta o título final
       if (!tituloLimpo.startsWith("[Aula")) {
         tituloLimpo = prefixo + tituloLimpo;
@@ -3599,9 +3795,8 @@ if (!idAtiv || idAtiv === "ID") continue;
         alteradas++;
       }
     }
+  }
 
-}
-
-// Avisa que terminou!
-SpreadsheetApp.getUi().alert("✅ Migração Concluída! Foram formatadas e migradas " + alteradas + " atividades com sucesso.");
+  // Avisa que terminou!
+  SpreadsheetApp.getUi().alert("✅ Migração Concluída! Foram formatadas e migradas " + alteradas + " atividades com sucesso.");
 }

@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { PixModalProps, ItemExtrato, ColegaPix } from "../types";
 import { apiAluno } from "@/src/services/api";
+import { useToast } from "@/src/contexts/ToastContext"; // <-- IMPORTAÇÃO DO CONTEXTO
 
 export default function PixModal({
   aluno,
@@ -10,6 +11,8 @@ export default function PixModal({
   onSuccess,
   alunoAlvoInicial,
 }: PixModalProps) {
+  const { toast } = useToast(); // <-- INICIALIZAÇÃO DO HOOK
+
   const [carregandoPix, setCarregandoPix] = useState(true);
   const [dadosPix, setDadosPix] = useState<{
     colegas: ColegaPix[];
@@ -45,37 +48,41 @@ export default function PixModal({
             setPixColega("");
           }
         } else {
-          alert("Erro ao carregar Pix.");
+          toast("Erro ao carregar o seu extrato do Pix.", "error", "Ops!");
           onClose();
         }
       } catch {
-        alert("Erro de conexão.");
+        toast("Erro de conexão ao abrir o Pix.", "error", "Falha na Rede");
         onClose();
       } finally {
         setCarregandoPix(false);
       }
     };
     carregarDadosPix();
-  }, [aluno.matricula, onClose, alunoAlvoInicial]);
+  }, [aluno.matricula, onClose, alunoAlvoInicial, toast]);
 
   const criarSenhaPix = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (novaSenhaPix.length !== 6)
-      return alert("A senha deve ter exatamente 6 números.");
-    if (novaSenhaPix !== confirmarNovaSenhaPix)
-      return alert("As senhas não batem!");
+    if (novaSenhaPix.length !== 6) {
+      toast("A senha deve ter exatamente 6 números.", "warning", "Atenção");
+      return;
+    }
+    if (novaSenhaPix !== confirmarNovaSenhaPix) {
+      toast("As senhas não batem!", "warning", "Atenção");
+      return;
+    }
 
     setEnviandoPix(true);
     try {
       const data = await apiAluno.criarSenhaPix(aluno.matricula, novaSenhaPix);
       if (data.status === "sucesso") {
-        alert("✅ Senha criada com sucesso!");
+        toast("Sua senha foi criada com sucesso!", "success", "Tudo Pronto!");
         setDadosPix((prev) => (prev ? { ...prev, temSenhaPix: true } : null));
       } else {
-        alert(data.mensagem);
+        toast(data.mensagem, "warning", "Atenção");
       }
     } catch {
-      alert("Erro ao criar senha.");
+      toast("Erro ao tentar criar a senha.", "error", "Erro");
     } finally {
       setEnviandoPix(false);
     }
@@ -84,14 +91,34 @@ export default function PixModal({
   const enviarPix = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!dadosPix) return;
-    if (pixQuantidade === "" || Number(pixQuantidade) <= 0)
-      return alert("Digite um valor válido.");
-    if (Number(pixQuantidade) > dadosPix.limiteDiario - dadosPix.xpDoadoHoje)
-      return alert("Isso ultrapassa o seu limite diário restante.");
-    if (Number(pixQuantidade) > dadosPix.meuXpTotal)
-      return alert("Você não tem saldo suficiente.");
-    if (pixSenha.length !== 6)
-      return alert("Digite o seu PIN de 6 números corretamente.");
+    if (pixQuantidade === "" || Number(pixQuantidade) <= 0) {
+      toast("Digite um valor válido de XP.", "warning", "Atenção");
+      return;
+    }
+    if (Number(pixQuantidade) > dadosPix.limiteDiario - dadosPix.xpDoadoHoje) {
+      toast(
+        `Isso ultrapassa o seu limite de transferência diário.`,
+        "warning",
+        "Limite Atingido",
+      );
+      return;
+    }
+    if (Number(pixQuantidade) > dadosPix.meuXpTotal) {
+      toast(
+        "Você não tem XP suficiente para esta transferência.",
+        "warning",
+        "Saldo Insuficiente",
+      );
+      return;
+    }
+    if (pixSenha.length !== 6) {
+      toast(
+        "Digite o seu PIN de 6 números corretamente.",
+        "warning",
+        "Senha Inválida",
+      );
+      return;
+    }
 
     setEnviandoPix(true);
     try {
@@ -104,21 +131,29 @@ export default function PixModal({
       );
 
       if (data.status === "sucesso") {
-        alert("🎉 PIX ENVIADO COM SUCESSO!");
+        toast(
+          `Você enviou ${pixQuantidade} XP com sucesso!`,
+          "success",
+          "Transferência Realizada! 🎉",
+        );
         onSuccess();
         onClose();
       } else {
-        alert("⚠️ " + data.mensagem);
+        toast(data.mensagem, "warning", "Atenção");
       }
     } catch {
-      alert("Erro na transferência.");
+      toast(
+        "Erro de rede durante a transferência.",
+        "error",
+        "Falha de Conexão",
+      );
     } finally {
       setEnviandoPix(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-[70] p-4 animate-in fade-in transition-colors duration-300">
+    <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-70 p-4 animate-in fade-in transition-colors duration-300">
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border dark:border-slate-800 w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] transition-colors duration-300">
         <div className="bg-gradient-to-r from-emerald-500 to-teal-600 dark:from-emerald-700 dark:to-teal-800 p-5 border-b dark:border-slate-800 flex justify-between items-center text-white shrink-0 transition-colors duration-300">
           <div>

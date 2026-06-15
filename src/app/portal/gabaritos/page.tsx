@@ -6,9 +6,12 @@ import { useRouter } from "next/navigation";
 import { DadosAluno, Atividade } from "@/src/types";
 import PortalHeader from "@/src/components/PortalHeader";
 import { apiAluno, apiGeral } from "@/src/services/api";
+import { useToast } from "@/src/contexts/ToastContext"; // <-- IMPORTAÇÃO DO CONTEXTO
 
 export default function GabaritosPage() {
   const router = useRouter();
+  const { toast } = useToast(); // <-- INICIALIZAÇÃO DO HOOK
+
   const [montado, setMontado] = useState(false);
   const [aluno, setAluno] = useState<DadosAluno | null>(null);
   const [nomeProjeto, setNomeProjeto] = useState("Portal Educacional");
@@ -40,10 +43,12 @@ export default function GabaritosPage() {
           setNomeProjeto(
             data.configuracoes.nomeProjeto || "Portal Educacional",
           );
-      } catch {}
+      } catch {
+        toast("Erro ao carregar configurações da plataforma.", "error", "Erro");
+      }
     };
     buscarConfiguracoes();
-  }, [router]);
+  }, [router, toast]);
 
   useEffect(() => {
     if (!aluno) return;
@@ -59,14 +64,18 @@ export default function GabaritosPage() {
           setAtividadesComGabarito(filtradas);
         }
       } catch (e) {
-        console.error("Erro ao carregar gabaritos");
+        toast(
+          "Falha ao descriptografar os gabaritos.",
+          "error",
+          "Erro de Conexão",
+        );
       } finally {
         setCarregando(false);
       }
     };
 
     carregarGabaritos();
-  }, [aluno]);
+  }, [aluno, toast]);
 
   const toggleModulo = (nomeModulo: string) => {
     setModulosFechados((prev) => ({
@@ -115,8 +124,12 @@ export default function GabaritosPage() {
       const lowerTitle = ativ.titulo.toLowerCase();
 
       // Expressão Regular para "Desafio 1", "Desafio_1", "Desafio_ 1", "Desafio 01"
-      const isDesafio1 = /desafio\s*[_|-]?\s*(?:\d+[\.\-])?(1|01)\b/i.test(lowerTitle);
-      const isDesafio2 = /desafio\s*[_|-]?\s*(?:\d+[\.\-])?(2|02)\b/i.test(lowerTitle);
+      const isDesafio1 = /desafio\s*[_|-]?\s*(?:\d+[\.\-])?(1|01)\b/i.test(
+        lowerTitle,
+      );
+      const isDesafio2 = /desafio\s*[_|-]?\s*(?:\d+[\.\-])?(2|02)\b/i.test(
+        lowerTitle,
+      );
 
       if (ativ.tipo === "Quiz") {
         if (isDesafio1) {
@@ -145,19 +158,44 @@ export default function GabaritosPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-12 transition-colors duration-300">
-      <PortalHeader
-        matricula={aluno.matricula}
-        nomeAluno={aluno.nome}
-        turma={aluno.turma}
-        nomeProjeto={nomeProjeto}
-        notificacoes={[]}
-        onAbrirRanking={() => {}}
-        onAbrirFrequencia={() => {}}
-        onAbrirPerfil={() => {}}
-        onLogout={() => {}}
-      />
+      {/* 🔥 CORREÇÃO DA SOBREPOSIÇÃO: Envolvendo o Header numa div com z-index alto */}
+      <div className="relative z-90">
+        <PortalHeader
+          matricula={aluno.matricula}
+          nomeAluno={aluno.nome}
+          turma={aluno.turma}
+          nomeProjeto={nomeProjeto}
+          notificacoes={[]}
+          // 🔥 CORREÇÃO DAS FUNÇÕES VAZIAS: Avisa o utilizador com o Toast dinâmico
+          onAbrirRanking={() =>
+            toast(
+              "Volte à sua página inicial para aceder ao Ranking da Turma.",
+              "info",
+              "Aviso",
+            )
+          }
+          onAbrirFrequencia={() =>
+            toast(
+              "Volte à sua página inicial para ver os relatórios de Frequência.",
+              "info",
+              "Aviso",
+            )
+          }
+          onAbrirPerfil={() =>
+            toast(
+              "Volte à sua página inicial para editar o seu Perfil e Avatar.",
+              "info",
+              "Aviso",
+            )
+          }
+          onLogout={() => {
+            localStorage.removeItem("alunoLogado");
+            router.push("/portal/login");
+          }}
+        />
+      </div>
 
-      <div className="bg-white dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors duration-300">
+      <div className="bg-white dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors duration-300 relative z-10">
         <div className="max-w-384 w-full mx-auto p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-4">
             <button
@@ -183,7 +221,7 @@ export default function GabaritosPage() {
         </div>
       </div>
 
-      <div className="max-w-384 w-full mx-auto p-4 md:p-8 mt-2">
+      <div className="max-w-384 w-full mx-auto p-4 md:p-8 mt-2 relative z-0">
         {/* 🔥 GUIA DE WORKFLOW COMPACTO (Inspirado no seu Notion) */}
         <div className="bg-slate-900 dark:bg-slate-950 rounded-2xl p-5 mb-8 flex flex-col md:flex-row gap-6 items-center justify-between shadow-md border-l-4 border-amber-500 transition-colors">
           <div className="flex items-center gap-4 w-full">
@@ -341,7 +379,7 @@ export default function GabaritosPage() {
                               >
                                 {/* COLUNA: AULAS (Identificador em Amarelo) */}
                                 <td className="border border-slate-300 dark:border-slate-700 p-2 text-center bg-amber-100/60 dark:bg-amber-900/20 font-black text-amber-900 dark:text-amber-500 whitespace-nowrap text-xs shadow-inner">
-                                  {aulaLabel}
+                                  {aulaLabel}-
                                 </td>
 
                                 {/* COLUNA: DESAFIO 1 (BOTÃO A, B, C, D) */}

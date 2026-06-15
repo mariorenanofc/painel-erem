@@ -6,9 +6,12 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Header from "@/src/components/Header";
 import { apiGeral, apiTutor } from "@/src/services/api";
+import { useToast } from "@/src/contexts/ToastContext"; // <-- IMPORTAÇÃO DO CONTEXTO
 
 export default function ConfiguracoesPage() {
   const router = useRouter();
+  const { toast } = useToast(); // <-- INICIALIZAÇÃO DO HOOK
+
   const [nomeUsuario] = useState(() =>
     typeof window !== "undefined"
       ? localStorage.getItem("usuarioLogado") || ""
@@ -105,6 +108,11 @@ export default function ConfiguracoesPage() {
         }
       } catch (error) {
         console.error("Erro ao buscar configurações iniciais", error);
+        toast(
+          "Falha ao carregar as suas configurações atuais.",
+          "error",
+          "Erro de Rede",
+        );
       } finally {
         setCarregando(false);
         // Força onboarding se não houver link
@@ -115,7 +123,7 @@ export default function ConfiguracoesPage() {
     };
 
     buscarDados();
-  }, [configs.LINK_PLANILHA, nomeUsuario]);
+  }, [configs.LINK_PLANILHA, nomeUsuario, toast]);
 
   const handleChange = (chave: string, valor: string) => {
     setConfigs((prev) => ({ ...prev, [chave]: valor }));
@@ -126,12 +134,20 @@ export default function ConfiguracoesPage() {
     try {
       const res = await apiTutor.salvarConfiguracoes(configs);
       if (res.status === "sucesso") {
-        alert("✅ Configurações salvas com sucesso no banco de dados!");
+        toast(
+          "Suas definições foram guardadas em segurança no banco de dados.",
+          "success",
+          "Configurações Salvas!",
+        );
       } else {
-        alert("⚠️ " + res.mensagem);
+        toast(res.mensagem, "warning", "Ops!");
       }
     } catch (e) {
-      alert("❌ Erro ao tentar salvar as configurações.");
+      toast(
+        "Erro de conexão ao tentar salvar as configurações.",
+        "error",
+        "Erro",
+      );
     } finally {
       setSalvando(false);
     }

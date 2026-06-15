@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { apiTutor } from "@/src/services/api";
 import { AlunoRankingTutor } from "../types";
+import { useToast } from "@/src/contexts/ToastContext"; // <-- IMPORTAÇÃO DO CONTEXTO
 
 interface FechamentoCicloModalProps {
   isOpen: boolean;
@@ -23,6 +24,8 @@ export default function FechamentoCicloModal({
   onClose,
   turmasDisponiveis,
 }: FechamentoCicloModalProps) {
+  const { toast } = useToast(); // <-- INICIALIZAÇÃO DO HOOK
+
   const [etapa, setEtapa] = useState<1 | 2>(1);
   const [tipo, setTipo] = useState<"semanal" | "mensal">("semanal");
   const [turma, setTurma] = useState<string>(turmasDisponiveis[0] || "Todas");
@@ -41,8 +44,10 @@ export default function FechamentoCicloModal({
   }, [isOpen]);
 
   const carregarTop10 = async () => {
-    if (!turma || turma === "Todas")
-      return alert("Selecione uma turma específica!");
+    if (!turma || turma === "Todas") {
+      toast("Selecione uma turma específica!", "warning", "Atenção");
+      return;
+    }
 
     setCarregando(true);
     try {
@@ -72,7 +77,7 @@ export default function FechamentoCicloModal({
         setEtapa(2);
       }
     } catch {
-      alert("Erro ao buscar o ranking.");
+      toast("Erro ao buscar o ranking.", "error", "Falha na Rede");
     } finally {
       setCarregando(false);
     }
@@ -121,6 +126,7 @@ export default function FechamentoCicloModal({
   };
 
   const aplicarPremicoesEFinalizar = async () => {
+    // Mantemos o confirm nativo para segurança (Evita cliques duplos acidentais)
     if (
       !confirm(
         "Isso irá depositar o XP na conta de todos os alunos da lista! Confirmar?",
@@ -148,16 +154,24 @@ export default function FechamentoCicloModal({
     setProcessandoXP(false);
 
     if (erros > 0) {
-      alert(`Finalizado com ${erros} erro(s).`);
+      toast(`Finalizado com ${erros} erro(s).`, "warning", "Atenção");
     } else {
       confetti({ particleCount: 200, spread: 90, origin: { y: 0.3 } });
-      alert("🎉 XP INJETADO COM SUCESSO! O Ranking foi fechado.");
+      toast(
+        "O XP foi injetado com sucesso e o ranking foi fechado.",
+        "success",
+        "Ciclo Fechado! 🎉",
+      );
     }
   };
 
   const copiarTexto = () => {
     navigator.clipboard.writeText(mensagemWhatsApp);
-    alert("Texto copiado para a área de transferência!");
+    toast(
+      "O relatório foi copiado e está pronto para colar no WhatsApp!",
+      "info",
+      "Copiado!",
+    );
   };
 
   if (!isOpen) return null;

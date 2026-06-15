@@ -7,12 +7,14 @@ import Header from "@/src/components/Header";
 import { useRouter } from "next/navigation";
 import { AlunoRisco, AlunoSimples } from "@/src/types/index";
 import { apiTutor } from "@/src/services/api"; // 🔥 API CENTRALIZADA
-
+import { useToast } from "@/src/contexts/ToastContext"; // <-- IMPORTAÇÃO DO CONTEXTO
 
 type FichaAluno = any;
 
 export default function AnalyticsPage() {
   const router = useRouter();
+  const { toast } = useToast(); // <-- INICIALIZAÇÃO DO HOOK
+
   const [nomeUsuario] = useState(() =>
     typeof window !== "undefined"
       ? localStorage.getItem("usuarioLogado") || ""
@@ -59,13 +61,14 @@ export default function AnalyticsPage() {
         }
       } catch (e) {
         console.error("Erro ao buscar analytics", e);
+        toast("Erro ao carregar o painel geral.", "error", "Falha de Conexão");
       } finally {
         setCarregandoGeral(false);
       }
     };
 
     buscarGeral();
-  }, [nomeUsuario]);
+  }, [nomeUsuario, toast]);
 
   const buscarFichaAluno = async (matricula: string) => {
     setAlunoSelecionado(matricula);
@@ -74,7 +77,7 @@ export default function AnalyticsPage() {
       const data = await apiTutor.buscarFicha360(matricula); // 🔥 USO DA API
       if (data.status === "sucesso") setFicha360(data.ficha);
     } catch (e) {
-      alert("Erro ao buscar a ficha do aluno.");
+      toast("Erro ao buscar a ficha do aluno.", "error", "Falha");
     } finally {
       setCarregandoFicha(false);
     }
@@ -100,7 +103,9 @@ export default function AnalyticsPage() {
   });
 
   if (!montado || !nomeUsuario)
-    return <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300"></div>;
+    return (
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 transition-colors duration-300"></div>
+    );
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 font-sans transition-colors duration-300">
@@ -132,13 +137,13 @@ export default function AnalyticsPage() {
               setAbaAtiva("geral");
               voltarParaLista();
             }}
-            className={`px-6 py-3 rounded-t-lg font-bold transition-all whitespace-nowrap ${abaAtiva === "geral" ? "bg-indigo-600 text-white shadow-md" : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+            className={`cursor-pointer px-6 py-3 rounded-t-lg font-bold transition-all whitespace-nowrap ${abaAtiva === "geral" ? "bg-indigo-600 text-white shadow-md" : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
           >
             📊 Visão Geral da Escola
           </button>
           <button
             onClick={() => setAbaAtiva("ficha")}
-            className={`px-6 py-3 rounded-t-lg font-bold transition-all whitespace-nowrap ${abaAtiva === "ficha" ? "bg-amber-500 text-white shadow-md" : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
+            className={`cursor-pointer px-6 py-3 rounded-t-lg font-bold transition-all whitespace-nowrap ${abaAtiva === "ficha" ? "bg-amber-500 text-white shadow-md" : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"}`}
           >
             🔍 Ficha 360º do Aluno
           </button>
@@ -280,7 +285,7 @@ export default function AnalyticsPage() {
 
                             <button
                               onClick={() => investigarAluno(aluno.matricula)}
-                              className="w-full mt-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                              className="cursor-pointer w-full mt-2 text-[10px] font-bold text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                             >
                               Ver Ficha Completa
                             </button>
@@ -317,7 +322,7 @@ export default function AnalyticsPage() {
                     <select
                       value={filtroTurmaAluno}
                       onChange={(e) => setFiltroTurmaAluno(e.target.value)}
-                      className="w-full border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-slate-700 dark:text-slate-300 font-bold outline-none focus:border-amber-500 bg-white dark:bg-slate-900 transition-colors duration-300"
+                      className="cursor-pointer w-full border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-slate-700 dark:text-slate-300 font-bold outline-none focus:border-amber-500 bg-white dark:bg-slate-900 transition-colors duration-300"
                     >
                       <option value="Todas">Todas as Turmas</option>
                       <option value="Turma 1 - 1º Ano">Turma 1 - 1º Ano</option>
@@ -363,7 +368,7 @@ export default function AnalyticsPage() {
               <div className="space-y-6">
                 <button
                   onClick={voltarParaLista}
-                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold px-4 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2 shadow-sm"
+                  className="cursor-pointer bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 font-bold px-4 py-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2 shadow-sm"
                 >
                   ← Voltar para o Diretório
                 </button>
@@ -521,7 +526,6 @@ export default function AnalyticsPage() {
                             </p>
                           ) : (
                             <div className="space-y-3">
-                              
                               {ficha360.historicoXP.map(
                                 (item: any, idx: number) => {
                                   const isPix = item.id.includes("PIX");

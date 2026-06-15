@@ -13,12 +13,15 @@ import StudentTable from "../components/StudentTable";
 import LoginScreen from "../components/LoginScreen";
 import { formatarDataInput } from "../utils/formatters";
 import { Aluno } from "../types";
+import { useToast } from "@/src/contexts/ToastContext"; // <-- IMPORTAÇÃO DO CONTEXTO
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL as string;
 
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
 
 export default function DashboardAlunos() {
+  const { toast } = useToast(); // <-- INICIALIZAÇÃO DO HOOK
+
   const [usuarioLogado, setUsuarioLogado] = useState<string | null>(null);
   const [verificandoSessao, setVerificandoSessao] = useState(true);
 
@@ -86,8 +89,10 @@ export default function DashboardAlunos() {
   }, [data, turmaSelecionada, busca, mostrarSemEmail, mostrarComObs]);
 
   const exportarParaCSV = () => {
-    if (alunosFiltrados.length === 0)
-      return alert("Nenhum aluno para exportar.");
+    if (alunosFiltrados.length === 0) {
+      toast("Nenhum aluno encontrado para exportar.", "warning", "Atenção");
+      return;
+    }
     const cabecalho = [
       "Matrícula",
       "Nome",
@@ -178,8 +183,10 @@ export default function DashboardAlunos() {
       }
 
       if (todosAlunos.length === 0) {
-        alert(
-          "⚠️ Nenhum aluno válido encontrado. Verifique se as planilhas contêm os dados no formato SIEPE.",
+        toast(
+          "Nenhum aluno válido encontrado. Verifique se as planilhas contêm os dados no formato SIEPE.",
+          "warning",
+          "Atenção",
         );
         setSincronizandoSiepe(false);
         return;
@@ -203,10 +210,18 @@ export default function DashboardAlunos() {
         });
         mutate();
       } else {
-        alert("❌ Erro no Servidor: " + resData.mensagem);
+        toast(
+          "Erro no Servidor: " + resData.mensagem,
+          "error",
+          "Falha na Sincronização",
+        );
       }
     } catch (err) {
-      alert("❌ Erro ao processar o(s) arquivo(s) Excel.");
+      toast(
+        "Erro ao processar o(s) arquivo(s) Excel.",
+        "error",
+        "Falha de Leitura",
+      );
     } finally {
       setSincronizandoSiepe(false);
     }
@@ -261,19 +276,22 @@ export default function DashboardAlunos() {
       try {
         const resData = JSON.parse(text);
         if (resData.status === "sucesso") {
+          toast("Dados do aluno salvos com sucesso!", "success", "Salvo!");
           setModalAberto(false);
           mutate();
         } else {
-          alert("❌ Erro da API: " + resData.mensagem);
+          toast(resData.mensagem, "warning", "Ops!");
         }
       } catch (parseError) {
         console.error("Erro na API (Resposta não foi um JSON):", text);
-        alert(
-          "❌ Erro no servidor ao salvar. Aperte F12 e veja o console para mais detalhes.",
+        toast(
+          "Erro no servidor ao salvar. Aperte F12 e veja o console para mais detalhes.",
+          "error",
+          "Falha no Servidor",
         );
       }
     } catch (err) {
-      alert("❌ Erro de conexão ao salvar aluno.");
+      toast("Erro de conexão ao salvar aluno.", "error", "Erro de Rede");
     } finally {
       setSalvando(false);
     }
@@ -293,14 +311,14 @@ export default function DashboardAlunos() {
       });
       const resData = await res.json();
       if (resData.status === "sucesso") {
-        alert("✅ " + resData.mensagem);
+        toast(resData.mensagem, "success", "Inscrição Realizada!");
         mutate(); // Atualiza a lista com o novo status
         setModalAberto(false);
       } else {
-        alert("❌ Erro: " + resData.mensagem);
+        toast(resData.mensagem, "warning", "Atenção");
       }
     } catch (err) {
-      alert("❌ Erro de conexão ao inscrever aluno.");
+      toast("Erro de conexão ao inscrever aluno.", "error", "Falha de Rede");
     }
   };
 
@@ -317,14 +335,14 @@ export default function DashboardAlunos() {
       });
       const resData = await res.json();
       if (resData.status === "sucesso") {
-        alert("✅ " + resData.mensagem);
+        toast(resData.mensagem, "success", "Status Atualizado!");
         mutate(); // Atualiza a lista
         setModalAberto(false);
       } else {
-        alert("❌ Erro: " + resData.mensagem);
+        toast(resData.mensagem, "warning", "Atenção");
       }
     } catch (err) {
-      alert("❌ Erro de conexão ao mudar status.");
+      toast("Erro de conexão ao mudar status.", "error", "Falha de Rede");
     }
   };
 

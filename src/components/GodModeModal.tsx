@@ -5,11 +5,14 @@ import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { apiTutor } from "@/src/services/api";
 import { AlunoGodMode, GodModeModalProps } from "../types";
+import { useToast } from "@/src/contexts/ToastContext"; // <-- IMPORTAÇÃO DO CONTEXTO
 
 export default function GodModeModal({
   onClose,
   onSuccess,
 }: GodModeModalProps) {
+  const { toast } = useToast(); // <-- INICIALIZAÇÃO DO HOOK
+
   const [alunos, setAlunos] = useState<AlunoGodMode[]>([]);
   const [carregando, setCarregando] = useState(true);
 
@@ -35,13 +38,13 @@ export default function GodModeModal({
         const data = await apiTutor.listarAlunosGodMode();
         if (data.status === "sucesso") setAlunos(data.alunos);
       } catch (e) {
-        alert("Erro ao buscar alunos.");
+        toast("Erro ao buscar alunos.", "error", "Falha de Conexão");
       } finally {
         setCarregando(false);
       }
     };
     buscarAlunos();
-  }, []);
+  }, [toast]);
 
   const handleInjetar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,9 +54,12 @@ export default function GodModeModal({
       Number(quantidadeXP) === 0 ||
       !motivo
     ) {
-      return alert(
+      toast(
         "Preencha todos os campos e use um valor diferente de zero!",
+        "warning",
+        "Atenção",
       );
+      return;
     }
 
     setInjetando(true);
@@ -72,14 +78,18 @@ export default function GodModeModal({
             colors: ["#fbbf24", "#f59e0b", "#fff"],
           });
         }
-        alert("⚡ " + data.mensagem);
+        toast(
+          data.mensagem,
+          "success",
+          Number(quantidadeXP) < 0 ? "Punição Aplicada" : "Bônus Injetado!",
+        );
         onSuccess();
         onClose();
       } else {
-        alert("⚠️ " + data.mensagem);
+        toast(data.mensagem, "warning", "Atenção");
       }
     } catch {
-      alert("Erro ao aplicar o poder.");
+      toast("Erro ao aplicar o poder.", "error", "Falha na Rede");
     } finally {
       setInjetando(false);
     }
@@ -87,8 +97,10 @@ export default function GodModeModal({
 
   const handleCoroar = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!matriculaCoroa)
-      return alert("Selecione o aluno que vai receber a placa!");
+    if (!matriculaCoroa) {
+      toast("Selecione o aluno que vai receber a placa!", "warning", "Atenção");
+      return;
+    }
 
     if (
       !confirm(
@@ -103,14 +115,14 @@ export default function GodModeModal({
 
       if (data.status === "sucesso") {
         confetti({ particleCount: 200, spread: 100, origin: { y: 0.3 } });
-        alert("👑 " + data.mensagem);
+        toast(data.mensagem, "success", "Novo Campeão Coroado! 👑");
         onSuccess();
         onClose();
       } else {
-        alert("⚠️ " + data.mensagem);
+        toast(data.mensagem, "warning", "Atenção");
       }
     } catch {
-      alert("Erro ao transferir a coroa.");
+      toast("Erro ao transferir a coroa.", "error", "Falha");
     } finally {
       setCoroando(false);
     }

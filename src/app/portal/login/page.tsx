@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/src/contexts/ToastContext"; // <-- IMPORTAÇÃO DO CONTEXTO
 
 export default function PortalLogin() {
+  const { toast } = useToast(); // <-- INICIALIZAÇÃO DO HOOK
+
   const [matricula, setMatricula] = useState("");
   const [dataNasc, setDataNasc] = useState("");
   const [carregando, setCarregando] = useState(false);
@@ -51,7 +54,10 @@ export default function PortalLogin() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!matricula || !dataNasc) return alert("Preencha todos os campos!");
+    if (!matricula || !dataNasc) {
+      toast("Preencha todos os campos!", "warning", "Atenção");
+      return;
+    }
 
     setCarregando(true);
     try {
@@ -69,15 +75,18 @@ export default function PortalLogin() {
 
       if (resposta.status === "sucesso") {
         localStorage.setItem("alunoLogado", JSON.stringify(resposta.aluno));
+        // Como o ToastProvider está no layout principal, a mensagem de boas-vindas
+        // vai permanecer na tela mesmo após o router.push!
+        toast(`Seja bem-vindo de volta!`, "success", "Acesso Permitido");
         router.push("/portal");
       } else if (resposta.status === "bloqueado") {
         setNomeBloqueado(resposta.nome || "Aluno");
         setAcessoNegado(true);
       } else {
-        alert("⚠️ " + resposta.mensagem);
+        toast(resposta.mensagem, "warning", "Ops!");
       }
     } catch (erro) {
-      alert("❌ Erro de conexão com o servidor.");
+      toast("Erro de conexão com o servidor.", "error", "Falha na Rede");
     } finally {
       setCarregando(false);
     }

@@ -7,6 +7,7 @@ import useSWR from "swr";
 import Header from "@/src/components/Header";
 import { useRouter } from "next/navigation";
 import { apiTutor, apiGeral } from "@/src/services/api";
+import { useToast } from "@/src/contexts/ToastContext"; // <-- O NOVO CONTEXTO IMPORTADO AQUI
 
 import {
   Atividade,
@@ -28,6 +29,7 @@ const fetcherAtividades = async () => {
 };
 
 export default function GestaoAulasPage() {
+  const { toast } = useToast(); // <-- O HOOK DO TOAST INICIADO AQUI
   const router = useRouter();
   const [nomeUsuario] = useState(() =>
     typeof window !== "undefined"
@@ -208,14 +210,15 @@ export default function GestaoAulasPage() {
           gabaritoLiberado: false,
         });
       }
-      alert(
-        `✅ Importação de ${atividadesMapeadas.length} rascunhos concluída com sucesso!`,
+      toast(
+        `Importação de ${atividadesMapeadas.length} rascunhos concluída com sucesso!`,
+        "success",
       );
       setModalImportadorAberto(false);
       mutate();
     } catch (e) {
       console.error("Erro na importação em lote", e);
-      alert("Houve um erro ao tentar importar algumas atividades.");
+      toast("Houve um erro ao tentar importar algumas atividades.", "error");
     } finally {
       setSalvando(false);
     }
@@ -227,9 +230,9 @@ export default function GestaoAulasPage() {
     try {
       const data = await apiTutor.toggleModoReposicao(novoStatus);
       if (data.status === "sucesso") setModoReposicao(!modoReposicao);
-      else alert("Erro: " + data.mensagem);
+      else toast("Erro: " + data.mensagem, "error");
     } catch {
-      alert("Erro de conexão.");
+      toast("Erro de conexão.", "error");
     } finally {
       setCarregandoReposicao(false);
     }
@@ -244,7 +247,7 @@ export default function GestaoAulasPage() {
       const data = await apiTutor.buscarRanking(tempo);
       if (data.status === "sucesso") setDadosRanking(data.ranking);
     } catch {
-      alert("Erro ao buscar o ranking.");
+      toast("Erro ao buscar o ranking.", "error");
     } finally {
       setCarregandoRanking(false);
     }
@@ -254,7 +257,8 @@ export default function GestaoAulasPage() {
     let lista = dadosRanking;
     if (filtroTurmaRanking !== "Todas")
       lista = dadosRanking.filter((a) => a.turma === filtroTurmaRanking);
-    if (lista.length === 0) return alert("Nenhum dado para exportar.");
+    if (lista.length === 0)
+      return toast("Nenhum dado para exportar.", "warning");
     const csvContent = [
       ["Posição", "Matrícula", "Nome", "Turma", "Nível", "XP"].join(","),
       ...lista.map(
@@ -273,13 +277,13 @@ export default function GestaoAulasPage() {
   };
 
   const salvarNovaSenha = async () => {
-    if (!senhaLousa) return alert("Digite uma senha válida!");
+    if (!senhaLousa) return toast("Digite uma senha válida!", "warning");
     setSalvandoSenha(true);
     try {
       const data = await apiTutor.atualizarSenhaCheckin(senhaLousa);
-      if (data.status === "sucesso") alert("✅ " + data.mensagem);
+      if (data.status === "sucesso") toast(data.mensagem, "success");
     } catch {
-      alert("Erro ao salvar a senha.");
+      toast("Erro ao salvar a senha.", "error");
     } finally {
       setSalvandoSenha(false);
     }
@@ -333,9 +337,10 @@ export default function GestaoAulasPage() {
     if (!confirm(`Tem certeza que deseja excluir a missão ${id}?`)) return;
     try {
       await apiTutor.excluirAtividade(id);
+      toast("Missão excluída!", "success");
       mutate();
     } catch {
-      alert("Erro ao excluir.");
+      toast("Erro ao excluir.", "error");
     }
   };
 
@@ -345,7 +350,7 @@ export default function GestaoAulasPage() {
   ) => {
     e.preventDefault();
     if (!titulo || !descricao || !dataLimite || !xp)
-      return alert("Preencha os campos obrigatórios!");
+      return toast("Preencha os campos obrigatórios!", "warning");
     setSalvando(true);
     try {
       await apiTutor.salvarAtividade({
@@ -368,10 +373,11 @@ export default function GestaoAulasPage() {
         gabarito,
         gabaritoLiberado,
       });
+      toast("Atividade salva com sucesso!", "success");
       limparFormulario();
       mutate();
     } catch {
-      alert("Erro ao salvar.");
+      toast("Erro ao salvar.", "error");
     } finally {
       setSalvando(false);
     }
@@ -392,7 +398,7 @@ export default function GestaoAulasPage() {
         setNotasTemp(notasIniciais);
       }
     } catch {
-      alert("Erro ao buscar entregas.");
+      toast("Erro ao buscar entregas.", "error");
       setMissaoAberta(null);
     } finally {
       setCarregandoEntregas(false);
@@ -415,7 +421,7 @@ export default function GestaoAulasPage() {
         feedbackTutor,
       );
       if (data.status === "sucesso") {
-        alert("✅ " + data.mensagem);
+        toast(data.mensagem, "success");
         setEntregas(
           entregas.map((e) =>
             e.idEntrega === entrega.idEntrega
@@ -430,7 +436,7 @@ export default function GestaoAulasPage() {
         );
       }
     } catch {
-      alert("Erro ao avaliar.");
+      toast("Erro ao avaliar.", "error");
     }
   };
 
@@ -448,7 +454,7 @@ export default function GestaoAulasPage() {
         setAlunosDiario(data.alunos);
       }
     } catch {
-      alert("Erro.");
+      toast("Erro.", "error");
     } finally {
       setCarregandoFreq(false);
     }
@@ -464,7 +470,7 @@ export default function GestaoAulasPage() {
         setTotalAulasTurma(data.totalAulas);
       }
     } catch {
-      alert("Erro.");
+      toast("Erro.", "error");
     } finally {
       setCarregandoFreqHoje(false);
     }
@@ -490,7 +496,7 @@ export default function GestaoAulasPage() {
 
   const salvarJustificativa = async () => {
     if (!modalJustificativaAberto || !textoJustificativa)
-      return alert("Digite o motivo da falta.");
+      return toast("Digite o motivo da falta.", "warning");
     const dataIso = `${anoDiario}-${String(mesDiario).padStart(2, "0")}-${String(modalJustificativaAberto.dia).padStart(2, "0")}`;
     try {
       const data = await apiTutor.justificarFalta(
@@ -500,13 +506,13 @@ export default function GestaoAulasPage() {
         modalJustificativaAberto.idFalta,
       );
       if (data.status === "sucesso") {
-        alert("✅ " + data.mensagem);
+        toast(data.mensagem, "success");
         setModalJustificativaAberto(null);
         setTextoJustificativa("");
         buscarDiarioClasse(turmaDiario, mesDiario, anoDiario);
-      } else alert("⚠️ " + data.mensagem);
+      } else toast(data.mensagem, "warning");
     } catch {
-      alert("Erro.");
+      toast("Erro.", "error");
     }
   };
 
@@ -660,7 +666,7 @@ export default function GestaoAulasPage() {
               </h2>
             </div>
 
-            {/* DASHBOARD SUPERIOR (SHORTCUTS) - AGORA COM O BOTÃO DE CONFIGURAÇÕES */}
+            {/* DASHBOARD SUPERIOR (SHORTCUTS) */}
             <div className="flex flex-wrap gap-2">
               <button
                 onClick={() => router.push("/trilhatech/configuracoes")}
@@ -675,13 +681,13 @@ export default function GestaoAulasPage() {
                   try {
                     const res = await (apiTutor as any).sincronizarAVA();
                     if (res.status === "sucesso") {
-                      alert("✅ " + res.mensagem);
+                      toast(res.mensagem, "success");
                       mutate(); // Atualiza a tela com os novos dados
                     } else {
-                      alert("⚠️ Erro: " + res.mensagem);
+                      toast(res.mensagem, "error");
                     }
                   } catch (e) {
-                    alert("❌ Erro de conexão ao sincronizar.");
+                    toast("Erro de conexão ao sincronizar.", "error");
                   } finally {
                     setSincronizando(false);
                   }
@@ -836,7 +842,6 @@ export default function GestaoAulasPage() {
                 </div>
               </div>
 
-              {/* AQUI NÓS LIMPAMOS O AVISO DO WHATSAPP E REDIRECIONAMOS PARA O PAINEL DE CONFIGURAÇÕES */}
               <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800 transition-colors">
                 <button
                   onClick={() => router.push("/trilhatech/configuracoes")}

@@ -29,6 +29,7 @@ import NovaConquistaModal from "@/src/components/NovaConquistaModal";
 import NovidadesModal from "@/src/components/NovidadesModal";
 import ResponderMissaoModal from "@/src/components/ResponderMissaoModal";
 import { apiAluno, apiGeral } from "@/src/services/api";
+import { useToast } from "@/src/contexts/ToastContext";
 
 const subscribe = (callback: () => void) => {
   if (typeof window !== "undefined") {
@@ -44,6 +45,7 @@ const getServerSnapshot = () => null;
 
 export default function PortalDashboard() {
   const router = useRouter();
+  const { toast } = useToast();
 
   const [montado, setMontado] = useState(false);
   const dadosSalvos = useSyncExternalStore(
@@ -275,14 +277,20 @@ export default function PortalDashboard() {
         badge.nome,
       );
       if (data.status === "sucesso") {
+        // 🔥 TOAST GAMIFICADO PARA RECOMPENSA
+        toast(
+          `+${badge.recompensa} XP Resgatado!`,
+          "reward",
+          "Conquista Épica!",
+        );
         setNovasConquistas((prev) => prev.slice(1));
         carregarPortal();
       } else {
-        alert("⚠️ " + data.mensagem);
+        toast(data.mensagem, "warning", "Ops!");
         setNovasConquistas((prev) => prev.slice(1));
       }
     } catch {
-      alert("Erro de conexão.");
+      toast("Erro de conexão ao resgatar conquista.", "error", "Erro");
     } finally {
       setResgatandoBadge(false);
     }
@@ -295,9 +303,14 @@ export default function PortalDashboard() {
       const data = await apiAluno.confirmarWhatsapp(aluno.matricula);
       if (data.status === "sucesso") {
         setZapConfirmado(true);
-        alert("✅ Perfeito! Agora você não perde nenhum aviso.");
+        toast(
+          "Perfeito! Agora você não perde nenhum aviso.",
+          "success",
+          "WhatsApp Confirmado!",
+        );
       }
     } catch {
+      toast("Erro ao confirmar entrada no grupo.", "error", "Erro de Conexão");
     } finally {
       setConfirmandoZap(false);
     }
@@ -318,12 +331,22 @@ export default function PortalDashboard() {
         respostaFinal,
       );
       if (data.status === "sucesso") {
-        alert("✅ " + data.mensagem);
+        // 🔥 LÓGICA INTELIGENTE DE FEEDBACK PARA QUIZ VS PROJETO
+        if (data.mensagem.includes("Resposta errada")) {
+          toast(data.mensagem, "quiz_wrong", "Quase lá...");
+        } else if (data.mensagem.includes("Resposta correta")) {
+          toast(data.mensagem, "quiz_correct", "Na Mosca!");
+        } else {
+          toast(data.mensagem, "success", "Missão Enviada!");
+        }
+
         setMissaoAberta(null);
         carregarPortal();
-      } else alert("⚠️ " + data.mensagem);
+      } else {
+        toast(data.mensagem, "warning", "Atenção!");
+      }
     } catch {
-      alert("❌ Erro.");
+      toast("Erro ao tentar enviar a missão.", "error", "Falha na Rede");
     } finally {
       setEnviando(false);
     }
@@ -332,7 +355,10 @@ export default function PortalDashboard() {
   const confirmarCheckin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!aluno) return;
-    if (!senhaDigitada.trim()) return alert("Digite a senha da lousa!");
+    if (!senhaDigitada.trim()) {
+      toast("Digite a senha da lousa!", "warning", "Senha Inválida");
+      return;
+    }
     setFazendoCheckin(true);
     try {
       const data = await apiAluno.fazerCheckin(aluno.matricula, senhaDigitada);
@@ -346,14 +372,14 @@ export default function PortalDashboard() {
           zIndex: 99999,
           colors: ["#10b981", "#34d399", "#ffffff"],
         });
-        alert("🎉 " + data.mensagem);
+        toast(data.mensagem, "success", "Presença Garantida!");
         localStorage.setItem(`checkin_${aluno.matricula}`, dataHoje);
         setCheckinRealizado(true);
         setModalSenhaAberto(false);
         setSenhaDigitada("");
         carregarPortal();
       } else {
-        alert("⚠️ " + data.mensagem);
+        toast(data.mensagem, "warning", "Não foi possível");
         if (data.mensagem.includes("já garantiu")) {
           localStorage.setItem(`checkin_${aluno.matricula}`, dataHoje);
           setCheckinRealizado(true);
@@ -361,7 +387,7 @@ export default function PortalDashboard() {
         }
       }
     } catch {
-      alert("❌ Erro ao tentar registar a presença.");
+      toast("Erro ao tentar registar a presença.", "error", "Falha de Conexão");
     } finally {
       setFazendoCheckin(false);
     }
@@ -373,9 +399,13 @@ export default function PortalDashboard() {
     setCarregandoPerfil(true);
     try {
       const data = await apiAluno.buscarPerfil(aluno.matricula);
-      if (data.status === "sucesso") setDadosPerfil(data.perfil);
-      else alert("⚠️ " + data.mensagem);
+      if (data.status === "sucesso") {
+        setDadosPerfil(data.perfil);
+      } else {
+        toast(data.mensagem, "warning", "Ops!");
+      }
     } catch {
+      toast("Erro ao abrir perfil.", "error", "Erro");
     } finally {
       setCarregandoPerfil(false);
     }
@@ -392,10 +422,17 @@ export default function PortalDashboard() {
         dadosAtualizados.telefoneResponsavel,
       );
       if (data.status === "sucesso") {
-        alert("✅ Salvo!");
+        toast(
+          "Seus dados foram atualizados com sucesso.",
+          "success",
+          "Perfil Salvo!",
+        );
         setPerfilAberto(false);
-      } else alert("⚠️ " + data.mensagem);
+      } else {
+        toast(data.mensagem, "warning", "Atenção");
+      }
     } catch {
+      toast("Erro ao tentar salvar perfil.", "error", "Erro de Rede");
     } finally {
       setSalvandoPerfil(false);
     }
@@ -409,6 +446,7 @@ export default function PortalDashboard() {
       const data = await apiAluno.minhaFrequencia(aluno.matricula);
       if (data.status === "sucesso") setDadosFrequencia(data);
     } catch {
+      toast("Erro ao carregar frequência.", "error", "Falha");
     } finally {
       setCarregandoFrequencia(false);
     }
@@ -420,10 +458,18 @@ export default function PortalDashboard() {
     try {
       const data = await apiAluno.resgatarAniversario(aluno.matricula);
       if (data.status === "sucesso") {
+        toast(
+          "Presente resgatado! Parabéns pelo seu dia!",
+          "reward",
+          "Feliz Aniversário!",
+        );
         setModalPresenteAberto(false);
         carregarPortal();
-      } else alert("⚠️ " + data.mensagem);
+      } else {
+        toast(data.mensagem, "warning", "Ops!");
+      }
     } catch {
+      toast("Erro ao tentar resgatar o presente.", "error", "Falha");
     } finally {
       setResgatandoPresente(false);
     }
@@ -441,13 +487,12 @@ export default function PortalDashboard() {
     setAulasFechadas((prev) => ({ ...prev, [nomeAula]: !prev[nomeAula] }));
   };
 
-// ================= CÁLCULOS E FILTROS =================
+  // ================= CÁLCULOS E FILTROS =================
   const missoesPendentes = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
-    // 🔥 IGNORA SE O MÓDULO ESTIVER ENCERRADO OU FECHADO
     const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
     if (stMod === "encerrado" || stMod === "em breve") return false;
-    
+
     return st === "pendente" || st === "devolvida";
   }).length;
 
@@ -455,16 +500,20 @@ export default function PortalDashboard() {
     const st = a.status?.toLowerCase().trim() || "pendente";
     const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
     if (stMod === "encerrado" || stMod === "em breve") return false;
-    
-    return (st === "pendente" || st === "devolvida") && a.statusPrazo !== "Atrasada";
+
+    return (
+      (st === "pendente" || st === "devolvida") && a.statusPrazo !== "Atrasada"
+    );
   }).length;
 
   const qtdAtrasadas = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
     const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
     if (stMod === "encerrado" || stMod === "em breve") return false;
-    
-    return (st === "pendente" || st === "devolvida") && a.statusPrazo === "Atrasada";
+
+    return (
+      (st === "pendente" || st === "devolvida") && a.statusPrazo === "Atrasada"
+    );
   }).length;
 
   const qtdConcluidas = atividades.filter((a) => {
@@ -473,7 +522,9 @@ export default function PortalDashboard() {
   }).length;
 
   const atividadesFiltradas = atividades.filter((a) => {
-    const matchBusca = a.titulo.toLowerCase().includes(buscaAtividade.toLowerCase());
+    const matchBusca = a.titulo
+      .toLowerCase()
+      .includes(buscaAtividade.toLowerCase());
     if (!matchBusca) return false;
 
     const st = a.status?.toLowerCase().trim() || "pendente";
@@ -481,13 +532,20 @@ export default function PortalDashboard() {
 
     if (abaAtividade === "Pendentes") {
       if (stMod === "encerrado" || stMod === "em breve") return false;
-      return (st === "pendente" || st === "devolvida") && a.statusPrazo !== "Atrasada";
+      return (
+        (st === "pendente" || st === "devolvida") &&
+        a.statusPrazo !== "Atrasada"
+      );
     }
     if (abaAtividade === "Atrasadas") {
       if (stMod === "encerrado" || stMod === "em breve") return false;
-      return (st === "pendente" || st === "devolvida") && a.statusPrazo === "Atrasada";
+      return (
+        (st === "pendente" || st === "devolvida") &&
+        a.statusPrazo === "Atrasada"
+      );
     }
-    if (abaAtividade === "Concluidas") return st !== "pendente" && st !== "devolvida";
+    if (abaAtividade === "Concluidas")
+      return st !== "pendente" && st !== "devolvida";
     return true;
   });
 
@@ -575,10 +633,7 @@ export default function PortalDashboard() {
     );
 
   return (
-    <main
-      className="min-h-screen relative bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-12 transition-colors duration-300"
-      
-    >
+    <main className="min-h-screen relative bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-slate-100 font-sans pb-12 transition-colors duration-300">
       {/* MODAIS GLOBAIS */}
       {modalPixAberto && (
         <PixModal
@@ -892,7 +947,6 @@ export default function PortalDashboard() {
                             (info.concluidas / info.todasMissoes.length) * 100,
                           );
 
-                    // 🔥 OBTÉM O TEMA VISUAL DO CURSO
                     const tema = getTemaCurso(nomeCurso);
 
                     let selo = (
@@ -927,7 +981,6 @@ export default function PortalDashboard() {
                         </span>
                       );
                     } else {
-                      // Curso Aberto Normal
                       corFiltro =
                         "cursor-pointer hover:-translate-y-1 hover:shadow-xl hover:ring-2 hover:ring-blue-400 hover:ring-offset-2 dark:hover:ring-offset-slate-900";
                     }

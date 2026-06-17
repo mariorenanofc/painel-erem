@@ -3545,163 +3545,292 @@ function doPost(e) {
       }
 
     // ==========================================
-    // ROTA 42: SINCRONIZAR COM O GOOGLE CLASSROOM (CORRIGIDA)
-    // ========================================== 
+    // ROTA 42: SINCRONIZAR AVA (LENDO A ABA CONTROLE_MODULOS + PROGRESSO)
+    // ==========================================
       if (action === "sincronizar_ava") {
         const lock = LockService.getScriptLock();
+        const cache = CacheService.getScriptCache();
+        
+        const logProgresso = (pct, msg) => {
+            cache.put("SYNC_STATUS", JSON.stringify({ progresso: pct, mensagem: msg }), 300);
+        };
+
         try {
-          lock.waitLock(30000); 
-          
-          const abaAtividades = planilha.getSheetByName("atividades");
-          const abaBase = planilha.getSheetByName("basededados"); // <-- CORRIGIDO
-          const abaTrilha = planilha.getSheetByName("trilhatech"); // <-- CORRIGIDO
-          const abaEntregas = planilha.getSheetByName("entregas");
-          
-          if (!abaAtividades || !abaBase || !abaTrilha || !abaEntregas) {
-            throw new Error("Abas necessárias não encontradas no BD.");
-          }
+            lock.waitLock(30000);
+            logProgresso(5, "Iniciando varredura no banco de dados...");
 
-          // 1. Mapear E-mails da Base de Dados (E-mail -> Matrícula)
-          const dadosBase = abaBase.getDataRange().getValues();
-          const emailParaMatricula = {}; 
-          for (let i = 1; i < dadosBase.length; i++) {
-            let matricula = String(dadosBase[i][2]).trim(); // Coluna C
-            let email = String(dadosBase[i][3]).toLowerCase().trim(); // Coluna D
-            if (email && matricula) {
-              emailParaMatricula[email] = matricula;
+            const abaAtividades = planilha.getSheetByName("atividades");
+            const abaBase = planilha.getSheetByName("basededados");
+            const abaTrilha = planilha.getSheetByName("trilhatech");
+            const abaEntregas = planilha.getSheetByName("entregas");
+            const abaModulos = planilha.getSheetByName("controle_modulos"); // 🔥 NOVA ABA AQUI
+
+            if (!abaAtividades || !abaBase || !abaTrilha || !abaEntregas || !abaModulos) {
+                throw new Error("Abas necessárias (incluindo controle_modulos) não encontradas no BD.");
             }
-          }
 
-          // 2. Mapear Alunos Ativos do TrilhaTech (Matrícula -> Linha e XP)
-          const dadosTrilha = abaTrilha.getDataRange().getValues();
-          const mapaAlunos = {}; // Vai cruzar o e-mail com os dados do Trilha
-          for (let i = 1; i < dadosTrilha.length; i++) {
-            let matricula = String(dadosTrilha[i][0]).trim(); // Coluna A
-            let status = String(dadosTrilha[i][2]).trim().toLowerCase(); // Coluna C
+            const normalizar = (texto) => String(texto).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+            logProgresso(10, "Mapeando alunos ativos e módulos...");
             
-            if (matricula && (status === "ativo" || status === "reserva")) {
-              // Descobre o e-mail dessa matrícula
-              let emailDoAluno = Object.keys(emailParaMatricula).find(key => emailParaMatricula[key] === matricula);
-              
-              if (emailDoAluno) {
-                mapaAlunos[emailDoAluno] = {
-                  matricula: matricula,
-                  linhaTrilha: i + 1,
-                  xpAtual: Number(dadosTrilha[i][4]) || 0 // Coluna E
-                };
-              }
-            }
-          }
-
-          // 3. Coletar Entregas já feitas (para não dar XP duplo)
-          const dadosEntregas = abaEntregas.getDataRange().getValues();
-          const entregasFeitas = new Set();
-          
-          for (let i = 1; i < dadosEntregas.length; i++) {
-            let matriculaEnt = String(dadosEntregas[i][1]).trim();
-            let idAtivEnt = String(dadosEntregas[i][2]).trim();
-            let statusEnt = String(dadosEntregas[i][4]).trim();
-            
-            if (statusEnt === "Avaliado" || statusEnt === "Concluída") {
-              entregasFeitas.add(matriculaEnt + "_" + idAtivEnt);
-            }
-          }
-
-          // 4. Varredura dos Links do Classroom nas Atividades
-          const dadosAtiv = abaAtividades.getDataRange().getValues();
-          let entregasNovas = 0;
-          const cacheUsuarios = {}; // Evita chamar a API do Google repetidamente
-
-          for (let i = 1; i < dadosAtiv.length; i++) {
-            let idAtiv = String(dadosAtiv[i][0]).trim();
-            let xpAtiv = Number(dadosAtiv[i][4]) || 0;
-            let link = String(dadosAtiv[i][12]).trim(); // Coluna M (Link Classroom)
-
-            // Se for um link de atividade válido
-            if (link.includes("classroom.google.com/c/")) {
-              const match = link.match(/\/c\/([^\/]+)\/a\/([^\/]+)/i);
-              if (match && match[1] && match[2]) {
-                let courseId = match[1];
-                let courseWorkId = match[2];
-
-                try {
-                  // Consulta o Google Classroom
-                  let submissions = Classroom.Courses.CourseWork.StudentSubmissions.list(courseId, courseWorkId).studentSubmissions || [];
-                  
-                  for (let sub of submissions) {
-                    // Se estiver Entregue ou Devolvido pelo professor
-                    if (sub.state === "TURNED_IN" || sub.state === "RETURNED") {
-                      let userId = sub.userId;
-                      let emailAluno = "";
-                      
-                      // Resolve o e-mail do aluno via API
-                      if (cacheUsuarios[userId]) {
-                        emailAluno = cacheUsuarios[userId];
-                      } else {
-                        try {
-                          let profile = Classroom.UserProfiles.get(userId);
-                          emailAluno = (profile.emailAddress || "").toLowerCase();
-                        } catch(e) {}
-                        
-                        if (!emailAluno) {
-                          try {
-                            const files = DriveApp.searchFiles(`'${userId}' in owners`);
-                            if (files.hasNext()) emailAluno = (files.next().getOwner().getEmail() || "").toLowerCase();
-                          } catch(e) {}
-                        }
-                        cacheUsuarios[userId] = emailAluno;
-                      }
-
-                      // Se achou o aluno no nosso BD do Trilha Tech
-                      if (emailAluno && mapaAlunos[emailAluno]) {
-                        let alunoDb = mapaAlunos[emailAluno];
-                        let chaveEntrega = alunoDb.matricula + "_" + idAtiv;
-
-                        // Se o aluno AINDA NÃO foi avaliado nesta missão no nosso portal
-                        if (!entregasFeitas.has(chaveEntrega)) {
-                          let timestampAtual = new Date().getTime();
-                          let idUnico = "SYNC-" + timestampAtual + "-" + Math.floor(Math.random() * 1000);
-                          
-                          // 1. Regista a entrega na aba "entregas"
-                          abaEntregas.appendRow([
-                            idUnico, 
-                            alunoDb.matricula, 
-                            idAtiv, 
-                            "Entrega validada pelo AVA.", 
-                            "Avaliado", 
-                            xpAtiv, 
-                            timestampAtual, 
-                            "Sincronizado via Google Classroom"
-                          ]);
-                          
-                          // 2. Injeta o XP direto na aba "trilhatech"
-                          alunoDb.xpAtual += xpAtiv;
-                          abaTrilha.getRange(alunoDb.linhaTrilha, 5).setValue(alunoDb.xpAtual);
-                          
-                          entregasFeitas.add(chaveEntrega);
-                          entregasNovas++;
-                        }
-                      }
-                    }
-                  }
-                } catch(e) {
-                  Logger.log(`Aviso ao ler Classroom na ativ ${idAtiv}. Turma arquivada ou sem permissão.`);
+            // 1. Mapear Status dos Módulos (Cruzando Nome + Turma para ser exato)
+            const dadosModulos = abaModulos.getDataRange().getValues();
+            const mapaModulos = {};
+            for (let i = 1; i < dadosModulos.length; i++) {
+                let nomeMod = String(dadosModulos[i][0]).trim().toLowerCase(); // Coluna A
+                let statusMod = String(dadosModulos[i][1]).trim().toLowerCase(); // Coluna B
+                let turmaMod = String(dadosModulos[i][2]).trim().toLowerCase();  // Coluna C
+                if (nomeMod) {
+                    // Guarda cruzando Nome do Módulo + Turma Alvo
+                    mapaModulos[nomeMod + "_" + turmaMod] = statusMod;
+                    // Guarda também só pelo nome como plano B
+                    mapaModulos[nomeMod] = statusMod; 
                 }
-              }
             }
-          }
 
-          return ContentService.createTextOutput(JSON.stringify({ 
-            status: "sucesso", 
-            mensagem: `Sincronização concluída! ${entregasNovas} novas entregas validadas e pontuadas automaticamente.`
-          })).setMimeType(ContentService.MimeType.JSON);
+            // 2. Mapear Alunos
+            const dadosBase = abaBase.getDataRange().getValues();
+            const mapaMatricula = {}; 
+            for (let i = 1; i < dadosBase.length; i++) {
+                let nome = String(dadosBase[i][0]);
+                let matricula = String(dadosBase[i][2]).trim();
+                let email = String(dadosBase[i][3]).toLowerCase().trim();
+                if (matricula) mapaMatricula[matricula] = { nomeNorm: normalizar(nome), email: email };
+            }
+
+            const dadosTrilha = abaTrilha.getDataRange().getValues();
+            const mapaBuscaAluno = {}; 
+            for (let i = 1; i < dadosTrilha.length; i++) {
+                let matricula = String(dadosTrilha[i][0]).trim();
+                let status = String(dadosTrilha[i][2]).trim().toLowerCase();
+
+                if (matricula && (status === "ativo" || status === "reserva")) {
+                    let info = mapaMatricula[matricula];
+                    if (info) {
+                        let objTrilha = { matricula: matricula, linhaTrilha: i + 1, xpAtual: Number(dadosTrilha[i][4]) || 0 };
+                        if (info.email) mapaBuscaAluno[info.email] = objTrilha;
+                        if (info.nomeNorm) mapaBuscaAluno[info.nomeNorm] = objTrilha;
+                    }
+                }
+            }
+
+            logProgresso(15, "Lendo histórico de entregas...");
+            const dadosEntregas = abaEntregas.getDataRange().getValues();
+            const entregasFeitas = new Set();
+            for (let i = 1; i < dadosEntregas.length; i++) {
+                let matriculaEnt = String(dadosEntregas[i][1]).trim();
+                let idAtivEnt = String(dadosEntregas[i][2]).trim();
+                let statusEnt = String(dadosEntregas[i][4]).trim();
+                if (statusEnt === "Avaliado" || statusEnt === "Concluída") entregasFeitas.add(matriculaEnt + "_" + idAtivEnt);
+            }
+
+            function decodificarId(idUrl) {
+                try {
+                    let decodificado = Utilities.newBlob(Utilities.base64Decode(idUrl)).getDataAsString();
+                    if (/^\d+$/.test(decodificado)) return decodificado;
+                } catch(e) {}
+                return idUrl; 
+            }
+
+            const cacheUser = {};
+            function resolverUsuario(userId, courseId) {
+                if (cacheUser[userId]) return cacheUser[userId];
+                let nome = "", email = "";
+                try {
+                    const alunosTurma = Classroom.Courses.Students.list(courseId).students || [];
+                    const alunoEncontrado = alunosTurma.find(a => a.userId === userId);
+                    if (alunoEncontrado && alunoEncontrado.profile) {
+                        if (alunoEncontrado.profile.emailAddress) email = alunoEncontrado.profile.emailAddress.toLowerCase().trim();
+                        if (alunoEncontrado.profile.name && alunoEncontrado.profile.name.fullName) nome = alunoEncontrado.profile.name.fullName;
+                    }
+                } catch(e) {}
+                if (!email) {
+                    try {
+                        const prof = Classroom.UserProfiles.get(userId);
+                        if (prof && prof.emailAddress) email = prof.emailAddress.toLowerCase().trim();
+                        if (prof && prof.name && prof.name.fullName) nome = prof.name.fullName;
+                    } catch(e) {}
+                }
+                if (!email) {
+                    try {
+                        const files = DriveApp.searchFiles(`'${userId}' in owners`);
+                        if (files.hasNext()) email = (files.next().getOwner().getEmail() || "").toLowerCase().trim();
+                    } catch(e) {}
+                }
+                const final = { nomeNorm: normalizar(nome), email: email, id: userId };
+                cacheUser[userId] = final;
+                return final;
+            }
+
+            const dadosAtiv = abaAtividades.getDataRange().getValues();
+            let entregasNovas = 0;
+            let logsErro = []; 
+
+            for (let i = 1; i < dadosAtiv.length; i++) {
+                let idAtiv = String(dadosAtiv[i][0]).trim();
+                let dataLimiteBruta = dadosAtiv[i][3];
+                let xpAtiv = Number(dadosAtiv[i][4]) || 0;
+                let turmaAlvoAtiv = String(dadosAtiv[i][5]).trim().toLowerCase(); // Coluna F
+                let link = String(dadosAtiv[i][12]).trim(); // Coluna M
+                let nomeModuloAtiv = String(dadosAtiv[i][15]).trim().toLowerCase(); // Coluna P
+
+                // 🔥 BUSCA O STATUS DO MÓDULO NA NOVA PLANILHA
+                let chaveBusca = nomeModuloAtiv + "_" + turmaAlvoAtiv;
+                let statusModulo = mapaModulos[chaveBusca] || mapaModulos[nomeModuloAtiv] || "aberto";
+
+                let porcentagem = 20 + Math.floor((i / dadosAtiv.length) * 75);
+                logProgresso(porcentagem, `Verificando Missão ${idAtiv} (Módulo: ${statusModulo.toUpperCase()})...`);
+
+                // REGRA 1: Se o Módulo for "Em breve", pula a verificação!
+                if (statusModulo === "em breve") {
+                    continue; 
+                }
+
+                let dataLimObj = null;
+                if (dataLimiteBruta instanceof Date) {
+                    dataLimObj = new Date(dataLimiteBruta.getFullYear(), dataLimiteBruta.getMonth(), dataLimiteBruta.getDate());
+                } else if (typeof dataLimiteBruta === "string") {
+                    let strDate = dataLimiteBruta.trim();
+                    if (strDate.includes("-")) {
+                        let p = strDate.split("-");
+                        if (p.length === 3) dataLimObj = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+                    } else if (strDate.includes("/")) {
+                        let p = strDate.split("/");
+                        if (p.length === 3) dataLimObj = new Date(Number(p[2]), Number(p[1])-1, Number(p[0]));
+                    }
+                }
+                if (dataLimObj) dataLimObj.setHours(0,0,0,0);
+
+                if (link.includes("classroom.google.com/c/")) {
+                    const match = link.match(/\/c\/([^\/\?]+)\/a\/([^\/\?]+)/i);
+                    if (match && match[1] && match[2]) {
+
+                        let courseId = decodificarId(match[1]);
+                        let courseWorkId = decodificarId(match[2]);
+
+                        try {
+                            let pageToken = null;
+                            do {
+                                let response = Classroom.Courses.CourseWork.StudentSubmissions.list(courseId, courseWorkId, { pageToken: pageToken });
+                                let submissions = response.studentSubmissions || [];
+
+                                for (let sub of submissions) {
+                                    if (sub.state === "TURNED_IN" || sub.state === "RETURNED") {
+
+                                        let usr = resolverUsuario(sub.userId, courseId);
+                                        let alunoDb = mapaBuscaAluno[usr.email] || mapaBuscaAluno[usr.nomeNorm];
+
+                                        if (alunoDb) {
+                                            let chaveEntrega = alunoDb.matricula + "_" + idAtiv;
+
+                                            if (!entregasFeitas.has(chaveEntrega)) {
+                                                
+                                                let dataEntregaAVA = sub.updateTime ? new Date(sub.updateTime) : new Date();
+                                                let timestampRealDaEntrega = dataEntregaAVA.getTime();
+
+                                                let xpGanhoFinal = xpAtiv;
+                                                let notaAdicional = "";
+
+                                                // REGRA 2: Se o Módulo estiver ENCERRADO, o XP é ZERADO!
+                                                if (statusModulo === "encerrado") {
+                                                    xpGanhoFinal = 0;
+                                                    notaAdicional = " (Módulo Encerrado: 0 XP)";
+                                                } 
+                                                // REGRA 3: Desconto por Atraso
+                                                else {
+                                                    let atrasoDias = 0;
+                                                    if (dataLimObj) {
+                                                        let dataEnvioZero = new Date(dataEntregaAVA);
+                                                        dataEnvioZero.setHours(0,0,0,0);
+                                                        if (dataEnvioZero > dataLimObj) {
+                                                            let diffTime = Math.abs(dataEnvioZero - dataLimObj);
+                                                            atrasoDias = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                                                        }
+                                                    }
+
+                                                    if (atrasoDias > 0 && xpAtiv > 0) {
+                                                        let teto = Math.floor(xpAtiv / 2);
+                                                        let desconto = atrasoDias;
+                                                        if (desconto > teto) desconto = teto;
+                                                        xpGanhoFinal = xpAtiv - desconto;
+                                                        notaAdicional = ` (-${desconto}XP por Atraso)`;
+                                                    }
+                                                }
+
+                                                let idUnico = "SYNC-" + new Date().getTime() + "-" + Math.floor(Math.random() * 1000);
+
+                                                abaEntregas.appendRow([
+                                                    idUnico,
+                                                    alunoDb.matricula,
+                                                    idAtiv,
+                                                    "Entrega validada pelo AVA.",
+                                                    "Avaliado",
+                                                    xpGanhoFinal,
+                                                    timestampRealDaEntrega, 
+                                                    "Sincronizado via Google Classroom" + notaAdicional
+                                                ]);
+
+                                                alunoDb.xpAtual += xpGanhoFinal;
+                                                abaTrilha.getRange(alunoDb.linhaTrilha, 5).setValue(alunoDb.xpAtual);
+
+                                                entregasFeitas.add(chaveEntrega);
+                                                entregasNovas++;
+                                            }
+                                        }
+                                    }
+                                }
+                                pageToken = response.nextPageToken;
+                            } while (pageToken);
+                        } catch(e) {
+                            logsErro.push(`Missão [${idAtiv}]: ${e.message}`);
+                        }
+                    }
+                }
+            }
+
+            logProgresso(100, "Concluído! Salvando dados na planilha...");
+
+            let mensagemFinal = "";
+            if (entregasNovas > 0) {
+                mensagemFinal = `Sincronização Perfeita! ${entregasNovas} entregas importadas (Filtros de módulo e atraso aplicados).`;
+            } else {
+                mensagemFinal = `Varredura concluída, mas 0 entregas novas foram validadas.`;
+            }
+
+            if (logsErro.length > 0) {
+                mensagemFinal += `\n\n⚠️ Erros ignorados da API:\n` + logsErro.slice(0, 3).join("\n");
+            }
+
+            cache.remove("SYNC_STATUS");
+
+            return ContentService.createTextOutput(JSON.stringify({
+                status: "sucesso",
+                mensagem: mensagemFinal
+            })).setMimeType(ContentService.MimeType.JSON);
 
         } catch (e) {
-          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Erro no servidor: " + e.message })).setMimeType(ContentService.MimeType.JSON);
+            cache.remove("SYNC_STATUS");
+            return ContentService.createTextOutput(JSON.stringify({
+                status: "erro",
+                mensagem: "Erro crítico no servidor: " + e.message
+            })).setMimeType(ContentService.MimeType.JSON);
         } finally {
-          lock.releaseLock();
+            lock.releaseLock();
         }
       }
+
+    // ==========================================
+    // ROTA 43: LER STATUS DA SINCRONIZAÇÃO
+    // ==========================================
+      if (action === "status_sync") {
+          const statusCache = CacheService.getScriptCache().get("SYNC_STATUS");
+          if (statusCache) {
+              return ContentService.createTextOutput(statusCache).setMimeType(ContentService.MimeType.JSON);
+          } else {
+              return ContentService.createTextOutput(JSON.stringify({ progresso: 0, mensagem: "Aguardando inicialização..." })).setMimeType(ContentService.MimeType.JSON);
+          }
+      }
+
 
   } catch (erro) {
     return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: erro.toString() })).setMimeType(ContentService.MimeType.JSON);
@@ -3799,4 +3928,9 @@ function migrarAtividadesInteligente() {
 
   // Avisa que terminou!
   SpreadsheetApp.getUi().alert("✅ Migração Concluída! Foram formatadas e migradas " + alteradas + " atividades com sucesso.");
+}
+
+function autorizarSuperPoderes() {
+  Classroom.Courses.list();
+  DriveApp.getFiles();
 }

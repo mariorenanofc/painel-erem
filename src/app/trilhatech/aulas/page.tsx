@@ -2,7 +2,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import useSWR from "swr";
 import Header from "@/src/components/Header";
 import { useRouter } from "next/navigation";
@@ -104,7 +104,11 @@ export default function GestaoAulasPage() {
   const [carregandoFreq, setCarregandoFreq] = useState(false);
   const [diasComAula, setDiasComAula] = useState<number[]>([]);
   const [alunosDiario, setAlunosDiario] = useState<any[]>([]);
-  const [sincronizando, setSincronizando] = useState(false);
+  const [sincronizandoAVA, setSincronizandoAVA] = useState(false);
+  const [progressoSync, setProgressoSync] = useState({
+    progresso: 0,
+    mensagem: "",
+  });
 
   const [turmaDiario, setTurmaDiario] = useState("");
   const [mesDiario, setMesDiario] = useState(String(new Date().getMonth() + 1));
@@ -440,41 +444,45 @@ export default function GestaoAulasPage() {
     }
   };
 
-  const buscarDiarioClasse = async (
-    turma: string,
-    mes: string,
-    ano: string,
-  ) => {
-    if (!turma) return;
-    setCarregandoFreq(true);
-    try {
-      const data = await apiTutor.buscarDiarioClasse(turma, mes, ano);
-      if (data.status === "sucesso") {
-        setDiasComAula(data.diasComAula);
-        setAlunosDiario(data.alunos);
+  // 🔥 ENVOLVIDO NO USECALLBACK
+  const buscarDiarioClasse = useCallback(
+    async (turma: string, mes: string, ano: string) => {
+      if (!turma) return;
+      setCarregandoFreq(true);
+      try {
+        const data = await apiTutor.buscarDiarioClasse(turma, mes, ano);
+        if (data.status === "sucesso") {
+          setDiasComAula(data.diasComAula);
+          setAlunosDiario(data.alunos);
+        }
+      } catch {
+        toast("Erro.", "error");
+      } finally {
+        setCarregandoFreq(false);
       }
-    } catch {
-      toast("Erro.", "error");
-    } finally {
-      setCarregandoFreq(false);
-    }
-  };
+    },
+    [toast],
+  );
 
-  const buscarFrequenciaHoje = async (turma: string) => {
-    if (!turma) return;
-    setCarregandoFreqHoje(true);
-    try {
-      const data = await apiTutor.buscarFrequenciaHoje(turma);
-      if (data.status === "sucesso") {
-        setDadosFreqHoje(data.registros);
-        setTotalAulasTurma(data.totalAulas);
+  // 🔥 ENVOLVIDO NO USECALLBACK
+  const buscarFrequenciaHoje = useCallback(
+    async (turma: string) => {
+      if (!turma) return;
+      setCarregandoFreqHoje(true);
+      try {
+        const data = await apiTutor.buscarFrequenciaHoje(turma);
+        if (data.status === "sucesso") {
+          setDadosFreqHoje(data.registros);
+          setTotalAulasTurma(data.totalAulas);
+        }
+      } catch {
+        toast("Erro.", "error");
+      } finally {
+        setCarregandoFreqHoje(false);
       }
-    } catch {
-      toast("Erro.", "error");
-    } finally {
-      setCarregandoFreqHoje(false);
-    }
-  };
+    },
+    [toast],
+  );
 
   const abrirRelatorioFrequencia = () => {
     setModalFreqAberto(true);
@@ -485,14 +493,79 @@ export default function GestaoAulasPage() {
     }
   };
 
+  const iniciarSincronizacaoAVA = async () => {
+    setSincronizandoAVA(true);
+    setProgressoSync({
+      progresso: 5,
+      mensagem: "Iniciando processo no servidor...",
+    });
+
+    // 🔥 AQUI ESTÁ O SEGREDO: A CHAVE MESTRA QUE O BACKEND EXIGE
+    const TOKEN_SEGURANCA = "TrilhaTech_Seguranca_Total_2026";
+
+    // Inicia o Polling (perguntar ao servidor a cada 2.5s)
+    const intervalStatus = setInterval(async () => {
+      try {
+        const res = await fetch(process.env.NEXT_PUBLIC_GOOGLE_API_URL || "", {
+          method: "POST",
+          headers: { "Content-Type": "text/plain" },
+          // Enviando o token também no status (por segurança)
+          body: JSON.stringify({
+            action: "status_sync",
+            token: TOKEN_SEGURANCA,
+          }),
+        });
+        const data = await res.json();
+        if (data && data.progresso > 0) {
+          setProgressoSync(data);
+        }
+      } catch (e) {
+        // Ignora erro de rede temporário no polling
+      }
+    }, 2500);
+
+    // Faz a chamada principal que demora 2 minutos
+    try {
+      const res = await fetch(process.env.NEXT_PUBLIC_GOOGLE_API_URL || "", {
+        method: "POST",
+        headers: { "Content-Type": "text/plain" },
+        // 🔥 CORREÇÃO: Enviando o Token na requisição principal!
+        body: JSON.stringify({
+          action: "sincronizar_ava",
+          token: TOKEN_SEGURANCA,
+        }),
+      });
+
+      const data = await res.json();
+
+      clearInterval(intervalStatus); // Para de escutar o progresso
+
+      if (data.status === "sucesso") {
+        toast(data.mensagem, "sync", "Varredura Concluída!");
+        mutate(); // Atualiza os dados na tela
+      } else {
+        toast(data.mensagem, "error", "Falha na Sincronização");
+      }
+    } catch (err) {
+      clearInterval(intervalStatus);
+      toast(
+        "O servidor demorou muito a responder. Verifique os dados.",
+        "error",
+        "Timeout",
+      );
+    } finally {
+      setSincronizandoAVA(false);
+    }
+  };
+
   useEffect(() => {
     if (modalFreqAberto && turmaDiario)
       buscarDiarioClasse(turmaDiario, mesDiario, anoDiario);
-  }, [turmaDiario, mesDiario, anoDiario, modalFreqAberto]);
+  }, [turmaDiario, mesDiario, anoDiario, modalFreqAberto, buscarDiarioClasse]);
 
   useEffect(() => {
     if (modalFreqAberto && turmaDiario) buscarFrequenciaHoje(turmaDiario);
-  }, [turmaDiario, modalFreqAberto]);
+  }, [turmaDiario, modalFreqAberto, buscarFrequenciaHoje]);
 
   const salvarJustificativa = async () => {
     if (!modalJustificativaAberto || !textoJustificativa)
@@ -643,7 +716,7 @@ export default function GestaoAulasPage() {
 
       {/* ================= CORPO INSTITUCIONAL DA PÁGINA ================= */}
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm mb-6 transition-colors duration-300">
-        <div className="max-w-[1536px] w-full mx-auto px-4 lg:px-8 py-3">
+        <div className="max-w-384 w-full mx-auto px-4 lg:px-8 py-3">
           <Header
             carregando={isLoading}
             nomeUsuario={nomeUsuario}
@@ -676,26 +749,10 @@ export default function GestaoAulasPage() {
               </button>
 
               <button
-                onClick={async () => {
-                  setSincronizando(true);
-                  try {
-                    const res = await (apiTutor as any).sincronizarAVA();
-                    if (res.status === "sucesso") {
-                      toast(res.mensagem, "success");
-                      mutate(); // Atualiza a tela com os novos dados
-                    } else {
-                      toast(res.mensagem, "error");
-                    }
-                  } catch (e) {
-                    toast("Erro de conexão ao sincronizar.", "error");
-                  } finally {
-                    setSincronizando(false);
-                  }
-                }}
-                disabled={sincronizando}
-                className="cursor-pointer px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-black shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-2 disabled:opacity-50 border border-blue-700"
+                onClick={iniciarSincronizacaoAVA}
+                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-lg shadow-sm flex items-center gap-2 transition-colors cursor-pointer"
               >
-                {sincronizando ? "⏳ Sincronizando..." : "🔄 Sincronizar AVA"}
+                <span>🔄</span> Sincronizar AVA
               </button>
               <button
                 onClick={() => {
@@ -730,7 +787,7 @@ export default function GestaoAulasPage() {
         </div>
       </div>
 
-      <div className="max-w-[1536px] w-full mx-auto px-4 lg:px-8">
+      <div className="max-w-384 w-full mx-auto px-4 lg:px-8">
         {/* BARRA DE LINKS EXTERNOS COMPACTA */}
         <div className="flex flex-wrap gap-2 mb-6">
           <a
@@ -871,6 +928,39 @@ export default function GestaoAulasPage() {
               onClose={() => setModalFechamentoAberto(false)}
               turmasDisponiveis={turmasDisponiveis}
             />
+          )}
+
+          {sincronizandoAVA && (
+            <div className="fixed inset-0 z-9999 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in">
+              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 max-w-md w-full text-center border-4 border-indigo-500">
+                <div className="text-6xl mb-4 animate-spin-slow">⚙️</div>
+                <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">
+                  Sincronizando Classroom
+                </h3>
+                <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mb-6 h-10 flex items-center justify-center">
+                  {progressoSync.mensagem || "Conectando ao banco de dados..."}
+                </p>
+
+                {/* BARRA DE PROGRESSO */}
+                <div className="w-full h-4 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner mb-3">
+                  <div
+                    className="h-full bg-indigo-500 transition-all duration-700 ease-out relative"
+                    style={{ width: `${progressoSync.progresso}%` }}
+                  >
+                    <div className="absolute top-0 left-0 w-full h-full bg-white/20 animate-pulse"></div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center px-1">
+                  <p className="text-xs text-slate-500 font-bold">
+                    {progressoSync.progresso}%
+                  </p>
+                  <p className="text-[10px] text-slate-400">
+                    Pode levar até 2 minutos
+                  </p>
+                </div>
+              </div>
+            </div>
           )}
 
           {/* ÁREA PRINCIPAL: CENTRAL DE MISSÕES */}

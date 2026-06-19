@@ -7,7 +7,7 @@ import useSWR from "swr";
 import Header from "@/src/components/Header";
 import { useRouter } from "next/navigation";
 import { apiTutor, apiGeral } from "@/src/services/api";
-import { useToast } from "@/src/contexts/ToastContext"; // <-- O NOVO CONTEXTO IMPORTADO AQUI
+import { useToast } from "@/src/contexts/ToastContext";
 
 import {
   Atividade,
@@ -29,7 +29,7 @@ const fetcherAtividades = async () => {
 };
 
 export default function GestaoAulasPage() {
-  const { toast } = useToast(); // <-- O HOOK DO TOAST INICIADO AQUI
+  const { toast } = useToast();
   const router = useRouter();
   const [nomeUsuario] = useState(() =>
     typeof window !== "undefined"
@@ -56,11 +56,14 @@ export default function GestaoAulasPage() {
   const [carregandoReposicao, setCarregandoReposicao] = useState(false);
   const [senhaLousa, setSenhaLousa] = useState("");
   const [salvandoSenha, setSalvandoSenha] = useState(false);
-  const [modalFechamentoAberto, setModalFechamentoAberto] = useState(false);
 
+  // Estados dos Modais
+  const [modalFechamentoAberto, setModalFechamentoAberto] = useState(false);
   const [modalNovaMissaoAberto, setModalNovaMissaoAberto] = useState(false);
   const [modalImportadorAberto, setModalImportadorAberto] = useState(false);
+  const [modalSyncAberto, setModalSyncAberto] = useState(false);
 
+  // Estados do Formulário de Missão
   const [idEditando, setIdEditando] = useState<string | null>(null);
   const [titulo, setTitulo] = useState("");
   const [descricao, setDescricao] = useState("");
@@ -81,6 +84,7 @@ export default function GestaoAulasPage() {
   const [gabaritoLiberado, setGabaritoLiberado] = useState(false);
   const [salvando, setSalvando] = useState(false);
 
+  // Estados de Entregas e Ranking
   const [missaoAberta, setMissaoAberta] = useState<Atividade | null>(null);
   const [entregas, setEntregas] = useState<Entrega[]>([]);
   const [carregandoEntregas, setCarregandoEntregas] = useState(false);
@@ -98,13 +102,18 @@ export default function GestaoAulasPage() {
     { nome: string; turma: string }[]
   >([]);
 
+  // Estados do Diário/Frequência
   const [modalFreqAberto, setModalFreqAberto] = useState(false);
   const [modalGodModeAberto, setModalGodModeAberto] = useState(false);
   const [abaDiario, setAbaDiario] = useState<"mensal" | "hoje">("mensal");
   const [carregandoFreq, setCarregandoFreq] = useState(false);
   const [diasComAula, setDiasComAula] = useState<number[]>([]);
   const [alunosDiario, setAlunosDiario] = useState<any[]>([]);
+
+  // Estados da Sincronização AVA (Barra de Progresso)
   const [sincronizandoAVA, setSincronizandoAVA] = useState(false);
+  const [filtroSyncTurma, setFiltroSyncTurma] = useState("Todas");
+  const [filtroSyncModulo, setFiltroSyncModulo] = useState("Todos");
   const [progressoSync, setProgressoSync] = useState({
     progresso: 0,
     mensagem: "",
@@ -221,7 +230,6 @@ export default function GestaoAulasPage() {
       setModalImportadorAberto(false);
       mutate();
     } catch (e) {
-      console.error("Erro na importação em lote", e);
       toast("Houve um erro ao tentar importar algumas atividades.", "error");
     } finally {
       setSalvando(false);
@@ -444,7 +452,6 @@ export default function GestaoAulasPage() {
     }
   };
 
-  // 🔥 ENVOLVIDO NO USECALLBACK
   const buscarDiarioClasse = useCallback(
     async (turma: string, mes: string, ano: string) => {
       if (!turma) return;
@@ -464,7 +471,6 @@ export default function GestaoAulasPage() {
     [toast],
   );
 
-  // 🔥 ENVOLVIDO NO USECALLBACK
   const buscarFrequenciaHoje = useCallback(
     async (turma: string) => {
       if (!turma) return;
@@ -493,23 +499,33 @@ export default function GestaoAulasPage() {
     }
   };
 
+  // 🔥 NOVA LÓGICA DE SINCRONIZAÇÃO BLINDADA 🔥
   const iniciarSincronizacaoAVA = async () => {
+    // Tenta pegar a URL do .env. Se não tiver, impede o código de falhar em silêncio
+    const URL_API = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
+
+    if (!URL_API) {
+      toast(
+        "Link da API não configurado! Verifique o seu arquivo .env",
+        "error",
+      );
+      return;
+    }
+
+    setModalSyncAberto(false);
     setSincronizandoAVA(true);
     setProgressoSync({
       progresso: 5,
       mensagem: "Iniciando processo no servidor...",
     });
 
-    // 🔥 AQUI ESTÁ O SEGREDO: A CHAVE MESTRA QUE O BACKEND EXIGE
     const TOKEN_SEGURANCA = "TrilhaTech_Seguranca_Total_2026";
 
-    // Inicia o Polling (perguntar ao servidor a cada 2.5s)
     const intervalStatus = setInterval(async () => {
       try {
-        const res = await fetch(process.env.NEXT_PUBLIC_GOOGLE_API_URL || "", {
+        const res = await fetch(URL_API, {
           method: "POST",
           headers: { "Content-Type": "text/plain" },
-          // Enviando o token também no status (por segurança)
           body: JSON.stringify({
             action: "status_sync",
             token: TOKEN_SEGURANCA,
@@ -524,25 +540,24 @@ export default function GestaoAulasPage() {
       }
     }, 2500);
 
-    // Faz a chamada principal que demora 2 minutos
     try {
-      const res = await fetch(process.env.NEXT_PUBLIC_GOOGLE_API_URL || "", {
+      const res = await fetch(URL_API, {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
-        // 🔥 CORREÇÃO: Enviando o Token na requisição principal!
         body: JSON.stringify({
           action: "sincronizar_ava",
           token: TOKEN_SEGURANCA,
+          filtroTurma: filtroSyncTurma,
+          filtroModulo: filtroSyncModulo,
         }),
       });
 
       const data = await res.json();
-
-      clearInterval(intervalStatus); // Para de escutar o progresso
+      clearInterval(intervalStatus);
 
       if (data.status === "sucesso") {
         toast(data.mensagem, "sync", "Varredura Concluída!");
-        mutate(); // Atualiza os dados na tela
+        mutate();
       } else {
         toast(data.mensagem, "error", "Falha na Sincronização");
       }
@@ -608,7 +623,7 @@ export default function GestaoAulasPage() {
 
   return (
     <main className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-24 transition-colors duration-300">
-      {/* ================= MODAIS ================= */}
+      {/* ================= TODOS OS MODAIS AGRUPADOS NO TOPO DA ÁRVORE (BOA PRÁTICA REACT) ================= */}
       <ImportadorLoteModal
         isOpen={modalImportadorAberto}
         onClose={() => setModalImportadorAberto(false)}
@@ -616,6 +631,7 @@ export default function GestaoAulasPage() {
         turmasDisponiveis={turmasDisponiveis}
         onImportar={executarImportacaoLote}
       />
+
       <RankingTutorModal
         isOpen={modalRankingAberto}
         onClose={() => setModalRankingAberto(false)}
@@ -627,6 +643,7 @@ export default function GestaoAulasPage() {
         onMudarFiltroTempo={carregarRankingTutor}
         onExportarCSV={exportarRankingCSV}
       />
+
       <CorrecaoMissoesModal
         missaoAberta={missaoAberta}
         entregas={entregas}
@@ -636,6 +653,7 @@ export default function GestaoAulasPage() {
         onSetNotasTemp={setNotasTemp}
         onAvaliar={avaliarAluno}
       />
+
       <GestaoFrequenciaModal
         isOpen={modalFreqAberto}
         onClose={() => setModalFreqAberto(false)}
@@ -664,6 +682,7 @@ export default function GestaoAulasPage() {
         setTextoJustificativa={setTextoJustificativa}
         salvarJustificativa={salvarJustificativa}
       />
+
       {modalGodModeAberto && (
         <GodModeModal
           onClose={() => setModalGodModeAberto(false)}
@@ -714,6 +733,117 @@ export default function GestaoAulasPage() {
         />
       )}
 
+      {modalFechamentoAberto && (
+        <FechamentoCicloModal
+          isOpen={modalFechamentoAberto}
+          onClose={() => setModalFechamentoAberto(false)}
+          turmasDisponiveis={turmasDisponiveis}
+        />
+      )}
+
+      {/* 🚀 MODAL 1: FILTRO DE SINCRONIZAÇÃO */}
+      {modalSyncAberto && (
+        <div className="fixed inset-0 z-5000 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 dark:border-slate-800">
+            <div className="text-5xl mb-4 text-center">⚙️</div>
+            <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2 text-center">
+              Filtro de Sincronização
+            </h3>
+            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 text-center leading-relaxed">
+              Otimize a varredura do Classroom. Escolha quais turmas ou módulos
+              deseja validar agora para evitar lentidão.
+            </p>
+
+            <div className="space-y-4 mb-8">
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">
+                  Filtrar por Turma Alvo
+                </label>
+                <select
+                  value={filtroSyncTurma}
+                  onChange={(e) => setFiltroSyncTurma(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg p-2.5 text-sm outline-none focus:border-indigo-500"
+                >
+                  <option value="Todas">👉 Todas as Turmas</option>
+                  {turmasDisponiveis.map((t, idx) => (
+                    <option key={idx} value={t}>
+                      {t}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 dark:text-slate-400 mb-1">
+                  Filtrar por Módulo
+                </label>
+                <select
+                  value={filtroSyncModulo}
+                  onChange={(e) => setFiltroSyncModulo(e.target.value)}
+                  className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg p-2.5 text-sm outline-none focus:border-indigo-500"
+                >
+                  <option value="Todos">👉 Todos os Módulos</option>
+                  {modulosCadastrados.map((m, idx) => (
+                    <option key={idx} value={m}>
+                      {m}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setModalSyncAberto(false)}
+                className="flex-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold py-3 rounded-xl transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={iniciarSincronizacaoAVA}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-xl shadow-md active:scale-95 transition-all cursor-pointer"
+              >
+                Sincronizar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 🚀 MODAL 2: CARREGAMENTO DA SINCRONIZAÇÃO */}
+      {sincronizandoAVA && (
+        <div className="fixed inset-0 z-9999 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 max-w-md w-full text-center border-4 border-indigo-500">
+            <div className="text-6xl mb-4 animate-spin-slow">⚙️</div>
+            <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">
+              Sincronizando Classroom
+            </h3>
+            <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mb-6 h-10 flex items-center justify-center">
+              {progressoSync.mensagem || "Conectando ao banco de dados..."}
+            </p>
+
+            {/* BARRA DE PROGRESSO */}
+            <div className="w-full h-4 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner mb-3">
+              <div
+                className="h-full bg-indigo-500 transition-all duration-700 ease-out relative"
+                style={{ width: `${progressoSync.progresso}%` }}
+              >
+                <div className="absolute top-0 left-0 w-full h-full bg-white/20 animate-pulse"></div>
+              </div>
+            </div>
+
+            <div className="flex justify-between items-center px-1">
+              <p className="text-xs text-slate-500 font-bold">
+                {progressoSync.progresso}%
+              </p>
+              <p className="text-[10px] text-slate-400">
+                Pode levar até 2 minutos
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ================= CORPO INSTITUCIONAL DA PÁGINA ================= */}
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm mb-6 transition-colors duration-300">
         <div className="max-w-384 w-full mx-auto px-4 lg:px-8 py-3">
@@ -749,11 +879,12 @@ export default function GestaoAulasPage() {
               </button>
 
               <button
-                onClick={iniciarSincronizacaoAVA}
+                onClick={() => setModalSyncAberto(true)}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-lg shadow-sm flex items-center gap-2 transition-colors cursor-pointer"
               >
                 <span>🔄</span> Sincronizar AVA
               </button>
+
               <button
                 onClick={() => {
                   setModalRankingAberto(true);
@@ -921,47 +1052,6 @@ export default function GestaoAulasPage() {
               </div>
             </div>
           </div>
-
-          {modalFechamentoAberto && (
-            <FechamentoCicloModal
-              isOpen={modalFechamentoAberto}
-              onClose={() => setModalFechamentoAberto(false)}
-              turmasDisponiveis={turmasDisponiveis}
-            />
-          )}
-
-          {sincronizandoAVA && (
-            <div className="fixed inset-0 z-9999 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in">
-              <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 max-w-md w-full text-center border-4 border-indigo-500">
-                <div className="text-6xl mb-4 animate-spin-slow">⚙️</div>
-                <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">
-                  Sincronizando Classroom
-                </h3>
-                <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mb-6 h-10 flex items-center justify-center">
-                  {progressoSync.mensagem || "Conectando ao banco de dados..."}
-                </p>
-
-                {/* BARRA DE PROGRESSO */}
-                <div className="w-full h-4 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner mb-3">
-                  <div
-                    className="h-full bg-indigo-500 transition-all duration-700 ease-out relative"
-                    style={{ width: `${progressoSync.progresso}%` }}
-                  >
-                    <div className="absolute top-0 left-0 w-full h-full bg-white/20 animate-pulse"></div>
-                  </div>
-                </div>
-
-                <div className="flex justify-between items-center px-1">
-                  <p className="text-xs text-slate-500 font-bold">
-                    {progressoSync.progresso}%
-                  </p>
-                  <p className="text-[10px] text-slate-400">
-                    Pode levar até 2 minutos
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
 
           {/* ÁREA PRINCIPAL: CENTRAL DE MISSÕES */}
           <div className="xl:col-span-3">

@@ -25,6 +25,7 @@ export interface DadosAluno {
   matricula: string;
   nome: string;
   turma: string;
+  saldoCarteira: number;
 }
 
 export interface Atividade {

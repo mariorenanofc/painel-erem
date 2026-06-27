@@ -143,6 +143,19 @@ export const apiAluno = {
       quantidade,
       motivo,
     }),
+
+  comprarRifa: (matricula: string, pacote: string) =>
+    fetchApi({
+      action: "comprar_rifa",
+      matricula,
+      pacote,
+    }),
+
+    buscarMeusBilhetes: (matricula: string) =>
+    fetchApi({
+      action: "buscar_bilhetes_aluno",
+      matricula,
+    }),
 };
 
 // ==========================================
@@ -285,4 +298,12 @@ export const apiTutor = {
   // 🔥 NOVA ROTA DE CONFIGURAÇÕES INTEGRADAS
   salvarConfiguracoes: (configs: Record<string, any>) =>
     fetchApi({ action: "salvar_configuracoes", configs, token: TUTOR_TOKEN }),
+
+  // Economia e Rifa
+  sortearRifa: (turma: string, tokenSeguranca: string) =>
+    fetchApi({
+      action: "sortear_rifa",
+      turma,
+      token: tokenSeguranca,
+    }),
 };

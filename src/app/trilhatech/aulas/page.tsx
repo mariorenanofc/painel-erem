@@ -23,6 +23,7 @@ import GodModeModal from "@/src/components/GodModeModal";
 import FormularioMissaoModal from "@/src/components/FormularioMissaoModal";
 import ImportadorLoteModal from "@/src/components/ImportadorLoteModal";
 import FechamentoCicloModal from "@/src/components/FechamentoCicloModal";
+import RoletaSorteioModal from "@/src/components/RoletaSorteioModal";
 
 const fetcherAtividades = async () => {
   return await apiTutor.buscarTodasAtividades("Todas", "Todos");
@@ -97,6 +98,7 @@ export default function GestaoAulasPage() {
     "geral" | "mensal" | "semanal"
   >("geral");
   const [filtroTurmaRanking, setFiltroTurmaRanking] = useState<string>("Todas");
+  const [modalSorteioAberto, setModalSorteioAberto] = useState(false);
 
   const [aniversariantes, setAniversariantes] = useState<
     { nome: string; turma: string }[]
@@ -844,6 +846,12 @@ export default function GestaoAulasPage() {
         </div>
       )}
 
+      <RoletaSorteioModal
+        isOpen={modalSorteioAberto}
+        onClose={() => setModalSorteioAberto(false)}
+        turmasDisponiveis={turmasDisponiveis}
+      />
+
       {/* ================= CORPO INSTITUCIONAL DA PÁGINA ================= */}
       <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm mb-6 transition-colors duration-300">
         <div className="max-w-384 w-full mx-auto px-4 lg:px-8 py-3">
@@ -883,6 +891,13 @@ export default function GestaoAulasPage() {
                 className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-lg shadow-sm flex items-center gap-2 transition-colors cursor-pointer"
               >
                 <span>🔄</span> Sincronizar AVA
+              </button>
+
+              <button
+                onClick={() => setModalSorteioAberto(true)}
+                className="cursor-pointer px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg text-sm font-black shadow-md hover:shadow-lg transition-all flex items-center gap-2 border-none uppercase tracking-wide"
+              >
+                🎰 Sortear Rifa
               </button>
 
               <button

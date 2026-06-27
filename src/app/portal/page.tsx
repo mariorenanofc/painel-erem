@@ -28,6 +28,8 @@ import PerfilModal from "@/src/components/PerfilModal";
 import NovaConquistaModal from "@/src/components/NovaConquistaModal";
 import NovidadesModal from "@/src/components/NovidadesModal";
 import ResponderMissaoModal from "@/src/components/ResponderMissaoModal";
+import LojaRifaModal from "@/src/components/LojaRifaModal";
+import MeusBilhetesModal from "@/src/components/MeusBilhetesModal";
 import { apiAluno, apiGeral } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
 
@@ -90,6 +92,9 @@ export default function PortalDashboard() {
   const [badgesResgatadas, setBadgesResgatadas] = useState<string[]>([]);
   const [novasConquistas, setNovasConquistas] = useState<Badge[]>([]);
   const [resgatandoBadge, setResgatandoBadge] = useState(false);
+  const [lojaAberta, setLojaAberta] = useState(false);
+  const [saldoCarteira, setSaldoCarteira] = useState(0); // 🔥 Novo estado
+  const [modalBilhetesAberto, setModalBilhetesAberto] = useState(false);
 
   const [abaAtividade, setAbaAtividade] = useState<
     "Pendentes" | "Atrasadas" | "Concluidas"
@@ -125,7 +130,7 @@ export default function PortalDashboard() {
   const [alvoPix, setAlvoPix] = useState<string | null>(null);
   const [rankingAberto, setRankingAberto] = useState(false);
 
-  const VERSAO_ATUALIZACAO = "1.8.1";
+  const VERSAO_ATUALIZACAO = "1.9.0";
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
   // ================= EFEITOS =================
@@ -166,6 +171,8 @@ export default function PortalDashboard() {
         if (data.stats) setEstatisticas(data.stats);
         if (data.aniversario.isAniversario && !data.aniversario.jaResgatado)
           setModalPresenteAberto(true);
+        // 🔥 ATUALIZE O SALDO AQUI
+        setSaldoCarteira(data.saldoCarteira || 0);
       }
     } catch (e) {
       console.error("Erro ao carregar o portal.");
@@ -679,6 +686,24 @@ export default function PortalDashboard() {
         />
       )}
 
+      {aluno && (
+        <LojaRifaModal
+          isOpen={lojaAberta}
+          onClose={() => setLojaAberta(false)}
+          matricula={aluno.matricula}
+          saldoCarteira={saldoCarteira}
+          onCompraSucesso={carregarPortal} // 🔥 CHAMA A SUA FUNÇÃO LOCAL
+        />
+      )}
+
+      {aluno && (
+        <MeusBilhetesModal
+          isOpen={modalBilhetesAberto}
+          onClose={() => setModalBilhetesAberto(false)}
+          matricula={aluno.matricula}
+        />
+      )}
+
       <div className="relative z-10">
         <PortalHeader
           matricula={aluno.matricula}
@@ -750,64 +775,69 @@ export default function PortalDashboard() {
               )}
             </p>
 
-            <div className="mt-6 flex flex-wrap justify-center lg:justify-start gap-3 w-full">
-              <a
-                href="https://classroom.google.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 whitespace-nowrap"
-              >
-                <span className="text-lg">🏫</span>{" "}
-                <span className="text-sm">Classroom</span>
-              </a>
-              <button
-                onClick={() => {
-                  setModalPixAberto(true);
-                  setAlvoPix(null);
-                }}
-                className="cursor-pointer inline-flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 dark:bg-emerald-600 dark:hover:bg-emerald-500 text-white font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-emerald-400 dark:border-emerald-500 whitespace-nowrap"
-              >
-                <span className="text-lg">💸</span>{" "}
-                <span className="text-sm">Pix de XP</span>
-              </button>
-              <button
-                onClick={() => setModalSenhaAberto(true)}
-                disabled={checkinRealizado}
-                className={`cursor-pointer inline-flex items-center justify-center gap-2 font-bold py-3 px-5 rounded-xl shadow-sm transition-all whitespace-nowrap ${checkinRealizado ? "bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed border border-slate-200 dark:border-slate-700" : taxaPresenca >= 90 ? "bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white border-none animate-pulse shadow-orange-200 dark:shadow-none" : "bg-blue-600 hover:bg-blue-700 text-white hover:-translate-y-0.5"}`}
-              >
-                {checkinRealizado ? (
-                  <>
-                    <span className="text-lg">✅</span>
-                    <span className="text-sm">Presença Confirmada</span>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-lg">
-                      {taxaPresenca >= 90
-                        ? "🔥"
-                        : taxaPresenca >= 75
-                          ? "⚡"
-                          : "📍"}
-                    </span>
-                    <span className="text-sm">
-                      Fazer Check-in (+
-                      {taxaPresenca >= 90
-                        ? 15
-                        : taxaPresenca >= 75
-                          ? 12
-                          : 10}{" "}
-                      XP)
-                    </span>
-                  </>
-                )}
-              </button>
-              <button
-                onClick={() => router.push("/portal/gabaritos")}
-                className="cursor-pointer inline-flex items-center justify-center gap-2 bg-indigo-100 dark:bg-indigo-900/50 hover:bg-indigo-200 dark:hover:bg-indigo-800/60 text-indigo-800 dark:text-indigo-300 font-bold py-3 px-5 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 border border-indigo-300 dark:border-indigo-700/50 whitespace-nowrap"
-              >
-                <span className="text-lg">🗝️</span>{" "}
-                <span className="text-sm">Gabaritos e Códigos</span>
-              </button>
+            {/* Container Principal dos Botões - Grid organizado */}
+            <div className="mt-6 flex flex-col gap-3 w-full">
+              {/* Linha 1: Ações Principais (Grid 2x2 no mobile, 4x1 no desktop) */}
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                <a
+                  href="https://classroom.google.com/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-900 dark:bg-slate-800 dark:hover:bg-slate-700 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 active:scale-95"
+                >
+                  <span className="text-lg">🏫</span>{" "}
+                  <span className="text-sm">Classroom</span>
+                </a>
+
+                <button
+                  onClick={() => {
+                    setModalPixAberto(true);
+                    setAlvoPix(null);
+                  }}
+                  className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-4 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 border border-emerald-400"
+                >
+                  <span className="text-lg">💸</span>{" "}
+                  <span className="text-sm">Pix de XP</span>
+                </button>
+
+                <button
+                  onClick={() => setModalSenhaAberto(true)}
+                  disabled={checkinRealizado}
+                  className={`flex items-center justify-center gap-2 font-bold py-3 px-4 rounded-xl shadow-sm transition-all active:scale-95 ${checkinRealizado ? "bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed" : taxaPresenca >= 90 ? "bg-gradient-to-r from-orange-500 to-amber-500 text-white animate-pulse" : "bg-blue-600 hover:bg-blue-700 text-white"}`}
+                >
+                  <span className="text-lg">
+                    {checkinRealizado ? "✅" : "🔥"}
+                  </span>
+                  <span className="text-sm">
+                    {checkinRealizado ? "Check-in feito" : "Check-in"}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => router.push("/portal/gabaritos")}
+                  className="flex items-center justify-center gap-2 bg-indigo-100 dark:bg-indigo-900/50 hover:bg-indigo-200 text-indigo-800 dark:text-indigo-300 font-bold py-3 px-4 rounded-xl shadow-sm transition-all hover:-translate-y-0.5 active:scale-95 border border-indigo-200"
+                >
+                  <span className="text-lg">🗝️</span>{" "}
+                  <span className="text-sm">Gabaritos</span>
+                </button>
+              </div>
+
+              {/* Linha 2: Ações da Rifa (Grid 2x1) */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <button
+                  onClick={() => setModalBilhetesAberto(true)}
+                  className="flex items-center justify-center gap-2 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold py-3 rounded-xl transition-all active:scale-95"
+                >
+                  <span>🎟️</span> Meus Bilhetes
+                </button>
+
+                <button
+                  onClick={() => setLojaAberta(true)}
+                  className="flex items-center justify-center gap-2 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white font-black uppercase text-sm py-3 rounded-xl shadow-lg transition-all active:scale-95"
+                >
+                  <span>🛒</span> Comprar Bilhetes
+                </button>
+              </div>
             </div>
           </div>
 

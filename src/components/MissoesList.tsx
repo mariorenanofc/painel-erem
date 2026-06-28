@@ -155,7 +155,7 @@ export default function MissoesList({
                 className="cursor-pointer w-full py-1.5 px-3 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg text-sm text-slate-600 dark:text-slate-400 transition-colors"
               >
                 <option value="Todos">Todos os Tipos</option>
-                <option value="Projeto">Projeto Prático</option>
+                <option value="Projeto">Mini projeto</option>
                 <option value="Quiz">Quiz Interativo</option>
                 <option value="Material">Material de Apoio</option>
               </select>

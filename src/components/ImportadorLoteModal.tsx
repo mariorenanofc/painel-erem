@@ -97,7 +97,7 @@ export default function ImportadorLoteModal({
         } else if (nomeLower.includes("projeto")) {
           tipoPortal = "Projeto";
           xp = TABELA_XP_PADRAO.Projeto;
-          nomeFormatado = "Projeto Prático";
+          nomeFormatado = "Mini projeto";
         } else {
           tipoPortal = "Material";
           xp = TABELA_XP_PADRAO.Material;

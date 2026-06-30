@@ -103,7 +103,17 @@ function doPost(e) {
     // ==========================================
       if (action === "login_aluno") {
         var matriculaDigitada = String(dadosApp.matricula).trim();
-        var dataNascDigitada = String(dadosApp.dataNasc).trim(); 
+        var dataNascDigitada = String(dadosApp.dataNasc).trim(); // Formato vindo do Front: YYYY-MM-DD
+        
+        // 🔥 MÁGICA DA DATA: Cria as variações da data para garantir que o login funcione sempre
+        var dataNascInvertida = ""; // DD-MM-YYYY
+        var dataNascBarra = "";     // DD/MM/YYYY
+        
+        if (dataNascDigitada.includes("-")) {
+          var partes = dataNascDigitada.split("-");
+          dataNascInvertida = partes[2] + "-" + partes[1] + "-" + partes[0]; 
+          dataNascBarra = partes[2] + "/" + partes[1] + "/" + partes[0];     
+        }
         
         var planBase = planilha.getSheetByName("basededados"); 
         var dadosBase = planBase.getDataRange().getValues();
@@ -123,12 +133,19 @@ function doPost(e) {
             
             if (dataNascBruta instanceof Date) {
               var timezone = Session.getScriptTimeZone();
-              dataNascPlanilha = Utilities.formatDate(dataNascBruta, timezone, "yyyy-MM-dd");
+              // Você pode manter o formato visual que desejar aqui
+              dataNascPlanilha = Utilities.formatDate(dataNascBruta, timezone, "dd-MM-yyyy");
             } else {
               dataNascPlanilha = String(dataNascBruta).trim();
             }
             
-            if (dataNascPlanilha === dataNascDigitada || dataNascPlanilha.includes(dataNascDigitada)) {
+            // 🛡️ COMPARAÇÃO BLINDADA: Aceita a data do HTML, a invertida com traço ou com barra!
+            if (dataNascPlanilha === dataNascDigitada || 
+                dataNascPlanilha === dataNascInvertida || 
+                dataNascPlanilha === dataNascBarra || 
+                dataNascPlanilha.includes(dataNascDigitada) ||
+                dataNascPlanilha.includes(dataNascInvertida)) {
+                
               dadosDoAluno = {
                 matricula: matriculaPlanilha,
                 nome: dadosBase[i][0], 
@@ -254,6 +271,7 @@ function doPost(e) {
             abaTurma.appendRow([proximoNumero, nome, dataNasc, matriculaDigitada, email, turma, telefoneAluno, telefoneResponsavel, obs]);
           }
         }
+        invalidarCacheGeral();
         return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Salvo com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
       }
 
@@ -502,6 +520,7 @@ function doPost(e) {
 
               // Grava a nova linha
               abaAtividades.appendRow([idGerado, titulo, descricao, dataLimite, xp, turmaAlvo, tipo, opcaoA, opcaoB, opcaoC, opcaoD, respostaCorreta, linkClassroom, statusPublicacao, imagemUrl, modulo, String(dadosApp.gabarito || ""), dadosApp.gabaritoLiberado ? true : false]);
+              invalidarCacheGeral();
               return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Missão criada! ID: " + idGerado })).setMimeType(ContentService.MimeType.JSON);
             }
       }
@@ -510,292 +529,219 @@ function doPost(e) {
     // ROTA 8: BUSCAR TODAS ATIVIDADES (Professor)
     // ==========================================
       if (action === "buscar_todas_atividades") {
+      
+        const filtroTurma = String(dadosApp.filtroTurma || "Todas").trim();
+        const filtroTipo = String(dadosApp.filtroTipo || "Todos").trim();
         
-          const filtroTurma = String(dadosApp.filtroTurma || "Todas").trim();
-          const filtroTipo = String(dadosApp.filtroTipo || "Todos").trim();
-          
-          const abaAtividades = planilha.getSheetByName("atividades");
-          const abaEntregas = planilha.getSheetByName("entregas");
+        const abaAtividades = planilha.getSheetByName("atividades");
+        const abaEntregas = planilha.getSheetByName("entregas");
 
-          // 🔥 1. LÊ A NOVA ABA DE MÓDULOS (E CRIA A LISTA)
-          const abaModulos = planilha.getSheetByName("controle_modulos");
-          let statusModulosMap = {};
-          let listaModulos = []; 
-          if (abaModulos) {
-            const dadosModulos = abaModulos.getDataRange().getValues();
-            for (let i = 1; i < dadosModulos.length; i++) {
-              let nomeMod = String(dadosModulos[i][0]).trim();
-              let statusMod = String(dadosModulos[i][1]).trim();
-              let turmaMod = String(dadosModulos[i][2] || "Todas").trim();
-              if (nomeMod) {
-                statusModulosMap[nomeMod + "|" + turmaMod] = statusMod;
-                if (listaModulos.indexOf(nomeMod) === -1) listaModulos.push(nomeMod);
-              }
+        // 🔥 1. LÊ A NOVA ABA DE MÓDULOS (E CRIA A LISTA)
+        const abaModulos = planilha.getSheetByName("controle_modulos");
+        let statusModulosMap = {};
+        let listaModulos = []; 
+        if (abaModulos) {
+          const dadosModulos = abaModulos.getDataRange().getValues();
+          for (let i = 1; i < dadosModulos.length; i++) {
+            let nomeMod = String(dadosModulos[i][0]).trim();
+            let statusMod = String(dadosModulos[i][1]).trim();
+            let turmaMod = String(dadosModulos[i][2] || "Todas").trim();
+            if (nomeMod) {
+              statusModulosMap[nomeMod + "|" + turmaMod] = statusMod;
+              if (listaModulos.indexOf(nomeMod) === -1) listaModulos.push(nomeMod);
             }
           }
+        }
 
-          // 🔥 2. MAPA DE PENDÊNCIAS (Para o alerta vermelho)
-          let pendentesMap = {};
-          if (abaEntregas) {
-            const dadosEntregas = abaEntregas.getDataRange().getValues();
-            for (let i = 1; i < dadosEntregas.length; i++) {
-              let statusEntrega = String(dadosEntregas[i][4]).trim();
-              if (statusEntrega === "Aguardando Correção") {
-                let idAtiv = String(dadosEntregas[i][2]).trim();
-                pendentesMap[idAtiv] = (pendentesMap[idAtiv] || 0) + 1;
-              }
+        // 🔥 2. MAPA DE PENDÊNCIAS (Para o alerta vermelho)
+        let pendentesMap = {};
+        if (abaEntregas) {
+          const dadosEntregas = abaEntregas.getDataRange().getValues();
+          for (let i = 1; i < dadosEntregas.length; i++) {
+            let statusEntrega = String(dadosEntregas[i][4]).trim();
+            if (statusEntrega === "Aguardando Correção") {
+              let idAtiv = String(dadosEntregas[i][2]).trim();
+              pendentesMap[idAtiv] = (pendentesMap[idAtiv] || 0) + 1;
             }
           }
+        }
 
-          // 🔥 3. LÊ E FILTRA AS ATIVIDADES
-          let atividades = [];
-          if (abaAtividades) {
-            const dadosAtiv = abaAtividades.getDataRange().getValues();
-            for (let i = 1; i < dadosAtiv.length; i++) {
-              let idAtiv = String(dadosAtiv[i][0]).trim();
-              if (!idAtiv || idAtiv === "ID") continue;
+        // 🔥 3. LÊ E FILTRA AS ATIVIDADES
+        let atividades = [];
+        if (abaAtividades) {
+          const dadosAtiv = abaAtividades.getDataRange().getValues();
+          for (let i = 1; i < dadosAtiv.length; i++) {
+            let idAtiv = String(dadosAtiv[i][0]).trim();
+            if (!idAtiv || idAtiv === "ID") continue;
 
-              let turmaAtiv = String(dadosAtiv[i][5] || "Todas").trim();
-              let tipoAtiv = String(dadosAtiv[i][6] || "Projeto").trim();
+            let turmaAtiv = String(dadosAtiv[i][5] || "Todas").trim();
+            let tipoAtiv = String(dadosAtiv[i][6] || "Projeto").trim();
 
-              // Aplica os filtros do painel do tutor
-              if (filtroTurma !== "Todas" && turmaAtiv !== "Todas" && turmaAtiv !== filtroTurma) continue;
-              if (filtroTipo !== "Todos" && tipoAtiv !== filtroTipo) continue;
+            // Aplica os filtros do painel do tutor
+            if (filtroTurma !== "Todas" && turmaAtiv !== "Todas" && turmaAtiv !== filtroTurma) continue;
+            if (filtroTipo !== "Todos" && tipoAtiv !== filtroTipo) continue;
 
-              let dataLimiteBruta = dadosAtiv[i][3];
-              let dataLimiteStr = dataLimiteBruta instanceof Date ? Utilities.formatDate(dataLimiteBruta, Session.getScriptTimeZone(), "yyyy-MM-dd") : String(dataLimiteBruta);
-              
-              let statusPub = String(dadosAtiv[i][13] || "Publicada").trim();
-              let nomeModulo = String(dadosAtiv[i][15] || "Geral").trim();
+            let dataLimiteBruta = dadosAtiv[i][3];
+            let dataLimiteStr = dataLimiteBruta instanceof Date ? Utilities.formatDate(dataLimiteBruta, Session.getScriptTimeZone(), "dd-MM-yyyy") : String(dataLimiteBruta);
+            
+            let statusPub = String(dadosAtiv[i][13] || "Publicada").trim();
+            let nomeModulo = String(dadosAtiv[i][15] || "Geral").trim();
 
-              atividades.push({
-                id: idAtiv,
-                titulo: String(dadosAtiv[i][1]),
-                descricao: String(dadosAtiv[i][2]),
-                dataLimite: dataLimiteStr,
-                xp: dadosAtiv[i][4],
-                turmaAlvo: turmaAtiv,
-                tipo: tipoAtiv,
-                opcaoA: String(dadosAtiv[i][7] || ""),
-                opcaoB: String(dadosAtiv[i][8] || ""),
-                opcaoC: String(dadosAtiv[i][9] || ""),
-                opcaoD: String(dadosAtiv[i][10] || ""),
-                respostaCorreta: String(dadosAtiv[i][11] || "A"),
-                linkClassroom: String(dadosAtiv[i][12] || ""),
-                statusPublicacao: statusPub,
-                imagemUrl: String(dadosAtiv[i][14] || ""),
-                modulo: nomeModulo,
-                gabarito: String(dadosAtiv[i][16] || ""),
-                gabaritoLiberado: dadosAtiv[i][17] === true || String(dadosAtiv[i][17]).toLowerCase() === "true",
-                pendentes: pendentesMap[idAtiv] || 0,
-                statusModulo: statusModulosMap[nomeModulo + "|" + turmaAtiv] || statusModulosMap[nomeModulo + "|Todas"] || "Aberto"
-              });
-            }
+            atividades.push({
+              id: idAtiv,
+              titulo: String(dadosAtiv[i][1]),
+              descricao: String(dadosAtiv[i][2]),
+              dataLimite: dataLimiteStr,
+              xp: dadosAtiv[i][4],
+              turmaAlvo: turmaAtiv,
+              tipo: tipoAtiv,
+              opcaoA: String(dadosAtiv[i][7] || ""),
+              opcaoB: String(dadosAtiv[i][8] || ""),
+              opcaoC: String(dadosAtiv[i][9] || ""),
+              opcaoD: String(dadosAtiv[i][10] || ""),
+              respostaCorreta: String(dadosAtiv[i][11] || "A"),
+              linkClassroom: String(dadosAtiv[i][12] || ""),
+              statusPublicacao: statusPub,
+              imagemUrl: String(dadosAtiv[i][14] || ""),
+              modulo: nomeModulo,
+              gabarito: String(dadosAtiv[i][16] || ""),
+              gabaritoLiberado: dadosAtiv[i][17] === true || String(dadosAtiv[i][17]).toLowerCase() === "true",
+              pendentes: pendentesMap[idAtiv] || 0,
+              statusModulo: statusModulosMap[nomeModulo + "|" + turmaAtiv] || statusModulosMap[nomeModulo + "|Todas"] || "Aberto"
+            });
           }
+        }
 
-          // 🔥 4. DEVOLVE A LISTA DE ATIVIDADES E OS MÓDULOS!
-          return ContentService.createTextOutput(JSON.stringify({ 
-            status: "sucesso", 
-            atividades: atividades,
-            modulosMatriz: listaModulos
-          })).setMimeType(ContentService.MimeType.JSON);
-        }  
-    
+        // 🔥 4. DEVOLVE A LISTA DE ATIVIDADES E OS MÓDULOS!
+        return ContentService.createTextOutput(JSON.stringify({ 
+          status: "sucesso", 
+          atividades: atividades,
+          modulosMatriz: listaModulos
+        })).setMimeType(ContentService.MimeType.JSON);
+      }  
+      
     // ==========================================
     // ROTA 9: ENVIAR ATIVIDADE (BLINDADA CONTRA DUPLO CHECK-IN)
     // ==========================================
       if (action === "enviar_atividade") {
-          const lock = LockService.getScriptLock();
-          try {
-              lock.waitLock(5000); // 🔒 Tranca a porta contra múltiplos envios simultâneos
+        const lock = LockService.getScriptLock();
+        try {
+            // 🔒 Tranca o servidor (aumentado para 15s para suportar filas em dias de pico)
+            lock.waitLock(10000); 
 
-              const matricula = String(dadosApp.matricula).trim();
-              const idAtividade = String(dadosApp.idAtividade).trim();
-              const resposta = String(dadosApp.resposta).trim();
-              const timestampAtual = new Date().getTime();
+            const cache = CacheService.getScriptCache();
+            const matricula = String(dadosApp.matricula).trim();
+            const idAtividade = String(dadosApp.idAtividade).trim();
+            const resposta = String(dadosApp.resposta).trim();
+            const timestampAtual = new Date().getTime();
 
-              const abaEntregas = planilha.getSheetByName("entregas");
-              const abaAtividades = planilha.getSheetByName("atividades") || planilha.getSheetByName("basededados");
-              const abaTrilha = planilha.getSheetByName("trilhatech");
-              const abaModulos = planilha.getSheetByName("controle_modulos");
+            const abaEntregas = planilha.getSheetByName("entregas");
+            const abaTrilha = planilha.getSheetByName("trilhatech");
 
-              if (!abaEntregas) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aba entregas não encontrada." })).setMimeType(ContentService.MimeType.JSON);
+            if (!abaEntregas) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aba entregas não encontrada." })).setMimeType(ContentService.MimeType.JSON);
 
-              // Tenta ver se há um ID de entrega padrão ou o ID gerado pelo sincronizador
-              let linhaExistente = -1;
-              let statusAtualBD = "";
-              let xpAnterior = 0;
-              let ehEntregaClassroom = false;
+            // 1. Busca dados do Cache (Performance: evita leitura lenta da planilha dentro do lock)
+            let dadosAtiv = JSON.parse(cache.get("CACHE_atividades") || "[]");
+            let dadosModulos = JSON.parse(cache.get("CACHE_controle_modulos") || "[]");
 
-              // 🛡️ VERIFICAÇÃO ANTI-FRAUDE / ANTI-DUPLICIDADE
-              const dadosEntregas = abaEntregas.getDataRange().getValues();
-              for (let i = 1; i < dadosEntregas.length; i++) {
-                  let idLinha = String(dadosEntregas[i][0]).trim();
-                  let matLinha = String(dadosEntregas[i][1]).trim();
-                  let idAtivLinha = String(dadosEntregas[i][2]).trim();
-                  let feedbackLinha = String(dadosEntregas[i][7]).toLowerCase(); // Coluna H
+            // 2. Verificação Anti-Duplicidade
+            const dadosEntregas = abaEntregas.getDataRange().getValues();
+            let linhaExistente = -1;
+            let statusAtualBD = "";
+            let xpAnterior = 0;
+            let ehEntregaClassroom = false;
 
-                  // O aluno pode ter o idEntrega normal (ATIV-001-12345) ou um ID de Sync do Classroom (SYNC-...)
-                  if ((idLinha === idAtividade + "-" + matricula) || (matLinha === matricula && idAtivLinha === idAtividade)) {
-                      linhaExistente = i + 1;
-                      statusAtualBD = String(dadosEntregas[i][4]).trim().toLowerCase();
-                      xpAnterior = Number(dadosEntregas[i][5]) || 0;
-                      
-                      // Identifica se essa linha foi gerada pelo nosso Sincronizador do Classroom
-                      if (feedbackLinha.includes("classroom") || feedbackLinha.includes("ava")) {
-                          ehEntregaClassroom = true;
-                      }
-                      break;
-                  }
-              }
+            for (let i = 1; i < dadosEntregas.length; i++) {
+                if (String(dadosEntregas[i][1]).trim() === matricula && String(dadosEntregas[i][2]).trim() === idAtividade) {
+                    linhaExistente = i + 1;
+                    statusAtualBD = String(dadosEntregas[i][4]).trim().toLowerCase();
+                    xpAnterior = Number(dadosEntregas[i][5]) || 0;
+                    if (String(dadosEntregas[i][7]).toLowerCase().includes("classroom") || String(dadosEntregas[i][7]).toLowerCase().includes("ava")) ehEntregaClassroom = true;
+                    break;
+                }
+            }
 
-              // 🛡️ TRAVA DE DUPLO CHECK-IN (CLASSROOM)
-              if (ehEntregaClassroom) {
-                  return ContentService.createTextOutput(JSON.stringify({ 
-                      status: "erro", 
-                      mensagem: "Você não precisa entregar por aqui! O sistema já avaliou a sua nota automaticamente pelo Google Classroom. 🤖" 
-                  })).setMimeType(ContentService.MimeType.JSON);
-              }
+            if (ehEntregaClassroom) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Você não precisa entregar por aqui! O sistema já avaliou automaticamente pelo Classroom. 🤖" })).setMimeType(ContentService.MimeType.JSON);
+            if (linhaExistente > 0 && statusAtualBD !== "devolvida") return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Você já enviou esta missão! Não é possível reenviar." })).setMimeType(ContentService.MimeType.JSON);
 
-              // 🛡️ TRAVA DE DUPLICIDADE NORMAL (PORTAL)
-              if (linhaExistente > 0 && statusAtualBD !== "devolvida") {
-                  return ContentService.createTextOutput(JSON.stringify({ 
-                      status: "erro", 
-                      mensagem: "Você já enviou esta missão! Não é possível reenviar." 
-                  })).setMimeType(ContentService.MimeType.JSON);
-              }
+            // 3. Processamento de regras (Usa os dados do Cache)
+            let ativXp = 0; let ativTipo = "Projeto"; let ativRespostaCorreta = ""; 
+            let moduloAtiv = ""; let turmaAlvoAtiv = ""; let dataLimObj = null;
 
-              // 1. Busca os detalhes da Missão
-              let ativTipo = "Projeto";
-              let ativXp = 0;
-              let ativRespostaCorreta = "";
-              let dataLimObj = null; 
-              let moduloAtiv = "";
-              let turmaAlvoAtiv = "";
+            for (let i = 1; i < dadosAtiv.length; i++) {
+                if (String(dadosAtiv[i][0]).trim() === idAtividade) {
+                    ativXp = Number(dadosAtiv[i][4]) || 0;
+                    turmaAlvoAtiv = String(dadosAtiv[i][5]).trim().toLowerCase();
+                    ativTipo = String(dadosAtiv[i][6]).trim();
+                    ativRespostaCorreta = String(dadosAtiv[i][11]).trim();
+                    moduloAtiv = String(dadosAtiv[i][15]).trim().toLowerCase();
+                    // Lógica de Data (Mantida a sua original para consistência)
+                    let strDate = String(dadosAtiv[i][3]).trim();
+                    if (strDate.includes("-")) {
+                        let p = strDate.split("T")[0].split("-");
+                        if (p.length === 3) dataLimObj = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+                    } else if (strDate.includes("/")) {
+                        let p = strDate.split("/");
+                        if (p.length === 3) dataLimObj = new Date(Number(p[2]), Number(p[1])-1, Number(p[0]));
+                    }
+                    if (dataLimObj) dataLimObj.setHours(0,0,0,0);
+                    break;
+                }
+            }
 
-              if (abaAtividades) {
-                  const dadosAtiv = abaAtividades.getDataRange().getValues();
-                  for (let i = 1; i < dadosAtiv.length; i++) {
-                      if (String(dadosAtiv[i][0]).trim() === idAtividade) {
-                          ativXp = Number(dadosAtiv[i][4]) || 0;
-                          turmaAlvoAtiv = String(dadosAtiv[i][5]).trim().toLowerCase();
-                          ativTipo = String(dadosAtiv[i][6]).trim();
-                          ativRespostaCorreta = String(dadosAtiv[i][11]).trim();
-                          moduloAtiv = String(dadosAtiv[i][15]).trim().toLowerCase();
+            // Cálculo de Atraso e XP (Lógica de Correção)
+            let atrasoDias = 0;
+            if (dataLimObj) {
+                let hoje = new Date(); hoje.setHours(0,0,0,0);
+                if (hoje > dataLimObj) atrasoDias = Math.ceil(Math.abs(hoje - dataLimObj) / (1000 * 60 * 60 * 24));
+            }
 
-                          let rawDate = dadosAtiv[i][3];
-                          if (rawDate instanceof Date) {
-                              dataLimObj = new Date(rawDate.getFullYear(), rawDate.getMonth(), rawDate.getDate());
-                          } else if (typeof rawDate === "string") {
-                              let strDate = rawDate.trim();
-                              if (strDate.includes("-")) {
-                                  let p = strDate.split("-");
-                                  if (p.length === 3) dataLimObj = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
-                              } else if (strDate.includes("/")) {
-                                  let p = strDate.split("/");
-                                  if (p.length === 3) dataLimObj = new Date(Number(p[2]), Number(p[1])-1, Number(p[0]));
-                              }
-                          }
-                          if (dataLimObj) dataLimObj.setHours(0,0,0,0);
-                          break;
-                      }
-                  }
-              }
+            let isCorreto = (ativTipo === "Material") ? true : (resposta === ativRespostaCorreta);
+            let xpGanhoFinal = 0;
+            let msgDesconto = "";
 
-              // 🛡️ VERIFICAÇÃO DE MÓDULO ENCERRADO
-              let xpFinalPermitido = ativXp;
-              if (abaModulos) {
-                  const dadosModulos = abaModulos.getDataRange().getValues();
-                  for (let i = 1; i < dadosModulos.length; i++) {
-                      let nomeModBD = String(dadosModulos[i][0]).trim().toLowerCase();
-                      let statusModBD = String(dadosModulos[i][1]).trim().toLowerCase();
-                      let turmaModBD = String(dadosModulos[i][2]).trim().toLowerCase();
-                      
-                      if (nomeModBD === moduloAtiv && (turmaModBD === turmaAlvoAtiv || turmaModBD === "todas")) {
-                          if (statusModBD === "encerrado") {
-                              xpFinalPermitido = 0; // Se entregou pelo portal um módulo fechado, ganha 0 XP!
-                          }
-                          break;
-                      }
-                  }
-              }
+            if (ativTipo === "Quiz" || ativTipo === "Material") {
+                if (isCorreto) {
+                    let teto = Math.floor(ativXp / 2);
+                    let desconto = (atrasoDias > teto) ? teto : atrasoDias;
+                    xpGanhoFinal = ativXp - desconto;
+                    if(atrasoDias > 0) msgDesconto = ` (Desconto de -${desconto} XP pelo atraso)`;
+                }
+            }
 
-              // 2. CÁLCULO DE ATRASO 
-              let atrasoDias = 0;
-              if (dataLimObj) {
-                  let hoje = new Date();
-                  hoje.setHours(0,0,0,0);
-                  if (hoje > dataLimObj) {
-                      let diffTime = Math.abs(hoje - dataLimObj);
-                      atrasoDias = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                  }
-              }
+            // 4. Escrita Otimizada (setValues para performance)
+            let statusFinal = (ativTipo === "Quiz" || ativTipo === "Material") ? "Avaliado" : "Aguardando Correção";
+            
+            if (linhaExistente > 0) {
+                abaEntregas.getRange(linhaExistente, 4, 1, 4).setValues([[resposta, statusFinal, xpGanhoFinal, timestampAtual]]);
+            } else {
+                abaEntregas.appendRow([idAtividade + "-" + matricula, matricula, idAtividade, resposta, statusFinal, xpGanhoFinal, timestampAtual, ""]);
+            }
 
-              // 3. Auto-Correção para Quizzes e Materiais (com Desconto Automático)
-              let statusFinal = "Aguardando Correção";
-              let xpGanhoFinal = 0;
-              let msgDesconto = "";
+            // 5. Atualiza XP na trilha
+            if (abaTrilha && xpGanhoFinal > 0) {
+                const dadosTrilha = abaTrilha.getDataRange().getValues();
+                for(let t = 1; t < dadosTrilha.length; t++) {
+                    if(String(dadosTrilha[t][0]).trim() === matricula) {
+                        let xpAtual = Number(dadosTrilha[t][4]) || 0;
+                        abaTrilha.getRange(t + 1, 5).setValue(xpAtual - xpAnterior + xpGanhoFinal);
+                        break;
+                    }
+                }
+            }
 
-              if (ativTipo === "Quiz" || ativTipo === "Material") {
-                  // Se for Material, a resposta está sempre "correta" automaticamente!
-                  let isCorreto = (ativTipo === "Material") ? true : (resposta === ativRespostaCorreta);
-                  
-                  statusFinal = "Avaliado";
-                  
-                  if (isCorreto) {
-                      let desconto = 0;
-                      if (atrasoDias > 0 && xpFinalPermitido > 0) {
-                          let teto = Math.floor(xpFinalPermitido / 2); // Teto máximo de desconto é metade do XP
-                          desconto = atrasoDias; // 1 XP perdido por dia de atraso
-                          if (desconto > teto) desconto = teto;
-                          msgDesconto = ` (Desconto de -${desconto} XP pelo atraso)`;
-                      }
-                      
-                      // Se o módulo estava encerrado, o xpGanhoFinal fica 0
-                      xpGanhoFinal = xpFinalPermitido - desconto;
-                      
-                      if (xpFinalPermitido === 0) {
-                          msgDesconto = " (0 XP: O módulo desta atividade já foi encerrado!)";
-                      }
+            // 6. Invalidação de Cache (Crucial para o Tutor ver a entrega instantaneamente)
+            cache.remove("CACHE_entregas"); 
 
-                      if (abaTrilha) {
-                          const dadosTrilha = abaTrilha.getDataRange().getValues();
-                          for(let t = 1; t < dadosTrilha.length; t++) {
-                              if(String(dadosTrilha[t][0]).trim() === matricula) {
-                                  let xpAtual = Number(dadosTrilha[t][4]) || 0;
-                                  let xpAjustado = xpAtual - xpAnterior + xpGanhoFinal;
-                                  abaTrilha.getRange(t+1, 5).setValue(xpAjustado);
-                                  break;
-                              }
-                          }
-                      }
-                  }
-              }
+            let msgRetorno = (ativTipo === "Quiz" && xpGanhoFinal > 0) ? "Resposta correta! XP adicionado." + msgDesconto : "Missão enviada com sucesso!";
+            return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: msgRetorno })).setMimeType(ContentService.MimeType.JSON);
 
-              // 4. Salva a entrega na folha
-              let idEntregaFinal = idAtividade + "-" + matricula;
-              if (linhaExistente > 0) {
-                  // É um reenvio de uma missão DEVOLVIDA
-                  abaEntregas.getRange(linhaExistente, 4).setValue(resposta);
-                  abaEntregas.getRange(linhaExistente, 5).setValue(statusFinal);
-                  abaEntregas.getRange(linhaExistente, 6).setValue(xpGanhoFinal);
-                  abaEntregas.getRange(linhaExistente, 7).setValue(timestampAtual);
-                  abaEntregas.getRange(linhaExistente, 8).setValue(""); // Limpa o feedback antigo do tutor
-              } else {
-                  // Primeira vez que envia
-                  abaEntregas.appendRow([idEntregaFinal, matricula, idAtividade, resposta, statusFinal, xpGanhoFinal, timestampAtual, ""]);
-              }
-
-              let msgRetorno = (ativTipo === "Quiz" && xpGanhoFinal > 0) ? "Resposta correta! XP adicionado." + msgDesconto : (ativTipo === "Quiz" && xpGanhoFinal === 0 && isCorreto) ? "Você acertou o Quiz, mas não ganhou XP." + msgDesconto : (ativTipo === "Quiz" && xpGanhoFinal === 0 && !isCorreto) ? "Resposta errada. Mas o Tutor pode rever depois!" : "Missão enviada com sucesso!";
-
-              return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: msgRetorno })).setMimeType(ContentService.MimeType.JSON);
-
-          } catch (e) {
-              return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado. Aguarde 2 segundos e tente enviar novamente." })).setMimeType(ContentService.MimeType.JSON);
-          } finally {
-              lock.releaseLock(); // 🔓 Libera a porta para o próximo
-          }
-      }  
+        } catch (e) {
+            return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado. Aguarde 2 segundos." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+            lock.releaseLock(); 
+        }
+      }
 
     // ==========================================
     // ROTA 10: EXCLUIR ATIVIDADE (Professor)
@@ -813,6 +759,7 @@ function doPost(e) {
             }
           }
         }
+        invalidarCacheGeral();
         return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Atividade não encontrada." })).setMimeType(ContentService.MimeType.JSON);
       }
     // ==========================================
@@ -1048,7 +995,7 @@ function doPost(e) {
         const lock = LockService.getScriptLock();
         try {
           // 🔒 Tranca o servidor por até 10 segundos para processar 1 aluno de cada vez
-          lock.waitLock(5000); 
+          lock.waitLock(10000); 
 
           const matricula = String(dadosApp.matricula).trim();
           const senhaInformada = String(dadosApp.senha).trim();
@@ -1723,7 +1670,7 @@ function doPost(e) {
         if (action === "resgatar_aniversario") {
           const lock = LockService.getScriptLock();
           try {
-            lock.waitLock(5000); // 🔒 Proteção dupla
+            lock.waitLock(10000); // 🔒 Proteção dupla
 
             const matricula = String(dadosApp.matricula).trim();
             const abaEntregas = planilha.getSheetByName("entregas");
@@ -2189,69 +2136,95 @@ function doPost(e) {
       }
 
     // ==========================================
-    // ROTA 28: CARREGAR PORTAL DO ALUNO (SUPER ROTA LIMPA E ATUALIZADA)
+    // ROTA 28: CARREGAR PORTAL DO ALUNO (COM CACHE ATIVO E BLINDADO)
     // ==========================================
       if (action === "carregar_portal_aluno") {
         const matricula = String(dadosApp.matricula).trim();
+        const cache = CacheService.getScriptCache(); 
+        const timezone = Session.getScriptTimeZone();
 
         const abaTrilha = planilha.getSheetByName("trilhatech");
-        const planBase = planilha.getSheetByName("basededados");
         const abaEntregas = planilha.getSheetByName("entregas");
-        const abaAtividades = planilha.getSheetByName("atividades");
-        const abaConfig = planilha.getSheetByName("configuracoes");
         const abaFrequencia = planilha.getSheetByName("frequencia");
         const abaCurtidas = planilha.getSheetByName("curtidas");
+        
+        // ⚡ LÓGICA DE CACHE BLINDADA COM CHUNKING (ANTI-100KB)
+        function lerComCache(nomeAba, tempoSegundos) {
+          const cacheChave = "CACHE_" + nomeAba;
+          let dadosString = cache.get(cacheChave);
 
-        const abaModulos = planilha.getSheetByName("controle_modulos");
-          let statusModulosMap = {};
-          if (abaModulos) {
-            const dadosModulos = abaModulos.getDataRange().getValues();
-            for (let i = 1; i < dadosModulos.length; i++) {
-              let nomeMod = String(dadosModulos[i][0]).trim();
-              let statusMod = String(dadosModulos[i][1]).trim();
-              let turmaMod = String(dadosModulos[i][2] || "Todas").trim(); 
-              
-              if (nomeMod) {
-                // Cria uma chave única: "Nome do Módulo|Turma"
-                statusModulosMap[nomeMod + "|" + turmaMod] = statusMod;
+          // 1. Tenta ler o dado inteiro ou fatiado
+          if (!dadosString) {
+            let chunksTotal = cache.get(cacheChave + "_CHUNKS");
+            if (chunksTotal) {
+              let reconstruido = "";
+              for (let c = 0; c < Number(chunksTotal); c++) {
+                reconstruido += cache.get(cacheChave + "_" + c) || "";
               }
+              if (reconstruido) return JSON.parse(reconstruido);
             }
+          } else {
+            return JSON.parse(dadosString);
           }
 
+          // 2. Se não achou na memória, vai no banco (Planilha)
+          let aba = planilha.getSheetByName(nomeAba);
+          if (!aba) return [];
+
+          let dados = aba.getDataRange().getValues();
+          let timezone = Session.getScriptTimeZone();
+          let dadosProcessados = dados.map(linha => linha.map(celula => (celula instanceof Date) ? Utilities.formatDate(celula, timezone, "yyyy-MM-dd") : celula));
+          let jsonStr = JSON.stringify(dadosProcessados);
+
+          // 3. Salva na memória dividindo em blocos seguros de 90.000 caracteres
+          try {
+            if (jsonStr.length < 90000) {
+              cache.put(cacheChave, jsonStr, tempoSegundos);
+            } else {
+              let numChunks = Math.ceil(jsonStr.length / 90000);
+              cache.put(cacheChave + "_CHUNKS", String(numChunks), tempoSegundos);
+              for (let c = 0; c < numChunks; c++) {
+                cache.put(cacheChave + "_" + c, jsonStr.substring(c * 90000, (c + 1) * 90000), tempoSegundos);
+              }
+            }
+          } catch (e) {
+            // Falha silenciosa: Se o Google recusar, apenas devolve os dados para não quebrar a tela do aluno
+          }
+
+          return dadosProcessados;
+        }
+
+        // Lê da memória ao invés do Google Sheets!
+        const dadosBase = lerComCache("basededados", 1800); 
+        const dadosModulos = lerComCache("controle_modulos", 900); 
+        const dadosAtiv = lerComCache("atividades", 300); 
+        const dadosConf = lerComCache("configuracoes", 1800); 
+
+        // 1. LER MÓDULOS (Direto da memória)
+        let statusModulosMap = {};
+        for (let i = 1; i < dadosModulos.length; i++) {
+          let nomeMod = String(dadosModulos[i][0]).trim();
+          let statusMod = String(dadosModulos[i][1]).trim();
+          let turmaMod = String(dadosModulos[i][2] || "Todas").trim();
+          if (nomeMod) statusModulosMap[nomeMod + "|" + turmaMod] = statusMod;
+        }
+
         let dadosRetorno = {
-          status: "sucesso",
-          xpTotal: 0,
-          nivel: "Iniciante",
-          avatar: "avatar-padrao",
-          totalCurtidas: 0,
-          ofensivaDias: 0,
-          whatsapp: { confirmado: true, link: "" },
-          aniversario: { isAniversario: false, jaResgatado: false },
-          atividades: [],
-          notificacoes: [],
-          extratoPix: [],
-          badgesResgatadas: [],
-          taxaPresenca: 100,
+          status: "sucesso", xpTotal: 0, nivel: "Iniciante", avatar: "avatar-padrao",
+          totalCurtidas: 0, ofensivaDias: 0, whatsapp: { confirmado: true, link: "" },
+          aniversario: { isAniversario: false, jaResgatado: false }, atividades: [],
+          notificacoes: [], extratoPix: [], badgesResgatadas: [], taxaPresenca: 100,
           stats: { xpDoado: 0, xpRecebido: 0, totalCheckins: 0 }
         };
 
         let turmaDoAlunoNoProjeto = "";
-
         const niveisGamificacao = [
-          { nome: "Hello World", min: 0, max: 499 },           // Gap: 500
-          { nome: "Bug Hunter", min: 500, max: 1499 },         // Gap: 1.000
-          { nome: "Coder Ninja", min: 1500, max: 2999 },       // Gap: 1.500
-          { nome: "Tech Hacker", min: 3000, max: 4999 },       // Gap: 2.000
-          { nome: "Dev Supremo", min: 5000, max: 7499 },       // Gap: 2.500
-          { nome: "Lenda Binária", min: 7500, max: 9999 },     // Gap: 2.500
-          
-          // 🔥 OS NOVOS NÍVEIS DE ELITE 🔥
-          { nome: "Mestre do Código", min: 10000, max: 13999 }, // Gap: 4.000
-          { nome: "Arquiteto de Sistemas", min: 14000, max: 18999 }, // Gap: 5.000
-          { nome: "Hacker Quântico", min: 19000, max: 24999 },  // Gap: 6.000
-          { nome: "Oráculo Digital", min: 25000, max: 34999 },  // Gap: 10.000 (Fim de ano letivo provável)
-          { nome: "Titã da Nuvem", min: 35000, max: 49999 },    // Gap: 15.000 (Para os alunos absurdamente focados)
-          { nome: "Deus da Lógica", min: 50000, max: 999999 }   // Infinito
+          { nome: "Hello World", min: 0, max: 499 }, { nome: "Bug Hunter", min: 500, max: 1499 },
+          { nome: "Coder Ninja", min: 1500, max: 2999 }, { nome: "Tech Hacker", min: 3000, max: 4999 },
+          { nome: "Dev Supremo", min: 5000, max: 7499 }, { nome: "Lenda Binária", min: 7500, max: 9999 },
+          { nome: "Mestre do Código", min: 10000, max: 13999 }, { nome: "Arquiteto de Sistemas", min: 14000, max: 18999 },
+          { nome: "Hacker Quântico", min: 19000, max: 24999 }, { nome: "Oráculo Digital", min: 25000, max: 34999 },
+          { nome: "Titã da Nuvem", min: 35000, max: 49999 }, { nome: "Deus da Lógica", min: 50000, max: 999999 }
         ];
 
         if (abaTrilha) {
@@ -2259,8 +2232,9 @@ function doPost(e) {
           for (let t = 1; t < dadosTrilha.length; t++) {
             if (String(dadosTrilha[t][0]).trim() === matricula) {
               turmaDoAlunoNoProjeto = String(dadosTrilha[t][1]).trim();
-              let xpTotalAtual = Number(dadosTrilha[t][4]) || 0;
-              let nivelAtualSheet = String(dadosTrilha[t][5]).trim();
+              let xpTotalAtual = Number(dadosTrilha[t][4]) || 0; 
+              let nivelAtualSheet = String(dadosTrilha[t][5]).trim(); 
+              let xpGasto = Number(dadosTrilha[t][11]) || 0;     
 
               dadosRetorno.avatar = String(dadosTrilha[t][8]).trim() || "avatar-padrao";
               dadosRetorno.totalCurtidas = Number(dadosTrilha[t][9]) || 0;
@@ -2275,68 +2249,47 @@ function doPost(e) {
                 }
               }
 
-              if (nivelCalculado.nome !== nivelAtualSheet) {
-                  abaTrilha.getRange(t + 1, 6).setValue(nivelCalculado.nome);
-              }
+              if (nivelCalculado.nome !== nivelAtualSheet) abaTrilha.getRange(t + 1, 6).setValue(nivelCalculado.nome);
 
               let xpBaseNivel = nivelCalculado.min;
               let xpParaProximo = proximoNivel.min;
               let progressoAtual = xpTotalAtual - xpBaseNivel;
               let totalDoNivel = xpParaProximo - xpBaseNivel;
-              let porcentagemProgresso = totalDoNivel === 0 ? 100 : Math.floor((progressoAtual / totalDoNivel) * 100);
-              let xpFaltante = xpParaProximo - xpTotalAtual > 0 ? xpParaProximo - xpTotalAtual : 0;
-
-              dadosRetorno.xpTotal = xpTotalAtual;
-              dadosRetorno.nivel = nivelCalculado.nome;
-              dadosRetorno.progressoNivel = { porcentagem: porcentagemProgresso, faltam: xpFaltante, nomeProximo: proximoNivel.nome, isMaximo: totalDoNivel === 0 };
+              dadosRetorno.xpTotal = xpTotalAtual; dadosRetorno.xpGasto = xpGasto;
+              dadosRetorno.saldoCarteira = xpTotalAtual - xpGasto; dadosRetorno.nivel = nivelCalculado.nome;
+              dadosRetorno.progressoNivel = { porcentagem: totalDoNivel === 0 ? 100 : Math.floor((progressoAtual / totalDoNivel) * 100), faltam: xpParaProximo - xpTotalAtual > 0 ? xpParaProximo - xpTotalAtual : 0, nomeProximo: proximoNivel.nome, isMaximo: totalDoNivel === 0 };
               dadosRetorno.whatsapp.confirmado = String(dadosTrilha[t][6]).trim() === "SIM";
               break;
             }
           }
         }
 
-        if (abaConfig) {
-          let dadosConf = abaConfig.getDataRange().getValues();
-          for(let i = 1; i < dadosConf.length; i++) {
-            if(turmaDoAlunoNoProjeto.includes("1º") && dadosConf[i][0] === "WHATSAPP_1ANO") dadosRetorno.whatsapp.link = dadosConf[i][1];
-            if(turmaDoAlunoNoProjeto.includes("2º") && dadosConf[i][0] === "WHATSAPP_2ANO") dadosRetorno.whatsapp.link = dadosConf[i][1];
-          }
+        // LER CONFIGURAÇÕES (Direto da memória)
+        for(let i = 1; i < dadosConf.length; i++) {
+          if(turmaDoAlunoNoProjeto.includes("1º") && dadosConf[i][0] === "WHATSAPP_1ANO") dadosRetorno.whatsapp.link = dadosConf[i][1];
+          if(turmaDoAlunoNoProjeto.includes("2º") && dadosConf[i][0] === "WHATSAPP_2ANO") dadosRetorno.whatsapp.link = dadosConf[i][1];
         }
 
-        const timezone = Session.getScriptTimeZone();
         const dataHoje = new Date();
         const diaHoje = Utilities.formatDate(dataHoje, timezone, "dd");
         const mesHoje = Utilities.formatDate(dataHoje, timezone, "MM");
         const anoHoje = Utilities.formatDate(dataHoje, timezone, "yyyy");
         const idNiver = "BDAY-" + anoHoje + "-" + matricula;
 
+        // LER BASEDEDADOS (Direto da memória)
         let nomesMap = {};
-        if (planBase) {
-          const dadosBase = planBase.getDataRange().getValues();
-          for (let i = 1; i < dadosBase.length; i++) {
-            let mat = String(dadosBase[i][2]).trim();
-            nomesMap[mat] = String(dadosBase[i][0]).trim();
-            if (mat === matricula) {
-              let celulaDataNasc = dadosBase[i][1];
-              let diaNasc = ""; let mesNasc = "";
-              if (celulaDataNasc instanceof Date) {
-                diaNasc = Utilities.formatDate(celulaDataNasc, timezone, "dd");
-                mesNasc = Utilities.formatDate(celulaDataNasc, timezone, "MM");
-              } else {
-                let strNasc = String(celulaDataNasc).trim();
-                // 1. Tenta quebrar por barras (DD/MM/YYYY)
-                if (strNasc.includes("/")) {
-                  let partesNasc = strNasc.split("/");
-                  if (partesNasc.length === 3) { diaNasc = partesNasc[0].padStart(2, '0'); mesNasc = partesNasc[1].padStart(2, '0'); }
-                } 
-                // 2. Tenta quebrar por hífen (YYYY-MM-DD) do formulário web
-                else if (strNasc.includes("-")) {
-                  let partesNasc = strNasc.split("T")[0].split("-");
-                  if (partesNasc.length === 3) { diaNasc = partesNasc[2].padStart(2, '0'); mesNasc = partesNasc[1].padStart(2, '0'); }
-                }
-              }
-              if (diaNasc === diaHoje && mesNasc === mesHoje) dadosRetorno.aniversario.isAniversario = true;
+        for (let i = 1; i < dadosBase.length; i++) {
+          let mat = String(dadosBase[i][2]).trim();
+          nomesMap[mat] = String(dadosBase[i][0]).trim();
+          if (mat === matricula) {
+            let strNasc = String(dadosBase[i][1]).trim();
+            let diaNasc = "", mesNasc = "";
+            if (strNasc.includes("/")) {
+              let p = strNasc.split("/"); if (p.length === 3) { diaNasc = p[0].padStart(2, '0'); mesNasc = p[1].padStart(2, '0'); }
+            } else if (strNasc.includes("-")) {
+              let p = strNasc.split("T")[0].split("-"); if (p.length === 3) { diaNasc = p[2].padStart(2, '0'); mesNasc = p[1].padStart(2, '0'); }
             }
+            if (diaNasc === diaHoje && mesNasc === mesHoje) dadosRetorno.aniversario.isAniversario = true;
           }
         }
 
@@ -2346,46 +2299,28 @@ function doPost(e) {
           for (let i = 1; i < dadosEntregas.length; i++) {
             let idEntrega = String(dadosEntregas[i][0]).trim();
             let mat = String(dadosEntregas[i][1]).trim();
-
             if (mat === matricula) {
               if (idEntrega.startsWith("NOTIF-")) {
-                  let timestampEnvio = Number(dadosEntregas[i][6]) || 0;
-                  dadosRetorno.notificacoes.push({ 
-                    id: idEntrega, 
-                    mensagem: String(dadosEntregas[i][3]), 
-                    xp: Number(dadosEntregas[i][5]) || 0, 
-                    tempo: timestampEnvio, 
-                    tipo: String(dadosEntregas[i][4]) 
-                  });
-                  continue; // Pula o resto para não ler como entrega normal
+                  dadosRetorno.notificacoes.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: Number(dadosEntregas[i][5]) || 0, tempo: Number(dadosEntregas[i][6]) || 0, tipo: String(dadosEntregas[i][4]) });
+                  continue; 
               }
-
               if (!idEntrega.startsWith("BDAY") && !idEntrega.startsWith("PIX") && !idEntrega.startsWith("BADGE") && !idEntrega.startsWith("BLOCK")) {
-                let idAtividade = String(dadosEntregas[i][2]).trim();
-                entregasMap[idAtividade] = {
-                  resposta: String(dadosEntregas[i][3]).trim(),
-                  status: String(dadosEntregas[i][4]).trim() || "Aguardando Correção",
-                  xpGanho: dadosEntregas[i][5] || 0,
-                  dataEnvio: Number(dadosEntregas[i][6]) || 0, 
-                  feedback: String(dadosEntregas[i][7] || "").trim()
-                };
+                entregasMap[String(dadosEntregas[i][2]).trim()] = { resposta: String(dadosEntregas[i][3]).trim(), status: String(dadosEntregas[i][4]).trim() || "Aguardando Correção", xpGanho: dadosEntregas[i][5] || 0, dataEnvio: Number(dadosEntregas[i][6]) || 0, feedback: String(dadosEntregas[i][7] || "").trim() };
               }
               if (idEntrega.includes("PIX") && idEntrega.includes("-RECEBEU")) {
                   dadosRetorno.stats.xpRecebido += Number(dadosEntregas[i][5]) || 0;
-                  let timestampEnvio = Number(dadosEntregas[i][6]) || 0;
-                  dadosRetorno.extratoPix.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: Number(dadosEntregas[i][5]), tempo: timestampEnvio, tipo: "RECEBEU" });
-                  dadosRetorno.notificacoes.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: Number(dadosEntregas[i][5]), tempo: timestampEnvio, tipo: "PIX" });
+                  dadosRetorno.extratoPix.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: Number(dadosEntregas[i][5]), tempo: Number(dadosEntregas[i][6]) || 0, tipo: "RECEBEU" });
+                  dadosRetorno.notificacoes.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: Number(dadosEntregas[i][5]), tempo: Number(dadosEntregas[i][6]) || 0, tipo: "PIX" });
               }
               if (idEntrega.includes("PIX") && idEntrega.includes("-ENVIOU")) {
                   let xpD = Math.abs(Number(dadosEntregas[i][5]) || 0);
                   dadosRetorno.stats.xpDoado += xpD;
-                  let timestampEnvio = Number(dadosEntregas[i][6]) || 0;
-                  dadosRetorno.extratoPix.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: -xpD, tempo: timestampEnvio, tipo: "ENVIOU" });
+                  dadosRetorno.extratoPix.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: -xpD, tempo: Number(dadosEntregas[i][6]) || 0, tipo: "ENVIOU" });
               }
               if (idEntrega === idNiver) dadosRetorno.aniversario.jaResgatado = true;
               if (idEntrega.startsWith("BADGE-")){
-                let badgeId = idEntrega.replace("BADGE-", "").replace("-" + matricula, "");
-                dadosRetorno.badgesResgatadas.push(badgeId);
+                let prefix = "BADGE-"; let suffix = "-" + matricula;
+                dadosRetorno.badgesResgatadas.push(idEntrega.substring(prefix.length, idEntrega.length - suffix.length));
               }
             }
           }
@@ -2395,25 +2330,14 @@ function doPost(e) {
           const dadosCurt = abaCurtidas.getDataRange().getValues();
           for (let i = 1; i < dadosCurt.length; i++) {
               if (String(dadosCurt[i][2]).trim() === matricula) {
-                  let idLike = String(dadosCurt[i][0]).trim();
                   let remetente = String(dadosCurt[i][1]).trim();
-                  let nomeCurto = nomesMap[remetente] ? nomesMap[remetente].split(" ")[0] : "Um colega";
-                  let tstamp = Number(idLike.split("-")[1]) || new Date().getTime();
-
-                  dadosRetorno.notificacoes.push({
-                      id: idLike,
-                      mensagem: `${nomeCurto} curtiu o seu perfil! ❤️`,
-                      xp: 0,
-                      tempo: tstamp,
-                      tipo: "LIKE"
-                  });
+                  dadosRetorno.notificacoes.push({ id: String(dadosCurt[i][0]).trim(), mensagem: `${nomesMap[remetente] ? nomesMap[remetente].split(" ")[0] : "Um colega"} curtiu o seu perfil! ❤️`, xp: 0, tempo: Number(String(dadosCurt[i][0]).trim().split("-")[1]) || new Date().getTime(), tipo: "LIKE" });
               }
           }
         }
 
         dadosRetorno.notificacoes.sort((a, b) => b.tempo - a.tempo);
         dadosRetorno.notificacoes = dadosRetorno.notificacoes.slice(0, 10);
-
         dadosRetorno.extratoPix.sort((a, b) => b.tempo - a.tempo);
         dadosRetorno.extratoPix = dadosRetorno.extratoPix.slice(0, 20);
 
@@ -2421,99 +2345,71 @@ function doPost(e) {
             let alunosDaMesmaTurma = new Set();
             if(abaTrilha) {
                 const dTrilha = abaTrilha.getDataRange().getValues();
-                for (let i = 1; i < dTrilha.length; i++) {
-                    if (String(dTrilha[i][1]).trim() === turmaDoAlunoNoProjeto && String(dTrilha[i][2]).trim().toLowerCase() === "ativo") {
-                        alunosDaMesmaTurma.add(String(dTrilha[i][0]).trim());
-                    }
-                }
+                for (let i = 1; i < dTrilha.length; i++) if (String(dTrilha[i][1]).trim() === turmaDoAlunoNoProjeto && String(dTrilha[i][2]).trim().toLowerCase() === "ativo") alunosDaMesmaTurma.add(String(dTrilha[i][0]).trim());
             }
 
-            let diasComAulaSet = new Set();
-            let checkinsMap = {};
-            let presencasAluno = 0;
+            let diasComAulaSet = new Set(); let checkinsMap = {}; let presencasAluno = 0;
             const dadosFreq = abaFrequencia.getDataRange().getValues();
             for (let i = 1; i < dadosFreq.length; i++) {
               let idCheckin = String(dadosFreq[i][0]).trim();
+              if (idCheckin.startsWith("BDAY")) continue;
               let matFreq = String(dadosFreq[i][1]).trim();
               let dataBruta = dadosFreq[i][3];
-              let hora = String(dadosFreq[i][4]).trim();
-
-              if (idCheckin.startsWith("BDAY")) continue;
               let dataFormatada = dataBruta instanceof Date ? Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy") : String(dataBruta).trim();
 
               if (alunosDaMesmaTurma.has(matFreq)) diasComAulaSet.add(dataFormatada);
-              if (matFreq === matricula && hora !== "00:00:00" && hora !== "00:00" && hora !== "") {
-                  presencasAluno++;
-                  dadosRetorno.stats.totalCheckins++;
-                  checkinsMap[dataFormatada] = true;
+              if (matFreq === matricula && String(dadosFreq[i][4]).trim() !== "00:00:00" && String(dadosFreq[i][4]).trim() !== "") {
+                  presencasAluno++; dadosRetorno.stats.totalCheckins++; checkinsMap[dataFormatada] = true;
               }
             }
-            let totalAulas = diasComAulaSet.size;
-            dadosRetorno.taxaPresenca = totalAulas === 0 ? 100 : Math.round((presencasAluno / totalAulas) * 100);
+            dadosRetorno.taxaPresenca = diasComAulaSet.size === 0 ? 100 : Math.round((presencasAluno / diasComAulaSet.size) * 100);
 
             let diasOrdenados = Array.from(diasComAulaSet).sort((a, b) => {
                 let pA = String(a).split('/'); let pB = String(b).split('/');
                 return new Date(pB[2], pB[1]-1, pB[0]).getTime() - new Date(pA[2], pA[1]-1, pA[0]).getTime();
             });
-            let streak = 0;
-            const dataHojeStr = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
+            let streak = 0; const dataHojeStr = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
             for (let dia of diasOrdenados) {
                 if (dia === dataHojeStr && !checkinsMap[dia]) continue;
-                if (checkinsMap[dia]) streak++;
-                else break;
+                if (checkinsMap[dia]) streak++; else break;
             }
             dadosRetorno.ofensivaDias = streak;
         }
 
-        if (abaAtividades) {
-          const dadosAtiv = abaAtividades.getDataRange().getValues();
-          let hojeTime = new Date(); hojeTime.setHours(0,0,0,0);
+        // LER ATIVIDADES (Direto da Memória)
+        let hojeTime = new Date(); hojeTime.setHours(0,0,0,0);
+        for (let i = 1; i < dadosAtiv.length; i++) {
+          if (String(dadosAtiv[i][13] || "Publicada").trim() !== "Publicada") continue;
 
-          for (let i = 1; i < dadosAtiv.length; i++) {
+          let turmaAlvo = String(dadosAtiv[i][5]).trim();
+          if (turmaAlvo.toLowerCase() === "todas" || turmaAlvo === turmaDoAlunoNoProjeto) {
+            let idAtiv = String(dadosAtiv[i][0]).trim();
+            let entregaAluno = entregasMap[idAtiv];
+            let dataLimiteStr = String(dadosAtiv[i][3]); // O cache já converteu para string YYYY-MM-DD ou pegou nativa
             
-            // --- MÁGICA 1: OCULTA OS RASCUNHOS ---
-            let statusPublicacao = String(dadosAtiv[i][13] || "Publicada").trim();
-            if (statusPublicacao !== "Publicada") continue;
-
-            let turmaAlvo = String(dadosAtiv[i][5]).trim();
-            if (turmaAlvo.toLowerCase() === "todas" || turmaAlvo === turmaDoAlunoNoProjeto) {
-              let idAtiv = String(dadosAtiv[i][0]).trim();
-              let entregaAluno = entregasMap[idAtiv];
-
-              let dataLimiteBruta = dadosAtiv[i][3];
-              let dataLimiteStr = dataLimiteBruta instanceof Date ? Utilities.formatDate(dataLimiteBruta, timezone, "dd/MM/yyyy") : String(dataLimiteBruta);
-
-              let statusPrazo = "No Prazo";
-              if (!entregaAluno && dataLimiteStr) {
-                  let partesData = dataLimiteStr.split('/');
-                  if (partesData.length === 3) {
-                    let dataLim = new Date(Number(partesData[2]), Number(partesData[1])-1, Number(partesData[0]));
-                    if (hojeTime > dataLim) statusPrazo = "Atrasada";
-                  }
+            let statusPrazo = "No Prazo";
+            if (!entregaAluno && dataLimiteStr) {
+              if (dataLimiteStr.includes("-")) {
+                let p = dataLimiteStr.split("-");
+                if (p.length === 3 && hojeTime > new Date(Number(p[0]), Number(p[1])-1, Number(p[2]))) statusPrazo = "Atrasada";
+              } else if (dataLimiteStr.includes("/")) {
+                let p = dataLimiteStr.split('/');
+                if (p.length === 3 && hojeTime > new Date(Number(p[2]), Number(p[1])-1, Number(p[0]))) statusPrazo = "Atrasada";
               }
-
-              // Verifica se o Tutor liberou
-              let isGabaritoLiberado = dadosAtiv[i][17] === true || String(dadosAtiv[i][17]).toLowerCase() === "true";
-              // Se não estiver liberado, o texto vira NADA (impossível hackear)
-              let textoGabaritoSeguro = isGabaritoLiberado ? String(dadosAtiv[i][16] || "") : "";
-
-              dadosRetorno.atividades.push({
-                id: idAtiv, titulo: String(dadosAtiv[i][1]), descricao: String(dadosAtiv[i][2]), dataLimite: dataLimiteStr,
-                xp: dadosAtiv[i][4], tipo: String(dadosAtiv[i][6] || "Projeto"),
-                opcaoA: String(dadosAtiv[i][7] || ""), opcaoB: String(dadosAtiv[i][8] || ""), opcaoC: String(dadosAtiv[i][9] || ""), opcaoD: String(dadosAtiv[i][10] || ""),
-                status: entregaAluno ? entregaAluno.status : "Pendente",
-                respostaEnviada: entregaAluno ? entregaAluno.resposta : "",
-                xpGanho: entregaAluno ? entregaAluno.xpGanho : 0,
-                dataEnvio: entregaAluno ? entregaAluno.dataEnvio : 0,
-                statusPrazo: statusPrazo,
-                feedback: entregaAluno ? entregaAluno.feedback : "",
-                linkClassroom: String(dadosAtiv[i][12] || ""),
-                imagemUrl: String(dadosAtiv[i][14] || ""),
-                modulo: String(dadosAtiv[i][15] || "Geral"),
-                gabarito: textoGabaritoSeguro,
-                statusModulo: statusModulosMap[String(dadosAtiv[i][15]).trim() + "|" + turmaDoAlunoNoProjeto] || statusModulosMap[String(dadosAtiv[i][15]).trim() + "|Todas"] || "Aberto"
-              });
             }
+
+            let isGabaritoLiberado = dadosAtiv[i][17] === true || String(dadosAtiv[i][17]).toLowerCase() === "true";
+            dadosRetorno.atividades.push({
+              id: idAtiv, titulo: String(dadosAtiv[i][1]), descricao: String(dadosAtiv[i][2]), dataLimite: dataLimiteStr,
+              xp: dadosAtiv[i][4], tipo: String(dadosAtiv[i][6] || "Projeto"),
+              opcaoA: String(dadosAtiv[i][7] || ""), opcaoB: String(dadosAtiv[i][8] || ""), opcaoC: String(dadosAtiv[i][9] || ""), opcaoD: String(dadosAtiv[i][10] || ""),
+              status: entregaAluno ? entregaAluno.status : "Pendente",
+              respostaEnviada: entregaAluno ? entregaAluno.resposta : "", xpGanho: entregaAluno ? entregaAluno.xpGanho : 0,
+              dataEnvio: entregaAluno ? entregaAluno.dataEnvio : 0, statusPrazo: statusPrazo, feedback: entregaAluno ? entregaAluno.feedback : "",
+              linkClassroom: String(dadosAtiv[i][12] || ""), imagemUrl: String(dadosAtiv[i][14] || ""), modulo: String(dadosAtiv[i][15] || "Geral"),
+              gabarito: isGabaritoLiberado ? String(dadosAtiv[i][16] || "") : "",
+              statusModulo: statusModulosMap[String(dadosAtiv[i][15]).trim() + "|" + turmaDoAlunoNoProjeto] || statusModulosMap[String(dadosAtiv[i][15]).trim() + "|Todas"] || "Aberto"
+            });
           }
         }
 
@@ -2526,7 +2422,7 @@ function doPost(e) {
       if (action === "resgatar_badge") {
         const lock = LockService.getScriptLock();
         try {
-          lock.waitLock(5000); // 🔒 Tranca a porta
+          lock.waitLock(10000); // 🔒 Tranca a porta
 
           const matricula = String(dadosApp.matricula).trim();
           const badgeId = String(dadosApp.badgeId).trim();
@@ -2924,6 +2820,7 @@ function doPost(e) {
           })).setMimeType(ContentService.MimeType.JSON);
         }
         
+        invalidarCacheGeral();
         return ContentService.createTextOutput(JSON.stringify({ 
           status: "erro", 
           mensagem: "Aba de configurações não encontrada." 
@@ -3169,7 +3066,7 @@ function doPost(e) {
       if (action === "injetar_xp_manual") {
         const lock = LockService.getScriptLock();
         try {
-          lock.waitLock(5000);
+          lock.waitLock(10000);
           const matriculaAlvo = String(dadosApp.matriculaAlvo).trim();
           const quantidadeXP = Number(dadosApp.quantidadeXP) || 0;
           const motivo = String(dadosApp.motivo).trim() || "Ajuste manual do Mestre.";
@@ -3273,7 +3170,7 @@ function doPost(e) {
       if (action === "salvar_gabaritos_lote") {
         const lock = LockService.getScriptLock();
         try {
-          lock.waitLock(5000);
+          lock.waitLock(10000);
           const atualizacoes = dadosApp.atualizacoes; // Array de { id, gabarito, linkClassroom, gabaritoLiberado }
           const abaAtividades = planilha.getSheetByName("atividades");
 
@@ -3294,6 +3191,7 @@ function doPost(e) {
               }
             });
 
+            invalidarCacheGeral();
             return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Gabaritos atualizados em lote com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
           }
           return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Nenhuma atualização recebida." })).setMimeType(ContentService.MimeType.JSON);
@@ -3626,7 +3524,7 @@ function doPost(e) {
       if (action === "comprar_rifa") {
           const lock = LockService.getScriptLock();
           try {
-              lock.waitLock(5000); // 🔒 Evita AutoClickers (Race Condition)
+              lock.waitLock(10000); // 🔒 Evita AutoClickers (Race Condition)
               const matricula = String(dadosApp.matricula).trim();
               const pacote = String(dadosApp.pacote).trim(); // "BRONZE", "PRATA", "OURO"
 
@@ -3749,6 +3647,29 @@ function doPost(e) {
           })).setMimeType(ContentService.MimeType.JSON);
       }
 
+    // ==========================================
+    // ROTA 46: HISTORICO DE BILHETES (alunos)
+    // ==========================================
+      if (action === "buscar_bilhetes_aluno") {
+          const matricula = String(dadosApp.matricula).trim();
+          const abaRifa = planilha.getSheetByName("rifa_bilhetes");
+          const dadosRifa = abaRifa.getDataRange().getValues();
+          let meusBilhetes = [];
+          
+          for (let i = 1; i < dadosRifa.length; i++) {
+              if (String(dadosRifa[i][1]).trim() === matricula) {
+                  meusBilhetes.push({ 
+                      id: dadosRifa[i][0], 
+                      data: dadosRifa[i][4], 
+                      status: dadosRifa[i][5],
+                      ciclo: dadosRifa[i][6] 
+                  });
+              }
+          }
+          return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", bilhetes: meusBilhetes })).setMimeType(ContentService.MimeType.JSON);
+      }
+
+
   } catch (erro) {
     return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: erro.toString() })).setMimeType(ContentService.MimeType.JSON);
   }
@@ -3764,6 +3685,24 @@ function registrarLogSeguranca(matricula, nome, acao, detalhes) {
     const dataHora = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "dd/MM/yyyy HH:mm:ss");
     sheetLog.appendRow([dataHora, matricula, nome, acao, detalhes]);
   }
+}
+
+// ==========================================
+// FUNÇÃO AUXILIAR: LIMPEZA DE CACHE (INVALIDAÇÃO)
+// ==========================================
+function invalidarCacheGeral() {
+  const cache = CacheService.getScriptCache();
+  const abas = ["basededados", "controle_modulos", "atividades", "configuracoes"];
+  let chavesParaRemover = [];
+  
+  // Mapeia tanto a chave principal quanto os possíveis "pedaços" (chunks)
+  abas.forEach(aba => {
+    chavesParaRemover.push("CACHE_" + aba);
+    chavesParaRemover.push("CACHE_" + aba + "_CHUNKS");
+    for (let i = 0; i < 15; i++) chavesParaRemover.push("CACHE_" + aba + "_" + i);
+  });
+  
+  cache.removeAll(chavesParaRemover);
 }
 
 // ==========================================

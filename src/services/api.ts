@@ -15,18 +15,30 @@ async function fetchApi(payload: any) {
     return { status: "erro", mensagem: "URL da API não configurada." };
   }
 
+  // Criamos um controlador de tempo limite (25 segundos)
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 20000);
+
   try {
     const response = await fetch(GOOGLE_API_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify(payload),
+      signal: controller.signal,
     });
+
+    clearTimeout(timeoutId);
     return await response.json();
-  } catch (error) {
-    console.error("Erro na comunicação com a API:", error);
-    throw new Error(
-      "Falha na conexão com o servidor. Verifique a sua internet.",
-    );
+  } catch (error: any) {
+    clearTimeout(timeoutId);
+    if (error.name === "AbortError") {
+      return {
+        status: "erro",
+        mensagem:
+          "O servidor demorou a responder. Sua missão pode ter sido salva; verifique a trilha.",
+      };
+    }
+    return { status: "erro", mensagem: "Falha na conexão." };
   }
 }
 
@@ -151,7 +163,7 @@ export const apiAluno = {
       pacote,
     }),
 
-    buscarMeusBilhetes: (matricula: string) =>
+  buscarMeusBilhetes: (matricula: string) =>
     fetchApi({
       action: "buscar_bilhetes_aluno",
       matricula,

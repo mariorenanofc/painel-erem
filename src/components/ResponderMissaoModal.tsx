@@ -67,6 +67,7 @@ export default function ResponderMissaoModal({
     }
     return false;
   };
+  
 
   const renderDescricaoComLinks = (texto: string) => {
     if (!texto) return null;

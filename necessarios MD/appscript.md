@@ -214,7 +214,7 @@ function doPost(e) {
         
         const lock = LockService.getScriptLock();
         try {
-          lock.waitLock(30000);
+          lock.waitLock(15000);
           
           const bd = planilha.getSheetByName("basededados");
           const dadosBD = bd.getDataRange().getValues();
@@ -372,7 +372,8 @@ function doPost(e) {
         let xpTotalDoAluno = 0;
         let nivelDoAluno = "Iniciante";
 
-        if (dadosTrilha && dadosTrilha.length > 0) {
+        if (abaTrilha) {
+          const dadosTrilha = abaTrilha.getDataRange().getValues();
           for (let t = 1; t < dadosTrilha.length; t++) {
             if (String(dadosTrilha[t][0]).trim() === matricula) {
               turmaDoAlunoNoProjeto = String(dadosTrilha[t][1]).trim();
@@ -383,7 +384,8 @@ function doPost(e) {
           }
         }
 
-        if (dadosEntregas && dadosEntregas.length > 0) {
+        if (abaEntregas) {
+          const dadosEntregas = abaEntregas.getDataRange().getValues();
           for (let i = 1; i < dadosEntregas.length; i++) {
             let mat = String(dadosEntregas[i][1]).trim();
             if (mat === matricula) {
@@ -588,7 +590,8 @@ function doPost(e) {
 
         // 🔥 2. MAPA DE PENDÊNCIAS (Para o alerta vermelho)
         let pendentesMap = {};
-        if (dadosEntregas && dadosEntregas.length > 0) {
+        if (abaEntregas) {
+          const dadosEntregas = abaEntregas.getDataRange().getValues();
           for (let i = 1; i < dadosEntregas.length; i++) {
             let statusEntrega = String(dadosEntregas[i][4]).trim();
             if (statusEntrega === "Aguardando Correção") {
@@ -748,11 +751,9 @@ function doPost(e) {
         }
 
         let linhaTrilhaAluno = -1;
-        let xpAtual = 0;
         for (let t = 1; t < dadosTrilha.length; t++) {
             if (String(dadosTrilha[t][0]).trim() === matricula) {
                 linhaTrilhaAluno = t + 1;
-                xpAtual = Number(dadosTrilha[t][4]) || 0;
                 break;
             }
         }
@@ -760,7 +761,7 @@ function doPost(e) {
         // 3. TRANCA O SERVIDOR APENAS PARA ESCREVER (Chama as abas SÓ AQUI)
         const lock = LockService.getScriptLock();
         try {
-            lock.waitLock(30000); 
+            lock.waitLock(25000); 
             
             const abaEntregas = planilha.getSheetByName("entregas");
             const abaTrilha = planilha.getSheetByName("trilhatech");
@@ -770,13 +771,12 @@ function doPost(e) {
             if (linhaExistente > 0) {
                 abaEntregas.getRange(linhaExistente, 4, 1, 4).setValues([[resposta, statusFinal, xpGanhoFinal, timestampAtual]]);
             } else {
-                let lastRow = abaEntregas.getLastRow();
-                abaEntregas.getRange(lastRow + 1, 1, 1, 8).setValues([[idAtividade + "-" + matricula, matricula, idAtividade, resposta, statusFinal, xpGanhoFinal, timestampAtual, ""]]);
+                abaEntregas.appendRow([idAtividade + "-" + matricula, matricula, idAtividade, resposta, statusFinal, xpGanhoFinal, timestampAtual, ""]);
             }
 
             if (xpGanhoFinal > 0 && linhaTrilhaAluno > -1) {
-                // Otimização de Performance: Evita leitura getValue() lenta dentro de trava crítica
-                abaTrilha.getRange(linhaTrilhaAluno, 5).setValue(xpAtual - xpAnterior + xpGanhoFinal);
+                let xpAtualReal = Number(abaTrilha.getRange(linhaTrilhaAluno, 5).getValue()) || 0;
+                abaTrilha.getRange(linhaTrilhaAluno, 5).setValue(xpAtualReal - xpAnterior + xpGanhoFinal);
             }
 
             // LIMPA O CACHE DE FORMA EFICIENTE 
@@ -832,7 +832,8 @@ function doPost(e) {
         const planBase = planilha.getSheetByName("basededados");
 
         let alunosMap = {}; 
-        if (dadosBase && dadosBase.length > 0) {
+        if (planBase) {
+          const dadosBase = planBase.getDataRange().getValues();
           for (let i = 1; i < dadosBase.length; i++) {
             alunosMap[String(dadosBase[i][2]).trim()] = String(dadosBase[i][0]);
           }
@@ -1171,11 +1172,10 @@ function doPost(e) {
             const abaFrequencia = planilha.getSheetByName("frequencia");
 
             const idCheckin = "CHK-" + agora.getTime();
-            let lastRow = abaFrequencia.getLastRow();
-            abaFrequencia.getRange(lastRow + 1, 1, 1, 6).setValues([[idCheckin, matricula, nomeAluno, dataHoje, horaAtual, xpGanho]]);
+            abaFrequencia.appendRow([idCheckin, matricula, nomeAluno, dataHoje, horaAtual, xpGanho]);
             
-            // Otimização de Performance: Evita leitura getValue() lenta dentro de trava crítica
-            abaTrilha.getRange(linhaTrilhaAluno, 5).setValue(xpAtual + xpGanho);
+            let xpAtualReal = Number(abaTrilha.getRange(linhaTrilhaAluno, 5).getValue()) || 0;
+            abaTrilha.getRange(linhaTrilhaAluno, 5).setValue(xpAtualReal + xpGanho);
 
             // Invalida cache de frequencia e trilhatech
             const cache = CacheService.getScriptCache();
@@ -1294,6 +1294,7 @@ function doPost(e) {
 
         let alunosRankMap = {};
         let nomesMap = {};
+        const dadosBase = planBase.getDataRange().getValues();
         for (let i = 1; i < dadosBase.length; i++) nomesMap[String(dadosBase[i][2]).trim()] = String(dadosBase[i][0]);
 
         const dadosTrilha = abaTrilha.getDataRange().getValues();
@@ -2116,19 +2117,23 @@ function doPost(e) {
         const CONTA_MESTRE = "1234567"; // <--- A SUA MATRÍCULA MESTRE AQUI
         const ehMestre = (matricula === CONTA_MESTRE);
 
-        const dadosTrilha = lerComCacheSeguro("trilhatech", 60);
-        const dadosBase = lerComCacheSeguro("basededados", 1800);
-        const dadosConf = lerComCacheSeguro("configuracoes", 1800);
-        const dadosEntregas = lerComCacheSeguro("entregas", 60);
+        let abaTrilha = planilha.getSheetByName("trilhatech");
+        let planBase = planilha.getSheetByName("basededados");
+        let abaConfig = planilha.getSheetByName("configuracoes");
+        let abaEntregas = planilha.getSheetByName("entregas");
+
+        if (!abaConfig) { abaConfig = planilha.insertSheet("configuracoes"); abaConfig.appendRow(["Chave", "Valor"]); }
 
         let limiteDiario = 50;
-        if (dadosConf && dadosConf.length > 0) {
-          for(let i=1; i<dadosConf.length; i++) {
-            if(dadosConf[i][0] === "LIMITE_PIX_DIARIO") { limiteDiario = Number(dadosConf[i][1]) || 50; break; }
-          }
+        let dadosConf = abaConfig.getDataRange().getValues();
+        let temConfig = false;
+        for(let i=1; i<dadosConf.length; i++) {
+          if(dadosConf[i][0] === "LIMITE_PIX_DIARIO") { limiteDiario = Number(dadosConf[i][1]) || 50; temConfig = true; break; }
         }
+        if(!temConfig) abaConfig.appendRow(["LIMITE_PIX_DIARIO", 50]);
 
         let minhaTurma = ""; let temSenhaPix = false; let meuXpTotal = 0;
+        const dadosTrilha = abaTrilha.getDataRange().getValues();
         for(let i=1; i<dadosTrilha.length; i++) {
           if(String(dadosTrilha[i][0]).trim() === matricula) {
               minhaTurma = String(dadosTrilha[i][1]).trim();
@@ -2139,6 +2144,7 @@ function doPost(e) {
         }
 
         let nomesMap = {};
+        const dadosBase = planBase.getDataRange().getValues();
         for(let i=1; i<dadosBase.length; i++) nomesMap[String(dadosBase[i][2]).trim()] = String(dadosBase[i][0]);
 
         let colegas = [];
@@ -2162,6 +2168,8 @@ function doPost(e) {
         const timezone = Session.getScriptTimeZone();
         const hojeStr = Utilities.formatDate(new Date(), timezone, "yyyyMMdd");
         const prefixoHoje = "PIX-" + hojeStr;
+
+        const dadosEntregas = abaEntregas.getDataRange().getValues();
         for(let i=1; i<dadosEntregas.length; i++) {
           let id = String(dadosEntregas[i][0]).trim();
           let matRow = String(dadosEntregas[i][1]).trim();
@@ -2328,11 +2336,8 @@ function doPost(e) {
 
           let timestamp = new Date().getTime();
           let idBase = prefixoHoje + "-" + timestamp;
-          let lastRow = abaEntregas.getLastRow();
-          abaEntregas.getRange(lastRow + 1, 1, 2, 7).setValues([
-            [idBase + "-ENVIOU", matriculaOrigem, "PIX-XP", `Enviou para ${matriculaDestino}: ${motivo}`, "Avaliado", -quantidade, timestamp],
-            [idBase + "-RECEBEU", matriculaDestino, "PIX-XP", `Recebeu de ${matriculaOrigem}: ${motivo}`, "Avaliado", quantidade, timestamp]
-          ]);
+          abaEntregas.appendRow([idBase + "-ENVIOU", matriculaOrigem, "PIX-XP", `Enviou para ${matriculaDestino}: ${motivo}`, "Avaliado", -quantidade, timestamp]);
+          abaEntregas.appendRow([idBase + "-RECEBEU", matriculaDestino, "PIX-XP", `Recebeu de ${matriculaOrigem}: ${motivo}`, "Avaliado", quantidade, timestamp]);
 
           // Invalida cache de entregas e trilhatech
           const cache = CacheService.getScriptCache();
@@ -2599,11 +2604,9 @@ function doPost(e) {
         }
 
         let linhaTrilhaAluno = -1;
-        let xpAtual = 0;
         for(let t = 1; t < dadosTrilha.length; t++) {
             if(String(dadosTrilha[t][0]).trim() === matricula) {
               linhaTrilhaAluno = t + 1;
-              xpAtual = Number(dadosTrilha[t][4]) || 0;
               break;
             }
         }
@@ -2611,19 +2614,18 @@ function doPost(e) {
         // 2. LOCK CIRÚRGICO APENAS PARA ESCREVER
         const lock = LockService.getScriptLock();
         try {
-          lock.waitLock(30000); 
+          lock.waitLock(15000); 
           const planilha = SpreadsheetApp.getActiveSpreadsheet(); // Abre só aqui
           const abaEntregas = planilha.getSheetByName("entregas");
           const abaTrilha = planilha.getSheetByName("trilhatech");
 
           if (!abaEntregas || !abaTrilha) throw new Error("Planilhas inacessíveis.");
 
-          let lastRow = abaEntregas.getLastRow();
-          abaEntregas.getRange(lastRow + 1, 1, 1, 7).setValues([[idUnico, matricula, "CONQUISTA-BADGE", `Desbloqueou: ${nomeBadge}`, "Avaliado", xpGanho, timestampAtual]]);
+          abaEntregas.appendRow([idUnico, matricula, "CONQUISTA-BADGE", `Desbloqueou: ${nomeBadge}`, "Avaliado", xpGanho, timestampAtual]);
 
           if (linhaTrilhaAluno > -1) {
-              // Otimização de Performance: Evita leitura getValue() lenta dentro de trava crítica
-              abaTrilha.getRange(linhaTrilhaAluno, 5).setValue(xpAtual + xpGanho);
+              let xpAtualReal = Number(abaTrilha.getRange(linhaTrilhaAluno, 5).getValue()) || 0;
+              abaTrilha.getRange(linhaTrilhaAluno, 5).setValue(xpAtualReal + xpGanho);
           }
 
           return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: `+${xpGanho} XP Resgatado!` })).setMimeType(ContentService.MimeType.JSON);
@@ -2639,11 +2641,11 @@ function doPost(e) {
     // ROTA 30: DASHBOARD ANALYTICS (GERAL E RADAR DE RISCO)
     // ==========================================
       if (action === "buscar_analytics_geral") {
-        const dadosTrilha = lerComCacheSeguro("trilhatech", 60);
-        const dadosBase = lerComCacheSeguro("basededados", 1800);
-        const dadosEntregas = lerComCacheSeguro("entregas", 60);
-        const dadosFrequencia = lerComCacheSeguro("frequencia", 60);
-        const dadosAtiv = lerComCacheSeguro("atividades", 300);
+        const abaTrilha = planilha.getSheetByName("trilhatech");
+        const planBase = planilha.getSheetByName("basededados");
+        const abaEntregas = planilha.getSheetByName("entregas");
+        const abaFrequencia = planilha.getSheetByName("frequencia");
+        const abaAtividades = planilha.getSheetByName("atividades");
 
         let totalAlunos = 0;
         let totalXpEscola = 0;
@@ -2654,7 +2656,8 @@ function doPost(e) {
         let nomesMap = {};
         let telefonesMap = {};
 
-        if (dadosBase && dadosBase.length > 0) {
+        if (planBase) {
+          const dadosBase = planBase.getDataRange().getValues();
           for (let i = 1; i < dadosBase.length; i++) {
             let mat = String(dadosBase[i][2]).trim();
             nomesMap[mat] = String(dadosBase[i][0]);
@@ -2662,7 +2665,8 @@ function doPost(e) {
           }
         }
 
-        if (dadosTrilha && dadosTrilha.length > 0) {
+        if (abaTrilha) {
+          const dadosTrilha = abaTrilha.getDataRange().getValues();
           for (let i = 1; i < dadosTrilha.length; i++) {
             let mat = String(dadosTrilha[i][0]).trim();
             let turma = String(dadosTrilha[i][1]).trim();
@@ -2698,8 +2702,8 @@ function doPost(e) {
           }
         }
 
-        if (dadosFrequencia && dadosFrequencia.length > 0) {
-          const dadosFreq = dadosFrequencia;
+        if (abaFrequencia) {
+          const dadosFreq = abaFrequencia.getDataRange().getValues();
           let timezone = Session.getScriptTimeZone();
           for (let i = 1; i < dadosFreq.length; i++) {
             let mat = String(dadosFreq[i][1]).trim();
@@ -2718,9 +2722,10 @@ function doPost(e) {
           }
         }
 
-        if (dadosAtiv && dadosEntregas) {
+        if (abaAtividades && abaEntregas) {
             let missoesVencidas = [];
             let hoje = new Date(); hoje.setHours(0,0,0,0);
+            const dadosAtiv = abaAtividades.getDataRange().getValues();
             for (let i = 1; i < dadosAtiv.length; i++) {
               let dataLimiteBruta = dadosAtiv[i][3];
               let dataLimiteStr = dataLimiteBruta instanceof Date ? Utilities.formatDate(dataLimiteBruta, Session.getScriptTimeZone(), "dd/MM/yyyy") : String(dataLimiteBruta);
@@ -2734,7 +2739,7 @@ function doPost(e) {
             }
 
             let entregasFeitas = {};
-            const dadosEnt = dadosEntregas;
+            const dadosEnt = abaEntregas.getDataRange().getValues();
             for (let i = 1; i < dadosEnt.length; i++) {
               let mat = String(dadosEnt[i][1]).trim();
               let idAtiv = String(dadosEnt[i][2]).trim();
@@ -2772,10 +2777,10 @@ function doPost(e) {
     // ==========================================
       if (action === "buscar_ficha_360") {
         const matricula = String(dadosApp.matricula).trim();
-        const dadosBase = lerComCacheSeguro("basededados", 1800);
-        const dadosTrilha = lerComCacheSeguro("trilhatech", 60);
-        const dadosEntregas = lerComCacheSeguro("entregas", 60);
-        const dadosFrequencia = lerComCacheSeguro("frequencia", 60);
+        const planBase = planilha.getSheetByName("basededados");
+        const abaTrilha = planilha.getSheetByName("trilhatech");
+        const abaEntregas = planilha.getSheetByName("entregas");
+        const abaFrequencia = planilha.getSheetByName("frequencia");
 
         let ficha = {
           dadosPessoais: {}, xpTotal: 0, nivel: "", turmaProjeto: "", statusProjeto: "", historicoXP: [],
@@ -2816,10 +2821,10 @@ function doPost(e) {
           }
         }
 
-        if (dadosFrequencia && dadosFrequencia.length > 0 && ficha.turmaProjeto) {
+        if (abaFrequencia && ficha.turmaProjeto) {
           let diasComAulaSet = new Set();
           let meusRegistrosMap = {};
-          const dadosFreq = dadosFrequencia;
+          const dadosFreq = abaFrequencia.getDataRange().getValues();
           let timezone = Session.getScriptTimeZone();
 
           for (let i = 1; i < dadosFreq.length; i++) {
@@ -3906,7 +3911,8 @@ function doPost(e) {
     // ==========================================
       if (action === "buscar_bilhetes_aluno") {
           const matricula = String(dadosApp.matricula).trim();
-          const dadosRifa = lerComCacheSeguro("rifa_bilhetes", 60);
+          const abaRifa = planilha.getSheetByName("rifa_bilhetes");
+          const dadosRifa = abaRifa.getDataRange().getValues();
           let meusBilhetes = [];
           
           for (let i = 1; i < dadosRifa.length; i++) {
@@ -3969,117 +3975,85 @@ function invalidarCacheGeral(abasAdicionais) {
 // ==========================================
 // FUNÇÃO AUXILIAR: LEITURA DE CACHE ULTRA RÁPIDA (BLINDADA)
 // ==========================================
-function lerComCacheSeguro(nomeAba, tempoSegundos) {
-  const cache = CacheService.getScriptCache();
-  const cacheChave = "CACHE_" + nomeAba;
-  
-  // 1. Tenta obter do cache ativo
-  let dadosString = cache.get(cacheChave);
-  try {
-    if (dadosString) {
-      return JSON.parse(dadosString);
-    }
-    let chunksTotal = cache.get(cacheChave + "_CHUNKS");
-    if (chunksTotal) {
-      let reconstruido = "";
-      for (let c = 0; c < Number(chunksTotal); c++) {
-        let chunk = cache.get(cacheChave + "_" + c);
-        if (chunk) reconstruido += chunk;
-      }
-      if (reconstruido) return JSON.parse(reconstruido);
-    }
-  } catch(e) {}
+  function lerComCacheSeguro(nomeAba, tempoSegundos) {
+    const cache = CacheService.getScriptCache();
+    const cacheChave = "CACHE_" + nomeAba;
+    let dadosString = cache.get(cacheChave);
 
-  // 2. Cache Miss: Tenta obter o lock rápido para reconstrução e evitar Thundering Herd
-  const lock = LockService.getScriptLock();
-  let lockAdquirido = false;
-  try {
-    lock.waitLock(1200); // Espera no máximo 1.2 segundos pelo lock
-    lockAdquirido = true;
-    
-    // Duplo check: verifica se outra thread gerou o cache enquanto esperávamos
-    dadosString = cache.get(cacheChave);
-    if (dadosString) return JSON.parse(dadosString);
-    let chunksTotal = cache.get(cacheChave + "_CHUNKS");
-    if (chunksTotal) {
-      let reconstruido = "";
-      for (let c = 0; c < Number(chunksTotal); c++) reconstruido += cache.get(cacheChave + "_" + c) || "";
-      if (reconstruido) return JSON.parse(reconstruido);
-    }
-  } catch (e) {
-    // Falha ao obter o lock (outra requisição está atualizando o cache).
-    // Servimos o cache backup de imediato, poupando a planilha!
     try {
-      let backupString = cache.get(cacheChave + "_BACKUP");
-      if (backupString) return JSON.parse(backupString);
-      let chunksBackup = cache.get(cacheChave + "_BACKUP_CHUNKS");
-      if (chunksBackup) {
+      if (dadosString) return JSON.parse(dadosString);
+      let chunksTotal = cache.get(cacheChave + "_CHUNKS");
+      if (chunksTotal) {
         let reconstruido = "";
-        for (let c = 0; c < Number(chunksBackup); c++) reconstruido += cache.get(cacheChave + "_BACKUP_" + c) || "";
-        if (reconstruido) return JSON.parse(reconstruido);
-      }
-    } catch(err) {}
-  }
-
-  // 3. Lê da planilha e reconstrói o cache
-  try {
-    const planilha = SpreadsheetApp.getActiveSpreadsheet();
-    let aba = planilha.getSheetByName(nomeAba);
-    if (!aba) return [];
-
-    let dados = aba.getDataRange().getValues();
-    let timezone = Session.getScriptTimeZone();
-    
-    let dadosProcessados = dados.map(linha => linha.map(celula => {
-      if (celula instanceof Date) {
-        let d = String(celula.getDate()).padStart(2, '0');
-        let m = String(celula.getMonth() + 1).padStart(2, '0');
-        let y = celula.getFullYear();
-        return `${d}/${m}/${y}`; 
-      }
-      return celula;
-    }));
-
-    let jsonStr = JSON.stringify(dadosProcessados);
-
-    // Grava no cache ativo e no cache backup (backup dura 2 horas)
-    gravarNoCache(cacheChave, jsonStr, tempoSegundos, cache);
-    gravarNoCache(cacheChave + "_BACKUP", jsonStr, 7200, cache);
-
-    return dadosProcessados;
-  } catch (err) {
-    // Fallback de contingência usando o cache de backup
-    try {
-      let backupString = cache.get(cacheChave + "_BACKUP");
-      if (backupString) return JSON.parse(backupString);
-      let chunksBackup = cache.get(cacheChave + "_BACKUP_CHUNKS");
-      if (chunksBackup) {
-        let reconstruido = "";
-        for (let c = 0; c < Number(chunksBackup); c++) reconstruido += cache.get(cacheChave + "_BACKUP_" + c) || "";
+        for (let c = 0; c < Number(chunksTotal); c++) reconstruido += cache.get(cacheChave + "_" + c) || "";
         if (reconstruido) return JSON.parse(reconstruido);
       }
     } catch(e) {}
-    return [];
-  } finally {
-    if (lockAdquirido) {
-      lock.releaseLock();
-    }
-  }
-}
 
-function gravarNoCache(chave, valorStr, tempo, cacheObj) {
-  try {
-    if (valorStr.length < 90000) {
-      cacheObj.put(chave, valorStr, tempo);
-    } else {
-      let numChunks = Math.ceil(valorStr.length / 90000);
-      cacheObj.put(chave + "_CHUNKS", String(numChunks), tempo);
-      for (let c = 0; c < numChunks; c++) {
-        cacheObj.put(chave + "_" + c, valorStr.substring(c * 90000, (c + 1) * 90000), tempo);
+    // Concorrência Segura: Garante que apenas 1 requisição leia a planilha por vez ao expirar o cache
+    const lock = LockService.getScriptLock();
+    let lockAdquirido = false;
+    try {
+      lock.waitLock(10000); // Espera até 10 segundos na fila de leitura
+      lockAdquirido = true;
+
+      // Duplo Check: Verifica se o cache foi preenchido enquanto esperava o lock
+      dadosString = cache.get(cacheChave);
+      if (dadosString) return JSON.parse(dadosString);
+      let chunksTotal = cache.get(cacheChave + "_CHUNKS");
+      if (chunksTotal) {
+        let reconstruido = "";
+        for (let c = 0; c < Number(chunksTotal); c++) reconstruido += cache.get(cacheChave + "_" + c) || "";
+        if (reconstruido) return JSON.parse(reconstruido);
+      }
+
+      const planilha = SpreadsheetApp.getActiveSpreadsheet();
+      let aba = planilha.getSheetByName(nomeAba);
+      if (!aba) return [];
+
+      let dados = aba.getDataRange().getValues();
+      let timezone = Session.getScriptTimeZone();
+      
+      let dadosProcessados = dados.map(linha => linha.map(celula => {
+        if (celula instanceof Date) {
+          let d = String(celula.getDate()).padStart(2, '0');
+          let m = String(celula.getMonth() + 1).padStart(2, '0');
+          let y = celula.getFullYear();
+          return `${d}/${m}/${y}`; 
+        }
+        return celula;
+      }));
+
+      let jsonStr = JSON.stringify(dadosProcessados);
+
+      try {
+        if (jsonStr.length < 90000) {
+          cache.put(cacheChave, jsonStr, tempoSegundos);
+        } else {
+          let numChunks = Math.ceil(jsonStr.length / 90000);
+          cache.put(cacheChave + "_CHUNKS", String(numChunks), tempoSegundos);
+          for (let c = 0; c < numChunks; c++) {
+            cache.put(cacheChave + "_" + c, jsonStr.substring(c * 90000, (c + 1) * 90000), tempoSegundos);
+          }
+        }
+      } catch (e) {}
+
+      return dadosProcessados;
+
+    } catch (e) {
+      // Fallback de emergência caso ocorra algum timeout no lock
+      try {
+        const planilha = SpreadsheetApp.getActiveSpreadsheet();
+        let aba = planilha.getSheetByName(nomeAba);
+        if (aba) return aba.getDataRange().getValues();
+      } catch (err) {}
+      return [];
+    } finally {
+      if (lockAdquirido) {
+        lock.releaseLock();
       }
     }
-  } catch (e) {}
-}
+  }
 
 // ==========================================
 // GATILHO AUTOMÁTICO (Vigia edições manuais na Planilha)

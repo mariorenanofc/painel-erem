@@ -2121,8 +2121,6 @@ function doPost(e) {
         const dadosConf = lerComCacheSeguro("configuracoes", 1800);
         const dadosEntregas = lerComCacheSeguro("entregas", 60);
 
-        if (!abaConfig) { abaConfig = planilha.insertSheet("configuracoes"); abaConfig.appendRow(["Chave", "Valor"]); }
-
         let limiteDiario = 50;
         if (dadosConf && dadosConf.length > 0) {
           for(let i=1; i<dadosConf.length; i++) {
@@ -2141,7 +2139,6 @@ function doPost(e) {
         }
 
         let nomesMap = {};
-        const dadosBase = planBase.getDataRange().getValues();
         for(let i=1; i<dadosBase.length; i++) nomesMap[String(dadosBase[i][2]).trim()] = String(dadosBase[i][0]);
 
         let colegas = [];

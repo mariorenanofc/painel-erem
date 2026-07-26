@@ -94,7 +94,7 @@ export default function FormularioMissaoModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={limparFormulario}
-          className="absolute inset-0 bg-slate-955/65 backdrop-blur-md"
+          className="absolute inset-0 bg-slate-950/65 backdrop-blur-md"
         />
 
         {/* Modal Container */}
@@ -148,38 +148,38 @@ export default function FormularioMissaoModal({
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 
                 {/* Tipo de Atividade */}
-                <div className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-850 shadow-sm flex flex-col justify-center">
-                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-3">
+                <div className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
                     Tipo de Missão
                   </label>
                   <div className="flex flex-col sm:flex-row gap-4">
-                    <label className="flex items-center gap-2.5 cursor-pointer font-bold text-sm text-slate-700 dark:text-slate-350 hover:text-blue-500 transition-colors">
+                    <label className="flex items-center gap-2.5 cursor-pointer font-bold text-sm text-slate-700 dark:text-slate-300 hover:text-blue-500 transition-colors">
                       <input
                         type="radio"
                         value="Projeto"
                         checked={tipo === "Projeto"}
                         onChange={() => setTipo("Projeto")}
-                        className="cursor-pointer w-5 h-5 text-blue-600 border-slate-350 dark:border-slate-700 rounded-full"
+                        className="cursor-pointer w-5 h-5 text-blue-600 border-slate-300 dark:border-slate-700 rounded-full"
                       />
                       Projeto (Link)
                     </label>
-                    <label className="flex items-center gap-2.5 cursor-pointer font-bold text-sm text-slate-700 dark:text-slate-350 hover:text-amber-500 transition-colors">
+                    <label className="flex items-center gap-2.5 cursor-pointer font-bold text-sm text-slate-700 dark:text-slate-300 hover:text-amber-500 transition-colors">
                       <input
                         type="radio"
                         value="Quiz"
                         checked={tipo === "Quiz"}
                         onChange={() => setTipo("Quiz")}
-                        className="cursor-pointer w-5 h-5 text-amber-500 border-slate-350 dark:border-slate-700 rounded-full"
+                        className="cursor-pointer w-5 h-5 text-amber-500 border-slate-300 dark:border-slate-700 rounded-full"
                       />
                       Quiz (Escolha)
                     </label>
-                    <label className="flex items-center gap-2.5 cursor-pointer font-bold text-sm text-slate-700 dark:text-slate-350 hover:text-emerald-500 transition-colors">
+                    <label className="flex items-center gap-2.5 cursor-pointer font-bold text-sm text-slate-700 dark:text-slate-300 hover:text-emerald-500 transition-colors">
                       <input
                         type="radio"
                         value="Material"
                         checked={tipo === "Material"}
                         onChange={() => setTipo("Material")}
-                        className="cursor-pointer w-5 h-5 text-emerald-500 border-slate-350 dark:border-slate-700 rounded-full"
+                        className="cursor-pointer w-5 h-5 text-emerald-500 border-slate-300 dark:border-slate-700 rounded-full"
                       />
                       Material (Apoio)
                     </label>
@@ -187,8 +187,8 @@ export default function FormularioMissaoModal({
                 </div>
 
                 {/* Seleção do Módulo */}
-                <div className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-850 shadow-sm flex flex-col justify-center">
-                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                <div className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm flex flex-col justify-center">
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
                     <span>🗂️</span> Módulo da Matriz Instrucional
                   </label>
                   {modulosCadastrados.length > 0 ? (
@@ -218,14 +218,14 @@ export default function FormularioMissaoModal({
               </div>
 
               {/* Bento Row 2: Título com etiquetas dinâmicas */}
-              <div className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-850 shadow-sm space-y-4">
-                <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">
+              <div className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm space-y-4">
+                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                   Título da Missão & Aula
                 </label>
 
                 <div className="flex flex-wrap gap-3">
                   <div className="flex items-center bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden focus-within:border-blue-500 transition-colors shadow-sm shrink-0">
-                    <span className="bg-slate-100/80 dark:bg-slate-850 px-3 py-2.5 text-xs font-black text-slate-500 dark:text-slate-450 border-r border-slate-200 dark:border-slate-800">
+                    <span className="bg-slate-100/80 dark:bg-slate-800 px-3 py-2.5 text-xs font-black text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-slate-800">
                       AULA Nº
                     </span>
                     <input
@@ -246,7 +246,7 @@ export default function FormularioMissaoModal({
 
                   <div className="relative">
                     <select
-                      className="cursor-pointer bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 pr-10 text-xs font-black text-slate-650 dark:text-slate-350 outline-none shrink-0 appearance-none shadow-sm"
+                      className="cursor-pointer bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 pr-10 text-xs font-black text-slate-600 dark:text-slate-300 outline-none shrink-0 appearance-none shadow-sm"
                       onChange={(e) => {
                         if (e.target.value) {
                           const tipoEtiq = `${e.target.value} - `;
@@ -292,7 +292,7 @@ export default function FormularioMissaoModal({
 
               {/* Descrição / Instruções */}
               <div className="space-y-2">
-                <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">
+                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                   Instruções Detalhadas da Missão
                 </label>
                 <textarea
@@ -314,7 +314,7 @@ export default function FormularioMissaoModal({
                   value={gabarito}
                   onChange={(e) => setGabarito(e.target.value)}
                   placeholder="Cole o link do Colab, CodePen, ou digite as instruções de resolução."
-                  className="w-full bg-white dark:bg-slate-950 border border-emerald-500/20 dark:border-emerald-900/30 text-slate-850 dark:text-slate-100 rounded-2xl p-4 font-mono text-xs focus:border-emerald-500 outline-none transition-all shadow-sm"
+                  className="w-full bg-white dark:bg-slate-950 border border-emerald-500/20 dark:border-emerald-900/30 text-slate-800 dark:text-slate-100 rounded-2xl p-4 font-mono text-xs focus:border-emerald-500 outline-none transition-all shadow-sm"
                 />
                 
                 <label className="flex items-center gap-3.5 p-4 bg-white/70 dark:bg-slate-950/60 border border-emerald-500/20 dark:border-emerald-900/30 rounded-2xl cursor-pointer hover:bg-white dark:hover:bg-slate-950 transition-colors shadow-sm">
@@ -322,7 +322,7 @@ export default function FormularioMissaoModal({
                     type="checkbox"
                     checked={gabaritoLiberado}
                     onChange={(e) => setGabaritoLiberado(e.target.checked)}
-                    className="cursor-pointer w-5 h-5 text-emerald-600 focus:ring-emerald-500 rounded shrink-0 bg-slate-100 dark:bg-slate-850 border-slate-300 dark:border-slate-700"
+                    className="cursor-pointer w-5 h-5 text-emerald-600 focus:ring-emerald-500 rounded shrink-0 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700"
                   />
                   <span className="text-xs font-bold text-emerald-900 dark:text-emerald-350 transition-colors">
                     Liberar acesso ao Gabarito para os Alunos (Fica visível na Central deles)
@@ -366,7 +366,7 @@ export default function FormularioMissaoModal({
                       <select
                         value={respostaCorreta}
                         onChange={(e) => setRespostaCorreta(e.target.value)}
-                        className="cursor-pointer border border-amber-500/30 dark:border-amber-900/55 rounded-xl p-2.5 pr-8 font-black text-emerald-600 dark:text-emerald-400 bg-white dark:bg-slate-955 outline-none focus:border-emerald-500 transition-all text-xs appearance-none"
+                        className="cursor-pointer border border-amber-500/30 dark:border-amber-900/55 rounded-xl p-2.5 pr-8 font-black text-emerald-600 dark:text-emerald-400 bg-white dark:bg-slate-950 outline-none focus:border-emerald-500 transition-all text-xs appearance-none"
                       >
                         <option value="A" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Alternativa A</option>
                         <option value="B" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Alternativa B</option>
@@ -384,7 +384,7 @@ export default function FormularioMissaoModal({
               {/* Bento Row 5: Links e Configurações */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
                     <span>🖼️</span> Link da Imagem
                   </label>
                   <input
@@ -396,7 +396,7 @@ export default function FormularioMissaoModal({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
                     <span>🏫</span> Link do Classroom
                   </label>
                   <input
@@ -412,7 +412,7 @@ export default function FormularioMissaoModal({
               {/* Bento Row 6: Três campos de configurações */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-wider">
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     Data Limite
                   </label>
                   <input
@@ -423,7 +423,7 @@ export default function FormularioMissaoModal({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-wider">
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     XP da Missão
                   </label>
                   <input
@@ -434,7 +434,7 @@ export default function FormularioMissaoModal({
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-wider">
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                     Turma Alvo
                   </label>
                   <div className="relative">

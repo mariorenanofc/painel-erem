@@ -224,7 +224,7 @@ export default function PixModal({
 
               <div className="space-y-4 text-left mb-6">
                 <div>
-                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase mb-1.5 tracking-wider">
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-1.5 tracking-wider">
                     Nova Senha (6 números)
                   </label>
                   <input
@@ -240,7 +240,7 @@ export default function PixModal({
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase mb-1.5 tracking-wider">
+                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-1.5 tracking-wider">
                     Repita a Senha
                   </label>
                   <input
@@ -277,7 +277,7 @@ export default function PixModal({
                   className={`cursor-pointer flex-1 py-3 font-black text-xs uppercase tracking-wider transition-colors relative z-10 ${
                     abaAtiva === "enviar"
                       ? "text-emerald-600 dark:text-emerald-450 font-black"
-                      : "text-slate-500 dark:text-slate-450 hover:text-slate-700 dark:hover:text-slate-350"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                   }`}
                 >
                   Transferir XP
@@ -293,7 +293,7 @@ export default function PixModal({
                   className={`cursor-pointer flex-1 py-3 font-black text-xs uppercase tracking-wider transition-colors relative z-10 ${
                     abaAtiva === "extrato"
                       ? "text-emerald-600 dark:text-emerald-450 font-black"
-                      : "text-slate-500 dark:text-slate-450 hover:text-slate-700 dark:hover:text-slate-350"
+                      : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                   }`}
                 >
                   Ver Extrato
@@ -317,7 +317,7 @@ export default function PixModal({
                     onSubmit={enviarPix}
                   >
                     {/* Bento Boxes de Saldos */}
-                    <div className="grid grid-cols-2 gap-3.5 bg-slate-50/50 dark:bg-slate-950/20 p-3.5 rounded-2xl border border-slate-200/60 dark:border-slate-850 mb-5">
+                    <div className="grid grid-cols-2 gap-3.5 bg-slate-50/50 dark:bg-slate-950/20 p-3.5 rounded-2xl border border-slate-200/60 dark:border-slate-800 mb-5">
                       <div className="space-y-0.5 border-r border-slate-200/80 dark:border-slate-800/80 pr-2">
                         <p className="text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 tracking-wider">
                           Seu Saldo
@@ -377,7 +377,7 @@ export default function PixModal({
                               setPixQuantidade(Number(e.target.value))
                             }
                             required
-                            className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-emerald-700 dark:text-emerald-450 font-black rounded-2xl p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors font-mono placeholder-slate-450"
+                            className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-emerald-700 dark:text-emerald-450 font-black rounded-2xl p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors font-mono placeholder-slate-400"
                             placeholder="10"
                           />
                         </div>
@@ -389,7 +389,7 @@ export default function PixModal({
                             value={pixMotivo}
                             onChange={(e) => setPixMotivo(e.target.value)}
                             required
-                            className="cursor-pointer w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-slate-850 dark:text-slate-150 rounded-2xl p-3 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                            className="cursor-pointer w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl p-3 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                           >
                             <option>🤝 Parceria de Equipe</option>
                             <option>🧠 Mestre do Código (Me ajudou)</option>
@@ -414,7 +414,7 @@ export default function PixModal({
                             setPixSenha(e.target.value.replace(/\D/g, ""))
                           }
                           required
-                          className="w-40 text-slate-850 dark:text-slate-50 mx-auto block text-center text-2xl tracking-widest border border-amber-250 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-950/15 rounded-2xl p-2.5 outline-none focus:border-amber-500 transition-colors"
+                          className="w-40 text-slate-800 dark:text-slate-50 mx-auto block text-center text-2xl tracking-widest border border-amber-250 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-950/15 rounded-2xl p-2.5 outline-none focus:border-amber-500 transition-colors"
                           placeholder="••••••"
                         />
                       </div>
@@ -462,26 +462,26 @@ export default function PixModal({
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: idx * 0.05 }}
                             key={item.id}
-                            className="flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/40 p-3 rounded-2xl border border-slate-200/50 dark:border-slate-850 transition-colors duration-300"
+                            className="flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/40 p-3 rounded-2xl border border-slate-200/50 dark:border-slate-800 transition-colors duration-300"
                           >
                             <div className="flex items-center gap-3">
                               <div
                                 className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
                                   item.tipo === "RECEBEU"
                                     ? "bg-emerald-100/80 dark:bg-emerald-950/45 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/30"
-                                    : "bg-slate-100 dark:bg-slate-950/60 text-slate-550 dark:text-slate-350 border-slate-200 dark:border-slate-850"
+                                    : "bg-slate-100 dark:bg-slate-950/60 text-slate-550 dark:text-slate-300 border-slate-200 dark:border-slate-800"
                                 }`}
                               >
                                 {item.tipo === "RECEBEU" ? "↙️" : "↗️"}
                               </div>
                               <div className="min-w-0">
-                                <p className="text-xs font-black text-slate-850 dark:text-slate-200 leading-tight">
+                                <p className="text-xs font-black text-slate-800 dark:text-slate-200 leading-tight">
                                   {item.tipo === "RECEBEU"
                                     ? "Pix Recebido"
                                     : "Pix Enviado"}
                                 </p>
                                 <p
-                                  className="text-[10px] text-slate-450 dark:text-slate-400 mt-0.5 font-bold truncate line-clamp-1"
+                                  className="text-[10px] text-slate-400 dark:text-slate-400 mt-0.5 font-bold truncate line-clamp-1"
                                   title={item.mensagem}
                                 >
                                   {item.mensagem}
@@ -504,7 +504,7 @@ export default function PixModal({
                               className={`font-black shrink-0 ml-2 font-mono text-sm ${
                                 item.tipo === "RECEBEU"
                                   ? "text-emerald-600 dark:text-emerald-450"
-                                  : "text-slate-650 dark:text-slate-300"
+                                  : "text-slate-600 dark:text-slate-300"
                               }`}
                             >
                               {item.tipo === "RECEBEU" ? "+" : "-"}

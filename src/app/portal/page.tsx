@@ -847,7 +847,7 @@ export default function PortalDashboard() {
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setModalBilhetesAberto(true)}
-                  className="cursor-pointer flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-955/40 dark:bg-slate-950/45 hover:bg-slate-200 dark:hover:bg-slate-900/45 text-slate-800 dark:text-slate-300 font-bold py-3.5 rounded-xl border border-slate-200 dark:border-white/5"
+                  className="cursor-pointer flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-950/40 dark:bg-slate-950/45 hover:bg-slate-200 dark:hover:bg-slate-900/45 text-slate-800 dark:text-slate-300 font-bold py-3.5 rounded-xl border border-slate-200 dark:border-white/5"
                 >
                   <span>🎟️</span> Meus Bilhetes
                 </motion.button>
@@ -949,7 +949,7 @@ export default function PortalDashboard() {
                 placeholder="Pesquisar missão..."
                 value={buscaAtividade}
                 onChange={(e) => setBuscaAtividade(e.target.value)}
-                className="w-full bg-slate-100 dark:bg-slate-950/50 border border-slate-350 dark:border-slate-700/60 text-slate-800 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary shadow-inner transition-all duration-200"
+                className="w-full bg-slate-100 dark:bg-slate-950/50 border border-slate-300 dark:border-slate-700/60 text-slate-800 dark:text-white rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary focus:border-brand-primary shadow-inner transition-all duration-200"
               />
             </div>
           </div>
@@ -1274,7 +1274,7 @@ export default function PortalDashboard() {
                                       return (
                                         <div
                                           key={ativ.id}
-                                          className={`bg-slate-955/60 rounded-2xl border shadow-sm flex flex-col overflow-hidden relative transition-all hover:shadow-xl hover:-translate-y-1 ${isConcluida ? "border-emerald-500/20" : isDevolvida ? "border-red-500/30" : "border-white/5 hover:border-brand-primary/30"}`}
+                                          className={`bg-slate-950/60 rounded-2xl border shadow-sm flex flex-col overflow-hidden relative transition-all hover:shadow-xl hover:-translate-y-1 ${isConcluida ? "border-emerald-500/20" : isDevolvida ? "border-red-500/30" : "border-white/5 hover:border-brand-primary/30"}`}
                                         >
                                           <div
                                             className={`h-2 w-full ${isConcluida ? "bg-emerald-500" : isDevolvida ? "bg-red-500" : ativ.tipo === "Quiz" ? "bg-amber-400" : ativ.tipo === "Material" ? "bg-emerald-400" : "bg-brand-primary"}`}
@@ -1391,7 +1391,7 @@ export default function PortalDashboard() {
 
                                             {/* Card da atividade */}
                                             <div
-                                              className={`ml-16 md:ml-0 w-[calc(100%-5rem)] md:w-[calc(50%-3rem)] bg-slate-955/60 backdrop-blur-md rounded-3xl border shadow-md transition-all hover:shadow-xl hover:-translate-y-0.5 ${
+                                              className={`ml-16 md:ml-0 w-[calc(100%-5rem)] md:w-[calc(50%-3rem)] bg-slate-950/60 backdrop-blur-md rounded-3xl border shadow-md transition-all hover:shadow-xl hover:-translate-y-0.5 ${
                                                 isConcluida
                                                   ? "border-emerald-500/20"
                                                   : isDevolvida
@@ -1614,7 +1614,7 @@ export default function PortalDashboard() {
                   <div className="space-y-6 animate-in slide-in-from-bottom-4">
                     {/* Bento Grid de Estatísticas */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-                      <div className="bg-slate-50/50 dark:bg-slate-950/20 p-4.5 rounded-2xl border border-slate-200/50 dark:border-slate-850 text-center transition-colors">
+                      <div className="bg-slate-50/50 dark:bg-slate-950/20 p-4.5 rounded-2xl border border-slate-200/50 dark:border-slate-800 text-center transition-colors">
                         <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                           Aulas Totais
                         </p>
@@ -1622,7 +1622,7 @@ export default function PortalDashboard() {
                           {dadosFrequencia.totalAulas}
                         </p>
                       </div>
-                      <div className="bg-slate-50/50 dark:bg-slate-950/20 p-4.5 rounded-2xl border border-slate-200/50 dark:border-slate-850 text-center transition-colors">
+                      <div className="bg-slate-50/50 dark:bg-slate-950/20 p-4.5 rounded-2xl border border-slate-200/50 dark:border-slate-800 text-center transition-colors">
                         <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                           Presenças
                         </p>
@@ -1630,7 +1630,7 @@ export default function PortalDashboard() {
                           {dadosFrequencia.totalPresencas}
                         </p>
                       </div>
-                      <div className="bg-slate-50/50 dark:bg-slate-950/20 p-4.5 rounded-2xl border border-slate-200/50 dark:border-slate-850 text-center transition-colors">
+                      <div className="bg-slate-50/50 dark:bg-slate-950/20 p-4.5 rounded-2xl border border-slate-200/50 dark:border-slate-800 text-center transition-colors">
                         <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                           Faltas
                         </p>
@@ -1638,7 +1638,7 @@ export default function PortalDashboard() {
                           {dadosFrequencia.totalFaltas}
                         </p>
                       </div>
-                      <div className="bg-slate-50/50 dark:bg-slate-950/20 p-4.5 rounded-2xl border border-slate-200/50 dark:border-slate-850 text-center transition-colors">
+                      <div className="bg-slate-50/50 dark:bg-slate-950/20 p-4.5 rounded-2xl border border-slate-200/50 dark:border-slate-800 text-center transition-colors">
                         <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                           Sua Taxa
                         </p>
@@ -1669,7 +1669,7 @@ export default function PortalDashboard() {
                         Histórico Resumido de Aulas
                       </h3>
                       {dadosFrequencia.historico.length === 0 ? (
-                        <p className="text-sm text-slate-450 dark:text-slate-500 italic text-center py-6 bg-slate-50/30 dark:bg-slate-950/10 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                        <p className="text-sm text-slate-400 dark:text-slate-500 italic text-center py-6 bg-slate-50/30 dark:bg-slate-950/10 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
                           Ainda não há registros de presença para a sua turma.
                         </p>
                       ) : (
@@ -1678,7 +1678,7 @@ export default function PortalDashboard() {
                             (reg: FrequenciaHistorico, idx: number) => (
                               <div
                                 key={idx}
-                                className="bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-850 p-2.5 px-3.5 rounded-xl flex justify-between items-center shadow-sm hover:border-slate-350 dark:hover:border-slate-700 transition-all duration-300"
+                                className="bg-slate-50/50 dark:bg-slate-800/40 border border-slate-200/60 dark:border-slate-800 p-2.5 px-3.5 rounded-xl flex justify-between items-center shadow-sm hover:border-slate-300 dark:hover:border-slate-700 transition-all duration-300"
                               >
                                 <span className="text-[11px] font-black text-slate-600 dark:text-slate-300 font-mono">
                                   {reg.data.slice(0, 5)}

@@ -394,7 +394,7 @@ export default function DashboardAlunos() {
       <div className="absolute top-[40%] left-[30%] w-[30vw] h-[30vw] rounded-full aurora-bg-blob-3 animate-glow-pulse pointer-events-none" />
 
       {modalSiepeAberto && (
-        <div className="fixed inset-0 bg-slate-955/80 dark:bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in">
+        <div className="fixed inset-0 bg-slate-950/80 dark:bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in">
           <div className="glass-panel-heavy rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/10">
             <div className="bg-emerald-600/25 border-b border-white/10 text-white p-5 flex justify-between items-center">
               <h2 className="font-display font-black text-lg flex items-center gap-2">

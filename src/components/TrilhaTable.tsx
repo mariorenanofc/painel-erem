@@ -16,7 +16,7 @@ export default function TrilhaTable({
 }: TrilhaTableProps) {
   return (
     <div className="bg-white/80 dark:bg-slate-900/40 rounded-[2rem] shadow-lg border border-slate-200/60 dark:border-white/5 backdrop-blur-md overflow-hidden">
-      <div className="p-6 border-b border-slate-200/80 dark:border-slate-850 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/20">
+      <div className="p-6 border-b border-slate-200/80 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-950/20">
         <h2 className="font-display font-black text-slate-800 dark:text-white text-base uppercase tracking-wider flex items-center gap-2">
           <span>📋</span> Gerenciamento de Vagas
         </h2>
@@ -25,22 +25,22 @@ export default function TrilhaTable({
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-left border-separate border-spacing-0 min-w-[800px]">
           <thead>
-            <tr className="bg-slate-100/80 dark:bg-slate-950 text-slate-500 dark:text-slate-455 text-[10px] uppercase font-black tracking-wider">
-              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-850">Nome do Aluno</th>
-              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-850">Matrícula</th>
-              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-850">Turma do Curso</th>
-              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-850">Status Atual</th>
-              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-850 text-center">Ações de Gestão</th>
+            <tr className="bg-slate-100/80 dark:bg-slate-950 text-slate-500 dark:text-slate-400 text-[10px] uppercase font-black tracking-wider">
+              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">Nome do Aluno</th>
+              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">Matrícula</th>
+              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">Turma do Curso</th>
+              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">Status Atual</th>
+              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 text-center">Ações de Gestão</th>
             </tr>
           </thead>
-          <tbody className="text-slate-700 dark:text-slate-300 text-xs divide-y divide-slate-150 dark:divide-slate-850">
+          <tbody className="text-slate-700 dark:text-slate-300 text-xs divide-y divide-slate-100 dark:divide-slate-800">
             {alunosFiltrados.length > 0 ? (
               alunosFiltrados.map((aluno, index) => (
                 <tr
                   key={index}
                   className="hover:bg-white/80 dark:hover:bg-slate-900/30 transition-colors group"
                 >
-                  <td className="px-6 py-4 font-bold text-slate-800 dark:text-slate-150">
+                  <td className="px-6 py-4 font-bold text-slate-800 dark:text-slate-100">
                     <div className="flex items-center gap-2">
                       <span>{aluno.nome}</span>
                       {aluno.obs && aluno.obs.trim() !== "" && (
@@ -79,7 +79,7 @@ export default function TrilhaTable({
                             ? "bg-amber-100/80 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200/30 dark:border-amber-900/15"
                             : aluno.statusTrilha === "Inscrito"
                               ? "bg-blue-100/80 dark:bg-blue-955/40 text-blue-700 dark:text-blue-400 border-blue-200/30 dark:border-blue-900/15"
-                              : "bg-slate-100 dark:bg-slate-950 text-slate-500 dark:text-slate-450 border-slate-200/50 dark:border-slate-800"
+                              : "bg-slate-100 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-slate-200/50 dark:border-slate-800"
                       }`}
                     >
                       {aluno.statusTrilha}
@@ -134,7 +134,7 @@ export default function TrilhaTable({
               <tr>
                 <td
                   colSpan={5}
-                  className="px-6 py-12 text-center text-slate-450 dark:text-slate-500 font-black uppercase tracking-wider text-xs"
+                  className="px-6 py-12 text-center text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider text-xs"
                 >
                   Nenhum aluno encontrado com estes filtros...
                 </td>

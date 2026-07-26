@@ -19,7 +19,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={props.onClose}
-          className="absolute inset-0 bg-slate-955/65 backdrop-blur-md"
+          className="absolute inset-0 bg-slate-950/65 backdrop-blur-md"
         />
 
         {/* Modal Container */}
@@ -77,13 +77,13 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
           </div>
 
           {/* Filtros / Barra Superior */}
-          <div className="p-4 bg-slate-50/50 dark:bg-slate-950/20 border-b border-slate-200 dark:border-slate-850 flex flex-col sm:flex-row justify-between items-center gap-4 transition-colors shrink-0">
+          <div className="p-4 bg-slate-50/50 dark:bg-slate-950/20 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 transition-colors shrink-0">
             <div className="flex flex-wrap gap-3">
               <div className="relative">
                 <select
                   value={props.turmaDiario}
                   onChange={(e) => props.setTurmaDiario(e.target.value)}
-                  className="cursor-pointer bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 pr-8 text-xs font-bold text-slate-700 dark:text-slate-250 outline-none focus:border-emerald-500 transition-all appearance-none shadow-sm"
+                  className="cursor-pointer bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 pr-8 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-emerald-500 transition-all appearance-none shadow-sm"
                 >
                   <option value="Turma 1 - 1º Ano" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Turma 1 - 1º Ano</option>
                   <option value="Turma 2 - 2º Ano" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Turma 2 - 2º Ano</option>
@@ -99,7 +99,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                     <select
                       value={props.mesDiario}
                       onChange={(e) => props.setMesDiario(e.target.value)}
-                      className="cursor-pointer bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 pr-8 text-xs font-bold text-slate-700 dark:text-slate-250 outline-none focus:border-emerald-500 transition-all appearance-none shadow-sm"
+                      className="cursor-pointer bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 pr-8 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-emerald-500 transition-all appearance-none shadow-sm"
                     >
                       <option value="1" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Janeiro</option>
                       <option value="2" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Fevereiro</option>
@@ -123,7 +123,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                     <select
                       value={props.anoDiario}
                       onChange={(e) => props.setAnoDiario(e.target.value)}
-                      className="cursor-pointer bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 pr-8 text-xs font-bold text-slate-700 dark:text-slate-250 outline-none focus:border-emerald-500 transition-all appearance-none shadow-sm"
+                      className="cursor-pointer bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 pr-8 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-emerald-500 transition-all appearance-none shadow-sm"
                     >
                       <option value={new Date().getFullYear()} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
                         {new Date().getFullYear()}
@@ -141,7 +141,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
             </div>
 
             {props.abaDiario === "mensal" ? (
-              <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-550 bg-white/50 dark:bg-slate-950/20 px-4 py-2.5 rounded-xl border border-slate-200/50 dark:border-slate-850 shadow-sm transition-colors">
+              <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-550 bg-white/50 dark:bg-slate-950/20 px-4 py-2.5 rounded-xl border border-slate-200/50 dark:border-slate-800 shadow-sm transition-colors">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-emerald-500/80"></span>{" "}
                   Presente
@@ -165,7 +165,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                     className={`cursor-pointer px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border shadow-sm select-none ${
                       props.filtroStatusHoje === "Todos"
                         ? "bg-emerald-600 dark:bg-emerald-700 text-white border-emerald-700 dark:border-emerald-800"
-                        : "bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-850 hover:bg-slate-50"
+                        : "bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
                     }`}
                   >
                     Todos ({props.dadosFreqHoje.length})
@@ -177,7 +177,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                     className={`cursor-pointer px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border shadow-sm select-none ${
                       props.filtroStatusHoje === "Presentes"
                         ? "bg-emerald-600 dark:bg-emerald-700 text-white border-emerald-700 dark:border-emerald-800"
-                        : "bg-white dark:bg-slate-955 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-855 hover:bg-slate-50"
+                        : "bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
                     }`}
                   >
                     Presentes ({totalPresentes})
@@ -189,14 +189,14 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                     className={`cursor-pointer px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all border shadow-sm select-none ${
                       props.filtroStatusHoje === "Faltantes"
                         ? "bg-red-650 dark:bg-red-700 text-white border-red-700 dark:border-red-800"
-                        : "bg-white dark:bg-slate-955 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-855 hover:bg-slate-50"
+                        : "bg-white dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50"
                     }`}
                   >
                     Faltantes ({totalFaltantes})
                   </motion.button>
                 </div>
                 <div className="flex gap-2.5 items-center border-t sm:border-t-0 sm:border-l pt-3 sm:pt-0 sm:pl-4 border-slate-200 dark:border-slate-800 transition-colors">
-                  <label className="text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">
+                  <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest whitespace-nowrap">
                     Ordenar:
                   </label>
                   <div className="relative">
@@ -205,7 +205,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                       onChange={(e) =>
                         props.setOrdenacaoFreq(e.target.value as "alfabetica" | "mais_faltas")
                       }
-                      className="cursor-pointer bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 pr-8 text-xs font-bold text-slate-700 dark:text-slate-250 outline-none focus:border-emerald-500 transition-all appearance-none shadow-sm"
+                      className="cursor-pointer bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-2.5 pr-8 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-emerald-500 transition-all appearance-none shadow-sm"
                     >
                        <option value="alfabetica" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Ordem Alfabética</option>
                        <option value="mais_faltas" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Mais Faltas</option>
@@ -244,7 +244,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                     key="emptyMensal"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    className="text-center text-slate-450 dark:text-slate-500 italic py-16"
+                    className="text-center text-slate-400 dark:text-slate-500 italic py-16"
                   >
                     Nenhuma aula registrada para esta turma neste mês.
                   </motion.p>
@@ -255,7 +255,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                     animate={{ opacity: 1, y: 0 }}
                     className="w-full text-left text-xs border-separate border-spacing-0"
                   >
-                    <thead className="bg-slate-100/80 dark:bg-slate-950 text-slate-500 dark:text-slate-450 text-[10px] uppercase font-black tracking-wider sticky top-0 z-20 shadow-sm">
+                    <thead className="bg-slate-100/80 dark:bg-slate-950 text-slate-500 dark:text-slate-400 text-[10px] uppercase font-black tracking-wider sticky top-0 z-20 shadow-sm">
                       <tr>
                         <th className="px-5 py-3.5 border-b border-r border-slate-200 dark:border-slate-800 sticky left-0 bg-slate-100/90 dark:bg-slate-950 z-30 min-w-[240px] transition-colors">
                           Nome do Aluno
@@ -273,7 +273,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                         ))}
                       </tr>
                     </thead>
-                    <tbody className="bg-white/40 dark:bg-slate-900/10 divide-y divide-slate-150 dark:divide-slate-850">
+                    <tbody className="bg-white/40 dark:bg-slate-900/10 divide-y divide-slate-100 dark:divide-slate-800">
                       {props.alunosDiario.map((aluno) => (
                         <tr
                           key={aluno.matricula}
@@ -367,7 +367,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                   animate={{ opacity: 1, y: 0 }}
                   className="w-full text-left text-xs border-collapse"
                 >
-                  <thead className="bg-slate-100/80 dark:bg-slate-950 text-slate-500 dark:text-slate-455 text-[10px] uppercase font-black tracking-wider sticky top-0 z-10 shadow-sm">
+                  <thead className="bg-slate-100/80 dark:bg-slate-950 text-slate-500 dark:text-slate-400 text-[10px] uppercase font-black tracking-wider sticky top-0 z-10 shadow-sm">
                     <tr>
                       <th className="px-5 py-3.5 border-b border-slate-200 dark:border-slate-800">
                         Aluno
@@ -383,7 +383,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="bg-white/40 dark:bg-slate-900/10 divide-y divide-slate-150 dark:divide-slate-850">
+                  <tbody className="bg-white/40 dark:bg-slate-900/10 divide-y divide-slate-100 dark:divide-slate-800">
                     {props.freqHojeFiltrada.map((aluno) => {
                       const taxaPresenca =
                         props.totalAulasTurma > 0
@@ -395,7 +395,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                           className="hover:bg-white/90 dark:hover:bg-slate-800/40 transition-colors"
                         >
                           <td className="px-5 py-3.5">
-                            <div className="font-bold text-slate-850 dark:text-white text-sm">
+                            <div className="font-bold text-slate-800 dark:text-white text-sm">
                               {aluno.nome}
                             </div>
                             <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono mt-0.5">
@@ -436,7 +436,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                                 style={{ width: `${taxaPresenca}%` }}
                               />
                             </div>
-                            <span className="text-[9px] font-black font-mono text-slate-500 dark:text-slate-450 mt-1.5 block">
+                            <span className="text-[9px] font-black font-mono text-slate-500 dark:text-slate-400 mt-1.5 block">
                               {taxaPresenca}%
                             </span>
                           </td>
@@ -447,7 +447,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                       <tr>
                         <td
                           colSpan={4}
-                          className="text-center py-12 text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider"
+                          className="text-center py-12 text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider"
                         >
                           Nenhum aluno encontrado para este filtro.
                         </td>
@@ -471,7 +471,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => props.setModalJustificativaAberto(null)}
-              className="absolute inset-0 bg-slate-955/60 backdrop-blur-sm"
+              className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
             />
 
             {/* Sub-modal Body */}
@@ -484,9 +484,9 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
               <h3 className="font-display font-black text-lg text-slate-800 dark:text-slate-100 mb-1 flex items-center gap-1.5">
                 <span>📝</span> Justificar Falta
               </h3>
-              <p className="text-[11px] font-semibold text-slate-550 dark:text-slate-450 leading-relaxed mb-4">
-                Aluno: <strong className="text-slate-800 dark:text-slate-250 font-black">{props.modalJustificativaAberto.nome}</strong> <br />
-                Data da Falta: <strong className="text-slate-800 dark:text-slate-250 font-mono font-black">{String(props.modalJustificativaAberto.dia).padStart(2, "0")}/{String(props.mesDiario).padStart(2, "0")}</strong>
+              <p className="text-[11px] font-semibold text-slate-550 dark:text-slate-400 leading-relaxed mb-4">
+                Aluno: <strong className="text-slate-800 dark:text-slate-200 font-black">{props.modalJustificativaAberto.nome}</strong> <br />
+                Data da Falta: <strong className="text-slate-800 dark:text-slate-200 font-mono font-black">{String(props.modalJustificativaAberto.dia).padStart(2, "0")}/{String(props.mesDiario).padStart(2, "0")}</strong>
               </p>
               
               <textarea

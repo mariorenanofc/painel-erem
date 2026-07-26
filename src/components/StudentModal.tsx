@@ -16,8 +16,8 @@ const DataDisplay = ({
   isLink?: boolean;
   type?: "text" | "tel" | "mailto";
 }) => (
-  <div className="flex flex-col bg-slate-50/50 dark:bg-slate-950/20 p-4.5 rounded-2xl border border-slate-200/50 dark:border-slate-850 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-800">
-    <span className="text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-1.5">
+  <div className="flex flex-col bg-slate-50/50 dark:bg-slate-950/20 p-4.5 rounded-2xl border border-slate-200/50 dark:border-slate-800 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-800">
+    <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5">
       {label}
     </span>
     {isLink && value && value !== "Sem email" && value !== "Não encontrado" ? (
@@ -30,7 +30,7 @@ const DataDisplay = ({
     ) : (
       <span
         className={`font-bold text-slate-800 dark:text-slate-200 text-sm md:text-base break-all ${
-          !value || value === "Sem email" ? "text-slate-450 italic font-normal" : ""
+          !value || value === "Sem email" ? "text-slate-400 italic font-normal" : ""
         }`}
       >
         {value || `Não informado`}
@@ -82,7 +82,7 @@ export default function StudentModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={fecharEResetar}
-          className="absolute inset-0 bg-slate-955/65 backdrop-blur-md"
+          className="absolute inset-0 bg-slate-950/65 backdrop-blur-md"
         />
 
         {/* Modal Container */}
@@ -168,17 +168,17 @@ export default function StudentModal({
 
                   {/* Lógica Trilha Tech */}
                   {formData.statusTrilha ? (
-                    <div className="bg-slate-50/70 dark:bg-slate-950/30 p-5 rounded-3xl border border-slate-200/60 dark:border-slate-850 mt-2 shadow-inner">
-                      <h3 className="text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-3">
+                    <div className="bg-slate-50/70 dark:bg-slate-950/30 p-5 rounded-3xl border border-slate-200/60 dark:border-slate-800 mt-2 shadow-inner">
+                      <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
                         🚀 Participação no Projeto Trilha Tech
                       </h3>
                       <div className="flex flex-col sm:flex-row gap-5 mb-4">
                         <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
-                          <span className="text-slate-450 dark:text-slate-500 font-normal">Turma do Projeto:</span>{" "}
+                          <span className="text-slate-400 dark:text-slate-500 font-normal">Turma do Projeto:</span>{" "}
                           {formData.turmaTrilha}
                         </p>
                         <p className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                          <span className="text-slate-450 dark:text-slate-500 font-normal">Status Atual:</span>{" "}
+                          <span className="text-slate-400 dark:text-slate-500 font-normal">Status Atual:</span>{" "}
                           <span className={`px-2.5 py-0.5 rounded-lg text-xs font-black uppercase tracking-wider ${
                             formData.statusTrilha === "Ativo"
                               ? "bg-emerald-100 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-400"
@@ -238,7 +238,7 @@ export default function StudentModal({
                               <select
                                 value={turmaCursoSelecionada}
                                 onChange={(e) => setTurmaCursoSelecionada(e.target.value)}
-                                className="cursor-pointer w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-705 dark:text-slate-250 rounded-xl p-3 pr-10 font-bold focus:border-blue-550 outline-none transition-all text-sm appearance-none shadow-sm"
+                                className="cursor-pointer w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-705 dark:text-slate-200 rounded-xl p-3 pr-10 font-bold focus:border-blue-550 outline-none transition-all text-sm appearance-none shadow-sm"
                               >
                                 <option value="" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Selecione a turma...</option>
                                 <option value="Turma 1 - 1º Ano" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Turma 1 - 1º Ano</option>
@@ -256,7 +256,7 @@ export default function StudentModal({
                             disabled={!turmaCursoSelecionada || inscrevendo}
                             className={`w-full sm:w-auto px-6 py-3.5 rounded-2xl text-white font-black text-xs uppercase tracking-wider transition-all shadow-md select-none ${
                               !turmaCursoSelecionada || inscrevendo
-                                ? "bg-slate-250 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none"
+                                ? "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none"
                                 : "bg-blue-600 hover:brightness-110 shadow-blue-500/10"
                             }`}
                           >
@@ -289,9 +289,9 @@ export default function StudentModal({
                         value={formData.matricula}
                         onChange={handleChange}
                         readOnly={isEditing}
-                        className={`border border-slate-250 dark:border-slate-800 p-3.5 rounded-2xl outline-none font-bold text-sm shadow-sm transition-all ${
+                        className={`border border-slate-200 dark:border-slate-800 p-3.5 rounded-2xl outline-none font-bold text-sm shadow-sm transition-all ${
                           isEditing
-                            ? "bg-slate-100 dark:bg-slate-900/50 border-slate-200 dark:border-slate-850 text-slate-400 dark:text-slate-605 cursor-not-allowed shadow-none font-mono"
+                            ? "bg-slate-100 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-605 cursor-not-allowed shadow-none font-mono"
                             : "bg-white dark:bg-slate-950 focus:border-blue-500 text-slate-800 dark:text-slate-100"
                         }`}
                         placeholder="Ex: 1234567"
@@ -307,7 +307,7 @@ export default function StudentModal({
                         name="nome"
                         value={formData.nome}
                         onChange={handleChange}
-                        className="bg-white dark:bg-slate-950 border border-slate-250 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all"
+                        className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all"
                         placeholder="Nome do aluno..."
                       />
                     </div>
@@ -321,7 +321,7 @@ export default function StudentModal({
                         name="dataNasc"
                         value={formData.dataNasc}
                         onChange={handleChange}
-                        className="bg-white dark:bg-slate-950 border border-slate-250 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all cursor-pointer"
+                        className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all cursor-pointer"
                       />
                     </div>
 
@@ -334,7 +334,7 @@ export default function StudentModal({
                         name="telefoneAluno"
                         value={formData.telefoneAluno}
                         onChange={handleChange}
-                        className="bg-white dark:bg-slate-950 border border-slate-250 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all font-mono"
+                        className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all font-mono"
                         placeholder="(87) 9XXXX-XXXX"
                       />
                     </div>
@@ -351,7 +351,7 @@ export default function StudentModal({
                           name="turma"
                           value={formData.turma}
                           onChange={handleChange}
-                          className="cursor-pointer w-full bg-white dark:bg-slate-955 border border-slate-250 dark:border-slate-800 p-3.5 pr-10 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all appearance-none"
+                          className="cursor-pointer w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3.5 pr-10 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all appearance-none"
                         >
                           <option value="" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Selecione a turma...</option>
                           <option value="1º ANO A" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">1º ANO A</option>
@@ -381,7 +381,7 @@ export default function StudentModal({
                         name="email"
                         value={formData.email}
                         onChange={handleChange}
-                        className="bg-white dark:bg-slate-950 border border-slate-250 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all"
+                        className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all"
                         placeholder="aluno@educacao.pe.gov.br"
                       />
                     </div>
@@ -395,7 +395,7 @@ export default function StudentModal({
                         name="telefoneResponsavel"
                         value={formData.telefoneResponsavel}
                         onChange={handleChange}
-                        className="bg-white dark:bg-slate-950 border border-slate-250 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all font-mono"
+                        className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all font-mono"
                         placeholder="(87) 9XXXX-XXXX"
                       />
                     </div>
@@ -409,7 +409,7 @@ export default function StudentModal({
                         name="obs"
                         value={formData.obs}
                         onChange={handleChange}
-                        className="bg-white dark:bg-slate-950 border border-slate-250 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all"
+                        className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all"
                         placeholder="Anotações extras..."
                       />
                     </div>

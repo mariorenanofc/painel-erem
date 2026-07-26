@@ -37,7 +37,7 @@ export default function BadgesGallery({ dados }: { dados: DadosParaBadges }) {
     <div className="bg-white/80 dark:bg-slate-900/40 rounded-[2.5rem] p-6 border border-slate-200/60 dark:border-white/5 shadow-lg backdrop-blur-md transition-colors duration-300">
       
       {/* Header */}
-      <div className="flex justify-between items-center mb-8 border-b border-slate-200/80 dark:border-slate-850 pb-4">
+      <div className="flex justify-between items-center mb-8 border-b border-slate-200/80 dark:border-slate-800 pb-4">
         <h3 className="font-display font-black text-slate-800 dark:text-white text-base uppercase tracking-wider flex items-center gap-2">
           <span>🏆</span> Mural de Conquistas
         </h3>
@@ -54,7 +54,7 @@ export default function BadgesGallery({ dados }: { dados: DadosParaBadges }) {
 
           return (
             <div key={cat.id} className="space-y-4">
-              <h4 className="text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest pl-1">
+              <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest pl-1">
                 {cat.nome}
               </h4>
               <motion.div
@@ -75,7 +75,7 @@ export default function BadgesGallery({ dados }: { dados: DadosParaBadges }) {
                       className={`relative flex flex-col items-center text-center p-5 rounded-2xl border transition-all duration-300 ${
                         badge.desbloqueada
                           ? "bg-white dark:bg-slate-800 border-amber-250 dark:border-amber-500/50 shadow-md cursor-pointer"
-                          : "bg-slate-100/50 dark:bg-slate-950/15 border-slate-200/50 dark:border-slate-850 opacity-55 grayscale hover:grayscale-[50%] cursor-not-allowed"
+                          : "bg-slate-100/50 dark:bg-slate-950/15 border-slate-200/50 dark:border-slate-800 opacity-55 grayscale hover:grayscale-[50%] cursor-not-allowed"
                       }`}
                     >
                       {/* PLAQUETA DE XP RECOMPENSA */}
@@ -83,7 +83,7 @@ export default function BadgesGallery({ dados }: { dados: DadosParaBadges }) {
                         className={`absolute -top-2 -right-1 text-[9px] font-black uppercase tracking-wider px-2 py-0.5 rounded-lg shadow-sm z-10 border ${
                           badge.desbloqueada
                             ? "bg-amber-500 text-white border-amber-400"
-                            : "bg-slate-200 dark:bg-slate-800 text-slate-450 dark:text-slate-500 border-slate-300 dark:border-slate-700"
+                            : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 border-slate-300 dark:border-slate-700"
                         }`}
                       >
                         +{badge.recompensa} XP
@@ -105,13 +105,13 @@ export default function BadgesGallery({ dados }: { dados: DadosParaBadges }) {
                       
                       <h5
                         className={`font-display font-black text-xs leading-snug mb-2 ${
-                          badge.desbloqueada ? "text-slate-800 dark:text-white" : "text-slate-500 dark:text-slate-450"
+                          badge.desbloqueada ? "text-slate-800 dark:text-white" : "text-slate-500 dark:text-slate-400"
                         }`}
                       >
                         {badge.nome}
                       </h5>
 
-                      <div className="w-full mt-auto pt-3 border-t border-slate-100 dark:border-slate-850/60">
+                      <div className="w-full mt-auto pt-3 border-t border-slate-100 dark:border-slate-800/60">
                         <div className="flex justify-between text-[9px] font-bold text-slate-400 dark:text-slate-500 mb-1.5 font-mono">
                           <span>PROGRESSO</span>
                           <span>

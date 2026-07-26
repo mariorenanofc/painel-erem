@@ -237,7 +237,7 @@ export default function ImportadorLoteModal({
                           <select
                             value={modulo}
                             onChange={(e) => setModulo(e.target.value)}
-                            className="cursor-pointer w-full p-3.5 pr-10 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-850 dark:text-slate-250 rounded-2xl outline-none focus:border-blue-500 transition-all text-sm appearance-none shadow-sm font-bold"
+                            className="cursor-pointer w-full p-3.5 pr-10 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-2xl outline-none focus:border-blue-500 transition-all text-sm appearance-none shadow-sm font-bold"
                           >
                             <option value="" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Selecione o Módulo...</option>
                             {modulosCadastrados.map((m) => (
@@ -260,7 +260,7 @@ export default function ImportadorLoteModal({
                           <select
                             value={turma}
                             onChange={(e) => setTurma(e.target.value)}
-                            className="cursor-pointer w-full p-3.5 pr-10 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-855 dark:text-slate-250 rounded-2xl outline-none focus:border-blue-500 transition-all text-sm appearance-none shadow-sm font-bold"
+                            className="cursor-pointer w-full p-3.5 pr-10 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-2xl outline-none focus:border-blue-500 transition-all text-sm appearance-none shadow-sm font-bold"
                           >
                             <option value="Todas" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Todas as Turmas</option>
                             {turmasDisponiveis.map((t) => (
@@ -291,7 +291,7 @@ export default function ImportadorLoteModal({
                         value={textoBruto}
                         onChange={(e) => setTextoBruto(e.target.value)}
                         placeholder="Exemplo:&#10;Aula 01 - Apresentação (História do JS)&#10;Rascunho&#10;Aula 01 - Desafio 1.1 (História do JS)"
-                        className="w-full p-4.5 font-mono text-xs border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-800 dark:text-slate-350 rounded-2xl outline-none focus:border-blue-500 resize-none transition-all shadow-inner leading-relaxed"
+                        className="w-full p-4.5 font-mono text-xs border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950 text-slate-800 dark:text-slate-300 rounded-2xl outline-none focus:border-blue-500 resize-none transition-all shadow-inner leading-relaxed"
                       />
                     </div>
 
@@ -328,7 +328,7 @@ export default function ImportadorLoteModal({
                         <span className="text-blue-600 dark:text-blue-450 font-display font-black text-2xl font-mono">
                           {atividades.filter((a) => a.selecionado).length}
                         </span>
-                        <p className="text-[9px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest mt-0.5">
+                        <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">
                           A Importar
                         </p>
                       </div>
@@ -342,7 +342,7 @@ export default function ImportadorLoteModal({
                           className={`flex items-start gap-4 p-4.5 rounded-2xl border cursor-pointer transition-all duration-355 shadow-sm hover:translate-x-0.5 ${
                             ativ.selecionado
                               ? "bg-white dark:bg-slate-800 border-blue-400 dark:border-blue-650 shadow-md"
-                              : "bg-slate-50/40 dark:bg-slate-950/15 border-slate-200/50 dark:border-slate-850 opacity-60 hover:opacity-85"
+                              : "bg-slate-50/40 dark:bg-slate-950/15 border-slate-200/50 dark:border-slate-800 opacity-60 hover:opacity-85"
                           }`}
                         >
                           <input
@@ -352,11 +352,11 @@ export default function ImportadorLoteModal({
                             className="cursor-pointer mt-1 w-5 h-5 text-blue-600 rounded shrink-0 border-slate-300 dark:border-slate-700"
                           />
                           <div className="flex-1 min-w-0">
-                            <p className="font-bold text-slate-850 dark:text-slate-100 text-sm leading-snug">
+                            <p className="font-bold text-slate-800 dark:text-slate-100 text-sm leading-snug">
                               {ativ.titulo}
                             </p>
                             <div className="flex flex-wrap gap-2 mt-2.5">
-                              <span className="text-[9px] font-black tracking-widest bg-slate-100 dark:bg-slate-850 text-slate-500 dark:text-slate-450 px-2.5 py-0.5 rounded-lg uppercase border border-slate-200 dark:border-slate-800 transition-colors">
+                              <span className="text-[9px] font-black tracking-widest bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2.5 py-0.5 rounded-lg uppercase border border-slate-200 dark:border-slate-800 transition-colors">
                                 {ativ.tipo}
                               </span>
                               <span className="text-[9px] font-black tracking-widest bg-emerald-100/90 dark:bg-emerald-955/35 text-emerald-700 dark:text-emerald-450 px-2.5 py-0.5 rounded-lg uppercase border border-emerald-250/30 dark:border-emerald-900/10 transition-colors">
@@ -378,7 +378,7 @@ export default function ImportadorLoteModal({
             </div>
 
             {/* Footer */}
-            <div className="p-5 bg-white/50 dark:bg-transparent border-t border-slate-200/80 dark:border-slate-850/80 flex flex-wrap gap-3 justify-between shrink-0">
+            <div className="p-5 bg-white/50 dark:bg-transparent border-t border-slate-200/80 dark:border-slate-800/80 flex flex-wrap gap-3 justify-between shrink-0">
               <div>
                 {etapa === 2 && (
                   <motion.button

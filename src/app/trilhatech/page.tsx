@@ -8,6 +8,7 @@ import TrilhaTable from "@/src/components/TrilhaTable";
 import { useState, useMemo, useEffect } from "react";
 import useSWR from "swr";
 import { Aluno } from "@/src/types";
+import { motion } from "framer-motion";
 
 // --- O "Buscador" que o SWR vai usar para ler a API ---
 const fetcher = (url: string) => fetch(url).then((res) => res.json());
@@ -45,18 +46,16 @@ export default function TrilhaTechPage() {
 
   const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
 
-  // 🚀 OTIMIZAÇÃO 1: SWR (Substitui o useEffect)
+  // 🚀 SWR para leitura da API
   const {
     data: dadosBrutos,
     isLoading: carregando,
     mutate,
   } = useSWR(GOOGLE_API_URL, fetcher, {
-    revalidateOnFocus: true, // Atualiza os dados sozinho se você voltar para a aba
+    revalidateOnFocus: true,
   });
 
-  // 🚀 OTIMIZAÇÃO 2: useMemo (Memória do Navegador)
-
-  // 1. Filtra a base geral para pegar apenas os alunos do Projeto
+  // Filtra a base geral para pegar apenas os alunos do Projeto
   const alunosCurso = useMemo(() => {
     if (!dadosBrutos) return [];
 
@@ -77,7 +76,7 @@ export default function TrilhaTechPage() {
     );
   }, [dadosBrutos]);
 
-  // 2. Aplica a barra de pesquisa e os filtros suspensos
+  // Aplica a barra de pesquisa e os filtros suspensos
   const alunosFiltrados = useMemo(() => {
     return alunosCurso.filter((aluno: Aluno) => {
       const matchBusca =
@@ -88,7 +87,6 @@ export default function TrilhaTechPage() {
       const matchStatus =
         filtroStatus === "" || aluno.statusTrilha === filtroStatus;
 
-      // --- REGRA DE OBSERVAÇÕES ---
       const temObs = aluno.obs && aluno.obs.trim() !== "";
       const matchObs = mostrarComObs ? temObs : true;
 
@@ -96,7 +94,7 @@ export default function TrilhaTechPage() {
     });
   }, [alunosCurso, busca, filtroTurma, filtroStatus, mostrarComObs]);
 
-  // 3. Calcula as estatísticas dos Cards
+  // Calcula as estatísticas dos Cards
   const totalTurma1Ativos = useMemo(() => {
     return alunosCurso.filter(
       (a: Aluno) =>
@@ -112,7 +110,6 @@ export default function TrilhaTechPage() {
   }, [alunosCurso]);
 
   // FUNÇÕES DE AÇÃO
-
   const mudarStatus = async (matricula: string, novoStatus: string) => {
     if (
       !confirm(
@@ -134,7 +131,7 @@ export default function TrilhaTechPage() {
       const resposta = await res.json();
       if (resposta.status === "sucesso") {
         alert("✅ " + resposta.mensagem);
-        mutate(); // Pede ao SWR para atualizar a tela!
+        mutate();
       } else {
         alert("⚠️ " + resposta.mensagem);
       }
@@ -175,15 +172,22 @@ export default function TrilhaTechPage() {
 
   if (verificandoSessao) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center font-bold text-slate-500">
-        Verificando sessão...
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center font-bold text-slate-500">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 border-4 border-slate-200 border-t-blue-500 rounded-full animate-spin" />
+          <span>Verificando sessão...</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans">
-      <div className="max-w-7xl mx-auto">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300 p-4 md:p-8 font-sans relative overflow-hidden">
+      {/* Decorative Glow Blobs */}
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-10 right-1/4 w-[600px] h-[600px] bg-cyan-500/5 dark:bg-cyan-500/8 rounded-full blur-[140px] pointer-events-none" />
+
+      <div className="max-w-7xl mx-auto relative z-10">
         <Header
           carregando={carregando}
           nomeUsuario={nomeUsuario}
@@ -193,25 +197,37 @@ export default function TrilhaTechPage() {
           }}
         />
 
-        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 mt-4 gap-4">
-          <h2 className="text-2xl font-black text-slate-800">
-            Alunos Trilha Tech
-          </h2>
-          <button
+        {/* Dashboard Title & Actions */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-8 mt-4 gap-4">
+          <div className="text-left">
+            <h2 className="font-display font-black text-2xl md:text-3xl text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
+              Alunos Trilha Tech
+              <span className="text-[10px] font-black tracking-widest uppercase bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-xl border border-blue-500/20 dark:border-blue-900/10 shadow-sm align-middle">
+                Tutor Area
+              </span>
+            </h2>
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 font-semibold">
+              Gerencie inscrições, turmas e emita listas de frequência da trilha gamificada.
+            </p>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             onClick={() => (window.location.href = "/trilhatech/aulas")}
-            className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
+            className="cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-650 hover:brightness-110 text-white text-xs font-black uppercase tracking-wider py-3.5 px-6 rounded-2xl shadow-lg shadow-blue-500/10 transition-all flex items-center gap-2"
           >
             <span>👨‍🏫</span> Gestão de Aulas
-          </button>
+          </motion.button>
         </div>
 
-        {/* COMPONENTES QUE CRIAMOS SEPARADOS */}
+        {/* Stats Cards Dashboard */}
         <TrilhaStatsCards
           totalInscritos={alunosCurso.length}
           totalTurma1Ativos={totalTurma1Ativos}
           totalTurma2Ativos={totalTurma2Ativos}
         />
 
+        {/* Filter controls */}
         <TrilhaFilters
           busca={busca}
           setBusca={setBusca}
@@ -224,6 +240,7 @@ export default function TrilhaTechPage() {
           exportarListaFrequencia={exportarListaFrequencia}
         />
 
+        {/* Main Students Table */}
         <TrilhaTable
           alunosFiltrados={alunosFiltrados}
           atualizandoMatricula={atualizandoMatricula}

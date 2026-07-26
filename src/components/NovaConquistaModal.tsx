@@ -77,7 +77,7 @@ export default function NovaConquistaModal({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.3 }}
-              className="text-sm text-slate-500 dark:text-slate-450 mb-6 leading-relaxed px-2 font-medium"
+              className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed px-2 font-medium"
             >
               {badge.descricao}
             </motion.p>

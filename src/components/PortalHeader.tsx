@@ -87,7 +87,7 @@ export default function PortalHeader({
             <h1 className="font-display font-black text-base leading-tight tracking-tight text-slate-800 dark:text-white">
               {nomeProjeto}
             </h1>
-            <p className="text-slate-450 dark:text-slate-500 text-[9px] font-mono font-bold mt-0.5">
+            <p className="text-slate-400 dark:text-slate-500 text-[9px] font-mono font-bold mt-0.5">
               {matricula}
             </p>
           </div>
@@ -100,7 +100,7 @@ export default function PortalHeader({
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
             onClick={toggleTheme}
-            className="cursor-pointer p-2 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200/80 dark:border-slate-850 hover:border-yellow-500/30 text-slate-700 dark:text-white rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-sm"
+            className="cursor-pointer p-2 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-yellow-500/30 text-slate-700 dark:text-white rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-sm"
             title={isDarkMode ? "Mudar para Modo Claro" : "Mudar para Modo Escuro"}
           >
             <span className="text-lg leading-none block select-none">
@@ -114,7 +114,7 @@ export default function PortalHeader({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={toggleNotificacoes}
-              className="cursor-pointer relative p-2 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200/80 dark:border-slate-850 text-slate-700 dark:text-white rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-sm"
+              className="cursor-pointer relative p-2 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-white rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-sm"
             >
               <span className="text-lg leading-none block select-none">🔔</span>
               {notificacoesNaoLidas > 0 && (
@@ -135,7 +135,7 @@ export default function PortalHeader({
                   exit={{ opacity: 0, y: 10, scale: 0.98 }}
                   className="absolute right-0 mt-3 w-80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/80 dark:border-white/5 overflow-hidden z-50"
                 >
-                  <div className="bg-slate-50/50 dark:bg-slate-950/40 p-4 border-b border-slate-200 dark:border-slate-850 flex justify-between items-center">
+                  <div className="bg-slate-50/50 dark:bg-slate-950/40 p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
                     <h3 className="font-display font-black text-slate-800 dark:text-white text-xs uppercase tracking-wider">
                       Notificações
                     </h3>
@@ -143,9 +143,9 @@ export default function PortalHeader({
                       Últimas {notificacoes.length}
                     </span>
                   </div>
-                  <div className="max-h-64 overflow-y-auto custom-scrollbar divide-y divide-slate-150 dark:divide-slate-850">
+                  <div className="max-h-64 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800">
                     {notificacoes.length === 0 ? (
-                      <p className="text-center text-slate-450 dark:text-slate-500 text-xs py-8 font-semibold italic">
+                      <p className="text-center text-slate-400 dark:text-slate-500 text-xs py-8 font-semibold italic">
                         Nenhuma novidade por aqui.
                       </p>
                     ) : (
@@ -205,7 +205,7 @@ export default function PortalHeader({
                 setMenuAberto(!menuAberto);
                 setNotificacoesAbertas(false);
               }}
-              className="cursor-pointer flex items-center gap-2.5 bg-slate-50 dark:bg-slate-955/60 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200/80 dark:border-slate-850 p-1.5 pr-3.5 rounded-full transition-colors text-slate-700 dark:text-white shadow-sm"
+              className="cursor-pointer flex items-center gap-2.5 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-1.5 pr-3.5 rounded-full transition-colors text-slate-700 dark:text-white shadow-sm"
             >
               <div className="bg-gradient-to-tr from-brand-primary to-brand-secondary text-white font-black h-8 w-8 rounded-full flex items-center justify-center shadow-inner relative select-none">
                 <div className="absolute inset-0 bg-white/10 rounded-full" />
@@ -215,7 +215,7 @@ export default function PortalHeader({
                 <p className="text-xs font-black leading-tight text-slate-800 dark:text-white">
                   {primeiroNome}
                 </p>
-                <p className="text-[9px] text-slate-450 dark:text-slate-500 font-bold truncate w-20 mt-0.5">
+                <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold truncate w-20 mt-0.5">
                   {turma}
                 </p>
               </div>
@@ -238,7 +238,7 @@ export default function PortalHeader({
                         onAbrirPerfil();
                         setMenuAberto(false);
                       }}
-                      className="cursor-pointer w-full text-left px-3 py-2.5 text-xs text-slate-700 dark:text-slate-350 font-black uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white rounded-xl transition-colors flex items-center gap-2.5"
+                      className="cursor-pointer w-full text-left px-3 py-2.5 text-xs text-slate-700 dark:text-slate-300 font-black uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white rounded-xl transition-colors flex items-center gap-2.5"
                     >
                       <span>👤</span> Meu Perfil
                     </button>
@@ -247,7 +247,7 @@ export default function PortalHeader({
                         onAbrirRanking();
                         setMenuAberto(false);
                       }}
-                      className="cursor-pointer w-full text-left px-3 py-2.5 text-xs text-slate-700 dark:text-slate-350 font-black uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white rounded-xl transition-colors flex items-center gap-2.5"
+                      className="cursor-pointer w-full text-left px-3 py-2.5 text-xs text-slate-700 dark:text-slate-300 font-black uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white rounded-xl transition-colors flex items-center gap-2.5"
                     >
                       <span>🏆</span> Ranking
                     </button>
@@ -256,12 +256,12 @@ export default function PortalHeader({
                         onAbrirFrequencia();
                         setMenuAberto(false);
                       }}
-                      className="cursor-pointer w-full text-left px-3 py-2.5 text-xs text-slate-700 dark:text-slate-350 font-black uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white rounded-xl transition-colors flex items-center gap-2.5"
+                      className="cursor-pointer w-full text-left px-3 py-2.5 text-xs text-slate-700 dark:text-slate-300 font-black uppercase tracking-wider hover:bg-slate-50 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white rounded-xl transition-colors flex items-center gap-2.5"
                     >
                       <span>📊</span> Frequência
                     </button>
                   </div>
-                  <div className="border-t border-slate-150 dark:border-slate-850 p-2">
+                  <div className="border-t border-slate-100 dark:border-slate-800 p-2">
                     <button
                       type="button"
                       onClick={(e) => {

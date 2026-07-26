@@ -61,7 +61,7 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
 
           {/* Conteúdo rolável */}
           <div className="p-6 md:p-8 overflow-y-auto max-h-[55vh] custom-scrollbar bg-white/40 dark:bg-transparent space-y-5">
-            <p className="text-slate-650 dark:text-slate-350 font-semibold text-center text-sm mb-4 leading-relaxed">
+            <p className="text-slate-600 dark:text-slate-300 font-semibold text-center text-sm mb-4 leading-relaxed">
               Preparamos uma reformulação completa na interface da plataforma com o novo padrão **Aurora UI & Glassmorphism**. Confira as principais novidades:
             </p>
 
@@ -100,12 +100,12 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-850 p-4.5 rounded-2xl shadow-sm"
+              className="bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-800 p-4.5 rounded-2xl shadow-sm"
             >
               <h3 className="font-display font-black text-slate-800 dark:text-slate-200 text-sm md:text-base flex items-center gap-2 mb-1.5">
                 <span>🚨</span> Feedbacks e Toasts Animados
               </h3>
-              <p className="text-xs md:text-sm text-slate-650 dark:text-slate-400 leading-relaxed font-medium">
+              <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                 Novo sistema de avisos flutuantes integrados à sua gamificação com glows coloridos de acordo com o tipo de retorno (Quiz Correto, Recompensas, Erros ou Avisos).
               </p>
             </motion.div>
@@ -115,12 +115,12 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.35 }}
-              className="bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-850 p-4.5 rounded-2xl shadow-sm"
+              className="bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-800 p-4.5 rounded-2xl shadow-sm"
             >
               <h3 className="font-display font-black text-slate-800 dark:text-slate-200 text-sm md:text-base flex items-center gap-2 mb-1.5">
                 <span>🎫</span> Pix de XP e Bilhetes Bento Grid
               </h3>
-              <p className="text-xs md:text-sm text-slate-650 dark:text-slate-400 leading-relaxed font-medium">
+              <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
                 Os modais de **Pix de XP**, **Frequência** e **Meus Bilhetes** foram organizados no formato Bento, trazendo relatórios visuais limpos e maior rapidez nas transações.
               </p>
             </motion.div>

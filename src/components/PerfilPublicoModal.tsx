@@ -173,7 +173,7 @@ export default function PerfilPublicoModal({
             isOuro
               ? "bg-gradient-to-r from-yellow-600 via-amber-500 to-yellow-500 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.15)]"
               : isPrata
-              ? "bg-gradient-to-r from-slate-400 via-slate-350 to-slate-450 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.1)]"
+              ? "bg-gradient-to-r from-slate-400 via-slate-300 to-slate-400 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.1)]"
               : isBronze
               ? "bg-gradient-to-r from-orange-550 via-amber-600 to-orange-500 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.15)]"
               : "bg-gradient-to-r from-indigo-650 via-purple-650 to-pink-650 dark:from-slate-950 dark:via-indigo-950/40 dark:to-slate-900"
@@ -205,11 +205,11 @@ export default function PerfilPublicoModal({
                     {avatar}
                   </div>
 
-                  <h2 className="font-display font-black text-xl md:text-2xl text-slate-850 dark:text-slate-100 tracking-tight leading-tight mb-1">
+                  <h2 className="font-display font-black text-xl md:text-2xl text-slate-800 dark:text-slate-100 tracking-tight leading-tight mb-1">
                     {perfil.nome}
                   </h2>
                   
-                  <p className="text-xs font-bold text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-2">
+                  <p className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">
                     🏫 {perfil.turma}
                   </p>
 
@@ -220,7 +220,7 @@ export default function PerfilPublicoModal({
                     </span>
                   )}
                   {isPrata && (
-                    <span className="inline-block bg-gradient-to-r from-slate-400 to-slate-350 text-slate-950 text-[10px] font-black px-3.5 py-1 rounded-full uppercase tracking-wider shadow-md border border-slate-350 mb-3">
+                    <span className="inline-block bg-gradient-to-r from-slate-400 to-slate-300 text-slate-950 text-[10px] font-black px-3.5 py-1 rounded-full uppercase tracking-wider shadow-md border border-slate-300 mb-3">
                       🥈 Elite Prata (Top 2)
                     </span>
                   )}
@@ -231,7 +231,7 @@ export default function PerfilPublicoModal({
                   )}
 
                   <div className="w-full space-y-2.5 mt-2">
-                    <span className="flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-slate-900/60 border border-slate-250/50 dark:border-slate-800/80 px-4 py-2 rounded-xl text-slate-700 dark:text-slate-300 font-bold text-xs shadow-inner">
+                    <span className="flex items-center justify-center gap-1.5 bg-slate-100 dark:bg-slate-900/60 border border-slate-200/50 dark:border-slate-800/80 px-4 py-2 rounded-xl text-slate-700 dark:text-slate-300 font-bold text-xs shadow-inner">
                       🏆 Nível: {perfil.nivel}
                     </span>
                     
@@ -392,7 +392,7 @@ export default function PerfilPublicoModal({
                       className="bg-white/80 dark:bg-slate-950/65 border border-slate-200 dark:border-slate-800 p-4 rounded-2xl text-center shadow-sm hover:-translate-y-0.5 transition-all duration-300"
                     >
                       <div className="text-xl mb-1">{stat.emoji}</div>
-                      <p className="text-[9px] font-bold text-slate-450 dark:text-slate-500 uppercase tracking-wider">
+                      <p className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
                         {stat.label}
                       </p>
                       <p className={`text-lg md:text-xl font-black mt-1 ${stat.col}`}>
@@ -429,7 +429,7 @@ export default function PerfilPublicoModal({
                             <h4 className="font-bold text-slate-800 dark:text-slate-200 text-xs md:text-sm leading-tight truncate">
                               {badge.nome}
                             </h4>
-                            <p className="text-[10px] leading-tight text-slate-500 dark:text-slate-450 mt-1 line-clamp-2">
+                            <p className="text-[10px] leading-tight text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
                               {badge.descricao}
                             </p>
                           </div>

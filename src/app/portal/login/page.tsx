@@ -138,7 +138,7 @@ export default function PortalLogin() {
   // ==========================================
   if (acessoNegado) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 text-center text-slate-850 dark:text-white relative overflow-hidden transition-colors duration-300">
+      <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex flex-col items-center justify-center p-4 text-center text-slate-800 dark:text-white relative overflow-hidden transition-colors duration-300">
         {/* Glow Blob */}
         <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full bg-red-500/10 blur-[100px] pointer-events-none animate-glow-pulse" />
         

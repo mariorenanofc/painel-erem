@@ -181,7 +181,7 @@ export default function GodModeModal({
           </div>
 
           {/* Abas */}
-          <div className="flex bg-slate-100/50 dark:bg-slate-950/40 p-1.5 rounded-2xl border-b border-slate-200/50 dark:border-slate-850 shrink-0 m-4 mb-2">
+          <div className="flex bg-slate-100/50 dark:bg-slate-950/40 p-1.5 rounded-2xl border-b border-slate-200/50 dark:border-slate-800 shrink-0 m-4 mb-2">
             <button
               onClick={() => setAbaAtiva("xp")}
               className={`cursor-pointer flex-1 py-3.5 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all select-none ${
@@ -237,7 +237,7 @@ export default function GodModeModal({
                         <select
                           value={matriculaSelecionada}
                           onChange={(e) => setMatriculaSelecionada(e.target.value)}
-                          className="cursor-pointer w-full p-4 pr-10 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-850 dark:text-slate-200 rounded-2xl outline-none focus:border-purple-500 font-bold text-sm transition-all shadow-sm appearance-none"
+                          className="cursor-pointer w-full p-4 pr-10 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-2xl outline-none focus:border-purple-500 font-bold text-sm transition-all shadow-sm appearance-none"
                           required
                         >
                           <option value="">Selecione um aluno...</option>
@@ -273,7 +273,7 @@ export default function GodModeModal({
                         />
                       </div>
                       <div className="flex items-center">
-                        <div className="bg-slate-50/50 dark:bg-slate-950/30 border border-slate-250/60 dark:border-slate-850 p-4.5 rounded-2xl w-full text-xs font-semibold leading-relaxed text-slate-550 dark:text-slate-400 shadow-sm">
+                        <div className="bg-slate-50/50 dark:bg-slate-950/30 border border-slate-200/60 dark:border-slate-800 p-4.5 rounded-2xl w-full text-xs font-semibold leading-relaxed text-slate-550 dark:text-slate-400 shadow-sm">
                           💡 <span className="text-emerald-600 dark:text-emerald-400 font-bold">Positivo (+10)</span> para bonificar. <br />
                           🚨 <span className="text-red-500 dark:text-red-400 font-bold font-mono">Negativo (-100)</span> para punir IA ou cola.
                         </div>
@@ -290,7 +290,7 @@ export default function GodModeModal({
                         value={motivo}
                         onChange={(e) => setMotivo(e.target.value)}
                         placeholder="Ex: Ajudou o colega / Punição por uso indevido de IA"
-                        className="w-full border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-sm text-slate-850 dark:text-slate-200 bg-white dark:bg-slate-950 outline-none focus:border-purple-500 shadow-sm transition-all"
+                        className="w-full border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-sm text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-950 outline-none focus:border-purple-500 shadow-sm transition-all"
                         required
                       />
                     </div>
@@ -366,7 +366,7 @@ export default function GodModeModal({
                         <select
                           value={matriculaCoroa}
                           onChange={(e) => setMatriculaCoroa(e.target.value)}
-                          className="cursor-pointer w-full p-4 pr-10 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-850 dark:text-slate-200 rounded-2xl outline-none focus:border-purple-500 font-bold text-sm transition-all shadow-sm appearance-none"
+                          className="cursor-pointer w-full p-4 pr-10 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-2xl outline-none focus:border-purple-500 font-bold text-sm transition-all shadow-sm appearance-none"
                           required
                         >
                           <option value="">Selecione o novo campeão...</option>

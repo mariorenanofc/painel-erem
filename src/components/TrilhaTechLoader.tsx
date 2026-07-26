@@ -88,14 +88,14 @@ export default function TrilhaTechLoader() {
         </div>
 
         {/* Terminal Compilation Logs */}
-        <div className="bg-slate-100/90 dark:bg-slate-955/40 dark:bg-slate-955/50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-800/80 rounded-xl p-4 w-72 text-left font-mono text-[10px] text-slate-650 dark:text-slate-400 min-h-[75px] shadow-lg relative overflow-hidden backdrop-blur-sm transition-all duration-300">
+        <div className="bg-slate-100/90 dark:bg-slate-950/40 dark:bg-slate-950/50 dark:bg-slate-950/80 border border-slate-300 dark:border-slate-800/80 rounded-xl p-4 w-72 text-left font-mono text-[10px] text-slate-600 dark:text-slate-400 min-h-[75px] shadow-lg relative overflow-hidden backdrop-blur-sm transition-all duration-300">
           <div className="absolute top-2 right-3 flex gap-1">
             <span className="w-1.5 h-1.5 rounded-full bg-red-400 dark:bg-red-500/60" />
             <span className="w-1.5 h-1.5 rounded-full bg-amber-400 dark:bg-amber-500/60" />
             <span className="w-1.5 h-1.5 rounded-full bg-green-400 dark:bg-green-500/60" />
           </div>
           
-          <div className="text-slate-450 dark:text-slate-500 mb-1 flex justify-between">
+          <div className="text-slate-400 dark:text-slate-500 mb-1 flex justify-between">
             <span>Terminal Core v1.2</span>
             <span className="animate-pulse text-indigo-600 dark:text-green-500 font-bold">● RUNNING</span>
           </div>
@@ -109,7 +109,7 @@ export default function TrilhaTechLoader() {
               transition={{ duration: 0.15 }}
               className="text-indigo-600 dark:text-cyan-400 font-bold dark:font-semibold"
             >
-              <span className="text-slate-450 dark:text-slate-600 font-bold">&gt;</span> {statusLogs[statusIndex]}
+              <span className="text-slate-400 dark:text-slate-600 font-bold">&gt;</span> {statusLogs[statusIndex]}
             </motion.div>
           </AnimatePresence>
         </div>

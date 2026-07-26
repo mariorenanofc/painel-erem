@@ -95,7 +95,7 @@ export default function MeusBilhetesModal({ isOpen, onClose, matricula }: MeusBi
 
                 <div className="space-y-4 text-left pt-2 text-sm">
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-500 dark:text-slate-450 font-bold">Status</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-bold">Status</span>
                     <span
                       className={`font-black px-3 py-1 rounded-full text-xs border ${
                         bilheteSelecionado.status === "ATIVO"
@@ -107,13 +107,13 @@ export default function MeusBilhetesModal({ isOpen, onClose, matricula }: MeusBi
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-500 dark:text-slate-450 font-bold">Data da Compra</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-bold">Data da Compra</span>
                     <span className="font-bold text-slate-700 dark:text-slate-200">
                       {bilheteSelecionado.data}
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-slate-500 dark:text-slate-450 font-bold">ID Transação</span>
+                    <span className="text-slate-500 dark:text-slate-400 font-bold">ID Transação</span>
                     <span className="text-xs font-mono text-slate-400 select-all dark:text-slate-500">
                       {bilheteSelecionado.id}
                     </span>
@@ -138,7 +138,7 @@ export default function MeusBilhetesModal({ isOpen, onClose, matricula }: MeusBi
                 <h2 className="text-2xl md:text-3xl font-display font-black text-slate-800 dark:text-white tracking-tight">
                   Meus Bilhetes
                 </h2>
-                <p className="text-slate-500 dark:text-slate-450 text-sm mt-1 font-medium">
+                <p className="text-slate-500 dark:text-slate-400 text-sm mt-1 font-medium">
                   Toque num ticket para ver detalhes
                 </p>
               </div>
@@ -150,7 +150,7 @@ export default function MeusBilhetesModal({ isOpen, onClose, matricula }: MeusBi
                       <div className="absolute inset-0 rounded-full border-3 border-slate-200 dark:border-slate-800" />
                       <div className="absolute inset-0 rounded-full border-3 border-transparent border-t-indigo-500 animate-spin" />
                     </div>
-                    <span className="text-slate-450 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">
+                    <span className="text-slate-400 dark:text-slate-500 text-xs font-bold uppercase tracking-wider">
                       Buscando bilhetes...
                     </span>
                   </div>

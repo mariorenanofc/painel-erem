@@ -23,7 +23,7 @@ export default function TrilhaFilters({
       <div className="flex flex-col md:flex-row flex-wrap gap-5 w-full flex-1 items-start md:items-end">
         {/* Search */}
         <div className="w-full md:flex-1 md:min-w-[200px] lg:max-w-xs space-y-1.5 text-left">
-          <label className="block text-[10px] font-black text-slate-450 dark:text-slate-550 uppercase tracking-widest">
+          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest">
             Buscar Aluno
           </label>
           <input
@@ -37,12 +37,12 @@ export default function TrilhaFilters({
         
         {/* Turma */}
         <div className="w-full md:w-52 shrink-0 space-y-1.5 text-left">
-          <label className="block text-[10px] font-black text-slate-450 dark:text-slate-550 uppercase tracking-widest">
+          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest">
             Turma
           </label>
           <div className="relative">
             <select
-              className="cursor-pointer w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-205 rounded-xl p-3.5 pr-10 focus:border-blue-550 outline-none transition-all text-sm appearance-none shadow-sm font-bold"
+              className="cursor-pointer w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl p-3.5 pr-10 focus:border-blue-550 outline-none transition-all text-sm appearance-none shadow-sm font-bold"
               value={filtroTurma}
               onChange={(e) => setFiltroTurma(e.target.value)}
             >
@@ -58,12 +58,12 @@ export default function TrilhaFilters({
         
         {/* Status */}
         <div className="w-full md:w-52 shrink-0 space-y-1.5 text-left">
-          <label className="block text-[10px] font-black text-slate-450 dark:text-slate-550 uppercase tracking-widest">
+          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest">
             Status
           </label>
           <div className="relative">
             <select
-              className="cursor-pointer w-full bg-white dark:bg-slate-955 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-205 rounded-xl p-3.5 pr-10 focus:border-blue-550 outline-none transition-all text-sm appearance-none shadow-sm font-bold"
+              className="cursor-pointer w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl p-3.5 pr-10 focus:border-blue-550 outline-none transition-all text-sm appearance-none shadow-sm font-bold"
               value={filtroStatus}
               onChange={(e) => setFiltroStatus(e.target.value)}
             >
@@ -81,7 +81,7 @@ export default function TrilhaFilters({
 
         {/* Checkbox filters */}
         <div className="w-full md:w-auto flex flex-wrap items-center gap-3.5 h-auto md:h-12 mb-1 mt-2.5 md:mt-0">
-          <label className="flex items-center gap-2.5 cursor-pointer text-amber-600 dark:text-amber-500 bg-white/70 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-850 px-4 py-2.5 rounded-2xl hover:bg-white dark:hover:bg-slate-950 transition-colors text-xs font-black uppercase tracking-wider shrink-0 shadow-sm">
+          <label className="flex items-center gap-2.5 cursor-pointer text-amber-600 dark:text-amber-500 bg-white/70 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-800 px-4 py-2.5 rounded-2xl hover:bg-white dark:hover:bg-slate-950 transition-colors text-xs font-black uppercase tracking-wider shrink-0 shadow-sm">
             <input
               type="checkbox"
               checked={mostrarComObs}
@@ -92,7 +92,7 @@ export default function TrilhaFilters({
           </label>
 
           {setMostrarSemWhats && (
-            <label className="flex items-center gap-2.5 cursor-pointer text-rose-500 bg-white/70 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-850 px-4 py-2.5 rounded-2xl hover:bg-white dark:hover:bg-slate-950 transition-colors text-xs font-black uppercase tracking-wider shrink-0 shadow-sm">
+            <label className="flex items-center gap-2.5 cursor-pointer text-rose-500 bg-white/70 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-800 px-4 py-2.5 rounded-2xl hover:bg-white dark:hover:bg-slate-950 transition-colors text-xs font-black uppercase tracking-wider shrink-0 shadow-sm">
               <input
                 type="checkbox"
                 checked={mostrarSemWhats}

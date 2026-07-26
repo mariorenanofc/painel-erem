@@ -88,12 +88,12 @@ export default function CorrecaoMissoesModal({
             ) : entregas.length === 0 ? (
               <div className="text-center py-24 flex flex-col items-center">
                 <div className="text-6xl mb-4 select-none opacity-40">📭</div>
-                <p className="text-slate-500 dark:text-slate-450 font-black text-base uppercase tracking-wider">
+                <p className="text-slate-500 dark:text-slate-400 font-black text-base uppercase tracking-wider">
                   Nenhum aluno enviou esta missão ainda.
                 </p>
               </div>
             ) : (
-              <div className="divide-y divide-slate-200 dark:divide-slate-850">
+              <div className="divide-y divide-slate-200 dark:divide-slate-800">
                 {entregas.map((entrega, index) => {
                   const isDevolvida = entrega.status === "Devolvida";
                   const isAprovada = entrega.status === "Avaliado";
@@ -130,7 +130,7 @@ export default function CorrecaoMissoesModal({
                             <h3 className="font-display font-black text-slate-800 dark:text-white text-base leading-tight">
                               {entrega.nomeAluno}
                             </h3>
-                            <span className="text-[10px] bg-slate-100 dark:bg-slate-850 text-slate-500 dark:text-slate-450 px-2 py-0.5 rounded-lg font-mono font-bold">
+                            <span className="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-2 py-0.5 rounded-lg font-mono font-bold">
                               {entrega.matricula}
                             </span>
                             {aguardando && !isQuiz && (
@@ -141,14 +141,14 @@ export default function CorrecaoMissoesModal({
                           </div>
 
                           {dataFormatada && (
-                            <p className="text-[10px] text-slate-450 dark:text-slate-500 font-bold mb-4 flex items-center gap-1">
+                            <p className="text-[10px] text-slate-400 dark:text-slate-500 font-bold mb-4 flex items-center gap-1">
                               <span>🕒</span> Enviado em: {dataFormatada}
                             </p>
                           )}
 
                           {/* Resposta do aluno */}
-                          <div className="bg-slate-50/50 dark:bg-slate-950/30 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-850 mb-4 shadow-inner">
-                            <p className="text-[9px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-2">
+                          <div className="bg-slate-50/50 dark:bg-slate-950/30 p-4 rounded-2xl border border-slate-200/50 dark:border-slate-800 mb-4 shadow-inner">
+                            <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-2">
                               {isQuiz ? "Alternativa Escolhida:" : "Resposta / Link do Projeto:"}
                             </p>
                             {entrega.resposta.startsWith("http") ? (
@@ -172,7 +172,7 @@ export default function CorrecaoMissoesModal({
                           {/* Campo de Feedback */}
                           {!isQuiz && (
                             <div className="space-y-1.5">
-                              <label className="text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-wider block">
+                              <label className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider block">
                                 Feedback para o Aluno (Opcional):
                               </label>
                               <textarea
@@ -187,13 +187,13 @@ export default function CorrecaoMissoesModal({
                         </div>
 
                         {/* Painel de Ação de Notas */}
-                        <div className="md:w-60 shrink-0 flex flex-col justify-end border-t md:border-t-0 md:border-l border-slate-200/80 dark:border-slate-850 pt-4 md:pt-0 md:pl-5">
+                        <div className="md:w-60 shrink-0 flex flex-col justify-end border-t md:border-t-0 md:border-l border-slate-200/80 dark:border-slate-800 pt-4 md:pt-0 md:pl-5">
                           {isQuiz ? (
                             <div className="text-center flex flex-col h-full justify-center py-2.5">
                               <div className="text-4xl mb-2 select-none">
                                 {entrega.xpGanho > 0 ? "🎉" : "❌"}
                               </div>
-                              <span className="text-slate-450 dark:text-slate-500 font-black text-[9px] uppercase tracking-widest mb-1.5">
+                              <span className="text-slate-400 dark:text-slate-500 font-black text-[9px] uppercase tracking-widest mb-1.5">
                                 Auto-Corrigido
                               </span>
                               <span

@@ -199,17 +199,17 @@ export default function RoletaSorteioModal({
                   </h2>
 
                   {/* Retro ticket layout (as defined in MeusBilhetesModal style guide) */}
-                  <div className="relative bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200/60 dark:border-slate-850 p-6 rounded-2xl mt-5 shadow-inner w-full max-w-sm">
+                  <div className="relative bg-slate-50/70 dark:bg-slate-950/40 border border-slate-200/60 dark:border-slate-800 p-6 rounded-2xl mt-5 shadow-inner w-full max-w-sm">
                     {/* Lateral cutout punches */}
-                    <div className="absolute left-[-11px] top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-850 z-10 pointer-events-none" />
-                    <div className="absolute right-[-11px] top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-850 z-10 pointer-events-none" />
+                    <div className="absolute left-[-11px] top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 z-10 pointer-events-none" />
+                    <div className="absolute right-[-11px] top-1/2 -translate-y-1/2 w-5 h-5 rounded-full bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 z-10 pointer-events-none" />
                     
                     <div className="space-y-2 text-left relative z-20">
-                      <p className="text-xs font-bold text-slate-450 dark:text-slate-500">
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500">
                         Matrícula: <span className="text-slate-800 dark:text-slate-200 font-mono font-bold ml-1">{vencedor.matricula}</span>
                       </p>
-                      <div className="border-t border-dashed border-slate-250 dark:border-slate-800 my-3" />
-                      <p className="text-xs font-bold text-slate-450 dark:text-slate-500">
+                      <div className="border-t border-dashed border-slate-200 dark:border-slate-800 my-3" />
+                      <p className="text-xs font-bold text-slate-400 dark:text-slate-500">
                         Bilhete Premiado: <span className="text-indigo-600 dark:text-indigo-400 font-black ml-1 font-mono text-sm">{vencedor.bilhete}</span>
                       </p>
                     </div>

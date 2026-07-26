@@ -113,7 +113,7 @@ export default function RankingTutorModal({
             <select
               value={filtroTurma}
               onChange={(e) => setFiltroTurma(e.target.value)}
-              className="cursor-pointer bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-850 text-slate-800 dark:text-slate-100 rounded-lg p-1.5 text-xs font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all w-48"
+              className="cursor-pointer bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-lg p-1.5 text-xs font-bold shadow-sm outline-none focus:ring-2 focus:ring-brand-primary/20 transition-all w-48"
             >
               {turmasRanking.map((t) => (
                 <option key={t} value={t}>
@@ -182,13 +182,13 @@ export default function RankingTutorModal({
                     onClick={() => setPerfilAlvo(podio[1].matricula)}
                     className="w-1/3 flex flex-col items-center cursor-pointer group"
                   >
-                    <div className="bg-white dark:bg-slate-800 w-12 h-12 rounded-full flex items-center justify-center text-3xl shadow-lg z-10 -mb-6 border-4 border-slate-350 dark:border-slate-600 relative transition-colors">
+                    <div className="bg-white dark:bg-slate-800 w-12 h-12 rounded-full flex items-center justify-center text-3xl shadow-lg z-10 -mb-6 border-4 border-slate-300 dark:border-slate-600 relative transition-colors">
                       {getAvatar(podio[1].avatar)}
                       <div className="absolute -bottom-1 -right-1 bg-slate-500 text-white text-[9px] font-black w-5 h-5 rounded-full flex items-center justify-center border border-white dark:border-slate-900">
                         2
                       </div>
                     </div>
-                    <div className="bg-slate-200/60 dark:bg-slate-850/40 w-full h-28 rounded-2xl border border-slate-300/40 dark:border-slate-800/60 flex flex-col items-center pt-8 px-1.5 text-center group-hover:bg-slate-200 dark:group-hover:bg-slate-800 transition-colors">
+                    <div className="bg-slate-200/60 dark:bg-slate-800/40 w-full h-28 rounded-2xl border border-slate-300/40 dark:border-slate-800/60 flex flex-col items-center pt-8 px-1.5 text-center group-hover:bg-slate-200 dark:group-hover:bg-slate-800 transition-colors">
                       <p className="font-bold text-[10px] line-clamp-2 text-slate-800 dark:text-slate-200 leading-tight">
                         {podio[1].nome}
                       </p>
@@ -237,7 +237,7 @@ export default function RankingTutorModal({
                         3
                       </div>
                     </div>
-                    <div className="bg-slate-200/60 dark:bg-slate-850/40 w-full h-24 rounded-2xl border border-slate-300/40 dark:border-slate-800/60 flex flex-col items-center pt-8 px-1.5 text-center group-hover:bg-slate-200 dark:group-hover:bg-slate-800 transition-colors">
+                    <div className="bg-slate-200/60 dark:bg-slate-800/40 w-full h-24 rounded-2xl border border-slate-300/40 dark:border-slate-800/60 flex flex-col items-center pt-8 px-1.5 text-center group-hover:bg-slate-200 dark:group-hover:bg-slate-800 transition-colors">
                       <p className="font-bold text-[10px] line-clamp-2 text-slate-800 dark:text-slate-200 leading-tight">
                         {podio[2].nome}
                       </p>
@@ -264,7 +264,7 @@ export default function RankingTutorModal({
               <div className="overflow-x-auto max-h-[55vh] overflow-y-auto custom-scrollbar select-text">
                 <table className="w-full text-left border-collapse text-sm">
                   <thead className="bg-slate-50 dark:bg-slate-900/60 sticky top-0 z-10 transition-colors">
-                    <tr className="text-slate-450 dark:text-slate-500 text-[10px] font-bold uppercase tracking-widest">
+                    <tr className="text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-widest">
                       <th className="p-3 border-b border-slate-200 dark:border-slate-800 text-center w-16">
                         Pos
                       </th>
@@ -283,18 +283,18 @@ export default function RankingTutorModal({
                     </tr>
                   </thead>
                   
-                  <tbody className="divide-y divide-slate-200 dark:divide-slate-850">
+                  <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
                     {rankingFiltrado.map((aluno) => (
                       <tr
                         key={aluno.matricula}
                         onClick={() => setPerfilAlvo(aluno.matricula)}
-                        className={`cursor-pointer hover:bg-brand-primary/5 dark:hover:bg-slate-850/60 transition-colors ${
+                        className={`cursor-pointer hover:bg-brand-primary/5 dark:hover:bg-slate-800/60 transition-colors ${
                           aluno.posicao && aluno.posicao <= 3
                             ? "bg-amber-500/5 dark:bg-amber-500/[0.03]"
                             : ""
                         }`}
                       >
-                        <td className="p-3 text-center font-black text-slate-450 dark:text-slate-500">
+                        <td className="p-3 text-center font-black text-slate-400 dark:text-slate-500">
                           {aluno.posicao}º
                         </td>
                         
@@ -307,7 +307,7 @@ export default function RankingTutorModal({
                               <p className="font-bold text-slate-800 dark:text-slate-200 leading-tight transition-colors">
                                 {aluno.nome}
                               </p>
-                              <p className="text-[9px] text-slate-450 dark:text-slate-500 font-mono font-medium transition-colors mt-0.5">
+                              <p className="text-[9px] text-slate-400 dark:text-slate-500 font-mono font-medium transition-colors mt-0.5">
                                 {aluno.matricula}
                               </p>
                             </div>
@@ -328,7 +328,7 @@ export default function RankingTutorModal({
                           <span className="font-display font-black text-emerald-600 dark:text-emerald-500 text-base">
                             {aluno.xp}
                           </span>{" "}
-                          <span className="text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase tracking-widest">
+                          <span className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-widest">
                             XP
                           </span>
                         </td>

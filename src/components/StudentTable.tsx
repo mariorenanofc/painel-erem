@@ -45,30 +45,30 @@ const EmailCell = ({ email }: { email?: string }) => {
 export default function StudentTable({ alunosFiltrados, preencherEdicao }: StudentTableProps) {
   return (
     <div className="bg-white/80 dark:bg-slate-900/40 rounded-[2rem] shadow-lg border border-slate-200/60 dark:border-white/5 backdrop-blur-md overflow-hidden">
-      <div className="p-4 px-6 border-b border-slate-200/80 dark:border-slate-850 bg-slate-50/50 dark:bg-slate-950/20 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">
+      <div className="p-4 px-6 border-b border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/20 text-slate-500 dark:text-slate-400 font-bold text-xs uppercase tracking-wider">
         Total de alunos nesta visualização: <strong className="text-slate-800 dark:text-white font-mono">{alunosFiltrados.length}</strong>
       </div>
       
       <div className="overflow-x-auto custom-scrollbar">
         <table className="w-full text-left border-separate border-spacing-0 min-w-[800px]">
           <thead>
-            <tr className="bg-slate-100/80 dark:bg-slate-950 text-slate-500 dark:text-slate-455 text-[10px] uppercase font-black tracking-wider">
-              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-850">Nome</th>
-              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-850">Data de Nasc.</th>
-              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-850">Matrícula</th>
-              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-850">Email</th>
-              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-850">Turma</th>
-              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-850 text-center">Ações</th>
+            <tr className="bg-slate-100/80 dark:bg-slate-950 text-slate-500 dark:text-slate-400 text-[10px] uppercase font-black tracking-wider">
+              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">Nome</th>
+              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">Data de Nasc.</th>
+              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">Matrícula</th>
+              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">Email</th>
+              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800">Turma</th>
+              <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 text-center">Ações</th>
             </tr>
           </thead>
-          <tbody className="text-slate-700 dark:text-slate-300 text-xs divide-y divide-slate-150 dark:divide-slate-850">
+          <tbody className="text-slate-700 dark:text-slate-300 text-xs divide-y divide-slate-100 dark:divide-slate-800">
             {alunosFiltrados.length > 0 ? (
               alunosFiltrados.map((aluno, index) => (
                 <tr
                   key={index}
                   className="hover:bg-white/80 dark:hover:bg-slate-900/30 transition-colors"
                 >
-                  <td className="px-6 py-4 font-bold text-slate-800 dark:text-slate-150">
+                  <td className="px-6 py-4 font-bold text-slate-800 dark:text-slate-100">
                     <div className="flex flex-col items-start">
                       <div className="flex items-center gap-2">
                         <span>{aluno.nome}</span>
@@ -90,7 +90,7 @@ export default function StudentTable({ alunosFiltrados, preencherEdicao }: Stude
                               ? "bg-amber-100/80 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200/30 dark:border-amber-900/15"
                               : aluno.statusTrilha === "Inscrito"
                                 ? "bg-blue-100/80 dark:bg-blue-955/40 text-blue-700 dark:text-blue-400 border-blue-200/30 dark:border-blue-900/15"
-                                : "bg-slate-100 dark:bg-slate-950 text-slate-500 dark:text-slate-450 border-slate-200/50 dark:border-slate-800"
+                                : "bg-slate-100 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-slate-200/50 dark:border-slate-800"
                         }`}>
                           🚀 Trilha Tech: {aluno.statusTrilha}
                         </span>
@@ -127,7 +127,7 @@ export default function StudentTable({ alunosFiltrados, preencherEdicao }: Stude
               <tr>
                 <td
                   colSpan={6}
-                  className="px-6 py-12 text-center text-slate-450 dark:text-slate-500 font-black uppercase tracking-wider text-xs"
+                  className="px-6 py-12 text-center text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider text-xs"
                 >
                   Nenhum aluno encontrado...
                 </td>

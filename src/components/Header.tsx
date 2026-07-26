@@ -61,7 +61,7 @@ export default function Header({
           <h1 className="font-display font-black text-base leading-none tracking-tight text-slate-800 dark:text-white">
             Portal Educacional
           </h1>
-          <p className="text-[9px] text-slate-450 dark:text-slate-500 font-black uppercase tracking-widest mt-1">
+          <p className="text-[9px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-widest mt-1">
             Plataforma Gamificada
           </p>
         </div>
@@ -78,7 +78,7 @@ export default function Header({
         {nomeUsuario && (
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="hidden md:block text-right">
-              <p className="text-[9px] text-slate-450 dark:text-slate-500 font-black uppercase tracking-wider">
+              <p className="text-[9px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-wider">
                 Conectado como
               </p>
               <p className="font-bold text-xs text-slate-800 dark:text-slate-200 mt-0.5">{nomeUsuario}</p>
@@ -90,7 +90,7 @@ export default function Header({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={toggleTema}
-                className="cursor-pointer bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200/80 dark:border-slate-850 hover:border-yellow-500/30 text-slate-700 dark:text-white p-2 rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-sm"
+                className="cursor-pointer bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-yellow-500/30 text-slate-700 dark:text-white p-2 rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-sm"
                 title={tema === "light" ? "Mudar para Modo Escuro" : "Mudar para Modo Claro"}
               >
                 <span className="text-lg leading-none select-none">
@@ -102,7 +102,7 @@ export default function Header({
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   href={destinoLink}
-                  className="cursor-pointer bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-brand-primary/80 border border-slate-200/80 dark:border-slate-850 hover:border-brand-primary/30 text-slate-700 dark:text-white p-2 px-3.5 rounded-xl transition-all flex items-center gap-2 shadow-sm text-xs font-black uppercase tracking-wider h-10 select-none"
+                  className="cursor-pointer bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-brand-primary/80 border border-slate-200/80 dark:border-slate-800 hover:border-brand-primary/30 text-slate-700 dark:text-white p-2 px-3.5 rounded-xl transition-all flex items-center gap-2 shadow-sm text-xs font-black uppercase tracking-wider h-10 select-none"
                   title={textoLink}
                 >
                   <span className="hidden sm:block">
@@ -122,7 +122,7 @@ export default function Header({
                     e.preventDefault();
                     onLogout();
                   }}
-                  className="cursor-pointer bg-slate-50 dark:bg-slate-950/60 hover:bg-rose-500/10 dark:hover:bg-red-500/80 border border-slate-200/80 dark:border-slate-850 hover:border-rose-500/30 text-rose-600 dark:text-white p-2 rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-sm"
+                  className="cursor-pointer bg-slate-50 dark:bg-slate-950/60 hover:bg-rose-500/10 dark:hover:bg-red-500/80 border border-slate-200/80 dark:border-slate-800 hover:border-rose-500/30 text-rose-600 dark:text-white p-2 rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-sm"
                   title="Sair do Sistema"
                 >
                   <svg

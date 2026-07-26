@@ -147,7 +147,7 @@ export default function MissoesList({
             className={`cursor-pointer px-5 py-2.5 rounded-2xl text-sm font-black border transition-colors ${
               filtrosAvançadosAbertos
                 ? "bg-slate-800 dark:bg-slate-700 text-white border-transparent"
-                : "bg-white dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-850"
+                : "bg-white dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
             }`}
           >
             Filtros ⚙️
@@ -231,7 +231,7 @@ export default function MissoesList({
                 {/* CABECALHO DO MODULO */}
                 <div
                   onClick={() => toggleModulo(nomeModulo)}
-                  className="bg-slate-50 dark:bg-slate-950/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 p-4.5 flex justify-between items-center cursor-pointer select-none transition-colors border-b border-slate-200/60 dark:border-slate-850"
+                  className="bg-slate-50 dark:bg-slate-950/40 hover:bg-slate-100/80 dark:hover:bg-slate-800/60 p-4.5 flex justify-between items-center cursor-pointer select-none transition-colors border-b border-slate-200/60 dark:border-slate-800"
                 >
                   <h3 className="font-black text-slate-800 dark:text-slate-100 text-lg flex items-center gap-2.5">
                     <span className="w-8 h-8 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center text-sm shadow-inner text-blue-600 dark:text-blue-400">
@@ -293,7 +293,7 @@ export default function MissoesList({
                                   {nomeAula}
                                 </h4>
                                 <div className="flex items-center gap-3">
-                                  <span className="text-[11px] text-slate-450 dark:text-slate-500 font-bold">
+                                  <span className="text-[11px] text-slate-400 dark:text-slate-500 font-bold">
                                     {missoes.length} {missoes.length === 1 ? "missão" : "missões"}
                                   </span>
                                   <span
@@ -399,7 +399,7 @@ export default function MissoesList({
                                               whileHover={{ scale: 1.08 }}
                                               whileTap={{ scale: 0.92 }}
                                               onClick={() => setMissaoPreview(ativ)}
-                                              className="cursor-pointer p-2.5 text-slate-450 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
+                                              className="cursor-pointer p-2.5 text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all"
                                               title="Visualizar Detalhes"
                                             >
                                               👁️
@@ -477,16 +477,16 @@ export default function MissoesList({
                 </h3>
                 <button
                   onClick={() => setMissaoPreview(null)}
-                  className="cursor-pointer text-2xl text-slate-450 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-500 transition-colors leading-none w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-850"
+                  className="cursor-pointer text-2xl text-slate-400 dark:text-slate-500 hover:text-red-500 dark:hover:text-red-500 transition-colors leading-none w-8 h-8 flex items-center justify-center rounded-full hover:bg-slate-200/50 dark:hover:bg-slate-800"
                 >
                   &times;
                 </button>
               </div>
               <div className="p-6 md:p-8 overflow-y-auto">
-                <h2 className="text-xl md:text-2xl font-display font-black text-slate-850 dark:text-slate-50 mb-3 tracking-tight">
+                <h2 className="text-xl md:text-2xl font-display font-black text-slate-800 dark:text-slate-50 mb-3 tracking-tight">
                   {missaoPreview.titulo}
                 </h2>
-                <div className="text-sm text-slate-600 dark:text-slate-350 mb-6 bg-slate-50/50 dark:bg-slate-950/30 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-850 whitespace-pre-wrap leading-relaxed">
+                <div className="text-sm text-slate-600 dark:text-slate-300 mb-6 bg-slate-50/50 dark:bg-slate-950/30 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-800 whitespace-pre-wrap leading-relaxed">
                   {missaoPreview.descricao}
                 </div>
                 <motion.button

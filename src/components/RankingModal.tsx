@@ -83,7 +83,7 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
             className={`cursor-pointer flex-1 py-3.5 text-xs md:text-sm font-bold border-b-2 transition-all duration-200 ${
               abaRanking === "Geral"
                 ? "border-amber-500 text-amber-600 dark:text-amber-400 bg-white/70 dark:bg-slate-900/60"
-                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-250 hover:bg-slate-50 dark:hover:bg-slate-800/20"
+                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/20"
             }`}
           >
             🌎 Ranking Geral
@@ -93,7 +93,7 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
             className={`cursor-pointer flex-1 py-3.5 text-xs md:text-sm font-bold border-b-2 transition-all duration-200 ${
               abaRanking === "Turma"
                 ? "border-amber-500 text-amber-600 dark:text-amber-400 bg-white/70 dark:bg-slate-900/60"
-                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-250 hover:bg-slate-50 dark:hover:bg-slate-800/20"
+                : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/20"
             }`}
           >
             👥 Minha Turma
@@ -113,7 +113,7 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
                 className={`cursor-pointer px-4 py-1.5 rounded-full text-xs font-bold transition-all border ${
                   filtroTempo === tempo
                     ? "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/40 shadow-sm"
-                    : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-250 border-slate-200 dark:border-slate-800/80"
+                    : "bg-white dark:bg-slate-900 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 border-slate-200 dark:border-slate-800/80"
                 }`}
               >
                 {label}
@@ -185,8 +185,8 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
                     {listaExibicao.map((userRank, idx) => {
                       const isMe = userRank.matricula === aluno.matricula;
                       let medalha = "";
-                      let styleCard = "bg-white/70 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800/80 hover:border-slate-350 dark:hover:border-slate-700";
-                      let styleNome = "text-slate-850 dark:text-slate-100";
+                      let styleCard = "bg-white/70 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700";
+                      let styleNome = "text-slate-800 dark:text-slate-100";
                       
                       if (userRank.posicao === 1) {
                         medalha = "🥇";
@@ -249,7 +249,7 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
                             <span className="font-display font-black text-amber-600 dark:text-amber-500 text-base md:text-lg">
                               {userRank.xp}
                             </span>
-                            <span className="text-[9px] text-slate-450 dark:text-slate-500 ml-1 font-bold uppercase tracking-widest">
+                            <span className="text-[9px] text-slate-400 dark:text-slate-500 ml-1 font-bold uppercase tracking-widest">
                               XP
                             </span>
                           </div>

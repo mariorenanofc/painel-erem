@@ -30,7 +30,7 @@ export default function LojaRifaModal({
 
   const pacotes = [
     { id: "BRONZE", nome: "Pacote Bronze", bilhetes: 10, preco: 1000, cor: "from-amber-700 to-amber-900", icon: "🥉", glow: "rgba(180,83,9,0.15)" },
-    { id: "PRATA", nome: "Pacote Prata", bilhetes: 20, preco: 1800, cor: "from-slate-400 to-slate-650", icon: "🥈", destaque: "10% OFF", glow: "rgba(148,163,184,0.15)" },
+    { id: "PRATA", nome: "Pacote Prata", bilhetes: 20, preco: 1800, cor: "from-slate-400 to-slate-600", icon: "🥈", destaque: "10% OFF", glow: "rgba(148,163,184,0.15)" },
     { id: "OURO", nome: "Pacote Ouro", bilhetes: 30, preco: 2500, cor: "from-yellow-400 to-amber-500", icon: "🥇", destaque: "17% OFF", glow: "rgba(245,158,11,0.25)" },
   ];
 
@@ -151,7 +151,7 @@ export default function LojaRifaModal({
                             <p className="text-3xl font-display font-black text-brand-secondary font-mono my-3">{pct.bilhetes} <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mt-0.5">Tickets</span></p>
                             
                             <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/80">
-                              <p className="text-[9px] text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Preço</p>
+                              <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Preço</p>
                               <p className={`font-black font-mono text-sm ${podeComprar ? "text-slate-800 dark:text-white" : "text-rose-500"}`}>
                                 {pct.preco} XP
                               </p>
@@ -170,7 +170,7 @@ export default function LojaRifaModal({
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={onClose} 
-                        className="cursor-pointer text-slate-450 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white font-black text-xs uppercase tracking-widest transition-colors"
+                        className="cursor-pointer text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white font-black text-xs uppercase tracking-widest transition-colors"
                       >
                         Sair da Loja
                       </motion.button>
@@ -193,20 +193,20 @@ export default function LojaRifaModal({
                       ← Voltar aos pacotes
                     </button>
 
-                    <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-3xl p-6 border border-slate-200/60 dark:border-slate-850 mb-5 shadow-inner">
-                      <h3 className="font-display font-black text-slate-800 dark:text-white text-base mb-4 text-center border-b border-slate-250 dark:border-slate-850 pb-4 uppercase tracking-wider">
+                    <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-3xl p-6 border border-slate-200/60 dark:border-slate-800 mb-5 shadow-inner">
+                      <h3 className="font-display font-black text-slate-800 dark:text-white text-base mb-4 text-center border-b border-slate-200 dark:border-slate-800 pb-4 uppercase tracking-wider">
                         Resumo da Compra
                       </h3>
                       
                       <div className="flex justify-between items-center mb-3 text-xs">
-                        <span className="text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider">Pacote Escolhido:</span>
+                        <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Pacote Escolhido:</span>
                         <span className="font-black text-slate-800 dark:text-white">{pacotes.find(p => p.id === pacoteSelecionado)?.nome}</span>
                       </div>
                       <div className="flex justify-between items-center mb-3 text-xs">
-                        <span className="text-slate-450 dark:text-slate-500 font-bold uppercase tracking-wider">Tickets a Receber:</span>
+                        <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Tickets a Receber:</span>
                         <span className="font-black text-brand-secondary">{pacotes.find(p => p.id === pacoteSelecionado)?.bilhetes} Tickets</span>
                       </div>
-                      <div className="flex justify-between items-center pt-3.5 border-t border-slate-200 dark:border-slate-850 text-xs">
+                      <div className="flex justify-between items-center pt-3.5 border-t border-slate-200 dark:border-slate-800 text-xs">
                         <span className="text-slate-800 dark:text-white font-black uppercase tracking-wider">Total a Pagar:</span>
                         <span className="font-black text-rose-500 dark:text-rose-455 font-mono text-sm">- {pacotes.find(p => p.id === pacoteSelecionado)?.preco} XP</span>
                       </div>

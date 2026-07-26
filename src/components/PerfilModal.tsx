@@ -127,7 +127,7 @@ export default function PerfilModal({
               className={`cursor-pointer flex-1 py-3.5 text-xs md:text-sm font-bold border-b-2 transition-all duration-200 ${
                 abaAtiva === tab.id
                   ? "border-brand-primary text-brand-primary dark:text-brand-secondary bg-white/70 dark:bg-slate-900/60"
-                  : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-250 hover:bg-slate-50 dark:hover:bg-slate-800/20"
+                  : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/20"
               }`}
             >
               {tab.label}
@@ -232,7 +232,7 @@ export default function PerfilModal({
                             telefoneAluno: e.target.value,
                           })
                         }
-                        className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none text-slate-850 dark:text-slate-100 rounded-xl p-3 text-sm transition-all"
+                        className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none text-slate-800 dark:text-slate-100 rounded-xl p-3 text-sm transition-all"
                         placeholder="(87) 9XXXX-XXXX"
                       />
                     </div>
@@ -250,7 +250,7 @@ export default function PerfilModal({
                             telefoneResponsavel: e.target.value,
                           })
                         }
-                        className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none text-slate-850 dark:text-slate-100 rounded-xl p-3 text-sm transition-all"
+                        className="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-800 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 outline-none text-slate-800 dark:text-slate-100 rounded-xl p-3 text-sm transition-all"
                         placeholder="(87) 9XXXX-XXXX"
                       />
                     </div>
@@ -330,7 +330,7 @@ export default function PerfilModal({
                         className={`cursor-pointer p-4 rounded-2xl text-left border flex gap-4 transition-all duration-200 relative overflow-hidden ${
                           selectedBg === opt.id
                             ? "bg-indigo-500/10 border-brand-primary dark:border-brand-secondary ring-1 ring-brand-primary/30"
-                            : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-slate-350 dark:hover:border-slate-700"
+                            : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                         }`}
                       >
                         {/* Glow indicator on selected item */}
@@ -346,7 +346,7 @@ export default function PerfilModal({
                           <h4 className="font-bold text-sm text-slate-800 dark:text-slate-200">
                             {opt.name}
                           </h4>
-                          <p className="text-[11px] leading-relaxed text-slate-450 dark:text-slate-450 font-medium">
+                          <p className="text-[11px] leading-relaxed text-slate-400 dark:text-slate-400 font-medium">
                             {opt.desc}
                           </p>
                         </div>

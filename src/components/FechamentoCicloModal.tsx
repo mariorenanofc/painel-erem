@@ -242,7 +242,7 @@ export default function FechamentoCicloModal({
                       <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                         1. Qual ciclo estamos fechando?
                       </label>
-                      <div className="flex gap-3 bg-slate-100/50 dark:bg-slate-950/40 p-1.5 rounded-2xl border border-slate-200/60 dark:border-slate-850">
+                      <div className="flex gap-3 bg-slate-100/50 dark:bg-slate-950/40 p-1.5 rounded-2xl border border-slate-200/60 dark:border-slate-800">
                         <button
                           type="button"
                           onClick={() => setTipo("semanal")}
@@ -301,7 +301,7 @@ export default function FechamentoCicloModal({
                     >
                       {carregando ? (
                         <>
-                          <div className="w-4 h-4 rounded-full border-2 border-slate-450 border-t-white animate-spin" />
+                          <div className="w-4 h-4 rounded-full border-2 border-slate-400 border-t-white animate-spin" />
                           Processando Classificação...
                         </>
                       ) : (
@@ -319,8 +319,8 @@ export default function FechamentoCicloModal({
                     className="grid grid-cols-1 lg:grid-cols-2 gap-6"
                   >
                     {/* Coluna Esquerda: Ganhadores e Ações */}
-                    <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-3xl border border-slate-200/60 dark:border-slate-850 shadow-sm overflow-hidden flex flex-col">
-                      <div className="bg-slate-100/65 dark:bg-slate-950/50 p-4 px-5 border-b border-slate-200/60 dark:border-slate-850 flex justify-between items-center">
+                    <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-3xl border border-slate-200/60 dark:border-slate-800 shadow-sm overflow-hidden flex flex-col">
+                      <div className="bg-slate-100/65 dark:bg-slate-950/50 p-4 px-5 border-b border-slate-200/60 dark:border-slate-800 flex justify-between items-center">
                         <h3 className="font-display font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider text-xs">
                           Os Vencedores ({tipo})
                         </h3>
@@ -331,7 +331,7 @@ export default function FechamentoCicloModal({
 
                       <div className="overflow-y-auto max-h-[48vh] p-3 space-y-2 custom-scrollbar">
                         {top10.length === 0 ? (
-                          <p className="text-center text-slate-450 dark:text-slate-500 italic py-8">
+                          <p className="text-center text-slate-400 dark:text-slate-500 italic py-8">
                             Nenhum aluno encontrado para os critérios.
                           </p>
                         ) : (
@@ -347,7 +347,7 @@ export default function FechamentoCicloModal({
                                     ? "bg-amber-500/10 border-amber-500/30 hover:border-amber-500/50"
                                     : isTop23
                                       ? "bg-slate-100/80 dark:bg-slate-800/40 border-slate-200/70 dark:border-slate-800 hover:border-slate-400"
-                                      : "bg-white/50 dark:bg-slate-900/20 border-slate-100 dark:border-white/5 hover:border-slate-250 dark:hover:border-slate-800"
+                                      : "bg-white/50 dark:bg-slate-900/20 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-slate-800"
                                 }`}
                               >
                                 <div className="flex items-center gap-3">
@@ -372,7 +372,7 @@ export default function FechamentoCicloModal({
                                   </span>
 
                                   <div>
-                                    <p className="font-bold text-sm text-slate-800 dark:text-slate-150 leading-tight">
+                                    <p className="font-bold text-sm text-slate-800 dark:text-slate-100 leading-tight">
                                       {aluno.nome}
                                     </p>
                                     <p className="text-[10px] text-slate-400 dark:text-slate-550 font-bold font-mono mt-0.5">
@@ -399,7 +399,7 @@ export default function FechamentoCicloModal({
                       </div>
 
                       {/* Botão de Confirmação */}
-                      <div className="p-4 bg-white/50 dark:bg-transparent border-t border-slate-200/80 dark:border-slate-850 mt-auto">
+                      <div className="p-4 bg-white/50 dark:bg-transparent border-t border-slate-200/80 dark:border-slate-800 mt-auto">
                         <motion.button
                           whileHover={{ scale: 1.01 }}
                           whileTap={{ scale: 0.99 }}
@@ -420,8 +420,8 @@ export default function FechamentoCicloModal({
                     </div>
 
                     {/* Coluna Direita: Relatório WhatsApp */}
-                    <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-3xl border border-slate-200/60 dark:border-slate-850 shadow-inner flex flex-col relative min-h-[300px]">
-                      <div className="p-4 border-b border-slate-200/60 dark:border-slate-850 flex justify-between items-center bg-white/40 dark:bg-transparent">
+                    <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-3xl border border-slate-200/60 dark:border-slate-800 shadow-inner flex flex-col relative min-h-[300px]">
+                      <div className="p-4 border-b border-slate-200/60 dark:border-slate-800 flex justify-between items-center bg-white/40 dark:bg-transparent">
                         <h3 className="font-display font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-wider text-xs flex items-center gap-2">
                           <span>💬</span> Mensagem do WhatsApp
                         </h3>
@@ -429,7 +429,7 @@ export default function FechamentoCicloModal({
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={copiarTexto}
-                          className="cursor-pointer bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-xl transition-all shadow-sm"
+                          className="cursor-pointer bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-xl transition-all shadow-sm"
                         >
                           Copiar Texto
                         </motion.button>
@@ -437,7 +437,7 @@ export default function FechamentoCicloModal({
                       <textarea
                         readOnly
                         value={mensagemWhatsApp}
-                        className="w-full h-full min-h-[320px] lg:min-h-0 lg:flex-1 p-5 bg-transparent text-xs text-slate-650 dark:text-slate-400 font-mono resize-none focus:outline-none custom-scrollbar leading-relaxed"
+                        className="w-full h-full min-h-[320px] lg:min-h-0 lg:flex-1 p-5 bg-transparent text-xs text-slate-600 dark:text-slate-400 font-mono resize-none focus:outline-none custom-scrollbar leading-relaxed"
                       />
                     </div>
                   </motion.div>

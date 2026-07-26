@@ -6,6 +6,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import useSWR from "swr";
 import Header from "@/src/components/Header";
 import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import { apiTutor, apiGeral } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
 
@@ -853,87 +854,108 @@ export default function GestaoAulasPage() {
       />
 
       {/* ================= CORPO INSTITUCIONAL DA PÁGINA ================= */}
-      <div className="bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 shadow-sm mb-6 transition-colors duration-300">
-        <div className="max-w-384 w-full mx-auto px-4 lg:px-8 py-3">
-          <Header
-            carregando={isLoading}
-            nomeUsuario={nomeUsuario}
-            onLogout={() => {
-              localStorage.removeItem("usuarioLogado");
-              window.location.href = "/";
-            }}
-          />
+      <div className="max-w-[1536px] w-full mx-auto px-6 lg:px-8 pt-6 relative z-10">
+        <Header
+          carregando={isLoading}
+          nomeUsuario={nomeUsuario}
+          onLogout={() => {
+            localStorage.removeItem("usuarioLogado");
+            window.location.href = "/";
+          }}
+        />
 
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mt-6 mb-3">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={() => router.push("/trilhatech")}
-                className="cursor-pointer text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-bold px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition-colors"
-              >
-                ← Voltar
-              </button>
-              <h2 className="text-2xl font-black text-slate-800 dark:text-slate-100 border-l-4 border-blue-600 pl-3 transition-colors">
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-5 mt-8 mb-6">
+          <div className="flex items-center gap-4">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={() => router.push("/trilhatech")}
+              className="cursor-pointer text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+            >
+              ← Voltar
+            </motion.button>
+            <div className="text-left">
+              <h2 className="font-display font-black text-2xl text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
                 Portal do Tutor
+                <span className="text-[9px] font-black tracking-widest uppercase bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-650 dark:text-indigo-400 px-2.5 py-0.5 rounded-lg border border-indigo-500/20 dark:border-indigo-900/10 shadow-sm align-middle">
+                  Aulas & Missões
+                </span>
               </h2>
             </div>
+          </div>
 
-            {/* DASHBOARD SUPERIOR (SHORTCUTS) */}
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => router.push("/trilhatech/configuracoes")}
-                className="cursor-pointer px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300 hover:border-fuchsia-400 dark:hover:border-fuchsia-500 hover:bg-fuchsia-50 dark:hover:bg-fuchsia-900/30 hover:text-fuchsia-800 dark:hover:text-fuchsia-400 shadow-sm transition-colors flex items-center gap-2"
-              >
-                ⚙️ Configurações
-              </button>
+          {/* DASHBOARD SUPERIOR (SHORTCUTS) */}
+          <div className="flex flex-wrap gap-2.5">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => router.push("/trilhatech/configuracoes")}
+              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-905 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-fuchsia-500/35 dark:hover:border-fuchsia-500/35 hover:bg-fuchsia-500/5 dark:hover:bg-fuchsia-500/10 shadow-sm transition-all flex items-center gap-1.5"
+            >
+              ⚙️ Configs
+            </motion.button>
 
-              <button
-                onClick={() => setModalSyncAberto(true)}
-                className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-lg shadow-sm flex items-center gap-2 transition-colors cursor-pointer"
-              >
-                <span>🔄</span> Sincronizar AVA
-              </button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={iniciarSincronizacaoAVA}
+              className="cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-650 hover:brightness-110 text-white font-black py-2.5 px-4.5 rounded-xl shadow-md shadow-blue-500/5 flex items-center gap-1.5 text-xs uppercase tracking-wider border-none"
+            >
+              <span>🔄</span> Sincronizar AVA
+            </motion.button>
 
-              <button
-                onClick={() => setModalSorteioAberto(true)}
-                className="cursor-pointer px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white rounded-lg text-sm font-black shadow-md hover:shadow-lg transition-all flex items-center gap-2 border-none uppercase tracking-wide"
-              >
-                🎰 Sortear Rifa
-              </button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setModalSorteioAberto(true)}
+              className="cursor-pointer px-4.5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 text-white rounded-xl text-xs font-black shadow-md shadow-amber-500/5 flex items-center gap-1.5 border-none uppercase tracking-wider"
+            >
+              🎰 Sortear Rifa
+            </motion.button>
 
-              <button
-                onClick={() => {
-                  setModalRankingAberto(true);
-                  carregarRankingTutor("geral");
-                }}
-                className="cursor-pointer px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300 hover:border-amber-400 dark:hover:border-amber-500 hover:bg-amber-50 dark:hover:bg-amber-900/30 hover:text-amber-800 dark:hover:text-amber-400 shadow-sm transition-colors flex items-center gap-2"
-              >
-                🏆 Ranking
-              </button>
-              <button
-                onClick={abrirRelatorioFrequencia}
-                className="cursor-pointer px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300 hover:border-emerald-400 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-800 dark:hover:text-emerald-400 shadow-sm transition-colors flex items-center gap-2"
-              >
-                📍 Diário
-              </button>
-              <button
-                onClick={() => router.push("/trilhatech/analytics")}
-                className="cursor-pointer px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300 hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 hover:text-indigo-800 dark:hover:text-indigo-400 shadow-sm transition-colors flex items-center gap-2"
-              >
-                📈 Analytics
-              </button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                setModalRankingAberto(true);
+                carregarRankingTutor("geral");
+              }}
+              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-amber-500/35 hover:bg-amber-500/5 dark:hover:bg-amber-500/10 shadow-sm transition-all flex items-center gap-1.5"
+            >
+              🏆 Ranking
+            </motion.button>
 
-              <button
-                onClick={() => router.push("/trilhatech/gabaritos")}
-                className="cursor-pointer px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300 hover:border-emerald-400 dark:hover:border-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 hover:text-emerald-800 dark:hover:text-emerald-400 shadow-sm transition-colors flex items-center gap-2"
-              >
-                📋 Editar Gabaritos
-              </button>
-            </div>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={abrirRelatorioFrequencia}
+              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-emerald-500/35 hover:bg-emerald-555/5 dark:hover:bg-emerald-500/10 shadow-sm transition-all flex items-center gap-1.5"
+            >
+              📍 Diário
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => router.push("/trilhatech/analytics")}
+              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-indigo-500/35 hover:bg-indigo-500/5 dark:hover:bg-indigo-500/10 shadow-sm transition-all flex items-center gap-1.5"
+            >
+              📈 Analytics
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => router.push("/trilhatech/gabaritos")}
+              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-emerald-555/35 hover:bg-emerald-500/5 dark:hover:bg-emerald-500/10 shadow-sm transition-all flex items-center gap-1.5"
+            >
+              📋 Gabaritos
+            </motion.button>
           </div>
         </div>
       </div>
 
-      <div className="max-w-384 w-full mx-auto px-4 lg:px-8">
+      <div className="max-w-[1536px] w-full mx-auto px-6 lg:px-8">
         {/* BARRA DE LINKS EXTERNOS COMPACTA */}
         <div className="flex flex-wrap gap-2 mb-6">
           <a

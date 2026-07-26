@@ -394,10 +394,11 @@ export default function DashboardAlunos() {
       <div className="absolute top-[40%] left-[30%] w-[30vw] h-[30vw] rounded-full aurora-bg-blob-3 animate-glow-pulse pointer-events-none" />
 
       {modalSiepeAberto && (
-        <div className="fixed inset-0 bg-slate-950/80 dark:bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="glass-panel-heavy rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/10">
-            <div className="bg-emerald-600/25 border-b border-white/10 text-white p-5 flex justify-between items-center">
-              <h2 className="font-display font-black text-lg flex items-center gap-2">
+        <div className="fixed inset-0 bg-slate-955/65 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="glass-panel-heavy bg-white/95 dark:bg-slate-900/95 rounded-[2.5rem] shadow-2xl w-full max-w-md overflow-hidden border border-slate-200 dark:border-white/5 relative z-10 flex flex-col">
+            <div className="bg-gradient-to-r from-emerald-600 to-teal-500 p-5 flex justify-between items-center text-white shrink-0 relative">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+              <h2 className="font-display font-black text-base flex items-center gap-2 relative z-10">
                 <span>🔄</span> Sincronizador SIEPE
               </h2>
               <button
@@ -405,33 +406,33 @@ export default function DashboardAlunos() {
                   setModalSiepeAberto(false);
                   setResultadoSiepe(null);
                 }}
-                className="cursor-pointer text-slate-400 hover:text-white transition-colors text-2xl"
+                className="cursor-pointer w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white text-xl transition-colors duration-200"
               >
                 &times;
               </button>
             </div>
-            <div className="p-6 text-center">
+            <div className="p-6 text-center bg-white/40 dark:bg-transparent">
               {resultadoSiepe ? (
                 <div className="animate-in zoom-in">
                   <div className="text-5xl mb-3">✅</div>
-                  <h3 className="font-display font-black text-white text-lg mb-2">
+                  <h3 className="font-display font-black text-slate-800 dark:text-white text-lg mb-2">
                     Sincronização Concluída!
                   </h3>
-                  <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+                  <p className="text-sm text-slate-400 dark:text-slate-400 mb-6 leading-relaxed">
                     Base escolar devidamente atualizada no servidor.
                   </p>
-                  <div className="grid grid-cols-2 gap-3 text-xs font-bold text-slate-300">
-                    <div className="bg-slate-950/40 border border-white/5 p-4 rounded-xl shadow-inner">
-                      Novatos Cadastrados
+                  <div className="grid grid-cols-2 gap-3.5 text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-300">
+                    <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-250 dark:border-white/5 p-4 rounded-xl shadow-inner text-center">
+                      Novatos
                       <br />
-                      <span className="text-3xl font-display font-black text-emerald-400 mt-2 block">
+                      <span className="text-3xl font-display font-black text-emerald-600 dark:text-emerald-400 mt-2 block">
                         {resultadoSiepe.inseridos}
                       </span>
                     </div>
-                    <div className="bg-slate-950/40 border border-white/5 p-4 rounded-xl shadow-inner">
-                      Alunos Atualizados
+                    <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-250 dark:border-white/5 p-4 rounded-xl shadow-inner text-center">
+                      Atualizados
                       <br />
-                      <span className="text-3xl font-display font-black text-brand-secondary mt-2 block">
+                      <span className="text-3xl font-display font-black text-blue-600 dark:text-brand-secondary mt-2 block">
                         {resultadoSiepe.atualizados}
                       </span>
                     </div>
@@ -439,11 +440,11 @@ export default function DashboardAlunos() {
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-slate-400 mb-6 leading-relaxed text-left">
+                  <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed text-left font-semibold">
                     Selecione o arquivo <strong>.xls ou .xlsx</strong> do SIEPE.
                     O sistema lerá todas as abas automaticamente.
                   </p>
-                  <div className="border-2 border-dashed border-slate-700 hover:border-brand-primary/50 rounded-2xl p-8 bg-slate-950/35 relative transition-colors cursor-pointer group">
+                  <div className="border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-brand-primary/50 rounded-2xl p-8 bg-slate-50/50 dark:bg-slate-950/35 relative transition-colors cursor-pointer group">
                     <input
                       type="file"
                       multiple
@@ -455,7 +456,7 @@ export default function DashboardAlunos() {
                     <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">
                       {sincronizandoSiepe ? "⚙️" : "📊"}
                     </div>
-                    <p className="font-bold text-slate-300 group-hover:text-white transition-colors text-sm">
+                    <p className="font-black text-slate-600 dark:text-slate-300 group-hover:text-slate-800 dark:group-hover:text-white transition-colors text-xs uppercase tracking-wider">
                       {sincronizandoSiepe
                         ? "Processando arquivos..."
                         : "Clique ou arraste o arquivo Excel aqui"}

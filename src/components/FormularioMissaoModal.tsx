@@ -1,6 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React from "react";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface FormularioMissaoModalProps {
   idEditando: string | null;
@@ -84,158 +86,199 @@ export default function FormularioMissaoModal({
   salvarNovaAtividade,
 }: FormularioMissaoModalProps) {
   return (
-    <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-in fade-in transition-colors duration-300">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] border-2 border-slate-200 dark:border-slate-800 transition-colors duration-300">
-        <div className="bg-slate-800 dark:bg-slate-950 p-4 flex justify-between items-center text-white shrink-0 transition-colors duration-300">
-          <h2 className="font-bold text-lg flex items-center gap-2">
-            <span>📝</span>{" "}
-            {idEditando
-              ? `Editando Missão: ${idEditando}`
-              : "Criar Nova Missão"}
-          </h2>
-          <button
-            onClick={limparFormulario}
-            className="cursor-pointer text-2xl hover:text-red-400 dark:hover:text-red-500 transition-colors leading-none"
-          >
-            &times;
-          </button>
-        </div>
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={limparFormulario}
+          className="absolute inset-0 bg-slate-955/65 backdrop-blur-md"
+        />
 
-        <div className="p-6 overflow-y-auto bg-slate-50 dark:bg-slate-900/50 custom-scrollbar transition-colors duration-300">
-          <form className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm transition-colors">
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-3 transition-colors">
-                  Tipo de Sistema
-                </label>
-                <div className="flex flex-col gap-3">
-                  <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 transition-colors">
-                    <input
-                      type="radio"
-                      value="Projeto"
-                      checked={tipo === "Projeto"}
-                      onChange={() => setTipo("Projeto")}
-                      className="cursor-pointer w-4 h-4 text-blue-600 dark:text-blue-500 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600"
-                    />{" "}
-                    Projeto (Envio de Link)
+        {/* Modal Container */}
+        <motion.div
+          initial={{ scale: 0.93, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.93, opacity: 0, y: 20 }}
+          transition={{ type: "spring", damping: 25, stiffness: 350 }}
+          className={`glass-panel-heavy bg-white/95 dark:bg-slate-900/95 rounded-[2.5rem] border border-slate-200/80 dark:border-white/5 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative z-10 ${
+            idEditando 
+              ? "shadow-[0_0_50px_rgba(245,158,11,0.15)]" 
+              : "shadow-[0_0_50px_rgba(59,130,246,0.15)]"
+          }`}
+        >
+          {/* Glow decorativo de fundo */}
+          <div className={`absolute top-0 right-0 w-80 h-80 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none ${
+            idEditando ? "bg-amber-500/10 dark:bg-amber-500/5" : "bg-blue-500/10 dark:bg-blue-500/5"
+          }`} />
+
+          {/* Header */}
+          <div className={`p-6 flex justify-between items-center text-white shrink-0 relative border-b border-white/5 ${
+            idEditando 
+              ? "bg-gradient-to-r from-amber-550 via-orange-550 to-amber-700" 
+              : "bg-gradient-to-r from-blue-900 via-indigo-950 to-blue-955"
+          }`}>
+            <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+            <div className="relative z-10">
+              <h2 className="font-display font-black text-lg md:text-xl flex items-center gap-2.5 tracking-tight">
+                <span className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-sm shadow-inner">
+                  📝
+                </span>{" "}
+                {idEditando ? `Editando Missão: ${idEditando}` : "Criar Nova Missão"}
+              </h2>
+              <p className="text-white/70 text-[10px] font-black uppercase tracking-wider mt-1">
+                Formulário da Matriz e Atividades
+              </p>
+            </div>
+            <button
+              onClick={limparFormulario}
+              className="cursor-pointer w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white text-xl transition-colors duration-200 shadow-sm"
+            >
+              &times;
+            </button>
+          </div>
+
+          {/* Form Content */}
+          <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1 bg-white/40 dark:bg-transparent">
+            <form className="space-y-6">
+              
+              {/* Bento Row 1: Tipo & Módulo */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Tipo de Atividade */}
+                <div className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-850 shadow-sm flex flex-col justify-center">
+                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-3">
+                    Tipo de Missão
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-700 dark:text-slate-300 hover:text-amber-500 dark:hover:text-amber-400 transition-colors">
-                    <input
-                      type="radio"
-                      value="Quiz"
-                      checked={tipo === "Quiz"}
-                      onChange={() => setTipo("Quiz")}
-                      className="cursor-pointer w-4 h-4 text-amber-500 dark:text-amber-500 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600"
-                    />{" "}
-                    Quiz (Múltipla Escolha)
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <label className="flex items-center gap-2.5 cursor-pointer font-bold text-sm text-slate-700 dark:text-slate-350 hover:text-blue-500 transition-colors">
+                      <input
+                        type="radio"
+                        value="Projeto"
+                        checked={tipo === "Projeto"}
+                        onChange={() => setTipo("Projeto")}
+                        className="cursor-pointer w-5 h-5 text-blue-600 border-slate-350 dark:border-slate-700 rounded-full"
+                      />
+                      Projeto (Link)
+                    </label>
+                    <label className="flex items-center gap-2.5 cursor-pointer font-bold text-sm text-slate-700 dark:text-slate-350 hover:text-amber-500 transition-colors">
+                      <input
+                        type="radio"
+                        value="Quiz"
+                        checked={tipo === "Quiz"}
+                        onChange={() => setTipo("Quiz")}
+                        className="cursor-pointer w-5 h-5 text-amber-500 border-slate-350 dark:border-slate-700 rounded-full"
+                      />
+                      Quiz (Escolha)
+                    </label>
+                    <label className="flex items-center gap-2.5 cursor-pointer font-bold text-sm text-slate-700 dark:text-slate-350 hover:text-emerald-500 transition-colors">
+                      <input
+                        type="radio"
+                        value="Material"
+                        checked={tipo === "Material"}
+                        onChange={() => setTipo("Material")}
+                        className="cursor-pointer w-5 h-5 text-emerald-500 border-slate-350 dark:border-slate-700 rounded-full"
+                      />
+                      Material (Apoio)
+                    </label>
+                  </div>
+                </div>
+
+                {/* Seleção do Módulo */}
+                <div className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-850 shadow-sm flex flex-col justify-center">
+                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                    <span>🗂️</span> Módulo da Matriz Instrucional
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer font-bold text-slate-700 dark:text-slate-300 hover:text-emerald-500 dark:hover:text-emerald-400 transition-colors">
-                    <input
-                      type="radio"
-                      value="Material"
-                      checked={tipo === "Material"}
-                      onChange={() => setTipo("Material")}
-                      className="cursor-pointer w-4 h-4 text-emerald-500 dark:text-emerald-500 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600"
-                    />{" "}
-                    Material (Acesso no AVA)
-                  </label>
+                  {modulosCadastrados.length > 0 ? (
+                    <div className="relative">
+                      <select
+                        value={modulo}
+                        onChange={(e) => setModulo(e.target.value)}
+                        className="cursor-pointer w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl p-3 pr-10 font-bold focus:border-indigo-500 outline-none transition-all text-sm appearance-none shadow-sm"
+                      >
+                        <option value="" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Selecione o módulo...</option>
+                        {modulosCadastrados.map((mod) => (
+                          <option key={mod} value={mod} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+                            {mod}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 font-bold text-xs">
+                        ▼
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 p-3.5 rounded-xl text-xs font-bold flex items-center gap-2">
+                      <span>⚠️</span> Nenhuma matriz cadastrada na tabela de controle!
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {/* 🔥 O NOVO CAMPO DE SELEÇÃO DA MATRIZ INSTRUCIONAL */}
-              <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-200 dark:border-indigo-800/50 shadow-sm flex flex-col justify-center transition-colors">
-                <label className="block text-xs font-black text-indigo-800 dark:text-indigo-400 uppercase mb-2 flex items-center gap-2 transition-colors">
-                  <span>🗂️</span> Módulo da Matriz Instrucional
-                </label>
-                {modulosCadastrados.length > 0 ? (
-                  <select
-                    value={modulo}
-                    onChange={(e) => setModulo(e.target.value)}
-                    className="w-full bg-white dark:bg-slate-950 border-2 border-indigo-300 dark:border-indigo-700 text-slate-800 dark:text-slate-100 rounded-lg p-3 font-bold focus:border-indigo-600 dark:focus:border-indigo-500 outline-none transition-colors cursor-pointer shadow-sm"
-                  >
-                    <option value="">Selecione o Nano Módulo...</option>
-                    {modulosCadastrados.map((mod) => (
-                      <option key={mod} value={mod}>
-                        {mod}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-3 rounded-lg border border-red-200 dark:border-red-800/50 text-sm font-bold flex items-center gap-2 transition-colors">
-                    <span>⚠️</span> Nenhuma matriz cadastrada na aba
-                    controle_modulos!
-                  </div>
-                )}
-                <p className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-2 font-medium transition-colors">
-                  As turmas e o acesso serão validados automaticamente pelo
-                  sistema.
-                </p>
-              </div>
-            </div>
-
-            <div>
-              {/* 🔥 NOVO GERADOR INTELIGENTE DE TÍTULOS COM ETIQUETA DE AULA */}
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2 transition-colors">
-                  Título da Missão (Com Etiqueta de Aula)
+              {/* Bento Row 2: Título com etiquetas dinâmicas */}
+              <div className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-2xl border border-slate-200/60 dark:border-slate-850 shadow-sm space-y-4">
+                <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">
+                  Título da Missão & Aula
                 </label>
 
-                <div className="flex flex-wrap gap-2 mb-2">
-                  <div className="flex items-center bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden focus-within:border-blue-500 dark:focus-within:border-blue-500 transition-colors shrink-0">
-                    <span className="bg-slate-100 dark:bg-slate-800 px-3 py-2 text-xs font-bold text-slate-500 dark:text-slate-400 border-r border-slate-200 dark:border-slate-700 transition-colors">
+                <div className="flex flex-wrap gap-3">
+                  <div className="flex items-center bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden focus-within:border-blue-500 transition-colors shadow-sm shrink-0">
+                    <span className="bg-slate-100/80 dark:bg-slate-850 px-3 py-2.5 text-xs font-black text-slate-500 dark:text-slate-450 border-r border-slate-200 dark:border-slate-800">
                       AULA Nº
                     </span>
                     <input
                       type="number"
                       placeholder="Ex: 1"
-                      className="w-16 p-2 text-sm font-black text-blue-600 dark:text-blue-400 bg-transparent outline-none text-center transition-colors"
+                      className="w-16 p-2 text-sm font-black text-blue-650 dark:text-blue-400 bg-transparent outline-none text-center"
                       onBlur={(e) => {
                         const num = e.target.value;
                         if (!num) return;
                         const formatado = num.length === 1 ? `0${num}` : num;
                         const prefixo = `[Aula ${formatado}] `;
-                        const tituloLimpo = titulo.replace(
-                          /^\[Aula \d+\]\s*/,
-                          "",
-                        );
+                        const tituloLimpo = titulo.replace(/^\[Aula \d+\]\s*/, "");
                         setTitulo(prefixo + tituloLimpo);
                         e.target.value = "";
                       }}
                     />
                   </div>
 
-                  <select
-                    className="bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-700 rounded-lg p-2 text-sm font-bold text-slate-600 dark:text-slate-300 outline-none shrink-0 cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
-                    onChange={(e) => {
-                      if (e.target.value) {
-                        const tipoEtiq = `${e.target.value} - `;
-                        const matchAula = titulo.match(
-                          /^(\[Aula \d+\]\s*)(.*)/,
-                        );
-                        if (matchAula) {
-                          setTitulo(
-                            `${matchAula[1]}${tipoEtiq}${matchAula[2].replace(/^(Desafio|Mini Projeto|Material de Apoio|Apresentação) - /, "")}`,
-                          );
-                        } else {
-                          setTitulo(
-                            `${tipoEtiq}${titulo.replace(/^(Desafio|Mini Projeto|Material de Apoio|Apresentação) - /, "")}`,
-                          );
+                  <div className="relative">
+                    <select
+                      className="cursor-pointer bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3 pr-10 text-xs font-black text-slate-650 dark:text-slate-350 outline-none shrink-0 appearance-none shadow-sm"
+                      onChange={(e) => {
+                        if (e.target.value) {
+                          const tipoEtiq = `${e.target.value} - `;
+                          const matchAula = titulo.match(/^(\[Aula \d+\]\s*)(.*)/);
+                          if (matchAula) {
+                            setTitulo(
+                              `${matchAula[1]}${tipoEtiq}${matchAula[2].replace(/^(Desafio|Mini Projeto|Material de Apoio|Apresentação) - /, "")}`,
+                            );
+                          } else {
+                            setTitulo(
+                              `${tipoEtiq}${titulo.replace(/^(Desafio|Mini Projeto|Material de Apoio|Apresentação) - /, "")}`,
+                            );
+                          }
+                          e.target.value = "";
                         }
-                        e.target.value = "";
-                      }
-                    }}
-                  >
-                    <option value="">+ Adicionar Tipo</option>
-                    <option value="Apresentação">Apresentação</option>
-                    <option value="Broadcast">Broadcast</option>
-                    <option value="Desafio_1">Desafio 1</option>
-                    <option value="Desafio_2">Desafio 2</option>
-                    <option value="Desafio_3">Desafio 3</option>
-                    <option value="feedback">Feedback</option>
-                    <option value="Mini Projeto">Mini Projeto</option>
-                    <option value="Material de Apoio">Material de Apoio</option>
-                    <option value="outros">Outros</option>
-                  </select>
+                      }}
+                    >
+                      <option value="" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">+ Adicionar Tipo</option>
+                      <option value="Apresentação" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Apresentação</option>
+                      <option value="Broadcast" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Broadcast</option>
+                      <option value="Desafio_1" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Desafio 1</option>
+                      <option value="Desafio_2" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Desafio 2</option>
+                      <option value="Desafio_3" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Desafio 3</option>
+                      <option value="feedback" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Feedback</option>
+                      <option value="Mini Projeto" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Mini Projeto</option>
+                      <option value="Material de Apoio" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Material de Apoio</option>
+                      <option value="outros" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Outros</option>
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 font-bold text-[10px]">
+                      ▼
+                    </div>
+                  </div>
                 </div>
 
                 <input
@@ -243,194 +286,228 @@ export default function FormularioMissaoModal({
                   value={titulo}
                   onChange={(e) => setTitulo(e.target.value)}
                   placeholder="Ex: [Aula 01] Desafio - Variáveis e Tipos"
-                  className="w-full bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg p-3 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors font-bold"
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-xl p-3.5 focus:border-blue-500 outline-none transition-all font-bold text-sm shadow-sm"
                 />
               </div>
-            </div>
 
-            <div>
-              <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
-                Instruções Detalhadas
-              </label>
-              <textarea
-                rows={4}
-                value={descricao}
-                onChange={(e) => setDescricao(e.target.value)}
-                placeholder="Descreva o que o aluno deve fazer..."
-                className="w-full bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg p-3 font-mono text-sm focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors"
-              ></textarea>
-            </div>
-
-            <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 p-4 rounded-xl shadow-sm transition-colors">
-              <label className="block text-xs font-black text-emerald-800 dark:text-emerald-400 uppercase mb-2 flex items-center gap-2 transition-colors">
-                <span>🗝️</span> Gabarito / Material de Recuperação (Opcional)
-              </label>
-              <textarea
-                rows={2}
-                value={gabarito}
-                onChange={(e) => setGabarito(e.target.value)}
-                placeholder="Cole o link do Colab, CodePen, ou digite a resposta correta aqui."
-                className="w-full bg-white dark:bg-slate-950 border-2 border-emerald-200 dark:border-emerald-800/50 text-slate-800 dark:text-slate-100 rounded-lg p-3 font-mono text-sm focus:border-emerald-500 dark:focus:border-emerald-400 outline-none transition-colors"
-              ></textarea>
-              <label className="flex items-center gap-3 p-3 bg-white dark:bg-slate-950 border border-emerald-200 dark:border-emerald-800/50 rounded-lg cursor-pointer hover:bg-emerald-50 dark:hover:bg-emerald-900/40 mt-3 transition-colors shadow-sm">
-                <input
-                  type="checkbox"
-                  checked={gabaritoLiberado}
-                  onChange={(e) => setGabaritoLiberado(e.target.checked)}
-                  className="cursor-pointer w-5 h-5 text-emerald-600 focus:ring-emerald-500 dark:focus:ring-emerald-400 rounded shrink-0 bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-600"
+              {/* Descrição / Instruções */}
+              <div className="space-y-2">
+                <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">
+                  Instruções Detalhadas da Missão
+                </label>
+                <textarea
+                  rows={4}
+                  value={descricao}
+                  onChange={(e) => setDescricao(e.target.value)}
+                  placeholder="Descreva detalhadamente o que o aluno deve realizar..."
+                  className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl p-4 font-mono text-xs focus:border-blue-500 outline-none transition-all shadow-sm leading-relaxed"
                 />
-                <span className="text-sm font-bold text-emerald-900 dark:text-emerald-300 transition-colors">
-                  Liberar acesso ao Gabarito para os Alunos (Fica visível na
-                  Central deles)
-                </span>
-              </label>
-            </div>
+              </div>
 
-            {tipo === "Quiz" && (
-              <div className="bg-amber-50 dark:bg-amber-900/20 p-5 rounded-xl border border-amber-200 dark:border-amber-800/50 space-y-4 shadow-sm transition-colors">
-                <h3 className="font-bold text-amber-800 dark:text-amber-400 text-sm uppercase mb-2 transition-colors">
-                  Alternativas do Quiz
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {[
-                    { label: "A", val: opcaoA, set: setOpcaoA },
-                    { label: "B", val: opcaoB, set: setOpcaoB },
-                    { label: "C", val: opcaoC, set: setOpcaoC },
-                    { label: "D", val: opcaoD, set: setOpcaoD },
-                  ].map((alt) => (
-                    <div key={alt.label} className="flex gap-2 items-start">
-                      <span className="font-black text-amber-600 dark:text-amber-500 mt-2 transition-colors">
-                        {alt.label})
-                      </span>
-                      <textarea
-                        rows={2}
-                        value={alt.val}
-                        onChange={(e) => alt.set(e.target.value)}
-                        placeholder={`Texto da opção ${alt.label}`}
-                        className="w-full border-2 border-amber-200 dark:border-amber-800/50 rounded-lg p-2 text-sm text-slate-800 dark:text-slate-100 font-mono focus:border-amber-500 dark:focus:border-amber-400 outline-none bg-white dark:bg-slate-950 transition-colors"
-                      />
+              {/* Bento Row 3: Gabarito e Material de Apoio (Cor Verde) */}
+              <div className="bg-emerald-500/5 dark:bg-emerald-950/10 border border-emerald-500/20 dark:border-emerald-900/30 p-5 rounded-3xl space-y-4">
+                <label className="block text-[10px] font-black text-emerald-800 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-1.5">
+                  <span>🗝️</span> Gabarito / Material de Recuperação (Opcional)
+                </label>
+                <textarea
+                  rows={2}
+                  value={gabarito}
+                  onChange={(e) => setGabarito(e.target.value)}
+                  placeholder="Cole o link do Colab, CodePen, ou digite as instruções de resolução."
+                  className="w-full bg-white dark:bg-slate-950 border border-emerald-500/20 dark:border-emerald-900/30 text-slate-850 dark:text-slate-100 rounded-2xl p-4 font-mono text-xs focus:border-emerald-500 outline-none transition-all shadow-sm"
+                />
+                
+                <label className="flex items-center gap-3.5 p-4 bg-white/70 dark:bg-slate-950/60 border border-emerald-500/20 dark:border-emerald-900/30 rounded-2xl cursor-pointer hover:bg-white dark:hover:bg-slate-950 transition-colors shadow-sm">
+                  <input
+                    type="checkbox"
+                    checked={gabaritoLiberado}
+                    onChange={(e) => setGabaritoLiberado(e.target.checked)}
+                    className="cursor-pointer w-5 h-5 text-emerald-600 focus:ring-emerald-500 rounded shrink-0 bg-slate-100 dark:bg-slate-850 border-slate-300 dark:border-slate-700"
+                  />
+                  <span className="text-xs font-bold text-emerald-900 dark:text-emerald-350 transition-colors">
+                    Liberar acesso ao Gabarito para os Alunos (Fica visível na Central deles)
+                  </span>
+                </label>
+              </div>
+
+              {/* Bento Row 4: Se for QUIZ */}
+              {tipo === "Quiz" && (
+                <div className="bg-amber-500/5 dark:bg-amber-955/10 p-5 rounded-3xl border border-amber-500/25 dark:border-amber-900/30 space-y-4 shadow-sm">
+                  <h3 className="font-display font-black text-amber-800 dark:text-amber-400 text-xs uppercase tracking-wider mb-2">
+                    Alternativas do Quiz
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {[
+                      { label: "A", val: opcaoA, set: setOpcaoA },
+                      { label: "B", val: opcaoB, set: setOpcaoB },
+                      { label: "C", val: opcaoC, set: setOpcaoC },
+                      { label: "D", val: opcaoD, set: setOpcaoD },
+                    ].map((alt) => (
+                      <div key={alt.label} className="flex gap-2 items-start">
+                        <span className="font-black text-amber-600 dark:text-amber-500 mt-3.5 text-sm select-none">
+                          {alt.label})
+                        </span>
+                        <textarea
+                          rows={2}
+                          value={alt.val}
+                          onChange={(e) => alt.set(e.target.value)}
+                          placeholder={`Texto da opção ${alt.label}`}
+                          className="w-full border border-amber-500/20 dark:border-amber-900/20 rounded-2xl p-3 text-xs text-slate-800 dark:text-slate-100 font-semibold focus:border-amber-500 outline-none bg-white dark:bg-slate-950 shadow-sm leading-relaxed"
+                        />
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pt-4 border-t border-amber-500/20 dark:border-amber-900/20 flex items-center gap-4">
+                    <label className="text-[10px] font-black text-amber-800 dark:text-amber-400 uppercase tracking-widest">
+                      Resposta Correta:
+                    </label>
+                    <div className="relative">
+                      <select
+                        value={respostaCorreta}
+                        onChange={(e) => setRespostaCorreta(e.target.value)}
+                        className="cursor-pointer border border-amber-500/30 dark:border-amber-900/55 rounded-xl p-2.5 pr-8 font-black text-emerald-600 dark:text-emerald-400 bg-white dark:bg-slate-955 outline-none focus:border-emerald-500 transition-all text-xs appearance-none"
+                      >
+                        <option value="A" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Alternativa A</option>
+                        <option value="B" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Alternativa B</option>
+                        <option value="C" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Alternativa C</option>
+                        <option value="D" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Alternativa D</option>
+                      </select>
+                      <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-emerald-600 font-bold text-[9px]">
+                        ▼
+                      </div>
                     </div>
-                  ))}
+                  </div>
                 </div>
-                <div className="pt-4 border-t border-amber-200 dark:border-amber-800/50 flex items-center gap-4 transition-colors">
-                  <label className="text-sm font-bold text-amber-800 dark:text-amber-400 uppercase transition-colors">
-                    Resposta Correta:
+              )}
+
+              {/* Bento Row 5: Links e Configurações */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                    <span>🖼️</span> Link da Imagem
                   </label>
-                  <select
-                    value={respostaCorreta}
-                    onChange={(e) => setRespostaCorreta(e.target.value)}
-                    className="cursor-pointer border-2 border-amber-300 dark:border-amber-700 rounded-lg p-2 font-black text-emerald-600 dark:text-emerald-400 bg-white dark:bg-slate-950 outline-none focus:border-emerald-500 dark:focus:border-emerald-400 transition-colors"
-                  >
-                    <option value="A">Alternativa A</option>
-                    <option value="B">Alternativa B</option>
-                    <option value="C">Alternativa C</option>
-                    <option value="D">Alternativa D</option>
-                  </select>
+                  <input
+                    type="url"
+                    value={imagemUrl}
+                    onChange={(e) => setImagemUrl(e.target.value)}
+                    placeholder="https://i.imgur.com/..."
+                    className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl p-3.5 focus:border-blue-500 outline-none transition-all text-sm shadow-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                    <span>🏫</span> Link do Classroom
+                  </label>
+                  <input
+                    type="url"
+                    value={linkClassroom}
+                    onChange={(e) => setLinkClassroom(e.target.value)}
+                    placeholder="https://classroom.google.com/..."
+                    className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl p-3.5 focus:border-blue-500 outline-none transition-all text-sm shadow-sm"
+                  />
                 </div>
               </div>
-            )}
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 flex items-center gap-2 transition-colors">
-                  <span>🖼️</span> Link da Imagem
-                </label>
-                <input
-                  type="url"
-                  value={imagemUrl}
-                  onChange={(e) => setImagemUrl(e.target.value)}
-                  placeholder="https://i.imgur.com/..."
-                  className="w-full bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg p-3 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors"
-                />
+              {/* Bento Row 6: Três campos de configurações */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-wider">
+                    Data Limite
+                  </label>
+                  <input
+                    type="date"
+                    value={dataLimite}
+                    onChange={(e) => setDataLimite(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl p-3.5 outline-none focus:border-blue-500 transition-all text-sm shadow-sm cursor-pointer"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-wider">
+                    XP da Missão
+                  </label>
+                  <input
+                    type="number"
+                    value={xp}
+                    onChange={(e) => setXp(e.target.value)}
+                    className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-emerald-600 dark:text-emerald-400 font-mono rounded-2xl p-3.5 font-black outline-none focus:border-emerald-500 transition-all text-sm shadow-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-wider">
+                    Turma Alvo
+                  </label>
+                  <div className="relative">
+                    <select
+                      value={turmaAlvo}
+                      onChange={(e) => setTurmaAlvo(e.target.value)}
+                      className="cursor-pointer w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl p-3.5 pr-10 outline-none focus:border-blue-500 transition-all text-sm shadow-sm appearance-none"
+                    >
+                      <option value="Todas" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Todas as Turmas</option>
+                      {turmasDisponiveis.map((turma) => (
+                        <option key={turma} value={turma} className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">
+                          {turma}
+                        </option>
+                      ))}
+                    </select>
+                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 font-bold text-xs">
+                      ▼
+                    </div>
+                  </div>
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 flex items-center gap-2 transition-colors">
-                  <span>🏫</span> Link do Classroom
-                </label>
-                <input
-                  type="url"
-                  value={linkClassroom}
-                  onChange={(e) => setLinkClassroom(e.target.value)}
-                  placeholder="https://classroom.google.com/..."
-                  className="w-full bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg p-3 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors"
-                />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
-                  Data Limite
-                </label>
-                <input
-                  type="date"
-                  value={dataLimite}
-                  onChange={(e) => setDataLimite(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg p-3 outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
-                  XP da Missão
-                </label>
-                <input
-                  type="number"
-                  value={xp}
-                  onChange={(e) => setXp(e.target.value)}
-                  className="w-full bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-700 text-emerald-700 dark:text-emerald-400 rounded-lg p-3 font-black outline-none focus:border-emerald-500 dark:focus:border-emerald-400 transition-colors"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
-                  Turma Alvo
-                </label>
-                <select
-                  value={turmaAlvo}
-                  onChange={(e) => setTurmaAlvo(e.target.value)}
-                  className="cursor-pointer w-full bg-white dark:bg-slate-950 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-lg p-3 outline-none focus:border-blue-500 dark:focus:border-blue-500 transition-colors"
-                >
-                  <option value="Todas">Todas as Turmas</option>
-                  {turmasDisponiveis.map((turma) => (
-                    <option key={turma} value={turma}>
-                      {turma}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </div>
-          </form>
-        </div>
+            </form>
+          </div>
 
-        <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex flex-wrap gap-3 justify-end shrink-0 transition-colors duration-300">
-          <button
-            type="button"
-            onClick={limparFormulario}
-            className="cursor-pointer px-6 py-3 rounded-xl font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-          >
-            Cancelar
-          </button>
-          <button
-            type="button"
-            onClick={(e) => salvarNovaAtividade(e, "Rascunho")}
-            disabled={salvando}
-            className="cursor-pointer px-6 py-3 rounded-xl font-bold bg-yellow-100 dark:bg-yellow-900/30 hover:bg-yellow-200 dark:hover:bg-yellow-900/50 text-yellow-800 dark:text-yellow-500 border border-yellow-300 dark:border-yellow-700 transition-colors shadow-sm disabled:opacity-50"
-          >
-            📝 Salvar Rascunho
-          </button>
-          <button
-            type="button"
-            onClick={(e) => salvarNovaAtividade(e, "Publicada")}
-            disabled={salvando}
-            className={`cursor-pointer px-8 py-3 rounded-xl text-white font-black shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:bg-slate-400 dark:disabled:bg-slate-700 ${idEditando ? "bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500" : "bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500"}`}
-          >
-            {salvando
-              ? "Processando..."
-              : idEditando
-                ? "Atualizar Missão"
-                : "🚀 Publicar Missão"}
-          </button>
-        </div>
+          {/* Footer */}
+          <div className="p-5 bg-white/50 dark:bg-transparent border-t border-slate-200/80 dark:border-slate-800/80 flex flex-wrap gap-3 justify-end shrink-0">
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              type="button"
+              onClick={limparFormulario}
+              className="cursor-pointer px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"
+            >
+              Cancelar
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              type="button"
+              onClick={(e) => salvarNovaAtividade(e, "Rascunho")}
+              disabled={salvando}
+              className="cursor-pointer px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider bg-amber-500/10 hover:bg-amber-500/15 text-amber-700 dark:text-amber-550 border border-amber-500/20 transition-all shadow-sm disabled:opacity-50"
+            >
+              📝 Salvar Rascunho
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              type="button"
+              onClick={(e) => salvarNovaAtividade(e, "Publicada")}
+              disabled={salvando}
+              className={`cursor-pointer px-8 py-3 rounded-2xl text-white font-black shadow-lg text-xs uppercase tracking-wider transition-all disabled:opacity-50 disabled:bg-slate-400 dark:disabled:bg-slate-700 ${
+                idEditando 
+                  ? "bg-gradient-to-r from-amber-500 to-orange-500 shadow-amber-500/10" 
+                  : "bg-gradient-to-r from-blue-600 to-indigo-600 shadow-blue-500/10"
+              }`}
+            >
+              {salvando ? (
+                <div className="flex items-center justify-center gap-1.5">
+                  <div className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                  Processando...
+                </div>
+              ) : idEditando ? (
+                "Atualizar Missão"
+              ) : (
+                "🚀 Publicar Missão"
+              )}
+            </motion.button>
+          </div>
+
+        </motion.div>
       </div>
-    </div>
+    </AnimatePresence>
   );
 }

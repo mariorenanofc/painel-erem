@@ -3,15 +3,16 @@
 
 import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
+import { motion, AnimatePresence } from "framer-motion";
 import { apiTutor } from "@/src/services/api";
 import { AlunoGodMode, GodModeModalProps } from "../types";
-import { useToast } from "@/src/contexts/ToastContext"; // <-- IMPORTAÇÃO DO CONTEXTO
+import { useToast } from "@/src/contexts/ToastContext";
 
 export default function GodModeModal({
   onClose,
   onSuccess,
 }: GodModeModalProps) {
-  const { toast } = useToast(); // <-- INICIALIZAÇÃO DO HOOK
+  const { toast } = useToast();
 
   const [alunos, setAlunos] = useState<AlunoGodMode[]>([]);
   const [carregando, setCarregando] = useState(true);
@@ -129,189 +130,282 @@ export default function GodModeModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-in fade-in duration-200 transition-colors">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col relative border-4 border-amber-400 dark:border-amber-500 transition-colors duration-300">
-        <div className="bg-gradient-to-r from-slate-900 via-purple-900 to-slate-900 p-6 relative overflow-hidden shrink-0 transition-colors duration-300">
-          <div className="absolute top-0 left-0 w-full h-full opacity-20 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] pointer-events-none"></div>
-          <button
-            onClick={onClose}
-            className="cursor-pointer absolute top-4 right-4 text-3xl leading-none text-white hover:text-amber-400 dark:hover:text-amber-300 z-10 transition-colors"
-          >
-            &times;
-          </button>
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+        />
 
-          <div className="relative z-10 text-center">
-            <div className="text-5xl mb-2 animate-bounce">⚡</div>
-            <h2 className="font-black text-2xl text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-500 uppercase tracking-widest">
-              God Mode
-            </h2>
-            <p className="text-purple-200 text-xs font-bold mt-1 transition-colors">
-              Controle Absoluto do Jogo
-            </p>
-          </div>
-        </div>
+        {/* Modal Container */}
+        <motion.div
+          initial={{ scale: 0.93, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.93, opacity: 0, y: 20 }}
+          transition={{ type: "spring", damping: 25, stiffness: 350 }}
+          className="glass-panel-heavy bg-white/90 dark:bg-slate-900/90 rounded-[2.5rem] shadow-[0_0_50px_rgba(168,85,247,0.2)] border border-slate-200/80 dark:border-white/5 w-full max-w-lg overflow-hidden flex flex-col relative z-10"
+        >
+          {/* Glow decorativo de fundo */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-purple-500/10 dark:bg-purple-500/5 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
 
-        <div className="flex bg-slate-100 dark:bg-slate-950 border-b border-slate-200 dark:border-slate-800 shrink-0 transition-colors duration-300">
-          <button
-            onClick={() => setAbaAtiva("xp")}
-            className={`cursor-pointer flex-1 py-3 font-black text-sm transition-colors ${abaAtiva === "xp" ? "text-purple-700 dark:text-purple-400 border-b-2 border-purple-600 dark:border-purple-500 bg-white dark:bg-slate-900" : "text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"}`}
-          >
-            ⚖️ Injetar/Punir XP
-          </button>
-          <button
-            onClick={() => setAbaAtiva("coroa")}
-            className={`cursor-pointer flex-1 py-3 font-black text-sm transition-colors ${abaAtiva === "coroa" ? "text-amber-600 dark:text-amber-400 border-b-2 border-amber-500 bg-white dark:bg-slate-900" : "text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800"}`}
-          >
-            👑 Coroar Elite
-          </button>
-        </div>
-
-        <div className="p-6 bg-slate-50 dark:bg-slate-900 max-h-[60vh] overflow-y-auto transition-colors duration-300 custom-scrollbar">
-          {carregando ? (
-            <div className="flex justify-center py-10">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-purple-600 dark:border-purple-400"></div>
-            </div>
-          ) : abaAtiva === "xp" ? (
-            <form
-              onSubmit={handleInjetar}
-              className="space-y-5 animate-in slide-in-from-left-4"
+          {/* Header */}
+          <div className="bg-gradient-to-r from-slate-950 via-purple-950 to-slate-950 p-7 text-center relative overflow-hidden shrink-0 border-b border-white/5">
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay pointer-events-none" />
+            <button
+              onClick={onClose}
+              className="cursor-pointer absolute top-5 right-5 w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white text-xl transition-colors duration-200 z-20"
             >
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
-                  1. Escolha o Alvo
-                </label>
-                <select
-                  value={matriculaSelecionada}
-                  onChange={(e) => setMatriculaSelecionada(e.target.value)}
-                  className="cursor-pointer w-full border-2 border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-950 outline-none focus:border-purple-500 dark:focus:border-purple-500 shadow-sm transition-colors"
-                  required
-                >
-                  <option value="">Selecione um aluno...</option>
-                  {alunos.map((a) => (
-                    <option key={a.matricula} value={a.matricula}>
-                      {a.nome} ({a.turma})
-                    </option>
-                  ))}
-                </select>
-              </div>
+              &times;
+            </button>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="col-span-2 md:col-span-1">
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
-                    2. Quantidade (+ ou -)
-                  </label>
-                  <div className="relative">
-                    <input
-                      type="number"
-                      value={quantidadeXP}
-                      onChange={(e) => setQuantidadeXP(Number(e.target.value))}
-                      placeholder="Ex: 50 ou -100"
-                      className={`w-full border-2 rounded-xl p-3 text-lg font-black outline-none shadow-sm text-center bg-white dark:bg-slate-950 transition-colors ${Number(quantidadeXP) < 0 ? "border-red-400 dark:border-red-800 text-red-600 dark:text-red-400 focus:border-red-600 dark:focus:border-red-500" : "border-emerald-400 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 focus:border-emerald-600 dark:focus:border-emerald-500"}`}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="col-span-2 md:col-span-1 flex flex-col justify-end pb-2">
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold leading-tight transition-colors">
-                    💡{" "}
-                    <span className="text-emerald-600 dark:text-emerald-400">
-                      Positivo (+10)
-                    </span>{" "}
-                    para premiar. <br />
-                    🚨{" "}
-                    <span className="text-red-500 dark:text-red-400">
-                      Negativo (-100)
-                    </span>{" "}
-                    para punir IA/cola.
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
-                  3. Motivo da Ação
-                </label>
-                <input
-                  type="text"
-                  value={motivo}
-                  onChange={(e) => setMotivo(e.target.value)}
-                  placeholder="Ex: Ajudou o colega / Punição por uso de IA"
-                  className="w-full border-2 border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-950 outline-none focus:border-purple-500 dark:focus:border-purple-500 shadow-sm transition-colors"
-                  required
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={injetando}
-                className={`cursor-pointer w-full text-white font-black py-4 rounded-xl shadow-lg transition-transform active:scale-95 text-lg flex items-center justify-center gap-2 ${Number(quantidadeXP) < 0 ? "bg-red-600 hover:bg-red-700 dark:bg-red-700 dark:hover:bg-red-600" : "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600"}`}
+            <div className="relative z-10 text-center">
+              <motion.div
+                initial={{ scale: 0, rotate: -20 }}
+                animate={{ scale: 1, rotate: 0 }}
+                transition={{ type: "spring", damping: 10, delay: 0.15 }}
+                className="text-5xl mb-2 animate-bounce select-none"
               >
-                {injetando
-                  ? "Aplicando..."
-                  : Number(quantidadeXP) < 0
-                    ? "🚨 APLICAR PUNIÇÃO"
-                    : "⚡ INJETAR BÔNUS"}
-              </button>
-            </form>
-          ) : (
-            <form
-              onSubmit={handleCoroar}
-              className="space-y-5 animate-in slide-in-from-right-4"
+                ⚡
+              </motion.div>
+              <h2 className="font-display font-black text-2xl text-transparent bg-clip-text bg-gradient-to-r from-amber-300 to-yellow-500 uppercase tracking-widest">
+                God Mode
+              </h2>
+              <p className="text-purple-200 text-[10px] font-black mt-1 uppercase tracking-widest opacity-80">
+                Controle Absoluto do Jogo
+              </p>
+            </div>
+          </div>
+
+          {/* Abas */}
+          <div className="flex bg-slate-100/50 dark:bg-slate-950/40 p-1.5 rounded-2xl border-b border-slate-200/50 dark:border-slate-850 shrink-0 m-4 mb-2">
+            <button
+              onClick={() => setAbaAtiva("xp")}
+              className={`cursor-pointer flex-1 py-3.5 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all select-none ${
+                abaAtiva === "xp"
+                  ? "bg-purple-650 text-white shadow-md"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+              }`}
             >
-              <div className="bg-amber-50 dark:bg-amber-900/20 p-4 rounded-xl border border-amber-200 dark:border-amber-800/50 mb-4 transition-colors">
-                <p className="text-xs text-amber-800 dark:text-amber-400 font-medium">
-                  <strong>Como funciona:</strong> Ao transferir a placa, o dono
-                  anterior perde o destaque VIP, mas recebe automaticamente uma{" "}
-                  <strong>Badge de Legado</strong> para guardar no mural dele
-                  eternamente.
+              ⚖️ Injetar/Punir XP
+            </button>
+            <button
+              onClick={() => setAbaAtiva("coroa")}
+              className={`cursor-pointer flex-1 py-3.5 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all select-none ${
+                abaAtiva === "coroa"
+                  ? "bg-amber-500 text-white shadow-md"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+              }`}
+            >
+              👑 Coroar Elite
+            </button>
+          </div>
+
+          {/* Conteúdo rolável */}
+          <div className="p-6 overflow-y-auto max-h-[52vh] custom-scrollbar bg-white/40 dark:bg-transparent">
+            {carregando ? (
+              <div className="flex flex-col justify-center items-center py-12 opacity-60">
+                <div className="relative w-10 h-10 mb-4">
+                  <div className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-800" />
+                  <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-purple-500 animate-spin" />
+                </div>
+                <p className="font-bold text-slate-600 dark:text-slate-400 text-xs tracking-wider uppercase">
+                  Carregando lista de alunos...
                 </p>
               </div>
+            ) : (
+              <AnimatePresence mode="wait">
+                {abaAtiva === "xp" ? (
+                  <motion.form
+                    key="abaXp"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    onSubmit={handleInjetar}
+                    className="space-y-5"
+                  >
+                    {/* Alvo */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        1. Escolha o Alvo
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={matriculaSelecionada}
+                          onChange={(e) => setMatriculaSelecionada(e.target.value)}
+                          className="cursor-pointer w-full p-4 pr-10 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-850 dark:text-slate-200 rounded-2xl outline-none focus:border-purple-500 font-bold text-sm transition-all shadow-sm appearance-none"
+                          required
+                        >
+                          <option value="">Selecione um aluno...</option>
+                          {alunos.map((a) => (
+                            <option key={a.matricula} value={a.matricula}>
+                              {a.nome} ({a.turma})
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 font-bold text-xs">
+                          ▼
+                        </div>
+                      </div>
+                    </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
-                  1. Qual placa transferir?
-                </label>
-                <select
-                  value={tipoPlaca}
-                  onChange={(e) => setTipoPlaca(e.target.value as any)}
-                  className="cursor-pointer w-full border-2 border-amber-300 dark:border-amber-700 rounded-xl p-3 text-sm font-black text-amber-700 dark:text-amber-500 outline-none focus:border-amber-500 dark:focus:border-amber-400 shadow-sm bg-white dark:bg-slate-950 transition-colors"
-                >
-                  <option value="Elite Ouro">👑 Elite Ouro (Top 1)</option>
-                  <option value="Elite Prata">🥈 Elite Prata (Top 2)</option>
-                  <option value="Elite Bronze">🥉 Elite Bronze (Top 3)</option>
-                </select>
-              </div>
+                    {/* Quantidade */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                          2. Quantidade (+ ou -)
+                        </label>
+                        <input
+                          type="number"
+                          value={quantidadeXP}
+                          onChange={(e) => setQuantidadeXP(Number(e.target.value))}
+                          placeholder="Ex: 50 ou -100"
+                          className={`w-full border rounded-2xl p-4 text-xl font-black outline-none shadow-inner text-center bg-white dark:bg-slate-950 transition-all ${
+                            Number(quantidadeXP) < 0
+                              ? "border-red-300 dark:border-red-900/50 text-red-600 dark:text-red-400 focus:border-red-500"
+                              : "border-emerald-300 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400 focus:border-emerald-500"
+                          }`}
+                          required
+                        />
+                      </div>
+                      <div className="flex items-center">
+                        <div className="bg-slate-50/50 dark:bg-slate-950/30 border border-slate-250/60 dark:border-slate-850 p-4.5 rounded-2xl w-full text-xs font-semibold leading-relaxed text-slate-550 dark:text-slate-400 shadow-sm">
+                          💡 <span className="text-emerald-600 dark:text-emerald-400 font-bold">Positivo (+10)</span> para bonificar. <br />
+                          🚨 <span className="text-red-500 dark:text-red-400 font-bold font-mono">Negativo (-100)</span> para punir IA ou cola.
+                        </div>
+                      </div>
+                    </div>
 
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
-                  2. Novo Dono (Campeão Atual)
-                </label>
-                <select
-                  value={matriculaCoroa}
-                  onChange={(e) => setMatriculaCoroa(e.target.value)}
-                  className="cursor-pointer w-full border-2 border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm font-bold text-slate-700 dark:text-slate-200 bg-white dark:bg-slate-950 outline-none focus:border-purple-500 dark:focus:border-purple-500 shadow-sm transition-colors"
-                  required
-                >
-                  <option value="">Selecione o novo campeão...</option>
-                  {alunos.map((a) => (
-                    <option key={a.matricula} value={a.matricula}>
-                      {a.nome} ({a.turma})
-                    </option>
-                  ))}
-                </select>
-              </div>
+                    {/* Motivo */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        3. Motivo da Ação
+                      </label>
+                      <input
+                        type="text"
+                        value={motivo}
+                        onChange={(e) => setMotivo(e.target.value)}
+                        placeholder="Ex: Ajudou o colega / Punição por uso indevido de IA"
+                        className="w-full border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-sm text-slate-850 dark:text-slate-200 bg-white dark:bg-slate-950 outline-none focus:border-purple-500 shadow-sm transition-all"
+                        required
+                      />
+                    </div>
 
-              <button
-                type="submit"
-                disabled={coroando}
-                className="cursor-pointer w-full text-white font-black py-4 rounded-xl shadow-lg transition-transform active:scale-95 text-lg flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 mt-4"
-              >
-                {coroando ? "Transferindo..." : "👑 COROAR NOVO CAMPEÃO"}
-              </button>
-            </form>
-          )}
-        </div>
+                    {/* Botão de Submissão */}
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      type="submit"
+                      disabled={injetando}
+                      className={`cursor-pointer w-full text-white font-black py-4 rounded-2xl shadow-lg transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2 select-none ${
+                        Number(quantidadeXP) < 0
+                          ? "bg-red-650 hover:brightness-110 shadow-red-500/10"
+                          : "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:brightness-110 shadow-amber-500/10"
+                      }`}
+                    >
+                      {injetando ? (
+                        <>
+                          <div className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                          Aplicando Alteração...
+                        </>
+                      ) : Number(quantidadeXP) < 0 ? (
+                        "🚨 Aplicar Punição"
+                      ) : (
+                        "⚡ Injetar Bônus de XP"
+                      )}
+                    </motion.button>
+                  </motion.form>
+                ) : (
+                  <motion.form
+                    key="abaCoroa"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    onSubmit={handleCoroar}
+                    className="space-y-5"
+                  >
+                    {/* Alerta explicativo */}
+                    <div className="bg-amber-50/50 dark:bg-amber-955/15 p-4.5 rounded-2xl border border-amber-200/50 dark:border-amber-900/30">
+                      <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-semibold">
+                        <strong>Destaque VIP:</strong> Ao coroar um novo campeão, o dono anterior perderá o destaque estético no mural público, mas receberá automaticamente uma <strong>Badge de Legado</strong> eterna em seu histórico.
+                      </p>
+                    </div>
+
+                    {/* Placa */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        1. Qual placa transferir?
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={tipoPlaca}
+                          onChange={(e) => setTipoPlaca(e.target.value as any)}
+                          className="cursor-pointer w-full p-4 pr-10 border border-amber-200 dark:border-amber-900 bg-white dark:bg-slate-950 text-amber-700 dark:text-amber-500 rounded-2xl outline-none focus:border-amber-500 font-bold text-sm transition-all shadow-sm appearance-none"
+                        >
+                          <option value="Elite Ouro">👑 Elite Ouro (Top 1)</option>
+                          <option value="Elite Prata">🥈 Elite Prata (Top 2)</option>
+                          <option value="Elite Bronze">🥉 Elite Bronze (Top 3)</option>
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-amber-500 font-bold text-xs">
+                          ▼
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Campeão */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        2. Novo Dono (Campeão Atual)
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={matriculaCoroa}
+                          onChange={(e) => setMatriculaCoroa(e.target.value)}
+                          className="cursor-pointer w-full p-4 pr-10 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-850 dark:text-slate-200 rounded-2xl outline-none focus:border-purple-500 font-bold text-sm transition-all shadow-sm appearance-none"
+                          required
+                        >
+                          <option value="">Selecione o novo campeão...</option>
+                          {alunos.map((a) => (
+                            <option key={a.matricula} value={a.matricula}>
+                              {a.nome} ({a.turma})
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 font-bold text-xs">
+                          ▼
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Botão Coroar */}
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      type="submit"
+                      disabled={coroando}
+                      className="cursor-pointer w-full text-white font-black py-4 rounded-2xl shadow-lg shadow-amber-500/10 transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 hover:brightness-110 mt-4 select-none"
+                    >
+                      {coroando ? (
+                        <>
+                          <div className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                          Transferindo Coroa...
+                        </>
+                      ) : (
+                        "👑 Coroar Novo Campeão"
+                      )}
+                    </motion.button>
+                  </motion.form>
+                )}
+              </AnimatePresence>
+            )}
+          </div>
+        </motion.div>
       </div>
-    </div>
+    </AnimatePresence>
   );
 }

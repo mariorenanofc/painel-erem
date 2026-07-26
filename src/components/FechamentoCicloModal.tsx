@@ -3,9 +3,10 @@
 
 import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
+import { motion, AnimatePresence } from "framer-motion";
 import { apiTutor } from "@/src/services/api";
 import { AlunoRankingTutor } from "../types";
-import { useToast } from "@/src/contexts/ToastContext"; // <-- IMPORTAÇÃO DO CONTEXTO
+import { useToast } from "@/src/contexts/ToastContext";
 
 interface FechamentoCicloModalProps {
   isOpen: boolean;
@@ -13,7 +14,6 @@ interface FechamentoCicloModalProps {
   turmasDisponiveis: string[];
 }
 
-// ⚙️ REGRAS DE NEGÓCIO DE PREMIAÇÃO
 const REGRAS_XP = {
   semanal: { top1: 0, top2_3: 20, top4_10: 10 },
   mensal: { top1: 30, top2_3: 80, top4_10: 40 },
@@ -24,7 +24,7 @@ export default function FechamentoCicloModal({
   onClose,
   turmasDisponiveis,
 }: FechamentoCicloModalProps) {
-  const { toast } = useToast(); // <-- INICIALIZAÇÃO DO HOOK
+  const { toast } = useToast();
 
   const [etapa, setEtapa] = useState<1 | 2>(1);
   const [tipo, setTipo] = useState<"semanal" | "mensal">("semanal");
@@ -53,7 +53,6 @@ export default function FechamentoCicloModal({
     try {
       const data = await apiTutor.buscarRanking(tipo);
       if (data.status === "sucesso") {
-        // Filtra pela turma e pega os 10 primeiros
         const rankingTurma = data.ranking.filter(
           (a: AlunoRankingTutor) => a.turma === turma,
         );
@@ -126,7 +125,6 @@ export default function FechamentoCicloModal({
   };
 
   const aplicarPremicoesEFinalizar = async () => {
-    // Mantemos o confirm nativo para segurança (Evita cliques duplos acidentais)
     if (
       !confirm(
         "Isso irá depositar o XP na conta de todos os alunos da lista! Confirmar?",
@@ -174,186 +172,295 @@ export default function FechamentoCicloModal({
     );
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm z-100 flex items-center justify-center p-4 animate-in fade-in transition-colors duration-300">
-      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] transition-colors duration-300">
-        <div className="bg-gradient-to-r from-amber-500 to-orange-600 p-6 flex justify-between items-center text-white shrink-0">
-          <div>
-            <h2 className="font-black text-2xl flex items-center gap-2">
-              <span>🏆</span> Fechamento de Ciclo
-            </h2>
-            <p className="text-amber-100 text-xs mt-1 font-bold tracking-widest uppercase">
-              Geração Automática de XP e Relatório
-            </p>
-          </div>
-          <button
+    <AnimatePresence>
+      {isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          {/* Backdrop */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
             onClick={onClose}
-            className="cursor-pointer text-4xl leading-none hover:text-amber-200 transition-colors"
-          >
-            &times;
-          </button>
-        </div>
+            className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+          />
 
-        <div className="p-6 overflow-y-auto flex-1 custom-scrollbar">
-          {etapa === 1 ? (
-            <div className="space-y-6 animate-in slide-in-from-right-4 max-w-lg mx-auto py-10">
-              <div className="bg-amber-50 dark:bg-amber-900/20 p-5 rounded-2xl border border-amber-200 dark:border-amber-800/50 transition-colors">
-                <p className="text-sm font-bold text-amber-800 dark:text-amber-400 text-center transition-colors">
-                  Selecione os parâmetros abaixo. O sistema irá capturar os 10
-                  melhores da turma e preparar o depósito automático dos XPs!
+          {/* Modal Container */}
+          <motion.div
+            initial={{ scale: 0.93, opacity: 0, y: 20 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.93, opacity: 0, y: 20 }}
+            transition={{ type: "spring", damping: 25, stiffness: 350 }}
+            className="glass-panel-heavy bg-white/90 dark:bg-slate-900/90 rounded-[2.5rem] shadow-[0_0_50px_rgba(245,158,11,0.15)] border border-slate-200/80 dark:border-white/5 w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col relative z-10"
+          >
+            {/* Glow decorativo de fundo */}
+            <div className="absolute top-0 right-0 w-80 h-80 bg-amber-500/10 dark:bg-amber-500/5 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
+
+            {/* Cabeçalho */}
+            <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-red-600 dark:from-amber-600 dark:to-red-800 p-6 flex justify-between items-center text-white shrink-0 relative">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
+              <div className="relative z-10">
+                <h2 className="font-display font-black text-xl flex items-center gap-2.5 tracking-tight">
+                  <span className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center text-base shadow-inner">
+                    🏆
+                  </span>{" "}
+                  Fechamento de Ciclo
+                </h2>
+                <p className="text-amber-100 text-xs mt-1.5 font-semibold tracking-wider uppercase opacity-90">
+                  Geração Automática de XP e Relatórios
                 </p>
               </div>
-
-              <div>
-                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase mb-2 transition-colors">
-                  1. Qual ciclo estamos fechando?
-                </label>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setTipo("semanal")}
-                    className={`cursor-pointer flex-1 py-3 rounded-xl font-black transition-all border-2 ${tipo === "semanal" ? "bg-amber-500 text-white border-amber-600 shadow-md scale-105" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
-                  >
-                    SEMANAL
-                  </button>
-                  <button
-                    onClick={() => setTipo("mensal")}
-                    className={`cursor-pointer flex-1 py-3 rounded-xl font-black transition-all border-2 ${tipo === "mensal" ? "bg-amber-500 text-white border-amber-600 shadow-md scale-105" : "bg-white dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
-                  >
-                    MENSAL
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase mb-2 transition-colors">
-                  2. De qual Turma?
-                </label>
-                <select
-                  value={turma}
-                  onChange={(e) => setTurma(e.target.value)}
-                  className="cursor-pointer w-full p-4 border-2 border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 rounded-xl outline-none focus:border-amber-500 dark:focus:border-amber-500 font-bold text-sm transition-colors"
-                >
-                  {turmasDisponiveis.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <button
-                onClick={carregarTop10}
-                disabled={carregando}
-                className="cursor-pointer w-full bg-slate-800 dark:bg-slate-700 hover:bg-slate-900 dark:hover:bg-slate-600 text-white font-black py-4 rounded-xl shadow-lg transition-all active:scale-95 text-lg mt-4 disabled:opacity-50"
+                onClick={onClose}
+                className="cursor-pointer w-9 h-9 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl transition-colors duration-200"
               >
-                {carregando ? "Calculando..." : "GERAR DADOS DO FECHAMENTO 🚀"}
+                &times;
               </button>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 animate-in slide-in-from-right-4">
-              {/* COLUNA ESQUERDA: LISTA E XP */}
-              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm overflow-hidden flex flex-col transition-colors">
-                <div className="bg-slate-100 dark:bg-slate-900 p-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center transition-colors">
-                  <h3 className="font-black text-slate-800 dark:text-slate-100 uppercase tracking-widest text-sm transition-colors">
-                    Os Vencedores ({tipo})
-                  </h3>
-                  <span className="bg-amber-100 dark:bg-amber-900/30 text-amber-800 dark:text-amber-500 text-[10px] font-black px-2 py-1 rounded transition-colors">
-                    Top 10
-                  </span>
-                </div>
-                <div className="overflow-y-auto max-h-[50vh] p-2 custom-scrollbar">
-                  {top10.length === 0 ? (
-                    <p className="text-center text-slate-500 dark:text-slate-400 p-6 transition-colors">
-                      Nenhum aluno encontado.
-                    </p>
-                  ) : (
-                    top10.map((aluno) => (
-                      <div
-                        key={aluno.matricula}
-                        className="flex justify-between items-center p-3 hover:bg-slate-50 dark:hover:bg-slate-700/50 border-b border-slate-100 dark:border-slate-700/50 last:border-0 transition-colors"
-                      >
-                        <div className="flex items-center gap-3">
-                          <span className="font-black text-slate-400 dark:text-slate-500 w-5 transition-colors">
-                            {aluno.posicao}º
-                          </span>
-                          <span className="text-xl">
-                            {aluno.avatar && aluno.avatar !== "avatar-padrao"
-                              ? aluno.avatar
-                              : "👨‍💻"}
-                          </span>
-                          <div>
-                            <p className="font-bold text-sm text-slate-800 dark:text-slate-100 leading-tight transition-colors">
-                              {aluno.nome}
-                            </p>
-                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold transition-colors">
-                              {aluno.xp} XP Atual
-                            </p>
-                          </div>
-                        </div>
-                        <div className="text-right shrink-0">
-                          {aluno.xpBonus > 0 ? (
-                            <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-black px-2 py-1 rounded text-xs animate-pulse transition-colors">
-                              +{aluno.xpBonus} XP
-                            </span>
-                          ) : (
-                            <span className="bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400 font-bold px-2 py-1 rounded text-[10px] transition-colors">
-                              Brinde Físico 🎁
-                            </span>
-                          )}
+
+            {/* Corpo rolável */}
+            <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1 bg-white/40 dark:bg-transparent">
+              <AnimatePresence mode="wait">
+                {etapa === 1 ? (
+                  <motion.div
+                    key="etapa1"
+                    initial={{ opacity: 0, x: -15 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 15 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-6 max-w-lg mx-auto py-6"
+                  >
+                    {/* Alerta Inicial */}
+                    <div className="bg-amber-50/50 dark:bg-amber-955/15 p-5 rounded-2xl border border-amber-200/50 dark:border-amber-900/30 text-center">
+                      <p className="text-sm font-semibold text-amber-800 dark:text-amber-300 leading-relaxed">
+                        Selecione os parâmetros do ciclo. O sistema mapeará os 10 melhores da turma e preparará o depósito automático dos XPs de forma instantânea!
+                      </p>
+                    </div>
+
+                    {/* Campo 1: Tipo de Ciclo */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        1. Qual ciclo estamos fechando?
+                      </label>
+                      <div className="flex gap-3 bg-slate-100/50 dark:bg-slate-950/40 p-1.5 rounded-2xl border border-slate-200/60 dark:border-slate-850">
+                        <button
+                          type="button"
+                          onClick={() => setTipo("semanal")}
+                          className={`cursor-pointer flex-1 py-3 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all select-none ${
+                            tipo === "semanal"
+                              ? "bg-amber-500 text-white shadow-md"
+                              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                          }`}
+                        >
+                          Semanal
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setTipo("mensal")}
+                          className={`cursor-pointer flex-1 py-3 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all select-none ${
+                            tipo === "mensal"
+                              ? "bg-amber-500 text-white shadow-md"
+                              : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+                          }`}
+                        >
+                          Mensal
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Campo 2: Selecionar Turma */}
+                    <div className="space-y-2">
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        2. De qual Turma?
+                      </label>
+                      <div className="relative">
+                        <select
+                          value={turma}
+                          onChange={(e) => setTurma(e.target.value)}
+                          className="cursor-pointer w-full p-4 pr-10 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 rounded-2xl outline-none focus:border-amber-500 dark:focus:border-amber-550 font-bold text-sm transition-all shadow-sm appearance-none"
+                        >
+                          {turmasDisponiveis.map((t) => (
+                            <option key={t} value={t}>
+                              {t}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 font-bold text-xs">
+                          ▼
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
-                <div className="p-4 bg-slate-50 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 mt-auto transition-colors">
-                  <button
-                    onClick={aplicarPremicoesEFinalizar}
-                    disabled={processandoXP}
-                    className="cursor-pointer w-full bg-emerald-600 dark:bg-emerald-700 hover:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-black py-3.5 rounded-xl shadow-md transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 text-sm"
-                  >
-                    {processandoXP
-                      ? "💸 Injetando nas contas..."
-                      : "💸 INJETAR XP NAS CONTAS AGORA"}
-                  </button>
-                </div>
-              </div>
+                    </div>
 
-              {/* COLUNA DIREITA: WHATSAPP COPY */}
-              <div className="bg-slate-50 dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-inner flex flex-col relative transition-colors">
-                <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center transition-colors">
-                  <h3 className="font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-widest text-sm flex items-center gap-2 transition-colors">
-                    <span>💬</span> Mensagem do WhatsApp
-                  </h3>
-                  <button
-                    onClick={copiarTexto}
-                    className="cursor-pointer bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-xs font-bold px-3 py-1.5 rounded hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors shadow-sm"
+                    {/* Botão de Enviar */}
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={carregarTop10}
+                      disabled={carregando}
+                      className="cursor-pointer w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black py-4 rounded-2xl shadow-lg transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2 select-none disabled:opacity-50 mt-4"
+                    >
+                      {carregando ? (
+                        <>
+                          <div className="w-4 h-4 rounded-full border-2 border-slate-450 border-t-white animate-spin" />
+                          Processando Classificação...
+                        </>
+                      ) : (
+                        "Gerar Dados do Fechamento 🚀"
+                      )}
+                    </motion.button>
+                  </motion.div>
+                ) : (
+                  <motion.div
+                    key="etapa2"
+                    initial={{ opacity: 0, x: 15 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -15 }}
+                    transition={{ duration: 0.2 }}
+                    className="grid grid-cols-1 lg:grid-cols-2 gap-6"
                   >
-                    Copiar Texto
-                  </button>
-                </div>
-                <textarea
-                  readOnly
-                  value={mensagemWhatsApp}
-                  className="w-full h-full min-h-75 p-5 bg-transparent text-sm text-slate-700 dark:text-slate-300 font-mono resize-none focus:outline-none custom-scrollbar leading-relaxed transition-colors"
-                />
-              </div>
+                    {/* Coluna Esquerda: Ganhadores e Ações */}
+                    <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-3xl border border-slate-200/60 dark:border-slate-850 shadow-sm overflow-hidden flex flex-col">
+                      <div className="bg-slate-100/65 dark:bg-slate-950/50 p-4 px-5 border-b border-slate-200/60 dark:border-slate-850 flex justify-between items-center">
+                        <h3 className="font-display font-black text-slate-800 dark:text-slate-200 uppercase tracking-wider text-xs">
+                          Os Vencedores ({tipo})
+                        </h3>
+                        <span className="bg-amber-100/90 dark:bg-amber-955/30 text-amber-700 dark:text-amber-400 text-[10px] font-black px-2.5 py-1 rounded-lg border border-amber-200/35 dark:border-amber-900/10">
+                          Top 10 Geral
+                        </span>
+                      </div>
+
+                      <div className="overflow-y-auto max-h-[48vh] p-3 space-y-2 custom-scrollbar">
+                        {top10.length === 0 ? (
+                          <p className="text-center text-slate-450 dark:text-slate-500 italic py-8">
+                            Nenhum aluno encontrado para os critérios.
+                          </p>
+                        ) : (
+                          top10.map((aluno) => {
+                            const isTop1 = aluno.posicao === 1;
+                            const isTop23 = aluno.posicao === 2 || aluno.posicao === 3;
+
+                            return (
+                              <div
+                                key={aluno.matricula}
+                                className={`flex justify-between items-center p-3.5 rounded-2xl border transition-all duration-300 ${
+                                  isTop1
+                                    ? "bg-amber-500/10 border-amber-500/30 hover:border-amber-500/50"
+                                    : isTop23
+                                      ? "bg-slate-100/80 dark:bg-slate-800/40 border-slate-200/70 dark:border-slate-800 hover:border-slate-400"
+                                      : "bg-white/50 dark:bg-slate-900/20 border-slate-100 dark:border-white/5 hover:border-slate-250 dark:hover:border-slate-800"
+                                }`}
+                              >
+                                <div className="flex items-center gap-3">
+                                  {/* Posição Badge */}
+                                  <span
+                                    className={`w-6 h-6 rounded-lg text-xs font-black flex items-center justify-center shadow-inner ${
+                                      isTop1
+                                        ? "bg-amber-400 text-amber-950 font-sans"
+                                        : isTop23
+                                          ? "bg-slate-300 dark:bg-slate-600 text-slate-800 dark:text-white"
+                                          : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                                    }`}
+                                  >
+                                    {aluno.posicao}º
+                                  </span>
+
+                                  {/* Avatar */}
+                                  <span className="text-2xl select-none">
+                                    {aluno.avatar && aluno.avatar !== "avatar-padrao"
+                                      ? aluno.avatar
+                                      : "👨‍💻"}
+                                  </span>
+
+                                  <div>
+                                    <p className="font-bold text-sm text-slate-800 dark:text-slate-150 leading-tight">
+                                      {aluno.nome}
+                                    </p>
+                                    <p className="text-[10px] text-slate-400 dark:text-slate-550 font-bold font-mono mt-0.5">
+                                      {aluno.xp} XP Atual
+                                    </p>
+                                  </div>
+                                </div>
+
+                                <div className="text-right shrink-0">
+                                  {aluno.xpBonus > 0 ? (
+                                    <span className="bg-emerald-100/80 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-400 font-black px-2.5 py-1 rounded-xl text-[10px] border border-emerald-250/30 dark:border-emerald-900/10">
+                                      +{aluno.xpBonus} XP
+                                    </span>
+                                  ) : (
+                                    <span className="bg-amber-100/90 dark:bg-amber-955/45 text-amber-700 dark:text-amber-400 font-black px-2.5 py-1 rounded-xl text-[10px] border border-amber-250/30 dark:border-amber-900/10">
+                                      Brinde Físico 🎁
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+
+                      {/* Botão de Confirmação */}
+                      <div className="p-4 bg-white/50 dark:bg-transparent border-t border-slate-200/80 dark:border-slate-850 mt-auto">
+                        <motion.button
+                          whileHover={{ scale: 1.01 }}
+                          whileTap={{ scale: 0.99 }}
+                          onClick={aplicarPremicoesEFinalizar}
+                          disabled={processandoXP}
+                          className="cursor-pointer w-full bg-emerald-600 dark:bg-emerald-700 hover:bg-emerald-700 dark:hover:bg-emerald-600 text-white font-black py-3.5 rounded-2xl shadow-lg transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-xs uppercase tracking-wider select-none"
+                        >
+                          {processandoXP ? (
+                            <>
+                              <div className="w-4 h-4 rounded-full border-2 border-emerald-350 border-t-white animate-spin" />
+                              Depositando prêmios...
+                            </>
+                          ) : (
+                            "💸 Injetar XP nas Contas"
+                          )}
+                        </motion.button>
+                      </div>
+                    </div>
+
+                    {/* Coluna Direita: Relatório WhatsApp */}
+                    <div className="bg-slate-50/50 dark:bg-slate-950/20 rounded-3xl border border-slate-200/60 dark:border-slate-850 shadow-inner flex flex-col relative min-h-[300px]">
+                      <div className="p-4 border-b border-slate-200/60 dark:border-slate-850 flex justify-between items-center bg-white/40 dark:bg-transparent">
+                        <h3 className="font-display font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-wider text-xs flex items-center gap-2">
+                          <span>💬</span> Mensagem do WhatsApp
+                        </h3>
+                        <motion.button
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={copiarTexto}
+                          className="cursor-pointer bg-white dark:bg-slate-800 border border-slate-250 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-xl transition-all shadow-sm"
+                        >
+                          Copiar Texto
+                        </motion.button>
+                      </div>
+                      <textarea
+                        readOnly
+                        value={mensagemWhatsApp}
+                        className="w-full h-full min-h-[320px] lg:min-h-0 lg:flex-1 p-5 bg-transparent text-xs text-slate-650 dark:text-slate-400 font-mono resize-none focus:outline-none custom-scrollbar leading-relaxed"
+                      />
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
-          )}
-        </div>
 
-        {etapa === 2 && (
-          <div className="p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shrink-0 transition-colors">
-            <button
-              onClick={() => setEtapa(1)}
-              className="cursor-pointer px-6 py-2.5 rounded-xl font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
-            >
-              ← Voltar e Refazer
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
+            {/* Rodapé fixo do Modal */}
+            {etapa === 2 && (
+              <div className="p-5 border-t border-slate-200/80 dark:border-slate-800 bg-white/30 dark:bg-transparent flex justify-start shrink-0">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setEtapa(1)}
+                  className="cursor-pointer px-5 py-2.5 rounded-xl font-black text-xs uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  ← Voltar e Refazer
+                </motion.button>
+              </div>
+            )}
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }

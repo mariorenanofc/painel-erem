@@ -1,4 +1,7 @@
+"use client";
+
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { StudentModalProps } from "../types";
 
 // --- Função utilitária para renderizar os dados bonitos no modo VISUALIZAÇÃO ---
@@ -13,22 +16,22 @@ const DataDisplay = ({
   isLink?: boolean;
   type?: "text" | "tel" | "mailto";
 }) => (
-  <div className="flex flex-col border-b border-slate-200 pb-2.5">
-    <span className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">
-      {label}:
+  <div className="flex flex-col bg-slate-50/50 dark:bg-slate-950/20 p-4.5 rounded-2xl border border-slate-200/50 dark:border-slate-850 shadow-sm transition-all hover:border-slate-300 dark:hover:border-slate-800">
+    <span className="text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-1.5">
+      {label}
     </span>
     {isLink && value && value !== "Sem email" && value !== "Não encontrado" ? (
       <a
-        href={
-          type === "tel" ? `tel:${value.replace(/\D/g, "")}` : `mailto:${value}`
-        }
-        className="text-emerald-700 font-semibold hover:underline text-sm md:text-base wrap-break-word"
+        href={type === "tel" ? `tel:${value.replace(/\D/g, "")}` : `mailto:${value}`}
+        className="text-emerald-700 dark:text-emerald-450 font-black hover:underline text-sm md:text-base break-all"
       >
         {value}
       </a>
     ) : (
       <span
-        className={`font-semibold text-slate-800 text-sm md:text-base wrap-break-word ${!value || value === "Sem email" ? "text-slate-400 italic" : ""}`}
+        className={`font-bold text-slate-800 dark:text-slate-200 text-sm md:text-base break-all ${
+          !value || value === "Sem email" ? "text-slate-450 italic font-normal" : ""
+        }`}
       >
         {value || `Não informado`}
       </span>
@@ -48,24 +51,18 @@ export default function StudentModal({
   mudarStatusTrilha,
 }: StudentModalProps) {
   // --- Estado para controlar se o usuário ativou a edição manualmente ---
-  // Começa como false por padrão. A lógica de "novo cadastro" vai forçar o formulário a aparecer mais embaixo.
   const [modoEdicaoAtivo, setModoEdicaoAtivo] = useState(false);
 
-  // Variável derivada: O modo de edição do formulário só aparece se:
-  // 1. For um cadastro NOVO (!isEditing)
-  // OU
-  // 2. O usuário clicou no botão de editar (modoEdicaoAtivo for true)
   const mostrarFormulario = !isEditing || modoEdicaoAtivo;
-  const [turmaCursoSelecionada, setTurmaCursoSelecionada] = useState(""); // <-- NOVO
-  const [inscrevendo, setInscrevendo] = useState(false); // <-- NOVO
+  const [turmaCursoSelecionada, setTurmaCursoSelecionada] = useState("");
+  const [inscrevendo, setInscrevendo] = useState(false);
 
-  // Função que será chamada ao clicar no botão
   const handleInscricao = async () => {
     if (inscreverNoTrilha) {
       setInscrevendo(true);
       await inscreverNoTrilha(formData.matricula, turmaCursoSelecionada);
       setInscrevendo(false);
-      setTurmaCursoSelecionada(""); // Limpa após inscrever
+      setTurmaCursoSelecionada("");
     }
   };
 
@@ -77,347 +74,424 @@ export default function StudentModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center z-50 p-2 md:p-4 animate-in fade-in duration-300">
-      {/* Container Principal */}
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[95vh] flex flex-col overflow-hidden animate-in fade-in zoom-in duration-200">
-        {/* Cabeçalho Fixo */}
-        <div className="bg-slate-800 px-4 md:px-6 py-4 border-b border-slate-200 flex justify-between items-center shrink-0">
-          <h2 className="text-lg md:text-xl font-bold text-white flex items-center gap-2">
-            {!isEditing && "✨ Cadastrar Novo Aluno"}
-            {isEditing && mostrarFormulario && "✏️ Editando Dados do Aluno"}
-            {isEditing &&
-              !mostrarFormulario &&
-              "📄 Visualizando Dados do Aluno"}
-          </h2>
-          <button
-            onClick={fecharEResetar}
-            className="text-slate-400 hover:text-red-500 transition-colors text-2xl leading-none p-1 cursor-pointer"
-          >
-            &times;
-          </button>
-        </div>
+    <AnimatePresence>
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        {/* Backdrop */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={fecharEResetar}
+          className="absolute inset-0 bg-slate-955/65 backdrop-blur-md"
+        />
 
-        {/* Corpo com Rolagem (Scroll) */}
-        <div className="p-4 md:p-6 overflow-y-auto flex-1">
-          {/* ==========================================
-              MODO VISUALIZAÇÃO (TELA LIMPA)
-              ========================================== */}
-          {!mostrarFormulario && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
-              <DataDisplay label="Nome Completo" value={formData.nome} />
-              <DataDisplay label="Matrícula" value={formData.matricula} />
-              <DataDisplay
-                label="Data de Nasc."
-                value={
-                  formData.dataNasc
-                    ? formData.dataNasc.split("-").reverse().join("/")
-                    : ""
-                }
-              />
-              <DataDisplay label="Turma" value={formData.turma} />
-              <DataDisplay
-                label="Email Institucional"
-                value={formData.email}
-                isLink
-                type="mailto"
-              />
-              <DataDisplay
-                label="Telefone Aluno"
-                value={formData.telefoneAluno}
-                isLink
-                type="tel"
-              />
-              <DataDisplay
-                label="Telefone Responsável"
-                value={formData.telefoneResponsavel}
-                isLink
-                type="tel"
-              />
-              <DataDisplay label="Observações" value={formData.obs} />
+        {/* Modal Container */}
+        <motion.div
+          initial={{ scale: 0.93, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.93, opacity: 0, y: 20 }}
+          transition={{ type: "spring", damping: 25, stiffness: 350 }}
+          className="glass-panel-heavy bg-white/95 dark:bg-slate-900/95 rounded-[2.5rem] shadow-[0_0_50px_rgba(59,130,246,0.15)] border border-slate-200/80 dark:border-white/5 w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col relative z-10"
+        >
+          {/* Glow decorativo de fundo */}
+          <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 dark:bg-blue-500/5 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
 
-              {/* --- LÓGICA BLINDADA DO TRILHA TECH --- */}
-              {formData.statusTrilha ? (
-                /* 1. SE O ALUNO JÁ TEM STATUS: Mostra o resumo */
-                <div className="md:col-span-2 bg-slate-200 p-4 rounded-lg border border-slate-200 mt-2">
-                  <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">
-                    🚀 Participação no Projeto Trilha Tech
-                  </h3>
-                  <div className="flex flex-col sm:flex-row gap-4 mb-2">
-                    <p className="text-sm font-semibold text-slate-800">
-                      <span className="text-slate-500 font-normal">Turma:</span>{" "}
-                      {formData.turmaTrilha}
-                    </p>
-                    <p className="text-sm font-semibold text-slate-800">
-                      <span className="text-slate-500 font-normal">
-                        Status Atual:
-                      </span>{" "}
-                      {formData.statusTrilha}
-                    </p>
+          {/* Header */}
+          <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-blue-955 p-6 flex justify-between items-center text-white shrink-0 relative border-b border-white/5">
+            <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+            <div className="relative z-10">
+              <h2 className="font-display font-black text-lg md:text-xl flex items-center gap-2.5 tracking-tight">
+                <span className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-sm shadow-inner">
+                  👤
+                </span>{" "}
+                {!isEditing && "Cadastrar Novo Aluno"}
+                {isEditing && mostrarFormulario && "Editando Dados do Aluno"}
+                {isEditing && !mostrarFormulario && "Visualizando Dados do Aluno"}
+              </h2>
+              <p className="text-white/70 text-[10px] font-black uppercase tracking-wider mt-1">
+                Ficha Cadastral e Projetos
+              </p>
+            </div>
+            <button
+              onClick={fecharEResetar}
+              className="cursor-pointer w-8 h-8 flex items-center justify-center rounded-full bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white text-xl transition-colors duration-200 shadow-sm"
+            >
+              &times;
+            </button>
+          </div>
+
+          {/* Corpo com Rolagem */}
+          <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1 bg-white/40 dark:bg-transparent">
+            <AnimatePresence mode="wait">
+              {!mostrarFormulario ? (
+                /* MODO VISUALIZAÇÃO */
+                <motion.div
+                  key="visualizacao"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="space-y-6"
+                >
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <DataDisplay label="Nome Completo" value={formData.nome} />
+                    <DataDisplay label="Matrícula" value={formData.matricula} />
+                    <DataDisplay
+                      label="Data de Nascimento"
+                      value={
+                        formData.dataNasc
+                          ? formData.dataNasc.split("-").reverse().join("/")
+                          : ""
+                      }
+                    />
+                    <DataDisplay label="Turma" value={formData.turma} />
+                    <DataDisplay
+                      label="Email Institucional"
+                      value={formData.email}
+                      isLink
+                      type="mailto"
+                    />
+                    <DataDisplay
+                      label="Telefone Aluno"
+                      value={formData.telefoneAluno}
+                      isLink
+                      type="tel"
+                    />
+                    <DataDisplay
+                      label="Telefone Responsável"
+                      value={formData.telefoneResponsavel}
+                      isLink
+                      type="tel"
+                    />
+                    <DataDisplay label="Observações" value={formData.obs} />
                   </div>
 
-                  {/* --- NOVO: PAINEL DE APROVAÇÃO DA GESTÃO --- */}
-                  {/* Só aparece se o aluno estiver "Inscrito" e se a função existir (para não aparecer no painel do Tutor) */}
-                  {formData.statusTrilha === "Inscrito" &&
-                    mudarStatusTrilha && (
-                      <div className="mt-4 pt-4 border-t border-blue-200 flex flex-col sm:flex-row gap-3 items-center bg-white p-3 rounded border  shadow-sm">
-                        <p className="text-sm text-slate-600 font-medium mb-2 sm:mb-0 sm:mr-auto flex items-center gap-2">
-                          <span>⏳</span> Avaliação Escolar Pendente:
+                  {/* Lógica Trilha Tech */}
+                  {formData.statusTrilha ? (
+                    <div className="bg-slate-50/70 dark:bg-slate-950/30 p-5 rounded-3xl border border-slate-200/60 dark:border-slate-850 mt-2 shadow-inner">
+                      <h3 className="text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest mb-3">
+                        🚀 Participação no Projeto Trilha Tech
+                      </h3>
+                      <div className="flex flex-col sm:flex-row gap-5 mb-4">
+                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                          <span className="text-slate-450 dark:text-slate-500 font-normal">Turma do Projeto:</span>{" "}
+                          {formData.turmaTrilha}
                         </p>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            mudarStatusTrilha(formData.matricula, "Ativo")
-                          }
-                          disabled={salvando}
-                          className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white px-4 py-2 rounded text-sm font-bold transition-colors shadow-sm"
-                        >
-                          ✅ Aprovar (Tornar Ativo)
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            mudarStatusTrilha(
-                              formData.matricula,
-                              "Desclassificado",
-                            )
-                          }
-                          disabled={salvando}
-                          className="w-full sm:w-auto bg-red-600 hover:bg-red-700 disabled:bg-red-400 text-white px-4 py-2 rounded text-sm font-bold transition-colors shadow-sm"
-                        >
-                          ❌ Desclassificar
-                        </button>
+                        <p className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                          <span className="text-slate-450 dark:text-slate-500 font-normal">Status Atual:</span>{" "}
+                          <span className={`px-2.5 py-0.5 rounded-lg text-xs font-black uppercase tracking-wider ${
+                            formData.statusTrilha === "Ativo"
+                              ? "bg-emerald-100 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-400"
+                              : formData.statusTrilha === "Inscrito"
+                                ? "bg-amber-100 dark:bg-amber-955/35 text-amber-700 dark:text-amber-400"
+                                : "bg-red-100 dark:bg-red-955/35 text-red-700 dark:text-red-400"
+                          }`}>
+                            {formData.statusTrilha}
+                          </span>
+                        </p>
                       </div>
-                    )}
-                </div>
+
+                      {/* Painel de Aprovação da Gestão */}
+                      {formData.statusTrilha === "Inscrito" && mudarStatusTrilha && (
+                        <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row gap-3 items-center">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold mb-2 sm:mb-0 sm:mr-auto flex items-center gap-2">
+                            <span>⏳</span> Avaliação Escolar Pendente:
+                          </p>
+                          <div className="flex gap-2 w-full sm:w-auto">
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              type="button"
+                              onClick={() => mudarStatusTrilha(formData.matricula, "Ativo")}
+                              disabled={salvando}
+                              className="cursor-pointer flex-1 sm:flex-initial bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-emerald-500/10"
+                            >
+                              ✅ Aprovar
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.02 }}
+                              whileTap={{ scale: 0.98 }}
+                              type="button"
+                              onClick={() => mudarStatusTrilha(formData.matricula, "Desclassificado")}
+                              disabled={salvando}
+                              className="cursor-pointer flex-1 sm:flex-initial bg-red-650 hover:bg-red-700 text-white px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md shadow-red-500/10"
+                            >
+                              ❌ Desclassificar
+                            </motion.button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    /* Inscrição */
+                    isEditing && (
+                      <div className="bg-blue-500/5 dark:bg-blue-955/10 p-5 rounded-3xl border border-blue-500/20 dark:border-blue-900/30 mt-2 shadow-inner">
+                        <h3 className="text-[10px] font-black text-blue-700 dark:text-blue-400 uppercase tracking-widest mb-3">
+                          🎓 Inscrever no Projeto Trilha Tech
+                        </h3>
+                        <div className="flex flex-col sm:flex-row gap-4 items-end">
+                          <div className="flex-1 w-full space-y-1.5 text-left">
+                            <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
+                              Escolha a Turma do Curso:
+                            </label>
+                            <div className="relative">
+                              <select
+                                value={turmaCursoSelecionada}
+                                onChange={(e) => setTurmaCursoSelecionada(e.target.value)}
+                                className="cursor-pointer w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-705 dark:text-slate-250 rounded-xl p-3 pr-10 font-bold focus:border-blue-550 outline-none transition-all text-sm appearance-none shadow-sm"
+                              >
+                                <option value="" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Selecione a turma...</option>
+                                <option value="Turma 1 - 1º Ano" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Turma 1 - 1º Ano</option>
+                                <option value="Turma 2 - 2º Ano" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Turma 2 - 2º Ano</option>
+                              </select>
+                              <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 font-bold text-xs">
+                                ▼
+                              </div>
+                            </div>
+                          </div>
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={handleInscricao}
+                            disabled={!turmaCursoSelecionada || inscrevendo}
+                            className={`w-full sm:w-auto px-6 py-3.5 rounded-2xl text-white font-black text-xs uppercase tracking-wider transition-all shadow-md select-none ${
+                              !turmaCursoSelecionada || inscrevendo
+                                ? "bg-slate-250 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none"
+                                : "bg-blue-600 hover:brightness-110 shadow-blue-500/10"
+                            }`}
+                          >
+                            {inscrevendo ? "⏳ Processando..." : "✅ Confirmar Inscrição"}
+                          </motion.button>
+                        </div>
+                      </div>
+                    )
+                  )}
+                </motion.div>
               ) : (
-                /* 2. SE NÃO TEM STATUS: Mostra a caixa de Inscrição (apenas se o aluno já existir no banco -> isEditing) */
-                isEditing && (
-                  <div className="md:col-span-2 bg-blue-50 p-4 rounded-lg border border-blue-200 mt-2 animate-in fade-in">
-                    <h3 className="text-xs font-bold text-blue-700 uppercase tracking-wider mb-3">
-                      🎓 Inscrever no Projeto Trilha Tech
-                    </h3>
-                    <div className="flex flex-col sm:flex-row gap-3 items-end">
-                      <div className="flex-1 w-full">
-                        <label className="text-xs font-bold text-slate-600 mb-1 block">
-                          Escolha a Turma do Curso:
-                        </label>
-                        <select
-                          value={turmaCursoSelecionada}
-                          onChange={(e) =>
-                            setTurmaCursoSelecionada(e.target.value)
-                          }
-                          className="w-full bg-white border border-slate-300 text-slate-700 rounded-lg p-2 focus:ring-2 focus:ring-blue-500 focus:outline-none font-medium text-sm"
-                        >
-                          <option value="">Selecione a turma...</option>
-                          <option value="Turma 1 - 1º Ano">
-                            Turma 1 - 1º Ano
-                          </option>
-                          <option value="Turma 2 - 2º Ano">
-                            Turma 2 - 2º Ano
-                          </option>
-                        </select>
-                      </div>
-                      <button
-                        onClick={handleInscricao}
-                        disabled={!turmaCursoSelecionada || inscrevendo}
-                        className={`w-full sm:w-auto px-6 py-2 rounded-lg text-white font-bold text-sm transition-all shadow-sm ${!turmaCursoSelecionada || inscrevendo ? "bg-slate-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700 hover:-translate-y-0.5"}`}
-                      >
-                        {inscrevendo
-                          ? "⏳ Processando..."
-                          : "✅ Confirmar Inscrição"}
-                      </button>
+                /* MODO EDIÇÃO */
+                <motion.div
+                  key="edicao"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                  className="grid grid-cols-1 md:grid-cols-2 gap-6"
+                >
+                  {/* Coluna Esquerda */}
+                  <div className="space-y-4">
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Matrícula <span className="text-red-500 font-black">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="matricula"
+                        value={formData.matricula}
+                        onChange={handleChange}
+                        readOnly={isEditing}
+                        className={`border border-slate-250 dark:border-slate-800 p-3.5 rounded-2xl outline-none font-bold text-sm shadow-sm transition-all ${
+                          isEditing
+                            ? "bg-slate-100 dark:bg-slate-900/50 border-slate-200 dark:border-slate-850 text-slate-400 dark:text-slate-605 cursor-not-allowed shadow-none font-mono"
+                            : "bg-white dark:bg-slate-950 focus:border-blue-500 text-slate-800 dark:text-slate-100"
+                        }`}
+                        placeholder="Ex: 1234567"
+                      />
+                    </div>
+
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Nome Completo <span className="text-red-500 font-black">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        name="nome"
+                        value={formData.nome}
+                        onChange={handleChange}
+                        className="bg-white dark:bg-slate-950 border border-slate-250 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all"
+                        placeholder="Nome do aluno..."
+                      />
+                    </div>
+
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Data de Nascimento
+                      </label>
+                      <input
+                        type="date"
+                        name="dataNasc"
+                        value={formData.dataNasc}
+                        onChange={handleChange}
+                        className="bg-white dark:bg-slate-950 border border-slate-250 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all cursor-pointer"
+                      />
+                    </div>
+
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Telefone do Aluno
+                      </label>
+                      <input
+                        type="tel"
+                        name="telefoneAluno"
+                        value={formData.telefoneAluno}
+                        onChange={handleChange}
+                        className="bg-white dark:bg-slate-950 border border-slate-250 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all font-mono"
+                        placeholder="(87) 9XXXX-XXXX"
+                      />
                     </div>
                   </div>
-                )
+
+                  {/* Coluna Direita */}
+                  <div className="space-y-4">
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Turma <span className="text-red-500 font-black">*</span>
+                      </label>
+                      <div className="relative">
+                        <select
+                          name="turma"
+                          value={formData.turma}
+                          onChange={handleChange}
+                          className="cursor-pointer w-full bg-white dark:bg-slate-955 border border-slate-250 dark:border-slate-800 p-3.5 pr-10 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all appearance-none"
+                        >
+                          <option value="" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Selecione a turma...</option>
+                          <option value="1º ANO A" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">1º ANO A</option>
+                          <option value="1º ANO B" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">1º ANO B</option>
+                          <option value="1º ANO C" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">1º ANO C</option>
+                          <option value="1º ANO D" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">1º ANO D</option>
+                          <option value="2º ANO A" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">2º ANO A</option>
+                          <option value="2º ANO B" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">2º ANO B</option>
+                          <option value="2º ANO C" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">2º ANO C</option>
+                          <option value="3º ANO A" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">3º ANO A</option>
+                          <option value="3º ANO B" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">3º ANO B</option>
+                          <option value="3º ANO C" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">3º ANO C</option>
+                          <option value="3º ANO D" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">3º ANO D</option>
+                        </select>
+                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 font-bold text-xs">
+                          ▼
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Email Institucional
+                      </label>
+                      <input
+                        type="email"
+                        name="email"
+                        value={formData.email}
+                        onChange={handleChange}
+                        className="bg-white dark:bg-slate-950 border border-slate-250 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all"
+                        placeholder="aluno@educacao.pe.gov.br"
+                      />
+                    </div>
+
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Telefone do Responsável
+                      </label>
+                      <input
+                        type="tel"
+                        name="telefoneResponsavel"
+                        value={formData.telefoneResponsavel}
+                        onChange={handleChange}
+                        className="bg-white dark:bg-slate-950 border border-slate-250 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all font-mono"
+                        placeholder="(87) 9XXXX-XXXX"
+                      />
+                    </div>
+
+                    <div className="flex flex-col space-y-1.5">
+                      <label className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Observações
+                      </label>
+                      <input
+                        type="text"
+                        name="obs"
+                        value={formData.obs}
+                        onChange={handleChange}
+                        className="bg-white dark:bg-slate-950 border border-slate-250 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all"
+                        placeholder="Anotações extras..."
+                      />
+                    </div>
+                  </div>
+                </motion.div>
               )}
-            </div>
-          )}
+            </AnimatePresence>
+          </div>
 
-          {/* ==========================================
-              MODO EDIÇÃO (O SEU FORMULÁRIO COM OS INPUTS)
-              ========================================== */}
-          {mostrarFormulario && (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 animate-in fade-in duration-300">
-              {/* Coluna 1 */}
-              <div className="space-y-4 md:space-y-5">
-                <div className="flex flex-col">
-                  <label className="text-xs md:text-sm font-bold text-slate-600 mb-1">
-                    MATRÍCULA: <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="matricula"
-                    value={formData.matricula}
-                    onChange={handleChange}
-                    readOnly={isEditing}
-                    className={`border-b-2 p-2 focus:outline-none font-medium text-sm md:text-base ${isEditing ? "bg-slate-100 border-slate-200 text-slate-400 cursor-not-allowed" : "bg-slate-50 border-slate-300 focus:border-emerald-600 text-slate-700"}`}
-                    placeholder="Ex: 1234567"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-xs md:text-sm font-bold text-slate-600 mb-1">
-                    NOME COMPLETO: <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="nome"
-                    value={formData.nome}
-                    onChange={handleChange}
-                    className="bg-slate-50 border-b-2 border-slate-300 p-2 focus:border-emerald-600 focus:outline-none text-slate-700 font-medium text-sm md:text-base"
-                    placeholder="Nome do aluno..."
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-xs md:text-sm font-bold text-slate-600 mb-1">
-                    DATA DE NASC:
-                  </label>
-                  <input
-                    type="date"
-                    name="dataNasc"
-                    value={formData.dataNasc}
-                    onChange={handleChange}
-                    className="bg-slate-50 border-b-2 border-slate-300 p-2 focus:border-emerald-600 focus:outline-none text-slate-700 text-sm md:text-base"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-xs md:text-sm font-bold text-slate-600 mb-1">
-                    TELEFONE DO ALUNO: (Único)
-                  </label>
-                  <input
-                    type="tel"
-                    name="telefoneAluno"
-                    value={formData.telefoneAluno}
-                    onChange={handleChange}
-                    className="bg-slate-50 border-b-2 border-slate-300 p-2 focus:border-emerald-600 focus:outline-none text-slate-700 text-sm md:text-base"
-                    placeholder="(87) 9XXXX-XXXX"
-                  />
-                </div>
-              </div>
-
-              {/* Coluna 2 */}
-              <div className="space-y-4 md:space-y-5">
-                <div className="flex flex-col">
-                  <label className="text-xs md:text-sm font-bold text-slate-600 mb-1">
-                    TURMA: <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    name="turma"
-                    value={formData.turma}
-                    onChange={handleChange}
-                    className="bg-slate-50 border-b-2 border-slate-300 p-2 focus:border-emerald-600 focus:outline-none text-slate-700 font-medium text-sm md:text-base"
-                  >
-                    <option value="">Selecione a turma...</option>
-                    <option value="1º ANO A">1º ANO A</option>
-                    <option value="1º ANO B">1º ANO B</option>
-                    <option value="1º ANO C">1º ANO C</option>
-                    <option value="1º ANO D">1º ANO D</option>
-                    <option value="2º ANO A">2º ANO A</option>
-                    <option value="2º ANO B">2º ANO B</option>
-                    <option value="2º ANO C">2º ANO C</option>
-                    <option value="3º ANO A">3º ANO A</option>
-                    <option value="3º ANO B">3º ANO B</option>
-                    <option value="3º ANO C">3º ANO C</option>
-                    <option value="3º ANO D">3º ANO D</option>
-                  </select>
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-xs md:text-sm font-bold text-slate-600 mb-1">
-                    EMAIL INSTITUCIONAL: (Único)
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    className="bg-slate-50 border-b-2 border-slate-300 p-2 focus:border-emerald-600 focus:outline-none text-slate-700 text-sm md:text-base"
-                    placeholder="aluno@educacao.pe.gov.br"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-xs md:text-sm font-bold text-slate-600 mb-1">
-                    TELEFONE DO RESPONSÁVEL:
-                  </label>
-                  <input
-                    type="tel"
-                    name="telefoneResponsavel"
-                    value={formData.telefoneResponsavel}
-                    onChange={handleChange}
-                    className="bg-slate-50 border-b-2 border-slate-300 p-2 focus:border-emerald-600 focus:outline-none text-slate-700 text-sm md:text-base"
-                    placeholder="(87) 9XXXX-XXXX"
-                  />
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-xs md:text-sm font-bold text-slate-600 mb-1">
-                    OBSERVAÇÕES:
-                  </label>
-                  <input
-                    type="text"
-                    name="obs"
-                    value={formData.obs}
-                    onChange={handleChange}
-                    className="bg-slate-50 border-b-2 border-slate-300 p-2 focus:border-emerald-600 focus:outline-none text-slate-700 text-sm md:text-base"
-                    placeholder="Anotações extras..."
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Rodapé Fixo */}
-        <div className="bg-slate-800 px-4 md:px-6 py-4 border-t border-slate-200 flex flex-col md:flex-row justify-end gap-3 shrink-0">
-          {/* BOTÕES DO MODO VISUALIZAÇÃO */}
-          {!mostrarFormulario && (
-            <>
-              <button
-                onClick={fecharEResetar}
-                className="cursor-pointer w-full md:w-auto px-6 py-2.5 rounded-lg bg-slate-100 text-slate-600 font-bold hover:bg-slate-300 transition-colors hover:-translate-y-0.5"
-              >
-                Sair
-              </button>
-              {isEditing && (
-                <button
-                  onClick={() => setModoEdicaoAtivo(true)}
-                  className="cursor-pointer w-full md:w-auto px-8 py-2.5 rounded-lg text-white font-bold shadow-md bg-emerald-600 hover:bg-emerald-700 transition-all hover:-translate-y-0.5 flex items-center justify-center gap-2"
-                >
-                  ✏️ Editar Dados
-                </button>
-              )}
-            </>
-          )}
-
-          {/* BOTÕES DO MODO EDIÇÃO (Quando destravado) */}
-          {mostrarFormulario && (
-            <>
-              {isEditing && (
-                <button
-                  onClick={() => setModoEdicaoAtivo(false)}
-                  className="cursor-pointer w-full md:w-auto px-6 py-2.5 rounded-lg text-slate-600 font-bold hover:bg-slate-200 transition-colors order-2 md:order-1"
-                  disabled={salvando}
-                >
-                  Cancelar Edição
-                </button>
-              )}
-              {!isEditing && (
-                <button
+          {/* Rodapé Fixo */}
+          <div className="p-5 bg-white/50 dark:bg-transparent border-t border-slate-200/80 dark:border-slate-800/80 flex flex-wrap gap-3 justify-end shrink-0">
+            {/* BOTÕES DO MODO VISUALIZAÇÃO */}
+            {!mostrarFormulario && (
+              <>
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
                   onClick={fecharEResetar}
-                  className="cursor-pointer w-full md:w-auto px-6 py-2.5 rounded-lg bg-white hover:bg-slate-300 text-slate-600 font-bold transition-colors order-2 md:order-1"
-                  disabled={salvando}
+                  className="cursor-pointer px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all select-none"
                 >
-                  Cancelar
-                </button>
-              )}
-              <button
-                onClick={salvarAluno}
-                disabled={salvando}
-                className={`cursor-pointer w-full md:w-auto px-8 py-2.5 rounded-lg text-white font-bold shadow-md transition-all order-1 md:order-2 ${salvando ? "bg-emerald-400 cursor-not-allowed flex items-center justify-center gap-2" : "bg-emerald-600 hover:bg-emerald-700 hover:-translate-y-0.5"}`}
-              >
-                {salvando ? "⏳ Salvando..." : "Confirmar e Salvar"}
-              </button>
-            </>
-          )}
-        </div>
+                  Sair
+                </motion.button>
+                {isEditing && (
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => setModoEdicaoAtivo(true)}
+                    className="cursor-pointer px-7 py-2.5 rounded-xl text-white font-black text-xs uppercase tracking-wider shadow-lg bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/10 transition-all select-none flex items-center justify-center gap-1.5"
+                  >
+                    ✏️ Editar Dados
+                  </motion.button>
+                )}
+              </>
+            )}
+
+            {/* BOTÕES DO MODO EDIÇÃO */}
+            {mostrarFormulario && (
+              <>
+                {isEditing && (
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={() => setModoEdicaoAtivo(false)}
+                    className="cursor-pointer px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all select-none order-2 md:order-1"
+                    disabled={salvando}
+                  >
+                    Cancelar Edição
+                  </motion.button>
+                )}
+                {!isEditing && (
+                  <motion.button
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.99 }}
+                    onClick={fecharEResetar}
+                    className="cursor-pointer px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all select-none order-2 md:order-1"
+                    disabled={salvando}
+                  >
+                    Cancelar
+                  </motion.button>
+                )}
+                <motion.button
+                  whileHover={{ scale: 1.01 }}
+                  whileTap={{ scale: 0.99 }}
+                  onClick={salvarAluno}
+                  disabled={salvando}
+                  className="cursor-pointer px-7 py-2.5 rounded-xl text-white font-black text-xs uppercase tracking-wider shadow-lg bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/10 transition-all select-none order-1 md:order-2"
+                >
+                  {salvando ? (
+                    <div className="flex items-center justify-center gap-1.5">
+                      <div className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                      Salvando...
+                    </div>
+                  ) : (
+                    "Confirmar e Salvar"
+                  )}
+                </motion.button>
+              </>
+            )}
+          </div>
+
+        </motion.div>
       </div>
-    </div>
+    </AnimatePresence>
   );
 }

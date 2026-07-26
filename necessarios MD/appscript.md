@@ -2153,8 +2153,8 @@ function doPost(e) {
           let t = String(dadosTrilha[i][1]).trim();
           let status = String(dadosTrilha[i][2]).trim().toLowerCase();
           
-          // MÁGICA: Removida a trava de turma! Agora qualquer aluno Ativo aparece na lista
-          if(mat !== matricula && status !== "desclassificado" && status !== "desistente") {
+          // MÁGICA: Removida a trava de turma! Apenas alunos Ativos aparecem na lista para transferência
+          if(mat !== matricula && status === "ativo") {
               // Mostra a turma ao lado do nome para todo mundo, ajudando na identificação
               let turmaCurta = t.split("-")[0].trim(); // Pega apenas "Turma 1" ou "Turma 2"
               let nomeExibicao = (nomesMap[mat] || "Aluno "+mat) + ` (${turmaCurta})`;
@@ -2265,14 +2265,31 @@ function doPost(e) {
           }
 
           let linhaOrigem = -1, linhaDestino = -1, xpOrigem = 0, xpDestino = 0, senhaReal = "";
+          let statusOrigem = "", statusDestino = "", bloqueioPixOrigem = "";
           let dadosTrilha = abaTrilha.getDataRange().getValues();
           for(let i=1; i<dadosTrilha.length; i++) {
             let mat = String(dadosTrilha[i][0]).trim();
-            if(mat === matriculaOrigem) { linhaOrigem = i+1; xpOrigem = Number(dadosTrilha[i][4]) || 0; senhaReal = String(dadosTrilha[i][7] || "").trim(); }
-            if(mat === matriculaDestino) { linhaDestino = i+1; xpDestino = Number(dadosTrilha[i][4]) || 0; }
+            if(mat === matriculaOrigem) { 
+              linhaOrigem = i+1; 
+              xpOrigem = Number(dadosTrilha[i][4]) || 0; 
+              senhaReal = String(dadosTrilha[i][7] || "").trim(); 
+              statusOrigem = String(dadosTrilha[i][2] || "").trim().toLowerCase();
+              bloqueioPixOrigem = String(dadosTrilha[i][10] || "").trim().toLowerCase();
+            }
+            if(mat === matriculaDestino) { 
+              linhaDestino = i+1; 
+              xpDestino = Number(dadosTrilha[i][4]) || 0; 
+              statusDestino = String(dadosTrilha[i][2] || "").trim().toLowerCase();
+            }
           }
 
           if (linhaOrigem === -1 || linhaDestino === -1) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Contas não encontradas."})).setMimeType(ContentService.MimeType.JSON);
+          
+          // Regras de bloqueio de status
+          if (statusOrigem !== "ativo") return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Apenas alunos ativos podem enviar Pix de XP."})).setMimeType(ContentService.MimeType.JSON);
+          if (statusDestino !== "ativo") return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Apenas alunos ativos podem receber Pix de XP."})).setMimeType(ContentService.MimeType.JSON);
+          if (bloqueioPixOrigem === "sim") return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Você está bloqueado de enviar Pix de XP no painel."})).setMimeType(ContentService.MimeType.JSON);
+          
           if (senhaDigitada !== senhaReal) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Senha PIN incorreta."})).setMimeType(ContentService.MimeType.JSON);
           
           // Se não for o Mestre, verifica se tem saldo

@@ -49,20 +49,20 @@ export default function Header({
   };
 
   return (
-    <header className="bg-slate-800 dark:bg-slate-950 text-white p-4 rounded-2xl shadow-lg flex justify-between items-center mb-6 transition-colors duration-300">
+    <header className="glass-panel text-slate-800 dark:text-white p-4 rounded-2xl shadow-xl flex justify-between items-center mb-6 transition-colors duration-300 border border-slate-200 dark:border-white/10 relative z-20">
       {/* LOGO E TÍTULO CLICÁVEIS */}
       <Link
         href={destinoLink}
-        className="flex items-center gap-3 hover:opacity-80 transition-opacity cursor-pointer"
+        className="flex items-center gap-3 hover:opacity-85 transition-all cursor-pointer group"
       >
-        <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center text-xl shadow-inner border border-white/10">
+        <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-xl flex items-center justify-center text-xl shadow-inner border border-white/10 group-hover:scale-105 transition-transform duration-300">
           🎓
         </div>
         <div>
-          <h1 className="font-black text-lg leading-none tracking-tight">
+          <h1 className="font-display font-black text-lg leading-none tracking-tight text-slate-800 dark:text-white dark:text-neon-glow">
             Portal Educacional
           </h1>
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mt-0.5">
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest mt-0.5">
             Plataforma Gamificada
           </p>
         </div>
@@ -70,23 +70,23 @@ export default function Header({
 
       <div className="flex items-center gap-4">
         {carregando && (
-          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white opacity-50"></div>
+          <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-brand-primary opacity-70"></div>
         )}
 
         {nomeUsuario && (
           <div className="flex items-center gap-3 sm:gap-4">
             <div className="hidden md:block text-right">
-              <p className="text-[10px] text-slate-400 font-bold uppercase">
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase">
                 Conectado como
               </p>
-              <p className="font-bold text-sm text-slate-100">{nomeUsuario}</p>
+              <p className="font-bold text-sm text-slate-850 dark:text-slate-100">{nomeUsuario}</p>
             </div>
 
             <div className="flex items-center gap-2">
               {/* 🔥 BOTÃO TOGGLE DE TEMA */}
               <button
                 onClick={toggleTema}
-                className="cursor-pointer bg-slate-700 dark:bg-slate-800 hover:bg-slate-600 dark:hover:bg-slate-700 text-white p-2 rounded-lg transition-colors border border-slate-600 dark:border-slate-700 hover:border-yellow-400 dark:hover:border-blue-400 flex items-center justify-center w-10 h-10"
+                className="cursor-pointer bg-slate-100 dark:bg-slate-950/60 hover:bg-slate-200 dark:hover:bg-slate-900 border border-slate-200 dark:border-white/5 hover:border-yellow-500/30 dark:hover:border-yellow-400/30 text-slate-700 dark:text-white p-2 rounded-xl transition-all flex items-center justify-center w-10 h-10 active:scale-95"
                 title={
                   tema === "light"
                     ? "Mudar para Modo Escuro"
@@ -101,7 +101,7 @@ export default function Header({
               {/* BOTÃO DINÂMICO (Muda dependendo da página) */}
               <Link
                 href={destinoLink}
-                className="cursor-pointer bg-slate-700 dark:bg-slate-800 hover:bg-blue-500 dark:hover:bg-blue-600 text-white p-2 rounded-lg transition-colors border border-slate-600 dark:border-slate-700 hover:border-blue-400 dark:hover:border-blue-500 flex items-center gap-2"
+                className="cursor-pointer bg-slate-100 dark:bg-slate-950/60 hover:bg-slate-200 dark:hover:bg-brand-primary/80 border border-slate-200 dark:border-white/5 hover:border-brand-primary/30 text-slate-700 dark:text-white p-2 rounded-xl transition-all flex items-center gap-2 active:scale-95"
                 title={textoLink}
               >
                 <span className="text-sm hidden sm:block font-bold pl-1">
@@ -118,7 +118,7 @@ export default function Header({
                     e.preventDefault();
                     onLogout();
                   }}
-                  className="cursor-pointer bg-slate-700 dark:bg-slate-800 hover:bg-red-500 dark:hover:bg-red-600 text-white p-2 rounded-lg transition-colors border border-slate-600 dark:border-slate-700 hover:border-red-400 flex items-center justify-center w-10 h-10"
+                  className="cursor-pointer bg-slate-100 dark:bg-slate-955/60 dark:bg-slate-950/60 hover:bg-red-500/10 dark:hover:bg-red-500/80 border border-slate-200 dark:border-white/5 hover:border-red-500/30 text-red-600 dark:text-white p-2 rounded-xl transition-all flex items-center justify-center w-10 h-10 active:scale-95"
                   title="Sair do Sistema"
                 >
                   <svg

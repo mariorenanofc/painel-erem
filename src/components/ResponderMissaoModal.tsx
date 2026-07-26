@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
+import { motion, AnimatePresence } from "framer-motion";
 import { Atividade } from "@/src/types";
 
 interface ResponderMissaoModalProps {
@@ -11,6 +12,41 @@ interface ResponderMissaoModalProps {
   onEnviar: (respostaFinal: string) => Promise<void>;
   enviando: boolean;
   respostaInicial: string;
+}
+
+/* ─── Micro-componente: Loader temático de Missão ─── */
+function MissaoLoader() {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 gap-4">
+      {/* Anel orbital externo */}
+      <div className="relative w-20 h-20">
+        <motion.div
+          className="absolute inset-0 rounded-full border-2 border-dashed border-indigo-400 dark:border-indigo-500"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div
+          className="absolute inset-2 rounded-full border-2 border-dotted border-pink-400 dark:border-pink-500"
+          animate={{ rotate: -360 }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+        />
+        <motion.div
+          className="absolute inset-0 flex items-center justify-center text-3xl"
+          animate={{ scale: [1, 1.15, 1], opacity: [0.8, 1, 0.8] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          🎯
+        </motion.div>
+      </div>
+      <motion.p
+        className="text-[10px] font-black uppercase tracking-[0.25em] text-slate-400 dark:text-slate-500"
+        animate={{ opacity: [0.4, 1, 0.4] }}
+        transition={{ duration: 2, repeat: Infinity }}
+      >
+        Processando missão...
+      </motion.p>
+    </div>
+  );
 }
 
 export default function ResponderMissaoModal({
@@ -82,7 +118,7 @@ export default function ResponderMissaoModal({
             href={parte}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-black underline break-all bg-blue-50 dark:bg-blue-900/30 px-1 rounded transition-colors"
+            className="text-indigo-600 dark:text-indigo-400 hover:text-indigo-800 dark:hover:text-indigo-300 font-black underline decoration-indigo-400/40 underline-offset-2 break-all bg-indigo-50 dark:bg-indigo-900/30 px-1.5 py-0.5 rounded-md transition-colors"
             onClick={(e) => e.stopPropagation()}
           >
             {parte}
@@ -119,260 +155,390 @@ export default function ResponderMissaoModal({
         .replace(",", " às")
     : "";
 
+  /* ─── Gradientes do Header por tipo de missão ─── */
+  const headerGradient =
+    missaoAberta.tipo === "Quiz"
+      ? "from-amber-500 via-orange-500 to-yellow-500 dark:from-slate-950 dark:via-amber-950/30 dark:to-slate-900"
+      : missaoAberta.tipo === "Material"
+        ? "from-emerald-500 via-teal-500 to-cyan-500 dark:from-slate-950 dark:via-emerald-950/30 dark:to-slate-900"
+        : "from-indigo-500 via-purple-500 to-pink-500 dark:from-slate-950 dark:via-indigo-950/30 dark:to-slate-900";
+
+  const tipoIcone =
+    missaoAberta.tipo === "Quiz"
+      ? "🧩"
+      : missaoAberta.tipo === "Material"
+        ? "📚"
+        : missaoAberta.tipo === "Projeto"
+          ? "🚀"
+          : "🎯";
+
   return (
-    <div className="fixed inset-0 bg-slate-900/70 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200 transition-colors">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border dark:border-slate-800 w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh] transition-colors duration-300">
-        <div
-          className={`p-4 border-b dark:border-slate-800 flex justify-between items-center text-white transition-colors duration-300 ${missaoAberta.tipo === "Quiz" ? "bg-amber-600 dark:bg-amber-700" : missaoAberta.tipo === "Material" ? "bg-emerald-600 dark:bg-emerald-700" : "bg-blue-600 dark:bg-blue-800"}`}
+    <AnimatePresence>
+      <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-md flex items-center justify-center z-50 p-2 md:p-4 animate-in fade-in duration-200 transition-colors">
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0, y: 10 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.95, opacity: 0, y: 10 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          className="glass-panel-heavy w-full max-w-2xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-[0_12px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] border border-slate-200 dark:border-white/5 transition-colors duration-300"
         >
-          <h2 className="font-bold text-lg flex items-center gap-2">
-            <span>🎯</span> {missaoAberta.tipo}: {missaoAberta.titulo}
-          </h2>
-          <button
-            onClick={onClose}
-            className="cursor-pointer text-2xl leading-none hover:text-slate-200 transition-colors"
+          {/* ═══ HEADER PREMIUM ═══ */}
+          <div
+            className={`bg-gradient-to-r ${headerGradient} p-5 flex justify-between items-center text-white shrink-0 shadow-md relative transition-colors duration-300`}
           >
-            &times;
-          </button>
-        </div>
+            {/* Textura sutil do header */}
+            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none" />
 
-        <div
-          className={`"p-6 overflow-y-auto bg-slate-50 dark:bg-slate-900/50 transition-colors duration-300 ${missaoAberta.tipo === "Quiz" ? "select-none" : ""}`}
-          onContextMenu={
-            missaoAberta.tipo === "Quiz" ? (e) => e.preventDefault() : undefined
-          }
-          onCopy={
-            missaoAberta.tipo === "Quiz" ? (e) => e.preventDefault() : undefined
-          }
-        >
-          <div className="flex flex-wrap gap-2 mb-4 text-sm font-bold">
-            <span className="bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-1 rounded-lg border border-slate-200 dark:border-slate-700 shadow-sm transition-colors">
-              ID: {missaoAberta.id}
-            </span>
-            <span className="bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-3 py-1 rounded-lg border border-indigo-200 dark:border-indigo-800/50 shadow-sm transition-colors">
-              🗂️ {missaoAberta.modulo || "Geral"}
-            </span>
-            <span className="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 px-3 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800/50 shadow-sm transition-colors">
-              ⭐ {missaoAberta.xp} XP
-            </span>
-            {prazoEncerrado && (
-              <span className="bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-3 py-1 rounded-lg border border-red-200 dark:border-red-800/50 shadow-sm animate-pulse transition-colors">
-                ⏳ Prazo Encerrado
-              </span>
-            )}
-          </div>
-
-          <div className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-mono text-sm mb-6 bg-white dark:bg-slate-800 p-5 rounded-xl border border-slate-200 dark:border-slate-700 leading-relaxed shadow-sm transition-colors duration-300">
-            {renderDescricaoComLinks(missaoAberta.descricao)}
-          </div>
-
-          {missaoAberta.imagemUrl && (
-            <div className="relative w-full h-64 mb-6 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700 shadow-sm bg-white dark:bg-slate-800 transition-colors">
-              <Image
-                src={(() => {
-                  const url = missaoAberta.imagemUrl || "";
-                  const match = url.match(
-                    /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
-                  );
-                  return match
-                    ? `https://drive.google.com/uc?export=view&id=${match[1]}`
-                    : url;
-                })()}
-                alt="Referência da Missão"
-                fill
-                sizes="(max-width: 768px) 100vw, 800px"
-                className="object-contain p-2"
-              />
+            <div className="relative z-10 flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-2xl">{tipoIcone}</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">
+                  {missaoAberta.tipo}
+                </span>
+              </div>
+              <h2 className="font-display font-black text-lg md:text-xl leading-tight truncate text-white drop-shadow-sm">
+                {missaoAberta.titulo}
+              </h2>
             </div>
-          )}
 
-          <form
-            onSubmit={handleSubmit}
-            className="border-t border-slate-200 dark:border-slate-700 pt-6 transition-colors"
+            <motion.button
+              whileHover={{ scale: 1.1, rotate: 90 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onClose}
+              className="cursor-pointer text-3xl leading-none text-white/80 hover:text-white transition-colors relative z-10 ml-4 shrink-0"
+            >
+              &times;
+            </motion.button>
+          </div>
+
+          {/* ═══ CORPO ROLÁVEL ═══ */}
+          <div
+            className={`overflow-y-auto flex-1 p-5 md:p-6 bg-slate-50/40 dark:bg-slate-900/20 transition-colors duration-300 custom-scrollbar ${missaoAberta.tipo === "Quiz" ? "select-none" : ""}`}
+            onContextMenu={
+              missaoAberta.tipo === "Quiz" ? (e) => e.preventDefault() : undefined
+            }
+            onCopy={
+              missaoAberta.tipo === "Quiz" ? (e) => e.preventDefault() : undefined
+            }
           >
-            {dataFormatada &&
-              (statusAtual === "aguardando correção" ||
-                statusAtual === "avaliado" ||
-                statusAtual === "avaliada") && (
-                <div className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-3 rounded-xl mb-4 shadow-sm animate-in slide-in-from-top-2 transition-colors">
-                  <p className="text-slate-600 dark:text-slate-400 text-xs font-medium flex items-center gap-1.5">
-                    <span>🕒</span> Enviado em: <strong>{dataFormatada}</strong>
-                  </p>
-                </div>
+            {/* ─── PILLS DE METADADOS ─── */}
+            <div className="flex flex-wrap gap-2 mb-5">
+              <span className="inline-flex items-center gap-1.5 bg-white dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-slate-700/60 shadow-sm transition-colors">
+                <span className="text-slate-400 dark:text-slate-500">#</span>{missaoAberta.id}
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-indigo-200/60 dark:border-indigo-800/40 shadow-sm transition-colors">
+                🗂️ {missaoAberta.modulo || "Geral"}
+              </span>
+              <span className="inline-flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-emerald-200/60 dark:border-emerald-800/40 shadow-sm transition-colors">
+                ⭐ {missaoAberta.xp} XP
+              </span>
+              {missaoAberta.dataLimite && (
+                <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-widest border shadow-sm transition-colors ${
+                  prazoEncerrado
+                    ? "bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200/60 dark:border-red-800/40 animate-pulse"
+                    : "bg-slate-50 dark:bg-slate-800/80 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700/60"
+                }`}>
+                  {prazoEncerrado ? "⏳ Prazo Encerrado" : `📅 ${missaoAberta.dataLimite}`}
+                </span>
               )}
+            </div>
 
-            {statusAtual === "devolvida" && (
-              <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 p-4 rounded-xl mb-4 shadow-sm animate-in slide-in-from-top-2 transition-colors">
-                <h3 className="text-red-700 dark:text-red-400 font-black text-sm flex items-center gap-2 mb-1">
-                  <span>⚠️</span> Missão Devolvida pelo Tutor!
-                </h3>
-                <p className="text-red-600 dark:text-red-300 text-xs font-medium">
-                  {missaoAberta.feedback ||
-                    "Revise as instruções e envie novamente."}
-                </p>
-              </div>
-            )}
+            {/* ─── BLOCO DE DESCRIÇÃO ─── */}
+            <div className="text-slate-700 dark:text-slate-300 whitespace-pre-wrap font-mono text-sm mb-6 bg-white dark:bg-slate-800/60 p-5 rounded-2xl border border-slate-200/80 dark:border-slate-700/50 leading-relaxed shadow-sm transition-colors duration-300 backdrop-blur-sm">
+              {renderDescricaoComLinks(missaoAberta.descricao)}
+            </div>
 
-            {(statusAtual === "avaliado" || statusAtual === "avaliada") &&
-              missaoAberta.feedback && (
-                <div className="bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800/50 p-4 rounded-xl mb-4 shadow-sm animate-in slide-in-from-top-2 transition-colors">
-                  <h3 className="text-emerald-700 dark:text-emerald-400 font-black text-sm flex items-center gap-2 mb-1">
-                    <span>💬</span> Feedback do Tutor
-                  </h3>
-                  <p className="text-emerald-600 dark:text-emerald-300 text-xs font-medium">
-                    {missaoAberta.feedback}
-                  </p>
-                </div>
-              )}
-
-            {missaoAberta.linkClassroom &&
-              (statusAtual === "pendente" || statusAtual === "devolvida") && (
-                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-300 dark:border-amber-700 p-5 rounded-xl mb-6 shadow-sm transition-colors">
-                  <h3 className="text-amber-800 dark:text-amber-400 font-black text-sm flex items-center gap-2 mb-2">
-                    <span>🏫</span> Entrega Obrigatória no Classroom!
-                  </h3>
-                  <p className="text-amber-700 dark:text-amber-300 text-xs font-medium mb-4 leading-relaxed">
-                    Para ganhar o XP, você precisa primeiro registrar a sua
-                    entrega oficial no Ambiente Virtual de Aprendizagem.
-                  </p>
-
-                  <div className="flex flex-col gap-3">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        dispararIdaAoClassroom(missaoAberta.linkClassroom!)
-                      }
-                      className="cursor-pointer bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 text-white font-black py-3 rounded-lg shadow-sm transition-colors flex items-center justify-center gap-2"
-                    >
-                      1. ABRIR O GOOGLE CLASSROOM 🔗
-                    </button>
-
-                    {classroomAberto && timerClassroom > 0 && (
-                      <div className="text-center p-3 bg-amber-100 dark:bg-amber-900/50 text-amber-800 dark:text-amber-300 font-bold text-xs rounded-lg animate-pulse border border-amber-200 dark:border-amber-700">
-                        ⏳ Validando o seu acesso... aguarde {timerClassroom}{" "}
-                        segundos.
-                      </div>
-                    )}
-
-                    {classroomAberto && timerClassroom === 0 && (
-                      <label className="flex items-start gap-3 p-4 bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-800 rounded-xl cursor-pointer hover:bg-emerald-50 dark:hover:bg-slate-700 transition-colors mt-2 shadow-sm animate-in fade-in">
-                        <input
-                          type="checkbox"
-                          required
-                          checked={checkboxHonestidade}
-                          onChange={(e) =>
-                            setCheckboxHonestidade(e.target.checked)
-                          }
-                          className="mt-1 w-5 h-5 text-emerald-600 focus:ring-emerald-500 shrink-0 cursor-pointer"
-                        />
-                        <span className="text-xs text-slate-700 dark:text-slate-300 font-bold leading-snug">
-                          2. Confirmo por minha honra que já anexei e enviei o
-                          meu material no Google Classroom oficial.
-                        </span>
-                      </label>
-                    )}
-                  </div>
-                </div>
-              )}
-
-            {missaoAberta.tipo !== "Material" && (
-              <h3 className="font-bold text-slate-800 dark:text-slate-200 mb-3 uppercase text-sm mt-4 transition-colors">
-                Sua Resposta:
-              </h3>
-            )}
-
-            {missaoAberta.tipo === "Quiz" ? (
-              <div className="space-y-3">
-                {["A", "B", "C", "D"].map((letra) => {
-                  const opcaoTexto =
-                    missaoAberta[`opcao${letra}` as keyof Atividade];
-                  return opcaoTexto ? (
-                    <label
-                      key={letra}
-                      className={`flex items-start p-4 rounded-xl border-2 cursor-pointer transition-all ${resposta === letra ? "bg-blue-50 dark:bg-blue-900/30 border-blue-500 shadow-sm" : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 hover:border-blue-300 dark:hover:border-blue-500 hover:bg-slate-50 dark:hover:bg-slate-700"} ${inputDesabilitado ? "opacity-60 cursor-not-allowed" : ""}`}
-                    >
-                      <input
-                        type="radio"
-                        name="quiz"
-                        value={letra}
-                        checked={resposta === letra}
-                        onChange={(e) => setResposta(e.target.value)}
-                        disabled={inputDesabilitado}
-                        className="mt-1 mr-3 w-4 h-4 text-blue-600 focus:ring-blue-500"
-                      />
-                      <div className="flex-1 overflow-x-auto">
-                        <strong className="text-slate-700 dark:text-slate-200 mr-2">
-                          {letra})
-                        </strong>
-                        <code className="text-slate-600 dark:text-slate-400 font-mono text-sm whitespace-pre-wrap leading-tight">
-                          {opcaoTexto}
-                        </code>
-                      </div>
-                    </label>
-                  ) : null;
-                })}
-              </div>
-            ) : missaoAberta.tipo === "Projeto" ? (
-              <div>
-                <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase">
-                  Link do seu projeto (GitHub, Replit, etc):
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://..."
-                  value={resposta}
-                  onChange={(e) => setResposta(e.target.value)}
-                  required={!missaoAberta.linkClassroom}
-                  disabled={inputDesabilitado}
-                  className={`w-full bg-white dark:bg-slate-800 border-2 border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded-xl p-4 focus:border-blue-500 dark:focus:border-blue-500 outline-none transition-colors ${inputDesabilitado ? "opacity-60 cursor-not-allowed bg-slate-100 dark:bg-slate-900" : ""}`}
+            {/* ─── IMAGEM DA MISSÃO ─── */}
+            {missaoAberta.imagemUrl && (
+              <div className="relative w-full h-64 mb-6 rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-700/50 shadow-sm bg-white dark:bg-slate-800/60 transition-colors backdrop-blur-sm">
+                <Image
+                  src={(() => {
+                    const url = missaoAberta.imagemUrl || "";
+                    const match = url.match(
+                      /drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/,
+                    );
+                    return match
+                      ? `https://drive.google.com/uc?export=view&id=${match[1]}`
+                      : url;
+                  })()}
+                  alt="Referência da Missão"
+                  fill
+                  sizes="(max-width: 768px) 100vw, 800px"
+                  className="object-contain p-2"
                 />
               </div>
-            ) : (
-              <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 p-5 rounded-2xl text-center shadow-sm opacity-90 transition-colors">
-                <span className="text-4xl block mb-3">📚</span>
-                <p className="text-sm font-black text-blue-800 dark:text-blue-400 uppercase tracking-widest mb-1">
-                  Material de Apoio
-                </p>
-                <p className="text-xs text-blue-600 dark:text-blue-300 font-medium">
-                  Acesse o conteúdo, marque a caixinha de honestidade (se
-                  existir) e resgate o seu XP!
-                </p>
-                <input type="hidden" value="Material Consumido" />
-              </div>
             )}
 
-            <div className="mt-8 flex justify-end gap-3 border-t border-slate-200 dark:border-slate-700 pt-4 transition-colors pb-4">
-              <button
-                type="button"
-                onClick={onClose}
-                className="cursor-pointer px-6 py-3 rounded-xl text-slate-600 dark:text-slate-400 font-bold hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"
-              >
-                Cancelar
-              </button>
-              <button
-                type="submit"
-                disabled={inputDesabilitado}
-                className={`cursor-pointer text-white px-8 py-3 rounded-xl font-black shadow-md transition-all ${inputDesabilitado ? "bg-slate-400 dark:bg-slate-700" : prazoEncerrado ? "bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 active:scale-95" : "bg-emerald-600 hover:bg-emerald-700 dark:bg-emerald-700 dark:hover:bg-emerald-600 active:scale-95"}`}
-              >
-                {enviando
-                  ? "Processando..."
-                  : statusAtual === "aguardando correção" ||
-                      statusAtual === "avaliador" ||
-                      statusAtual === "avaliado" ||
-                      statusAtual === "avaliada"
-                    ? "Já Concluído"
-                    : statusAtual === "devolvida"
-                      ? "Reenviar Missão"
-                      : missaoAberta.tipo === "Material"
-                        ? "Resgatar XP do Material"
-                        : prazoEncerrado
-                          ? "Enviar Atrasado"
-                          : "Enviar Resposta"}
-              </button>
-            </div>
-          </form>
-        </div>
+            {/* ═══ FORMULÁRIO ═══ */}
+            <form
+              onSubmit={handleSubmit}
+              className="border-t border-slate-200/60 dark:border-slate-700/40 pt-6 transition-colors"
+            >
+              {/* ─── CARD: Data de envio ─── */}
+              {dataFormatada &&
+                (statusAtual === "aguardando correção" ||
+                  statusAtual === "avaliado" ||
+                  statusAtual === "avaliada") && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-slate-100/80 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/40 p-3.5 rounded-2xl mb-4 shadow-sm backdrop-blur-sm"
+                  >
+                    <p className="text-slate-500 dark:text-slate-400 text-xs font-bold flex items-center gap-2">
+                      <span className="text-base">🕒</span> Enviado em: <strong className="text-slate-700 dark:text-slate-200">{dataFormatada}</strong>
+                    </p>
+                  </motion.div>
+                )}
+
+              {/* ─── CARD: Missão Devolvida ─── */}
+              {statusAtual === "devolvida" && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-red-50/80 dark:bg-red-900/15 border border-red-200/60 dark:border-red-800/40 p-4 rounded-2xl mb-4 shadow-sm backdrop-blur-sm"
+                >
+                  <h3 className="text-red-700 dark:text-red-400 font-black text-sm flex items-center gap-2 mb-1.5">
+                    <span className="text-base">⚠️</span> Missão Devolvida pelo Tutor!
+                  </h3>
+                  <p className="text-red-600 dark:text-red-300 text-xs font-medium leading-relaxed">
+                    {missaoAberta.feedback ||
+                      "Revise as instruções e envie novamente."}
+                  </p>
+                </motion.div>
+              )}
+
+              {/* ─── CARD: Feedback do Tutor ─── */}
+              {(statusAtual === "avaliado" || statusAtual === "avaliada") &&
+                missaoAberta.feedback && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-emerald-50/80 dark:bg-emerald-900/15 border border-emerald-200/60 dark:border-emerald-800/40 p-4 rounded-2xl mb-4 shadow-sm backdrop-blur-sm"
+                  >
+                    <h3 className="text-emerald-700 dark:text-emerald-400 font-black text-sm flex items-center gap-2 mb-1.5">
+                      <span className="text-base">💬</span> Feedback do Tutor
+                    </h3>
+                    <p className="text-emerald-600 dark:text-emerald-300 text-xs font-medium leading-relaxed">
+                      {missaoAberta.feedback}
+                    </p>
+                  </motion.div>
+                )}
+
+              {/* ─── CARD: Classroom Obrigatório ─── */}
+              {missaoAberta.linkClassroom &&
+                (statusAtual === "pendente" || statusAtual === "devolvida") && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-amber-50/80 dark:bg-amber-900/15 border border-amber-300/60 dark:border-amber-700/40 p-5 rounded-2xl mb-6 shadow-sm backdrop-blur-sm transition-colors"
+                  >
+                    <h3 className="text-amber-800 dark:text-amber-400 font-black text-sm flex items-center gap-2 mb-2">
+                      <span className="text-base">🏫</span> Entrega Obrigatória no Classroom!
+                    </h3>
+                    <p className="text-amber-700 dark:text-amber-300 text-xs font-medium mb-4 leading-relaxed">
+                      Para ganhar o XP, você precisa primeiro registrar a sua
+                      entrega oficial no Ambiente Virtual de Aprendizagem.
+                    </p>
+
+                    <div className="flex flex-col gap-3">
+                      <motion.button
+                        type="button"
+                        whileHover={{ scale: 1.01 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() =>
+                          dispararIdaAoClassroom(missaoAberta.linkClassroom!)
+                        }
+                        className="cursor-pointer bg-gradient-to-r from-amber-500 to-orange-500 dark:from-amber-600 dark:to-orange-600 hover:from-amber-600 hover:to-orange-600 text-white font-black py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider"
+                      >
+                        1. ABRIR O GOOGLE CLASSROOM 🔗
+                      </motion.button>
+
+                      <AnimatePresence>
+                        {classroomAberto && timerClassroom > 0 && (
+                          <motion.div
+                            initial={{ opacity: 0, height: 0 }}
+                            animate={{ opacity: 1, height: "auto" }}
+                            exit={{ opacity: 0, height: 0 }}
+                            className="text-center p-3.5 bg-amber-100/80 dark:bg-amber-900/30 text-amber-800 dark:text-amber-300 font-bold text-xs rounded-xl border border-amber-200/60 dark:border-amber-700/40 backdrop-blur-sm"
+                          >
+                            <motion.span
+                              animate={{ opacity: [0.5, 1, 0.5] }}
+                              transition={{ duration: 1.5, repeat: Infinity }}
+                            >
+                              ⏳ Validando o seu acesso... aguarde {timerClassroom}{" "}
+                              segundos.
+                            </motion.span>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+
+                      <AnimatePresence>
+                        {classroomAberto && timerClassroom === 0 && (
+                          <motion.label
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="flex items-start gap-3 p-4 bg-white/80 dark:bg-slate-800/60 border border-emerald-200/60 dark:border-emerald-800/40 rounded-2xl cursor-pointer hover:bg-emerald-50/80 dark:hover:bg-slate-700/60 transition-colors mt-1 shadow-sm backdrop-blur-sm"
+                          >
+                            <input
+                              type="checkbox"
+                              required
+                              checked={checkboxHonestidade}
+                              onChange={(e) =>
+                                setCheckboxHonestidade(e.target.checked)
+                              }
+                              className="mt-1 w-5 h-5 text-emerald-600 focus:ring-emerald-500 shrink-0 cursor-pointer accent-emerald-500"
+                            />
+                            <span className="text-xs text-slate-700 dark:text-slate-300 font-bold leading-snug">
+                              2. Confirmo por minha honra que já anexei e enviei o
+                              meu material no Google Classroom oficial.
+                            </span>
+                          </motion.label>
+                        )}
+                      </AnimatePresence>
+                    </div>
+                  </motion.div>
+                )}
+
+              {/* ─── LABEL: Sua Resposta ─── */}
+              {missaoAberta.tipo !== "Material" && (
+                <h3 className="font-display font-black text-slate-800 dark:text-slate-200 mb-3 uppercase text-[11px] tracking-[0.2em] mt-4 transition-colors flex items-center gap-2">
+                  <span className="w-1.5 h-4 bg-gradient-to-b from-indigo-500 to-pink-500 rounded-full" />
+                  Sua Resposta
+                </h3>
+              )}
+
+              {/* ─── OPÇÕES: Quiz ─── */}
+              {missaoAberta.tipo === "Quiz" ? (
+                <div className="space-y-3">
+                  {["A", "B", "C", "D"].map((letra) => {
+                    const opcaoTexto =
+                      missaoAberta[`opcao${letra}` as keyof Atividade];
+                    const isSelected = resposta === letra;
+                    return opcaoTexto ? (
+                      <motion.label
+                        key={letra}
+                        whileHover={!inputDesabilitado ? { scale: 1.005 } : {}}
+                        whileTap={!inputDesabilitado ? { scale: 0.995 } : {}}
+                        className={`flex items-start p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 backdrop-blur-sm ${
+                          isSelected
+                            ? "bg-indigo-50/80 dark:bg-indigo-900/20 border-indigo-500 dark:border-indigo-500 shadow-md shadow-indigo-500/10"
+                            : "bg-white/80 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/50 hover:border-indigo-300 dark:hover:border-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-700/60"
+                        } ${inputDesabilitado ? "opacity-60 cursor-not-allowed" : ""}`}
+                      >
+                        <input
+                          type="radio"
+                          name="quiz"
+                          value={letra}
+                          checked={isSelected}
+                          onChange={(e) => setResposta(e.target.value)}
+                          disabled={inputDesabilitado}
+                          className="mt-1 mr-3 w-4 h-4 text-indigo-600 focus:ring-indigo-500 accent-indigo-500"
+                        />
+                        <div className="flex-1 overflow-x-auto">
+                          <strong className={`mr-2 text-sm font-black ${isSelected ? "text-indigo-700 dark:text-indigo-300" : "text-slate-600 dark:text-slate-300"}`}>
+                            {letra})
+                          </strong>
+                          <code className="text-slate-600 dark:text-slate-400 font-mono text-sm whitespace-pre-wrap leading-tight">
+                            {opcaoTexto}
+                          </code>
+                        </div>
+                      </motion.label>
+                    ) : null;
+                  })}
+                </div>
+              ) : missaoAberta.tipo === "Projeto" ? (
+                <div>
+                  <label className="block text-[10px] font-black text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-[0.15em]">
+                    Link do seu projeto (GitHub, Replit, etc):
+                  </label>
+                  <input
+                    type="url"
+                    placeholder="https://..."
+                    value={resposta}
+                    onChange={(e) => setResposta(e.target.value)}
+                    required={!missaoAberta.linkClassroom}
+                    disabled={inputDesabilitado}
+                    className={`w-full bg-white/80 dark:bg-slate-800/60 border-2 border-slate-200/80 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 rounded-2xl p-4 focus:border-indigo-500 dark:focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600 backdrop-blur-sm ${inputDesabilitado ? "opacity-60 cursor-not-allowed bg-slate-100/80 dark:bg-slate-900/60" : ""}`}
+                  />
+                </div>
+              ) : (
+                /* ─── BLOCO: Material de Apoio ─── */
+                <div className="bg-indigo-50/80 dark:bg-indigo-900/15 border border-indigo-200/60 dark:border-indigo-800/40 p-6 rounded-2xl text-center shadow-sm backdrop-blur-sm transition-colors">
+                  <motion.span
+                    className="text-4xl block mb-3"
+                    animate={{ y: [0, -4, 0] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    📚
+                  </motion.span>
+                  <p className="text-sm font-black text-indigo-800 dark:text-indigo-400 uppercase tracking-widest mb-1">
+                    Material de Apoio
+                  </p>
+                  <p className="text-xs text-indigo-600 dark:text-indigo-300 font-medium">
+                    Acesse o conteúdo, marque a caixinha de honestidade (se
+                    existir) e resgate o seu XP!
+                  </p>
+                  <input type="hidden" value="Material Consumido" />
+                </div>
+              )}
+
+              {/* ─── LOADING ESTADO ─── */}
+              <AnimatePresence>
+                {enviando && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                  >
+                    <MissaoLoader />
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              {/* ─── BARRA DE AÇÕES ─── */}
+              <div className="mt-8 flex justify-end gap-3 border-t border-slate-200/60 dark:border-slate-700/40 pt-5 transition-colors pb-2">
+                <motion.button
+                  type="button"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={onClose}
+                  className="cursor-pointer px-6 py-3 rounded-xl text-slate-500 dark:text-slate-400 font-bold text-sm hover:bg-slate-200/60 dark:hover:bg-slate-800/60 transition-colors backdrop-blur-sm"
+                >
+                  Cancelar
+                </motion.button>
+                <motion.button
+                  type="submit"
+                  whileHover={!inputDesabilitado ? { scale: 1.02 } : {}}
+                  whileTap={!inputDesabilitado ? { scale: 0.97 } : {}}
+                  disabled={inputDesabilitado}
+                  className={`cursor-pointer text-white px-8 py-3 rounded-xl font-black text-sm shadow-md transition-all uppercase tracking-wider ${
+                    inputDesabilitado
+                      ? "bg-slate-400 dark:bg-slate-700 shadow-none"
+                      : prazoEncerrado
+                        ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/20 active:scale-95"
+                        : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/20 active:scale-95"
+                  }`}
+                >
+                  {enviando
+                    ? "Processando..."
+                    : statusAtual === "aguardando correção" ||
+                        statusAtual === "avaliador" ||
+                        statusAtual === "avaliado" ||
+                        statusAtual === "avaliada"
+                      ? "Já Concluído"
+                      : statusAtual === "devolvida"
+                        ? "Reenviar Missão"
+                        : missaoAberta.tipo === "Material"
+                          ? "Resgatar XP do Material"
+                          : prazoEncerrado
+                            ? "Enviar Atrasado"
+                            : "Enviar Resposta"}
+                </motion.button>
+              </div>
+            </form>
+          </div>
+        </motion.div>
       </div>
-    </div>
+    </AnimatePresence>
   );
 }

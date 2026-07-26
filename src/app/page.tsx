@@ -14,6 +14,8 @@ import LoginScreen from "../components/LoginScreen";
 import { formatarDataInput } from "../utils/formatters";
 import { Aluno } from "../types";
 import { useToast } from "@/src/contexts/ToastContext"; // <-- IMPORTAÇÃO DO CONTEXTO
+import ThreeInteractiveBg from "../components/ThreeInteractiveBg";
+import TrilhaTechLoader from "../components/TrilhaTechLoader";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL as string;
 
@@ -348,16 +350,19 @@ export default function DashboardAlunos() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center text-red-600">
-        <div className="text-center p-8 bg-white shadow-2xl rounded-2xl max-w-lg mx-auto">
-          <h2 className="text-2xl font-black text-slate-800 mb-2">
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center text-red-400 p-4 relative overflow-hidden">
+        <div className="absolute top-[-10%] right-[-10%] w-[35vw] h-[35vw] rounded-full aurora-bg-blob-1 animate-float-slow pointer-events-none" />
+        <div className="absolute bottom-[-15%] left-[-15%] w-[40vw] h-[40vw] rounded-full aurora-bg-blob-2 animate-float-medium pointer-events-none" />
+        
+        <div className="glass-panel p-8 rounded-2xl max-w-lg text-center border border-red-500/20 relative z-10 shadow-2xl">
+          <h2 className="text-2xl font-display font-black text-white mb-3">
             ❌ Erro ao Carregar Dados
           </h2>
-          <p className="text-slate-600 mb-4">
+          <p className="text-slate-400 text-sm leading-relaxed mb-4">
             Não foi possível conectar-se à base de dados. Isso pode ocorrer por
             um problema de rede ou uma falha na API.
           </p>
-          <p className="text-xs text-slate-400 bg-slate-50 p-2 rounded">
+          <p className="text-xs text-slate-500 bg-slate-900/50 p-3 rounded-xl border border-white/5 font-mono">
             <strong>Dica:</strong> Verifique o console do navegador (F12) para
             mais detalhes técnicos sobre o erro.
           </p>
@@ -367,11 +372,7 @@ export default function DashboardAlunos() {
   }
 
   if (verificandoSessao)
-    return (
-      <div className="min-h-screen bg-slate-100 flex items-center justify-center font-bold text-slate-500">
-        Verificando sessão...
-      </div>
-    );
+    return <TrilhaTechLoader />;
 
   if (!usuarioLogado) {
     return (
@@ -383,12 +384,20 @@ export default function DashboardAlunos() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 p-4 md:p-8 font-sans">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 p-4 md:p-8 font-sans relative overflow-hidden transition-colors duration-300">
+      {/* Three.js interactive custom background */}
+      <ThreeInteractiveBg />
+
+      {/* Ambient background glows */}
+      <div className="absolute top-[-10%] right-[-10%] w-[45vw] h-[45vw] rounded-full aurora-bg-blob-1 animate-float-slow pointer-events-none" />
+      <div className="absolute bottom-[-15%] left-[-15%] w-[50vw] h-[50vw] rounded-full aurora-bg-blob-2 animate-float-medium pointer-events-none" />
+      <div className="absolute top-[40%] left-[30%] w-[30vw] h-[30vw] rounded-full aurora-bg-blob-3 animate-glow-pulse pointer-events-none" />
+
       {modalSiepeAberto && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden">
-            <div className="bg-emerald-700 text-white p-4 flex justify-between items-center">
-              <h2 className="font-bold flex items-center gap-2">
+        <div className="fixed inset-0 bg-slate-955/80 dark:bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 animate-in fade-in">
+          <div className="glass-panel-heavy rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/10">
+            <div className="bg-emerald-600/25 border-b border-white/10 text-white p-5 flex justify-between items-center">
+              <h2 className="font-display font-black text-lg flex items-center gap-2">
                 <span>🔄</span> Sincronizador SIEPE
               </h2>
               <button
@@ -396,7 +405,7 @@ export default function DashboardAlunos() {
                   setModalSiepeAberto(false);
                   setResultadoSiepe(null);
                 }}
-                className="text-3xl leading-none hover:text-emerald-200"
+                className="cursor-pointer text-slate-400 hover:text-white transition-colors text-2xl"
               >
                 &times;
               </button>
@@ -404,25 +413,25 @@ export default function DashboardAlunos() {
             <div className="p-6 text-center">
               {resultadoSiepe ? (
                 <div className="animate-in zoom-in">
-                  <div className="text-5xl mb-2">✅</div>
-                  <h3 className="font-bold text-emerald-800 text-lg mb-1">
+                  <div className="text-5xl mb-3">✅</div>
+                  <h3 className="font-display font-black text-white text-lg mb-2">
                     Sincronização Concluída!
                   </h3>
-                  <p className="text-sm text-slate-500 mb-4">
-                    Base escolar devidamente atualizada.
+                  <p className="text-sm text-slate-400 mb-6 leading-relaxed">
+                    Base escolar devidamente atualizada no servidor.
                   </p>
-                  <div className="grid grid-cols-2 gap-2 text-xs font-bold text-slate-700">
-                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg">
+                  <div className="grid grid-cols-2 gap-3 text-xs font-bold text-slate-300">
+                    <div className="bg-slate-950/40 border border-white/5 p-4 rounded-xl shadow-inner">
                       Novatos Cadastrados
                       <br />
-                      <span className="text-2xl text-emerald-600">
+                      <span className="text-3xl font-display font-black text-emerald-400 mt-2 block">
                         {resultadoSiepe.inseridos}
                       </span>
                     </div>
-                    <div className="bg-slate-50 border border-slate-200 p-3 rounded-lg">
+                    <div className="bg-slate-950/40 border border-white/5 p-4 rounded-xl shadow-inner">
                       Alunos Atualizados
                       <br />
-                      <span className="text-2xl text-blue-600">
+                      <span className="text-3xl font-display font-black text-brand-secondary mt-2 block">
                         {resultadoSiepe.atualizados}
                       </span>
                     </div>
@@ -430,26 +439,26 @@ export default function DashboardAlunos() {
                 </div>
               ) : (
                 <>
-                  <p className="text-sm text-slate-500 mb-4">
+                  <p className="text-sm text-slate-400 mb-6 leading-relaxed text-left">
                     Selecione o arquivo <strong>.xls ou .xlsx</strong> do SIEPE.
                     O sistema lerá todas as abas automaticamente.
                   </p>
-                  <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 bg-slate-50 relative hover:bg-slate-100 transition-colors">
+                  <div className="border-2 border-dashed border-slate-700 hover:border-brand-primary/50 rounded-2xl p-8 bg-slate-950/35 relative transition-colors cursor-pointer group">
                     <input
                       type="file"
                       multiple
                       accept=".csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
                       onChange={handleFileUploadSIEPE}
                       disabled={sincronizandoSiepe}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed z-20"
                     />
-                    <div className="text-4xl mb-3">
+                    <div className="text-4xl mb-3 group-hover:scale-110 transition-transform duration-300">
                       {sincronizandoSiepe ? "⚙️" : "📊"}
                     </div>
-                    <p className="font-bold text-slate-700">
+                    <p className="font-bold text-slate-300 group-hover:text-white transition-colors text-sm">
                       {sincronizandoSiepe
-                        ? "Lendo Planilhas..."
-                        : "Clique aqui para subir o Excel"}
+                        ? "Processando arquivos..."
+                        : "Clique ou arraste o arquivo Excel aqui"}
                     </p>
                   </div>
                 </>
@@ -459,18 +468,18 @@ export default function DashboardAlunos() {
         </div>
       )}
 
-      <div className="max-w-7xl mx-auto">
+      <div className="max-w-7xl mx-auto relative z-10">
         <Header
           carregando={isLoading}
           nomeUsuario={usuarioLogado}
           onLogout={fazerLogout}
         />
 
-        <div className="flex justify-between items-center mb-6 mt-4">
-          <h2 className="text-2xl font-black text-slate-800">Alunos</h2>
+        <div className="flex justify-between items-center mb-8 mt-6">
+          <h2 className="text-3xl font-display font-black text-slate-800 dark:text-white dark:text-neon-glow leading-none">Gestão de Alunos</h2>
           <button
             onClick={() => setModalSiepeAberto(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold py-2.5 px-5 rounded-lg shadow-sm transition-all flex items-center gap-2"
+            className="cursor-pointer bg-gradient-to-r from-emerald-600 to-teal-500 hover:brightness-110 text-white text-xs uppercase tracking-wider font-black py-3 px-6 rounded-xl shadow-lg transition-all active:scale-95 flex items-center gap-2"
           >
             <span>🔄</span> Importar SIEPE
           </button>
@@ -489,16 +498,18 @@ export default function DashboardAlunos() {
           exportarDados={exportarParaCSV}
         />
 
-        <StudentTable
-          alunosFiltrados={alunosFiltrados}
-          preencherEdicao={abrirVisualizacao}
-        />
-
-        {isLoading && (
-          <div className="text-center p-10 font-semibold text-slate-500">
-            Carregando alunos...
-          </div>
-        )}
+        <div className="mt-6 glass-panel rounded-3xl overflow-hidden border border-white/10 shadow-2xl">
+          <StudentTable
+            alunosFiltrados={alunosFiltrados}
+            preencherEdicao={abrirVisualizacao}
+          />
+          
+          {isLoading && (
+            <div className="text-center p-16 font-bold text-slate-400 animate-pulse bg-slate-950/20">
+              Carregando alunos...
+            </div>
+          )}
+        </div>
 
         <StudentModal
           isOpen={modalAberto}

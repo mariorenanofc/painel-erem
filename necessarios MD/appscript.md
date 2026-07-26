@@ -1,14 +1,10 @@
 function doGet(e) {
-  const planilha = SpreadsheetApp.getActiveSpreadsheet();
-  const bd = planilha.getSheetByName("basededados");
-  const dados = bd.getDataRange().getValues();
+  const dados = lerComCacheSeguro("basededados", 1800);
+  const dadosTrilha = lerComCacheSeguro("trilhatech", 60);
   
-  // 1. LER OS DADOS DO PROJETO TRILHA TECH
-  const abaTrilha = planilha.getSheetByName("trilhatech");
   let trilhaMap = {}; // Dicionário inteligente para busca rápida
   
-  if (abaTrilha) {
-    const dadosTrilha = abaTrilha.getDataRange().getValues();
+  if (dadosTrilha && dadosTrilha.length > 0) {
     // Pula o cabeçalho (i=1)
     for (let j = 1; j < dadosTrilha.length; j++) {
       let mat = String(dadosTrilha[j][0]).trim();
@@ -27,6 +23,11 @@ function doGet(e) {
     let dataNascFormatada = dados[i][1];
     if (dataNascFormatada instanceof Date) {
       dataNascFormatada = dataNascFormatada.toISOString().split('T')[0];
+    } else if (typeof dataNascFormatada === "string" && dataNascFormatada.includes("/")) {
+      let partes = dataNascFormatada.split("/");
+      if (partes.length === 3) {
+        dataNascFormatada = `${partes[2]}-${partes[1].padStart(2, '0')}-${partes[0].padStart(2, '0')}`;
+      }
     }
     
     let matricula = String(dados[i][2] || "").trim();
@@ -197,7 +198,7 @@ function doPost(e) {
     // ==========================================
     // ROTA 3: SALVAR/EDITAR ALUNO (Gestão Escolar)
     // ==========================================
-      if (action === "salvar_aluno") {
+         if (action === "salvar_aluno") {
         const matriculaDigitada = String(dadosApp.matricula).trim();
         const nome = dadosApp.nome;
         const dataNasc = dadosApp.dataNasc;
@@ -211,94 +212,100 @@ function doPost(e) {
           return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Matrícula, Nome e Turma são obrigatórios." })).setMimeType(ContentService.MimeType.JSON);
         }
         
-        const bd = planilha.getSheetByName("basededados");
-        const dadosBD = bd.getDataRange().getValues();
-        let linhaBD = -1;
-
-        for (let i = 1; i < dadosBD.length; i++) {
-          let matLinha = String(dadosBD[i][2]).trim();
-          let emailLinha = String(dadosBD[i][3]).trim().toLowerCase();
-          let telAlunoLinha = String(dadosBD[i][5]).trim();
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(15000);
           
-          if (matLinha === matriculaDigitada) {
-            linhaBD = i + 1; 
-          } else {
-            if (email && email.toLowerCase() !== "sem email" && email.toLowerCase() !== "não encontrado" && emailLinha === email.toLowerCase()) {
-              return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: `Este e-mail já está cadastrado na matrícula: ${matLinha}` })).setMimeType(ContentService.MimeType.JSON);
-            }
-            if (telefoneAluno && telAlunoLinha === telefoneAluno) {
-              return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: `Este telefone de aluno já pertence à matrícula: ${matLinha}` })).setMimeType(ContentService.MimeType.JSON);
-            }
-          }
-        }
-        
-        if (linhaBD > 0) {
-          bd.getRange(linhaBD, 1).setValue(nome);
-          bd.getRange(linhaBD, 2).setValue(dataNasc);
-          bd.getRange(linhaBD, 3).setValue(matriculaDigitada);
-          bd.getRange(linhaBD, 4).setValue(email);
-          bd.getRange(linhaBD, 5).setValue(turma);
-          bd.getRange(linhaBD, 6).setValue(telefoneAluno);
-          bd.getRange(linhaBD, 7).setValue(telefoneResponsavel);
-          bd.getRange(linhaBD, 8).setValue(obs);
-        } else {
-          bd.appendRow([nome, dataNasc, matriculaDigitada, email, turma, telefoneAluno, telefoneResponsavel, obs]);
-        }
+          const bd = planilha.getSheetByName("basededados");
+          const dadosBD = bd.getDataRange().getValues();
+          let linhaBD = -1;
 
-        const nomeAbaTurma = turma.replace(" ANO ", " "); 
-        const abaTurma = planilha.getSheetByName(nomeAbaTurma);
-        
-        if (abaTurma) {
-          const dadosTurma = abaTurma.getDataRange().getValues();
-          let linhaTurma = -1;
-          for (let i = 1; i < dadosTurma.length; i++) {
-            if (String(dadosTurma[i][3]).trim() === matriculaDigitada) {
-              linhaTurma = i + 1; break;
+          for (let i = 1; i < dadosBD.length; i++) {
+            let matLinha = String(dadosBD[i][2]).trim();
+            let emailLinha = String(dadosBD[i][3]).trim().toLowerCase();
+            let telAlunoLinha = String(dadosBD[i][5]).trim();
+            
+            if (matLinha === matriculaDigitada) {
+              linhaBD = i + 1; 
+            } else {
+              if (email && email.toLowerCase() !== "sem email" && email.toLowerCase() !== "não encontrado" && emailLinha === email.toLowerCase()) {
+                return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: `Este e-mail já está cadastrado na matrícula: ${matLinha}` })).setMimeType(ContentService.MimeType.JSON);
+              }
+              if (telefoneAluno && telAlunoLinha === telefoneAluno) {
+                return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: `Este telefone de aluno já pertence à matrícula: ${matLinha}` })).setMimeType(ContentService.MimeType.JSON);
+              }
             }
           }
           
-          if (linhaTurma > 0) {
-            abaTurma.getRange(linhaTurma, 2).setValue(nome);
-            abaTurma.getRange(linhaTurma, 3).setValue(dataNasc);
-            abaTurma.getRange(linhaTurma, 4).setValue(matriculaDigitada);
-            abaTurma.getRange(linhaTurma, 5).setValue(email);
-            abaTurma.getRange(linhaTurma, 6).setValue(turma);
-            abaTurma.getRange(linhaTurma, 7).setValue(telefoneAluno);
-            abaTurma.getRange(linhaTurma, 8).setValue(telefoneResponsavel);
-            abaTurma.getRange(linhaTurma, 9).setValue(obs);
+          if (linhaBD > 0) {
+            bd.getRange(linhaBD, 1, 1, 8).setValues([[nome, dataNasc, matriculaDigitada, email, turma, telefoneAluno, telefoneResponsavel, obs]]);
           } else {
-            const proximoNumero = dadosTurma.length; 
-            abaTurma.appendRow([proximoNumero, nome, dataNasc, matriculaDigitada, email, turma, telefoneAluno, telefoneResponsavel, obs]);
+            bd.appendRow([nome, dataNasc, matriculaDigitada, email, turma, telefoneAluno, telefoneResponsavel, obs]);
           }
+
+          const nomeAbaTurma = turma.replace(" ANO ", " "); 
+          const abaTurma = planilha.getSheetByName(nomeAbaTurma);
+          
+          if (abaTurma) {
+            const dadosTurma = abaTurma.getDataRange().getValues();
+            let linhaTurma = -1;
+            for (let i = 1; i < dadosTurma.length; i++) {
+              if (String(dadosTurma[i][3]).trim() === matriculaDigitada) {
+                linhaTurma = i + 1; break;
+              }
+            }
+            
+            if (linhaTurma > 0) {
+              abaTurma.getRange(linhaTurma, 2, 1, 8).setValues([[nome, dataNasc, matriculaDigitada, email, turma, telefoneAluno, telefoneResponsavel, obs]]);
+            } else {
+              const proximoNumero = dadosTurma.length; 
+              abaTurma.appendRow([proximoNumero, nome, dataNasc, matriculaDigitada, email, turma, telefoneAluno, telefoneResponsavel, obs]);
+            }
+          }
+          invalidarCacheGeral();
+          return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Salvo com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao salvar aluno. Tente novamente." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
         }
-        invalidarCacheGeral();
-        return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Salvo com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
       }
 
-    // ==========================================
-    // ROTA 4: INSCREVER NO TRILHA TECH
-    // ==========================================
       if (action === "inscrever_trilhatech") {
         const matricula = String(dadosApp.matricula).trim();
         const turmaCurso = dadosApp.turmaCurso;
         const statusCurso = dadosApp.statusCurso;
-        
-        // Formata a data atual do Brasil
         const dataAtual = new Date().toLocaleString("pt-BR", {timeZone: "America/Sao_Paulo"}).split(',')[0]; 
         
-        const abaTrilha = planilha.getSheetByName("trilhatech");
-        const dadosTrilha = abaTrilha.getDataRange().getValues();
-        
-        // 1. Verifica se já não foi inscrito antes
-        for (let i = 1; i < dadosTrilha.length; i++) {
-          if (String(dadosTrilha[i][0]).trim() === matricula) {
-              return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Esta matrícula já está inscrita no projeto." })).setMimeType(ContentService.MimeType.JSON);
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(15000);
+          
+          const abaTrilha = planilha.getSheetByName("trilhatech");
+          const dadosTrilha = abaTrilha.getDataRange().getValues();
+          
+          // 1. Verifica se já não foi inscrito antes
+          for (let i = 1; i < dadosTrilha.length; i++) {
+            if (String(dadosTrilha[i][0]).trim() === matricula) {
+                return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Esta matrícula já está inscrita no projeto." })).setMimeType(ContentService.MimeType.JSON);
+            }
           }
+          
+          // 2. Registra na aba
+          abaTrilha.appendRow([matricula, turmaCurso, statusCurso, dataAtual]);
+          
+          // Invalida cache de trilhatech
+          const cache = CacheService.getScriptCache();
+          let keys = ["CACHE_trilhatech", "CACHE_trilhatech_CHUNKS"];
+          for (let i = 0; i < 15; i++) keys.push("CACHE_trilhatech_" + i);
+          cache.removeAll(keys);
+          
+          return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Inscrição realizada com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao inscrever. Tente novamente." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
         }
-        
-        // 2. Registra na aba
-        abaTrilha.appendRow([matricula, turmaCurso, statusCurso, dataAtual]);
-        return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Inscrição realizada com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
       }
 
     // ==========================================
@@ -309,28 +316,42 @@ function doPost(e) {
         const novoStatus = dadosApp.novoStatus; // Ex: "Ativo", "Reserva", "Desistente"
         const dataAtual = new Date().toLocaleString("pt-BR", {timeZone: "America/Sao_Paulo"}).split(',')[0];
         
-        const abaTrilha = planilha.getSheetByName("trilhatech");
-        const dadosTrilha = abaTrilha.getDataRange().getValues();
-        
-        let linha = -1;
-        for (let i = 1; i < dadosTrilha.length; i++) {
-            if (String(dadosTrilha[i][0]).trim() === matricula) {
-              linha = i + 1;
-              break;
-            }
-        }
-        
-        if (linha > 0) {
-            abaTrilha.getRange(linha, 3).setValue(novoStatus); // Atualiza o status
-            abaTrilha.getRange(linha, 4).setValue(dataAtual);  // Atualiza a data da mudança
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(15000);
+          
+          const abaTrilha = planilha.getSheetByName("trilhatech");
+          const dadosTrilha = abaTrilha.getDataRange().getValues();
+          
+          let linha = -1;
+          for (let i = 1; i < dadosTrilha.length; i++) {
+              if (String(dadosTrilha[i][0]).trim() === matricula) {
+                linha = i + 1;
+                break;
+              }
+          }
+          
+          if (linha > 0) {
+              if (String(novoStatus).trim().toLowerCase() === "desistente") {
+                abaTrilha.getRange(linha, 3, 1, 3).setValues([[novoStatus, dataAtual, 0]]);
+              } else {
+                abaTrilha.getRange(linha, 3, 1, 2).setValues([[novoStatus, dataAtual]]);
+              }
+              
+              // Invalida cache de trilhatech
+              const cache = CacheService.getScriptCache();
+              let keys = ["CACHE_trilhatech", "CACHE_trilhatech_CHUNKS"];
+              for (let i = 0; i < 15; i++) keys.push("CACHE_trilhatech_" + i);
+              cache.removeAll(keys);
 
-            if (String(novoStatus).trim().toLocaleLowerCase() === "desistente"){
-              abaTrilha.getRange(linha, 5).setValue(0)
-            }
-
-            return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: `Status atualizado para ${novoStatus}!` })).setMimeType(ContentService.MimeType.JSON);
-        } else {
-            return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Matrícula não encontrada no curso." })).setMimeType(ContentService.MimeType.JSON);
+              return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: `Status atualizado para ${novoStatus}!` })).setMimeType(ContentService.MimeType.JSON);
+          } else {
+              return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Matrícula não encontrada no curso." })).setMimeType(ContentService.MimeType.JSON);
+          }
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao atualizar status. Tente novamente." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
         }
       }
       
@@ -463,65 +484,79 @@ function doPost(e) {
             const imagemUrl = String(dadosApp.imagemUrl || "").trim();
             const modulo = String(dadosApp.modulo || "Geral").trim();
 
-            const abaAtividades = planilha.getSheetByName("atividades");
-            if (!abaAtividades) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aba 'atividades' não encontrada." })).setMimeType(ContentService.MimeType.JSON);
+            const lock = LockService.getScriptLock();
+            try {
+              lock.waitLock(15000);
+              
+              const abaAtividades = planilha.getSheetByName("atividades");
+              if (!abaAtividades) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aba 'atividades' não encontrada." })).setMimeType(ContentService.MimeType.JSON);
 
-            if (idAtividadeEdit) {
-              // MODO EDIÇÃO
-              const dados = abaAtividades.getDataRange().getValues();
-              let linhaEdit = -1;
-              for (let i = 1; i < dados.length; i++) {
-                if (String(dados[i][0]).trim() === idAtividadeEdit) {
-                  linhaEdit = i + 1;
-                  break;
-                }
-              }
-              if (linhaEdit > 0) {
-                abaAtividades.getRange(linhaEdit, 2).setValue(titulo);
-                abaAtividades.getRange(linhaEdit, 3).setValue(descricao);
-                abaAtividades.getRange(linhaEdit, 4).setValue(dataLimite);
-                abaAtividades.getRange(linhaEdit, 5).setValue(xp);
-                abaAtividades.getRange(linhaEdit, 6).setValue(turmaAlvo);
-                abaAtividades.getRange(linhaEdit, 7).setValue(tipo);
-                abaAtividades.getRange(linhaEdit, 8).setValue(opcaoA);
-                abaAtividades.getRange(linhaEdit, 9).setValue(opcaoB);
-                abaAtividades.getRange(linhaEdit, 10).setValue(opcaoC);
-                abaAtividades.getRange(linhaEdit, 11).setValue(opcaoD);
-                abaAtividades.getRange(linhaEdit, 12).setValue(respostaCorreta);
-                abaAtividades.getRange(linhaEdit, 13).setValue(linkClassroom); // Coluna M
-                abaAtividades.getRange(linhaEdit, 14).setValue(statusPublicacao); // Coluna N
-                abaAtividades.getRange(linhaEdit, 15).setValue(imagemUrl);
-                abaAtividades.getRange(linhaEdit, 16).setValue(modulo);
-                abaAtividades.getRange(linhaEdit, 17).setValue(String(dadosApp.gabarito || ""));
-                abaAtividades.getRange(linhaEdit, 18).setValue(dadosApp.gabaritoLiberado ? true : false);
-                return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Missão atualizada!" })).setMimeType(ContentService.MimeType.JSON);
-              }
-            } else {
-              // MODO CRIAÇÃO: Lógica Blindada de ID Sequencial
-              const dadosAtuais = abaAtividades.getDataRange().getValues();
-              let maiorId = 0;
-
-              // Varre todas as linhas (pulando o cabeçalho) para achar o maior número de ATIV
-              for (let i = 1; i < dadosAtuais.length; i++) {
-                let idAtualStr = String(dadosAtuais[i][0]).trim(); // Pega o ID da Coluna A
-                if (idAtualStr.startsWith("ATIV-")) {
-                  // Extrai só o número (ex: de "ATIV-015" tira o 15)
-                  let numId = parseInt(idAtualStr.replace("ATIV-", ""), 10);
-                  if (!isNaN(numId) && numId > maiorId) {
-                    maiorId = numId;
+              if (idAtividadeEdit) {
+                // MODO EDIÇÃO
+                const dados = abaAtividades.getDataRange().getValues();
+                let linhaEdit = -1;
+                for (let i = 1; i < dados.length; i++) {
+                  if (String(dados[i][0]).trim() === idAtividadeEdit) {
+                    linhaEdit = i + 1;
+                    break;
                   }
                 }
+                if (linhaEdit > 0) {
+                  abaAtividades.getRange(linhaEdit, 2, 1, 17).setValues([[
+                    titulo, 
+                    descricao, 
+                    dataLimite, 
+                    xp, 
+                    turmaAlvo, 
+                    tipo, 
+                    opcaoA, 
+                    opcaoB, 
+                    opcaoC, 
+                    opcaoD, 
+                    respostaCorreta, 
+                    linkClassroom, 
+                    statusPublicacao, 
+                    imagemUrl, 
+                    modulo, 
+                    String(dadosApp.gabarito || ""), 
+                    dadosApp.gabaritoLiberado ? true : false
+                  ]]);
+                  invalidarCacheGeral();
+                  return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Missão atualizada!" })).setMimeType(ContentService.MimeType.JSON);
+                } else {
+                  return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Missão não encontrada para edição." })).setMimeType(ContentService.MimeType.JSON);
+                }
+              } else {
+                // MODO CRIAÇÃO: Lógica Blindada de ID Sequencial
+                const dadosAtuais = abaAtividades.getDataRange().getValues();
+                let maiorId = 0;
+
+                // Varre todas as linhas (pulando o cabeçalho) para achar o maior número de ATIV
+                for (let i = 1; i < dadosAtuais.length; i++) {
+                  let idAtualStr = String(dadosAtuais[i][0]).trim(); // Pega o ID da Coluna A
+                  if (idAtualStr.startsWith("ATIV-")) {
+                    // Extrai só o número (ex: de "ATIV-015" tira o 15)
+                    let numId = parseInt(idAtualStr.replace("ATIV-", ""), 10);
+                    if (!isNaN(numId) && numId > maiorId) {
+                      maiorId = numId;
+                    }
+                  }
+                }
+
+                // O próximo ID é sempre o maior número encontrado + 1
+                const proximoNumero = maiorId + 1;
+                const numeroIdStr = proximoNumero.toString().padStart(3, '0');
+                const idGerado = "ATIV-" + numeroIdStr;
+
+                // Grava a nova linha
+                abaAtividades.appendRow([idGerado, titulo, descricao, dataLimite, xp, turmaAlvo, tipo, opcaoA, opcaoB, opcaoC, opcaoD, respostaCorreta, linkClassroom, statusPublicacao, imagemUrl, modulo, String(dadosApp.gabarito || ""), dadosApp.gabaritoLiberado ? true : false]);
+                invalidarCacheGeral();
+                return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Missão criada! ID: " + idGerado })).setMimeType(ContentService.MimeType.JSON);
               }
-
-              // O próximo ID é sempre o maior número encontrado + 1
-              const proximoNumero = maiorId + 1;
-              const numeroIdStr = proximoNumero.toString().padStart(3, '0');
-              const idGerado = "ATIV-" + numeroIdStr;
-
-              // Grava a nova linha
-              abaAtividades.appendRow([idGerado, titulo, descricao, dataLimite, xp, turmaAlvo, tipo, opcaoA, opcaoB, opcaoC, opcaoD, respostaCorreta, linkClassroom, statusPublicacao, imagemUrl, modulo, String(dadosApp.gabarito || ""), dadosApp.gabaritoLiberado ? true : false]);
-              invalidarCacheGeral();
-              return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Missão criada! ID: " + idGerado })).setMimeType(ContentService.MimeType.JSON);
+            } catch (e) {
+              return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao salvar missão. Tente novamente." })).setMimeType(ContentService.MimeType.JSON);
+            } finally {
+              lock.releaseLock();
             }
       }
 
@@ -624,120 +659,138 @@ function doPost(e) {
     // ROTA 9: ENVIAR ATIVIDADE (BLINDADA CONTRA DUPLO CHECK-IN)
     // ==========================================
       if (action === "enviar_atividade") {
+        const matricula = String(dadosApp.matricula).trim();
+        const idAtividade = String(dadosApp.idAtividade).trim();
+        const resposta = String(dadosApp.resposta).trim();
+        const timestampAtual = new Date().getTime();
+
+        // 1. LEITURA 100% VIA CACHE (Sem estourar a cota da API do Sheets)
+        let dadosAtiv = lerComCacheSeguro("atividades", 300);
+        let dadosModulos = lerComCacheSeguro("controle_modulos", 900);
+        const dadosEntregas = lerComCacheSeguro("entregas", 60);
+        const dadosTrilha = lerComCacheSeguro("trilhatech", 60);
+
+        let linhaExistente = -1;
+        let statusAtualBD = "";
+        let xpAnterior = 0;
+        let ehEntregaClassroom = false;
+
+        for (let i = 1; i < dadosEntregas.length; i++) {
+            if (String(dadosEntregas[i][1]).trim() === matricula && String(dadosEntregas[i][2]).trim() === idAtividade) {
+                linhaExistente = i + 1;
+                statusAtualBD = String(dadosEntregas[i][4]).trim().toLowerCase();
+                xpAnterior = Number(dadosEntregas[i][5]) || 0;
+                if (String(dadosEntregas[i][7]).toLowerCase().includes("classroom") || String(dadosEntregas[i][7]).toLowerCase().includes("ava")) ehEntregaClassroom = true;
+                break;
+            }
+        }
+
+        if (ehEntregaClassroom) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Você não precisa entregar por aqui! O sistema já avaliou automaticamente pelo Classroom. 🤖" })).setMimeType(ContentService.MimeType.JSON);
+        if (linhaExistente > 0 && statusAtualBD !== "devolvida") return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Você já enviou esta missão! Não é possível reenviar." })).setMimeType(ContentService.MimeType.JSON);
+
+        let ativXp = 0; let ativTipo = "Projeto"; let ativRespostaCorreta = ""; 
+        let moduloAtiv = ""; let turmaAlvoAtiv = ""; let dataLimObj = null;
+
+        for (let i = 1; i < dadosAtiv.length; i++) {
+            if (String(dadosAtiv[i][0]).trim() === idAtividade) {
+                ativXp = Number(dadosAtiv[i][4]) || 0;
+                turmaAlvoAtiv = String(dadosAtiv[i][5]).trim().toLowerCase();
+                ativTipo = String(dadosAtiv[i][6]).trim();
+                ativRespostaCorreta = String(dadosAtiv[i][11]).trim();
+                moduloAtiv = String(dadosAtiv[i][15]).trim().toLowerCase();
+                
+                let strDate = String(dadosAtiv[i][3]).trim();
+                if (strDate.includes("-")) {
+                    let p = strDate.split("T")[0].split("-");
+                    if (p.length === 3) dataLimObj = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+                } else if (strDate.includes("/")) {
+                    let p = strDate.split("/");
+                    if (p.length === 3) dataLimObj = new Date(Number(p[2]), Number(p[1])-1, Number(p[0]));
+                }
+                if (dataLimObj) dataLimObj.setHours(0,0,0,0);
+                break;
+            }
+        }
+
+        let xpFinalPermitido = ativXp;
+        for (let i = 1; i < dadosModulos.length; i++) {
+            let nomeModBD = String(dadosModulos[i][0]).trim().toLowerCase();
+            let statusModBD = String(dadosModulos[i][1]).trim().toLowerCase();
+            let turmaModBD = String(dadosModulos[i][2]).trim().toLowerCase();
+            
+            if (nomeModBD === moduloAtiv && (turmaModBD === turmaAlvoAtiv || turmaModBD === "todas")) {
+                if (statusModBD === "encerrado") xpFinalPermitido = 0;
+                break;
+            }
+        }
+
+        let atrasoDias = 0;
+        if (dataLimObj) {
+            let hoje = new Date(); hoje.setHours(0,0,0,0);
+            if (hoje > dataLimObj) atrasoDias = Math.ceil(Math.abs(hoje - dataLimObj) / (1000 * 60 * 60 * 24));
+        }
+
+        let statusFinal = "Aguardando Correção";
+        let xpGanhoFinal = 0;
+        let msgDesconto = "";
+        let isCorreto = (ativTipo === "Material") ? true : (resposta === ativRespostaCorreta);
+
+        if (ativTipo === "Quiz" || ativTipo === "Material") {
+            statusFinal = "Avaliado";
+            if (isCorreto) {
+                let desconto = 0;
+                if (atrasoDias > 0 && xpFinalPermitido > 0) {
+                    let teto = Math.floor(xpFinalPermitido / 2); 
+                    desconto = atrasoDias; 
+                    if (desconto > teto) desconto = teto;
+                    msgDesconto = ` (Desconto de -${desconto} XP pelo atraso)`;
+                }
+                xpGanhoFinal = xpFinalPermitido - desconto;
+                if (xpFinalPermitido === 0) msgDesconto = " (0 XP: O módulo desta atividade já foi encerrado!)";
+            }
+        }
+
+        let linhaTrilhaAluno = -1;
+        for (let t = 1; t < dadosTrilha.length; t++) {
+            if (String(dadosTrilha[t][0]).trim() === matricula) {
+                linhaTrilhaAluno = t + 1;
+                break;
+            }
+        }
+
+        // 3. TRANCA O SERVIDOR APENAS PARA ESCREVER (Chama as abas SÓ AQUI)
         const lock = LockService.getScriptLock();
         try {
-            // 🔒 Tranca o servidor (aumentado para 15s para suportar filas em dias de pico)
-            lock.waitLock(10000); 
-
-            const cache = CacheService.getScriptCache();
-            const matricula = String(dadosApp.matricula).trim();
-            const idAtividade = String(dadosApp.idAtividade).trim();
-            const resposta = String(dadosApp.resposta).trim();
-            const timestampAtual = new Date().getTime();
-
+            lock.waitLock(25000); 
+            
             const abaEntregas = planilha.getSheetByName("entregas");
             const abaTrilha = planilha.getSheetByName("trilhatech");
 
-            if (!abaEntregas) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aba entregas não encontrada." })).setMimeType(ContentService.MimeType.JSON);
+            if (!abaEntregas || !abaTrilha) throw new Error("Planilhas não acessíveis.");
 
-            // 1. Busca dados do Cache (Performance: evita leitura lenta da planilha dentro do lock)
-            let dadosAtiv = JSON.parse(cache.get("CACHE_atividades") || "[]");
-            let dadosModulos = JSON.parse(cache.get("CACHE_controle_modulos") || "[]");
-
-            // 2. Verificação Anti-Duplicidade
-            const dadosEntregas = abaEntregas.getDataRange().getValues();
-            let linhaExistente = -1;
-            let statusAtualBD = "";
-            let xpAnterior = 0;
-            let ehEntregaClassroom = false;
-
-            for (let i = 1; i < dadosEntregas.length; i++) {
-                if (String(dadosEntregas[i][1]).trim() === matricula && String(dadosEntregas[i][2]).trim() === idAtividade) {
-                    linhaExistente = i + 1;
-                    statusAtualBD = String(dadosEntregas[i][4]).trim().toLowerCase();
-                    xpAnterior = Number(dadosEntregas[i][5]) || 0;
-                    if (String(dadosEntregas[i][7]).toLowerCase().includes("classroom") || String(dadosEntregas[i][7]).toLowerCase().includes("ava")) ehEntregaClassroom = true;
-                    break;
-                }
-            }
-
-            if (ehEntregaClassroom) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Você não precisa entregar por aqui! O sistema já avaliou automaticamente pelo Classroom. 🤖" })).setMimeType(ContentService.MimeType.JSON);
-            if (linhaExistente > 0 && statusAtualBD !== "devolvida") return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Você já enviou esta missão! Não é possível reenviar." })).setMimeType(ContentService.MimeType.JSON);
-
-            // 3. Processamento de regras (Usa os dados do Cache)
-            let ativXp = 0; let ativTipo = "Projeto"; let ativRespostaCorreta = ""; 
-            let moduloAtiv = ""; let turmaAlvoAtiv = ""; let dataLimObj = null;
-
-            for (let i = 1; i < dadosAtiv.length; i++) {
-                if (String(dadosAtiv[i][0]).trim() === idAtividade) {
-                    ativXp = Number(dadosAtiv[i][4]) || 0;
-                    turmaAlvoAtiv = String(dadosAtiv[i][5]).trim().toLowerCase();
-                    ativTipo = String(dadosAtiv[i][6]).trim();
-                    ativRespostaCorreta = String(dadosAtiv[i][11]).trim();
-                    moduloAtiv = String(dadosAtiv[i][15]).trim().toLowerCase();
-                    // Lógica de Data (Mantida a sua original para consistência)
-                    let strDate = String(dadosAtiv[i][3]).trim();
-                    if (strDate.includes("-")) {
-                        let p = strDate.split("T")[0].split("-");
-                        if (p.length === 3) dataLimObj = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
-                    } else if (strDate.includes("/")) {
-                        let p = strDate.split("/");
-                        if (p.length === 3) dataLimObj = new Date(Number(p[2]), Number(p[1])-1, Number(p[0]));
-                    }
-                    if (dataLimObj) dataLimObj.setHours(0,0,0,0);
-                    break;
-                }
-            }
-
-            // Cálculo de Atraso e XP (Lógica de Correção)
-            let atrasoDias = 0;
-            if (dataLimObj) {
-                let hoje = new Date(); hoje.setHours(0,0,0,0);
-                if (hoje > dataLimObj) atrasoDias = Math.ceil(Math.abs(hoje - dataLimObj) / (1000 * 60 * 60 * 24));
-            }
-
-            let isCorreto = (ativTipo === "Material") ? true : (resposta === ativRespostaCorreta);
-            let xpGanhoFinal = 0;
-            let msgDesconto = "";
-
-            if (ativTipo === "Quiz" || ativTipo === "Material") {
-                if (isCorreto) {
-                    let teto = Math.floor(ativXp / 2);
-                    let desconto = (atrasoDias > teto) ? teto : atrasoDias;
-                    xpGanhoFinal = ativXp - desconto;
-                    if(atrasoDias > 0) msgDesconto = ` (Desconto de -${desconto} XP pelo atraso)`;
-                }
-            }
-
-            // 4. Escrita Otimizada (setValues para performance)
-            let statusFinal = (ativTipo === "Quiz" || ativTipo === "Material") ? "Avaliado" : "Aguardando Correção";
-            
             if (linhaExistente > 0) {
                 abaEntregas.getRange(linhaExistente, 4, 1, 4).setValues([[resposta, statusFinal, xpGanhoFinal, timestampAtual]]);
             } else {
                 abaEntregas.appendRow([idAtividade + "-" + matricula, matricula, idAtividade, resposta, statusFinal, xpGanhoFinal, timestampAtual, ""]);
             }
 
-            // 5. Atualiza XP na trilha
-            if (abaTrilha && xpGanhoFinal > 0) {
-                const dadosTrilha = abaTrilha.getDataRange().getValues();
-                for(let t = 1; t < dadosTrilha.length; t++) {
-                    if(String(dadosTrilha[t][0]).trim() === matricula) {
-                        let xpAtual = Number(dadosTrilha[t][4]) || 0;
-                        abaTrilha.getRange(t + 1, 5).setValue(xpAtual - xpAnterior + xpGanhoFinal);
-                        break;
-                    }
-                }
+            if (xpGanhoFinal > 0 && linhaTrilhaAluno > -1) {
+                let xpAtualReal = Number(abaTrilha.getRange(linhaTrilhaAluno, 5).getValue()) || 0;
+                abaTrilha.getRange(linhaTrilhaAluno, 5).setValue(xpAtualReal - xpAnterior + xpGanhoFinal);
             }
 
-            // 6. Invalidação de Cache (Crucial para o Tutor ver a entrega instantaneamente)
-            cache.remove("CACHE_entregas"); 
+            // LIMPA O CACHE DE FORMA EFICIENTE 
+            const cache = CacheService.getScriptCache();
+            let keys = ["CACHE_entregas", "CACHE_entregas_CHUNKS", "CACHE_trilhatech", "CACHE_trilhatech_CHUNKS"];
+            for (let i=0; i<10; i++) { keys.push("CACHE_entregas_"+i); keys.push("CACHE_trilhatech_"+i); }
+            cache.removeAll(keys);
 
-            let msgRetorno = (ativTipo === "Quiz" && xpGanhoFinal > 0) ? "Resposta correta! XP adicionado." + msgDesconto : "Missão enviada com sucesso!";
+            let msgRetorno = (ativTipo === "Quiz" && xpGanhoFinal > 0) ? "Resposta correta! XP adicionado." + msgDesconto : (ativTipo === "Quiz" && xpGanhoFinal === 0 && isCorreto) ? "Você acertou o Quiz, mas não ganhou XP." + msgDesconto : (ativTipo === "Quiz" && xpGanhoFinal === 0 && !isCorreto) ? "Resposta errada. Mas o Tutor pode rever depois!" : "Missão enviada com sucesso!";
+
             return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: msgRetorno })).setMimeType(ContentService.MimeType.JSON);
 
         } catch (e) {
-            return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado. Aguarde 2 segundos." })).setMimeType(ContentService.MimeType.JSON);
+            return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor estabilizando fila. Tente novamente." })).setMimeType(ContentService.MimeType.JSON);
         } finally {
             lock.releaseLock(); 
         }
@@ -748,19 +801,27 @@ function doPost(e) {
     // ==========================================
       if (action === "excluir_atividade") {
         const idAtiv = String(dadosApp.idAtividade).trim();
-        const abaAtividades = planilha.getSheetByName("atividades");
-        if (abaAtividades) {
-          const dados = abaAtividades.getDataRange().getValues();
-          // Começa do fim para não quebrar a ordem ao deletar
-          for (let i = dados.length - 1; i >= 1; i--) {
-            if (String(dados[i][0]).trim() === idAtiv) {
-              abaAtividades.deleteRow(i + 1);
-              return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Missão excluída!" })).setMimeType(ContentService.MimeType.JSON);
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(15000);
+          const abaAtividades = planilha.getSheetByName("atividades");
+          if (abaAtividades) {
+            const dados = abaAtividades.getDataRange().getValues();
+            // Começa do fim para não quebrar a ordem ao deletar
+            for (let i = dados.length - 1; i >= 1; i--) {
+              if (String(dados[i][0]).trim() === idAtiv) {
+                abaAtividades.deleteRow(i + 1);
+                invalidarCacheGeral();
+                return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Missão excluída!" })).setMimeType(ContentService.MimeType.JSON);
+              }
             }
           }
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Atividade não encontrada." })).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao excluir atividade. Tente novamente." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
         }
-        invalidarCacheGeral();
-        return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Atividade não encontrada." })).setMimeType(ContentService.MimeType.JSON);
       }
     // ==========================================
     // ROTA 11: BUSCAR ENTREGAS DA ATIVIDADE E AVALIAR (Professor)
@@ -809,98 +870,115 @@ function doPost(e) {
         // Se for devolvida, o XP tem que ser 0 obrigatoriamente
         if (novoStatus === "Devolvida") xpGanhoTutor = 0;
 
-        const abaEntregas = planilha.getSheetByName("entregas");
-        const abaAtividades = planilha.getSheetByName("atividades");
-        let xpAnterior = 0;
-        let linhaEntrega = -1;
-        let idAtiv = "";
-        let dataEnvioTime = 0;
-
-        if (abaEntregas) {
-          const dadosEntregas = abaEntregas.getDataRange().getValues();
-          for (let i = 1; i < dadosEntregas.length; i++) {
-            if (String(dadosEntregas[i][0]).trim() === idEntrega) {
-              linhaEntrega = i + 1;
-              idAtiv = String(dadosEntregas[i][2]).trim();
-              xpAnterior = Number(dadosEntregas[i][5]) || 0;
-              dataEnvioTime = Number(dadosEntregas[i][6]) || new Date().getTime();
-              break;
-            }
-          }
-        }
-
-        let atrasoDias = 0;
-        if (abaAtividades && idAtiv) {
-            const dadosAtiv = abaAtividades.getDataRange().getValues();
-            for (let i = 1; i < dadosAtiv.length; i++) {
-                if (String(dadosAtiv[i][0]).trim() === idAtiv) {
-                    let dataLimObj = null;
-                    let rawDate = dadosAtiv[i][3];
-                    if (rawDate instanceof Date) {
-                        dataLimObj = new Date(rawDate.getFullYear(), rawDate.getMonth(), rawDate.getDate());
-                    } else if (typeof rawDate === "string") {
-                        let strDate = rawDate.trim();
-                        if (strDate.includes("-")) {
-                            let p = strDate.split("-");
-                            if (p.length === 3) dataLimObj = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
-                        } else if (strDate.includes("/")) {
-                            let p = strDate.split("/");
-                            if (p.length === 3) dataLimObj = new Date(Number(p[2]), Number(p[1])-1, Number(p[0]));
-                        }
-                    }
-                    if (dataLimObj) {
-                        dataLimObj.setHours(0,0,0,0);
-                        let dataEnvio = new Date(dataEnvioTime);
-                        dataEnvio.setHours(0,0,0,0);
-                        if (dataEnvio > dataLimObj) {
-                            let diffTime = Math.abs(dataEnvio - dataLimObj);
-                            atrasoDias = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-                        }
-                    }
-                    break;
-                }
-            }
-        }
-
-        let xpGanhoFinal = xpGanhoTutor;
-        let msgDesconto = "";
-        if (atrasoDias > 0 && xpGanhoTutor > 0) {
-            let teto = Math.floor(xpGanhoTutor / 2);
-            let desconto = atrasoDias; 
-            if (desconto > teto) desconto = teto;
-            xpGanhoFinal = xpGanhoTutor - desconto;
-            if (desconto > 0) msgDesconto = ` (Desconto automático de -${desconto} XP pelo atraso)`;
-        }
-
-        if (linhaEntrega > -1) {
-          abaEntregas.getRange(linhaEntrega, 5).setValue(novoStatus);
-          abaEntregas.getRange(linhaEntrega, 6).setValue(xpGanhoFinal);
-          abaEntregas.getRange(linhaEntrega, 8).setValue(feedbackTutor); // SALVA O FEEDBACK
-
-          // GERA A NOTIFICAÇÃO NO SININHO DO ALUNO
-          let timestampAtual = new Date().getTime();
-          let msgNotif = novoStatus === "Devolvida" 
-            ? `⚠️ Sua missão foi devolvida! Verifique o feedback do tutor.` 
-            : `⭐ Sua missão foi aprovada!`;
-          let tipoNotif = novoStatus === "Devolvida" ? "DEVOLVIDA" : "AVALIADA";
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(20000);
           
-          abaEntregas.appendRow([`NOTIF-${timestampAtual}`, matricula, "SISTEMA", msgNotif, tipoNotif, xpGanhoFinal, timestampAtual]);
-        }
+          const abaEntregas = planilha.getSheetByName("entregas");
+          const abaAtividades = planilha.getSheetByName("atividades");
+          let xpAnterior = 0;
+          let linhaEntrega = -1;
+          let idAtiv = "";
+          let dataEnvioTime = 0;
 
-        const abaTrilha = planilha.getSheetByName("trilhatech");
-        if (abaTrilha) {
-          const dadosTrilha = abaTrilha.getDataRange().getValues();
-          for (let i = 1; i < dadosTrilha.length; i++) {
-            if (String(dadosTrilha[i][0]).trim() === matricula) {
-              let xpTotalAtual = Number(dadosTrilha[i][4]) || 0;
-              // Se foi devolvida, xpGanhoFinal é 0. Vai subtrair o xpAnterior que ele tinha ganho (se for uma re-avaliação)
-              let novoXpTotal = xpTotalAtual - xpAnterior + xpGanhoFinal;
-              abaTrilha.getRange(i + 1, 5).setValue(novoXpTotal);
-              break;
+          if (abaEntregas) {
+            const dadosEntregas = abaEntregas.getDataRange().getValues();
+            for (let i = 1; i < dadosEntregas.length; i++) {
+              if (String(dadosEntregas[i][0]).trim() === idEntrega) {
+                linhaEntrega = i + 1;
+                idAtiv = String(dadosEntregas[i][2]).trim();
+                xpAnterior = Number(dadosEntregas[i][5]) || 0;
+                dataEnvioTime = Number(dadosEntregas[i][6]) || new Date().getTime();
+                break;
+              }
             }
           }
+
+          let atrasoDias = 0;
+          if (abaAtividades && idAtiv) {
+              const dadosAtiv = abaAtividades.getDataRange().getValues();
+              for (let i = 1; i < dadosAtiv.length; i++) {
+                  if (String(dadosAtiv[i][0]).trim() === idAtiv) {
+                      let dataLimObj = null;
+                      let rawDate = dadosAtiv[i][3];
+                      if (rawDate instanceof Date) {
+                          dataLimObj = new Date(rawDate.getFullYear(), rawDate.getMonth(), rawDate.getDate());
+                      } else if (typeof rawDate === "string") {
+                          let strDate = rawDate.trim();
+                          if (strDate.includes("-")) {
+                              let p = strDate.split("-");
+                              if (p.length === 3) dataLimObj = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+                          } else if (strDate.includes("/")) {
+                              let p = strDate.split("/");
+                              if (p.length === 3) dataLimObj = new Date(Number(p[2]), Number(p[1])-1, Number(p[0]));
+                          }
+                      }
+                      if (dataLimObj) {
+                          dataLimObj.setHours(0,0,0,0);
+                          let dataEnvio = new Date(dataEnvioTime);
+                          dataEnvio.setHours(0,0,0,0);
+                          if (dataEnvio > dataLimObj) {
+                              let diffTime = Math.abs(dataEnvio - dataLimObj);
+                              atrasoDias = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                          }
+                      }
+                      break;
+                  }
+              }
+          }
+
+          let xpGanhoFinal = xpGanhoTutor;
+          let msgDesconto = "";
+          if (atrasoDias > 0 && xpGanhoTutor > 0) {
+              let teto = Math.floor(xpGanhoTutor / 2);
+              let desconto = atrasoDias; 
+              if (desconto > teto) desconto = teto;
+              xpGanhoFinal = xpGanhoTutor - desconto;
+              if (desconto > 0) msgDesconto = ` (Desconto automático de -${desconto} XP pelo atraso)`;
+          }
+
+          if (linhaEntrega > -1) {
+            abaEntregas.getRange(linhaEntrega, 5, 1, 2).setValues([[novoStatus, xpGanhoFinal]]);
+            abaEntregas.getRange(linhaEntrega, 8).setValue(feedbackTutor); // SALVA O FEEDBACK
+
+            // GERA A NOTIFICAÇÃO NO SININHO DO ALUNO
+            let timestampAtual = new Date().getTime();
+            let msgNotif = novoStatus === "Devolvida" 
+              ? `⚠️ Sua missão foi devolvida! Verifique o feedback do tutor.` 
+              : `⭐ Sua missão foi aprovada!`;
+            let tipoNotif = novoStatus === "Devolvida" ? "DEVOLVIDA" : "AVALIADA";
+            
+            abaEntregas.appendRow([`NOTIF-${timestampAtual}`, matricula, "SISTEMA", msgNotif, tipoNotif, xpGanhoFinal, timestampAtual]);
+          }
+
+          const abaTrilha = planilha.getSheetByName("trilhatech");
+          if (abaTrilha) {
+            const dadosTrilha = abaTrilha.getDataRange().getValues();
+            for (let i = 1; i < dadosTrilha.length; i++) {
+              if (String(dadosTrilha[i][0]).trim() === matricula) {
+                let xpTotalAtual = Number(dadosTrilha[i][4]) || 0;
+                let novoXpTotal = xpTotalAtual - xpAnterior + xpGanhoFinal;
+                abaTrilha.getRange(i + 1, 5).setValue(novoXpTotal);
+                break;
+              }
+            }
+          }
+          
+          // Invalida cache de entregas e trilhatech
+          const cache = CacheService.getScriptCache();
+          let keys = ["CACHE_entregas", "CACHE_entregas_CHUNKS", "CACHE_trilhatech", "CACHE_trilhatech_CHUNKS"];
+          for (let i = 0; i < 15; i++) {
+            keys.push("CACHE_entregas_" + i);
+            keys.push("CACHE_trilhatech_" + i);
+          }
+          cache.removeAll(keys);
+
+          return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: (novoStatus === "Devolvida" ? "Missão devolvida para refazer!" : "Avaliação salva!") + msgDesconto })).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao avaliar entrega. Tente novamente." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
         }
-        return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: (novoStatus === "Devolvida" ? "Missão devolvida para refazer!" : "Avaliação salva!") + msgDesconto })).setMimeType(ContentService.MimeType.JSON);
       }
 
     // ==========================================
@@ -951,40 +1029,53 @@ function doPost(e) {
         const telefoneResponsavel = String(dadosApp.telefoneResponsavel || "").trim();
         const turma = String(dadosApp.turma).trim();
 
-        const bd = planilha.getSheetByName("basededados");
-        let atualizado = false;
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(15000);
+          
+          const bd = planilha.getSheetByName("basededados");
+          let atualizado = false;
 
-        // 1. Atualiza na aba Geral (basededados)
-        if (bd) {
-          const dadosBD = bd.getDataRange().getValues();
-          for (let i = 1; i < dadosBD.length; i++) {
-            if (String(dadosBD[i][2]).trim() === matricula) {
-              bd.getRange(i + 1, 6).setValue(telefoneAluno); // Coluna F
-              bd.getRange(i + 1, 7).setValue(telefoneResponsavel); // Coluna G
-              atualizado = true;
-              break;
+          // 1. Atualiza na aba Geral (basededados)
+          if (bd) {
+            const dadosBD = bd.getDataRange().getValues();
+            for (let i = 1; i < dadosBD.length; i++) {
+              if (String(dadosBD[i][2]).trim() === matricula) {
+                bd.getRange(i + 1, 6, 1, 2).setValues([[telefoneAluno, telefoneResponsavel]]);
+                atualizado = true;
+                break;
+              }
             }
           }
-        }
 
-        // 2. Atualiza na aba Específica da Turma (Ex: "1º ANO A")
-        const nomeAbaTurma = turma.replace(" ANO ", " "); 
-        const abaTurma = planilha.getSheetByName(nomeAbaTurma);
-        if (abaTurma) {
-          const dadosTurma = abaTurma.getDataRange().getValues();
-          for (let i = 1; i < dadosTurma.length; i++) {
-            if (String(dadosTurma[i][3]).trim() === matricula) { // Matrícula é Coluna D
-              abaTurma.getRange(i + 1, 7).setValue(telefoneAluno); // Coluna G
-              abaTurma.getRange(i + 1, 8).setValue(telefoneResponsavel); // Coluna H
-              break;
+          // 2. Atualiza na aba Específica da Turma (Ex: "1º ANO A")
+          const nomeAbaTurma = turma.replace(" ANO ", " "); 
+          const abaTurma = planilha.getSheetByName(nomeAbaTurma);
+          if (abaTurma) {
+            const dadosTurma = abaTurma.getDataRange().getValues();
+            for (let i = 1; i < dadosTurma.length; i++) {
+              if (String(dadosTurma[i][3]).trim() === matricula) { // Matrícula é Coluna D
+                abaTurma.getRange(i + 1, 7, 1, 2).setValues([[telefoneAluno, telefoneResponsavel]]);
+                break;
+              }
             }
           }
-        }
 
-        if (atualizado) {
-          return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Contatos atualizados com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
-        } else {
-          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Erro ao tentar salvar contatos." })).setMimeType(ContentService.MimeType.JSON);
+          if (atualizado) {
+            // Invalida cache de basededados
+            const cache = CacheService.getScriptCache();
+            let keys = ["CACHE_basededados", "CACHE_basededados_CHUNKS"];
+            for (let i = 0; i < 15; i++) keys.push("CACHE_basededados_" + i);
+            cache.removeAll(keys);
+            
+            return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Contatos updated com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
+          } else {
+            return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Erro ao tentar salvar contatos." })).setMimeType(ContentService.MimeType.JSON);
+          }
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao atualizar contatos. Tente novamente." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
         }
       }
 
@@ -992,37 +1083,24 @@ function doPost(e) {
     // ROTA 14: FAZER CHECK-IN DE PRESENÇA (BLINDADO)
     // ==========================================
       if (action === "fazer_checkin") {
-        const lock = LockService.getScriptLock();
-        try {
-          // 🔒 Tranca o servidor por até 10 segundos para processar 1 aluno de cada vez
-          lock.waitLock(10000); 
-
           const matricula = String(dadosApp.matricula).trim();
           const senhaInformada = String(dadosApp.senha).trim();
-
-          const planilha = SpreadsheetApp.getActiveSpreadsheet();
-          const abaConfig = planilha.getSheetByName("configuracoes");
-          const abaTrilha = planilha.getSheetByName("trilhatech");
-          const abaFrequencia = planilha.getSheetByName("frequencia");
-          const planBase = planilha.getSheetByName("basededados");
-
-          if (!abaTrilha || !abaFrequencia || !planBase) {
-            return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Erro interno: Abas não encontradas." })).setMimeType(ContentService.MimeType.JSON);
-          }
-
           const timezone = Session.getScriptTimeZone();
           const agora = new Date();
           const dataHoje = Utilities.formatDate(agora, timezone, "dd/MM/yyyy");
           const horaAtual = Utilities.formatDate(agora, timezone, "HH:mm:ss");
           const diaSemana = Number(Utilities.formatDate(agora, timezone, "u"));
 
+          // 1. LEITURA RÁPIDA FORA DO LOCK
+          const dadosConf = lerComCacheSeguro("configuracoes", 1800);
+          const dadosTrilha = lerComCacheSeguro("trilhatech", 60);
+          const dadosFreq = lerComCacheSeguro("frequencia", 60);
+          const dadosBase = lerComCacheSeguro("basededados", 1800);
+
           let senhaCorreta = ""; let modoReposicao = "DESLIGADO";
-          if (abaConfig) {
-            const dadosConf = abaConfig.getDataRange().getValues();
-            for (let i = 1; i < dadosConf.length; i++) {
-              if (String(dadosConf[i][0]).trim() === "SENHA_CHECKIN") senhaCorreta = String(dadosConf[i][1]).trim();
-              if (String(dadosConf[i][0]).trim() === "MODO_REPOSICAO") modoReposicao = String(dadosConf[i][1]).trim().toUpperCase();
-            }
+          for (let i = 1; i < dadosConf.length; i++) {
+            if (String(dadosConf[i][0]).trim() === "SENHA_CHECKIN") senhaCorreta = String(dadosConf[i][1]).trim();
+            if (String(dadosConf[i][0]).trim() === "MODO_REPOSICAO") modoReposicao = String(dadosConf[i][1]).trim().toUpperCase();
           }
 
           if (!senhaCorreta || senhaInformada.toUpperCase() !== senhaCorreta.toUpperCase()) {
@@ -1030,7 +1108,6 @@ function doPost(e) {
           }
 
           let turmaDoAluno = ""; let linhaTrilhaAluno = -1; let xpAtual = 0;
-          const dadosTrilha = abaTrilha.getDataRange().getValues();
           for (let i = 1; i < dadosTrilha.length; i++) {
             if (String(dadosTrilha[i][0]).trim() === matricula) {
               turmaDoAluno = String(dadosTrilha[i][1]).trim();
@@ -1040,17 +1117,16 @@ function doPost(e) {
             }
           }
 
-          if (linhaTrilhaAluno === -1) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aluno não encontrado no Projeto." })).setMimeType(ContentService.MimeType.JSON);
+          if (linhaTrilhaAluno === -1) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aluno não encontrado." })).setMimeType(ContentService.MimeType.JSON);
 
           if (modoReposicao !== "LIGADO") {
             if ((turmaDoAluno.includes("1º") || turmaDoAluno.includes("1 ANO")) && diaSemana !== 1 && diaSemana !== 3) {
-                return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Calma aí! Hoje não é dia de aula para o 1º Ano (apenas Seg/Qua)." })).setMimeType(ContentService.MimeType.JSON);
+                return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Hoje não é dia de aula para o 1º Ano." })).setMimeType(ContentService.MimeType.JSON);
             } else if ((turmaDoAluno.includes("2º") || turmaDoAluno.includes("2 ANO")) && diaSemana !== 2 && diaSemana !== 4) {
-                return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Calma aí! Hoje não é dia de aula para o 2º Ano (apenas Ter/Qui)." })).setMimeType(ContentService.MimeType.JSON);
+                return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Hoje não é dia de aula para o 2º Ano." })).setMimeType(ContentService.MimeType.JSON);
             }
           }
 
-          // CALCULADOR DE OFENSIVA (FOGUINHO 🔥) E VALIDAÇÃO DUPLA
           let alunosDaMesmaTurma = new Set();
           for (let i = 1; i < dadosTrilha.length; i++) {
               if (String(dadosTrilha[i][1]).trim() === turmaDoAluno && String(dadosTrilha[i][2]).trim().toLowerCase() === "ativo") {
@@ -1060,16 +1136,13 @@ function doPost(e) {
 
           let diasComAulaSet = new Set();
           let presencasAluno = 0;
-          const dadosFreq = abaFrequencia.getDataRange().getValues();
           for (let i = 1; i < dadosFreq.length; i++) {
             let matFreq = String(dadosFreq[i][1]).trim();
             let dataBruta = dadosFreq[i][3];
             let hora = String(dadosFreq[i][4]).trim();
             let idCheckinFreq = String(dadosFreq[i][0]).trim();
-
             let dataFormatada = dataBruta instanceof Date ? Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy") : String(dataBruta).trim();
 
-            // 🛡️ A TRAVA FUNCIONANDO DENTRO DO LOCK:
             if (matFreq === matricula && dataFormatada === dataHoje) {
               return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Você já garantiu o seu XP de presença hoje!" })).setMimeType(ContentService.MimeType.JSON);
             }
@@ -1081,28 +1154,45 @@ function doPost(e) {
           let totalAulas = diasComAulaSet.size;
           let taxa = totalAulas === 0 ? 100 : Math.round((presencasAluno / totalAulas) * 100);
 
-          let xpGanho = 10;
-          let msgFogo = "";
+          let xpGanho = 10; let msgFogo = "";
           if (taxa >= 90) { xpGanho = 15; msgFogo = " 🔥 Ofensiva Alta!"; }
           else if (taxa >= 75) { xpGanho = 12; msgFogo = " ⚡ Ofensiva Média!"; }
 
           let nomeAluno = "Aluno";
-          const dadosBase = planBase.getDataRange().getValues();
           for (let i = 1; i < dadosBase.length; i++) {
             if (String(dadosBase[i][2]).trim() === matricula) { nomeAluno = String(dadosBase[i][0]); break; }
           }
 
-          const idCheckin = "CHK-" + agora.getTime();
-          abaFrequencia.appendRow([idCheckin, matricula, nomeAluno, dataHoje, horaAtual, xpGanho]);
-          abaTrilha.getRange(linhaTrilhaAluno, 5).setValue(xpAtual + xpGanho);
+          // 2. LOCK CIRÚRGICO APENAS PARA ESCREVER
+          const lock = LockService.getScriptLock();
+          try {
+            lock.waitLock(15000); 
+            const planilha = SpreadsheetApp.getActiveSpreadsheet(); // Abre só aqui
+            const abaTrilha = planilha.getSheetByName("trilhatech");
+            const abaFrequencia = planilha.getSheetByName("frequencia");
 
-          return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: `Check-in realizado! +${xpGanho} XP garantidos.${msgFogo}` })).setMimeType(ContentService.MimeType.JSON);
+            const idCheckin = "CHK-" + agora.getTime();
+            abaFrequencia.appendRow([idCheckin, matricula, nomeAluno, dataHoje, horaAtual, xpGanho]);
+            
+            let xpAtualReal = Number(abaTrilha.getRange(linhaTrilhaAluno, 5).getValue()) || 0;
+            abaTrilha.getRange(linhaTrilhaAluno, 5).setValue(xpAtualReal + xpGanho);
 
-        } catch (e) {
-          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Sistema processando muitos check-ins. Tente novamente em 2 segundos." })).setMimeType(ContentService.MimeType.JSON);
-        } finally {
-          lock.releaseLock(); // 🔓 Libera a porta
-        }
+            // Invalida cache de frequencia e trilhatech
+            const cache = CacheService.getScriptCache();
+            let keys = ["CACHE_frequencia", "CACHE_frequencia_CHUNKS", "CACHE_trilhatech", "CACHE_trilhatech_CHUNKS"];
+            for (let i = 0; i < 15; i++) {
+              keys.push("CACHE_frequencia_" + i);
+              keys.push("CACHE_trilhatech_" + i);
+            }
+            cache.removeAll(keys);
+
+            return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: `Check-in realizado! +${xpGanho} XP garantidos.${msgFogo}` })).setMimeType(ContentService.MimeType.JSON);
+
+          } catch (e) {
+            return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Sistema processando muitos check-ins. Tente novamente." })).setMimeType(ContentService.MimeType.JSON);
+          } finally {
+            lock.releaseLock(); 
+          }
       }
 
     // ==========================================
@@ -1267,16 +1357,13 @@ function doPost(e) {
     // ROTA 17: GERENCIAR SENHA DA LOUSA (TUTOR)
     // ==========================================
       if (action === "buscar_senha_checkin") {
-        const abaConfig = planilha.getSheetByName("configuracoes");
+        const dados = lerComCacheSeguro("configuracoes", 1800);
         let senha = "";
         
-        if (abaConfig) {
-          const dados = abaConfig.getDataRange().getValues();
-          for (let i = 1; i < dados.length; i++) {
-            if (String(dados[i][0]).trim() === "SENHA_CHECKIN") {
-              senha = String(dados[i][1]).trim();
-              break;
-            }
+        for (let i = 1; i < dados.length; i++) {
+          if (String(dados[i][0]).trim() === "SENHA_CHECKIN") {
+            senha = String(dados[i][1]).trim();
+            break;
           }
         }
         
@@ -1287,26 +1374,40 @@ function doPost(e) {
 
       if (action === "atualizar_senha_checkin") {
         const novaSenha = String(dadosApp.novaSenha).trim();
-        const abaConfig = planilha.getSheetByName("configuracoes");
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(15000);
+          const abaConfig = planilha.getSheetByName("configuracoes");
 
-        if (abaConfig) {
-          const dados = abaConfig.getDataRange().getValues();
-          let achou = false;
-          
-          for (let i = 1; i < dados.length; i++) {
-            if (String(dados[i][0]).trim() === "SENHA_CHECKIN") {
-              abaConfig.getRange(i + 1, 2).setValue(novaSenha); 
-              achou = true;
-              break;
+          if (abaConfig) {
+            const dados = abaConfig.getDataRange().getValues();
+            let achou = false;
+            
+            for (let i = 1; i < dados.length; i++) {
+              if (String(dados[i][0]).trim() === "SENHA_CHECKIN") {
+                abaConfig.getRange(i + 1, 2).setValue(novaSenha); 
+                achou = true;
+                break;
+              }
             }
+            
+            if (!achou) abaConfig.appendRow(["SENHA_CHECKIN", novaSenha]);
+            
+            // Invalida cache de configuracoes
+            const cache = CacheService.getScriptCache();
+            let keys = ["CACHE_configuracoes", "CACHE_configuracoes_CHUNKS"];
+            for (let i = 0; i < 15; i++) keys.push("CACHE_configuracoes_" + i);
+            cache.removeAll(keys);
           }
           
-          if (!achou) abaConfig.appendRow(["SENHA_CHECKIN", novaSenha]);
+          return ContentService.createTextOutput(JSON.stringify({ 
+            status: "sucesso", mensagem: "Senha atualizada com sucesso!" 
+          })).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao atualizar senha. Tente novamente." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
         }
-        
-        return ContentService.createTextOutput(JSON.stringify({ 
-          status: "sucesso", mensagem: "Senha atualizada com sucesso!" 
-        })).setMimeType(ContentService.MimeType.JSON);
       }
 
     // ==========================================
@@ -1314,53 +1415,90 @@ function doPost(e) {
     // ==========================================
       if (action === "sincronizar_siepe") {
         const alunosNovos = dadosApp.alunos || [];
-        const planBase = planilha.getSheetByName("basededados");
-        const abaTrilha = planilha.getSheetByName("trilhatech");
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(30000);
+          
+          const planBase = planilha.getSheetByName("basededados");
+          const abaTrilha = planilha.getSheetByName("trilhatech");
 
-        if (!planBase || !abaTrilha) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Abas não encontradas." })).setMimeType(ContentService.MimeType.JSON);
+          if (!planBase || !abaTrilha) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Abas não encontradas." })).setMimeType(ContentService.MimeType.JSON);
 
-        let dadosBase = planBase.getDataRange().getValues();
-        let mapBase = {}; 
-        for(let i = 1; i < dadosBase.length; i++) { mapBase[String(dadosBase[i][2]).trim()] = i + 1; }
+          let dadosBase = planBase.getDataRange().getValues();
+          let mapBase = {}; 
+          for(let i = 1; i < dadosBase.length; i++) { mapBase[String(dadosBase[i][2]).trim()] = i + 1; }
 
-        let dadosTrilha = abaTrilha.getDataRange().getValues();
-        let mapTrilha = {};
-        for(let i = 1; i < dadosTrilha.length; i++) { mapTrilha[String(dadosTrilha[i][0]).trim()] = i + 1; }
+          let dadosTrilha = abaTrilha.getDataRange().getValues();
+          let mapTrilha = {};
+          for(let i = 1; i < dadosTrilha.length; i++) { mapTrilha[String(dadosTrilha[i][0]).trim()] = i + 1; }
 
-        let inseridos = 0;
-        let atualizados = 0;
+          let inseridos = 0;
+          let atualizados = 0;
 
-        alunosNovos.forEach(aluno => {
-            let matricula = String(aluno.matricula).trim();
-            let nome = String(aluno.nome).trim();
-            let dataNasc = String(aluno.dataNasc).trim();
-            let turmaEscola = String(aluno.turmaEscola).trim();
-            let emailInstitucional = matricula + "@aluno.educacao.pe.gov.br";
+          // Processamento em memória para base geral (basededados)
+          let numColsBase = planBase.getLastColumn() || 8;
+          let rowsBase = dadosBase.map(r => {
+            while (r.length < numColsBase) r.push("");
+            return r;
+          });
 
-            // 1. ATUALIZA OU INSERE NA BASE GERAL (basededados)
-            if (mapBase[matricula]) {
-              let linha = mapBase[matricula];
-              planBase.getRange(linha, 1).setValue(nome); 
-              planBase.getRange(linha, 2).setValue(dataNasc);
-              planBase.getRange(linha, 5).setValue(turmaEscola);
-              atualizados++;
-            } else {
-              planBase.appendRow([nome, dataNasc, matricula, emailInstitucional, turmaEscola, "", ""]);
-              inseridos++;
-            }
+          // Processamento em memória para trilhatech
+          let numColsTrilha = abaTrilha.getLastColumn() || 12;
+          let rowsTrilha = dadosTrilha.map(r => {
+            while (r.length < numColsTrilha) r.push("");
+            return r;
+          });
 
-            // 2. ATUALIZA NA TRILHA APENAS SE JÁ EXISTIR LÁ
-            if (mapTrilha[matricula]) {
-              let linhaTrilha = mapTrilha[matricula];
-              let turmaProjeto = turmaEscola.includes("1º") ? "Turma 1 - 1º Ano" : "Turma 2 - 2º Ano";
-              abaTrilha.getRange(linhaTrilha, 2).setValue(turmaProjeto);
-            }
-            // Se não existe na trilha, não fazemos nada. O aluno fica apenas na base geral.
-        });
+          alunosNovos.forEach(aluno => {
+              let matricula = String(aluno.matricula).trim();
+              let nome = String(aluno.nome).trim();
+              let dataNasc = String(aluno.dataNasc).trim();
+              let turmaEscola = String(aluno.turmaEscola).trim();
+              let emailInstitucional = matricula + "@aluno.educacao.pe.gov.br";
 
-        return ContentService.createTextOutput(JSON.stringify({ 
-          status: "sucesso", inseridos: inseridos, atualizados: atualizados 
-        })).setMimeType(ContentService.MimeType.JSON);
+              // 1. ATUALIZA OU INSERE NA BASE GERAL (basededados)
+              if (mapBase[matricula]) {
+                let rowIndex = mapBase[matricula] - 1;
+                rowsBase[rowIndex][0] = nome; 
+                rowsBase[rowIndex][1] = dataNasc;
+                rowsBase[rowIndex][4] = turmaEscola;
+                atualizados++;
+              } else {
+                let newRow = [nome, dataNasc, matricula, emailInstitucional, turmaEscola, "", "", ""];
+                while (newRow.length < numColsBase) newRow.push("");
+                rowsBase.push(newRow);
+                inseridos++;
+              }
+
+              // 2. ATUALIZA NA TRILHA APENAS SE JÁ EXISTIR LÁ
+              if (mapTrilha[matricula]) {
+                let rowIndexTrilha = mapTrilha[matricula] - 1;
+                let turmaProjeto = turmaEscola.includes("1º") ? "Turma 1 - 1º Ano" : "Turma 2 - 2º Ano";
+                rowsTrilha[rowIndexTrilha][1] = turmaProjeto;
+              }
+          });
+
+          // Escreve de volta em lote
+          planBase.getRange(1, 1, rowsBase.length, numColsBase).setValues(rowsBase);
+          abaTrilha.getRange(1, 1, rowsTrilha.length, numColsTrilha).setValues(rowsTrilha);
+
+          // Invalida caches
+          const cache = CacheService.getScriptCache();
+          let keys = ["CACHE_basededados", "CACHE_basededados_CHUNKS", "CACHE_trilhatech", "CACHE_trilhatech_CHUNKS"];
+          for (let i = 0; i < 15; i++) {
+            keys.push("CACHE_basededados_" + i);
+            keys.push("CACHE_trilhatech_" + i);
+          }
+          cache.removeAll(keys);
+
+          return ContentService.createTextOutput(JSON.stringify({ 
+            status: "sucesso", inseridos: inseridos, atualizados: atualizados 
+          })).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Erro na sincronização: " + e.message })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
+        }
       }
 
     // ==========================================
@@ -1489,47 +1627,61 @@ function doPost(e) {
           const justificativa = String(dadosApp.justificativa).trim();
           const idFalta = dadosApp.idFalta ? String(dadosApp.idFalta).trim() : null;
 
-          const abaFrequencia = planilha.getSheetByName("frequencia");
-          const planBase = planilha.getSheetByName("basededados");
+          const lock = LockService.getScriptLock();
+          try {
+            lock.waitLock(15000);
+            
+            const abaFrequencia = planilha.getSheetByName("frequencia");
+            const planBase = planilha.getSheetByName("basededados");
 
-          if (!abaFrequencia) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aba frequencia não encontrada." })).setMimeType(ContentService.MimeType.JSON);
+            if (!abaFrequencia) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aba frequencia não encontrada." })).setMimeType(ContentService.MimeType.JSON);
 
-          // Converte Data de YYYY-MM-DD para DD/MM/YYYY
-          let partesData = dataIso.split('-');
-          if (partesData.length !== 3) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Data inválida." })).setMimeType(ContentService.MimeType.JSON);
-          let dataBR = `${partesData[2]}/${partesData[1]}/${partesData[0]}`;
+            // Converte Data de YYYY-MM-DD para DD/MM/YYYY
+            let partesData = dataIso.split('-');
+            if (partesData.length !== 3) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Data inválida." })).setMimeType(ContentService.MimeType.JSON);
+            let dataBR = `${partesData[2]}/${partesData[1]}/${partesData[0]}`;
 
-          let nomeAluno = "Aluno";
-          if (planBase) {
-            const dadosBase = planBase.getDataRange().getValues();
-            for (let i = 1; i < dadosBase.length; i++) {
-              if (String(dadosBase[i][2]).trim() === matricula) { nomeAluno = String(dadosBase[i][0]); break; }
-            }
-          }
-
-          if (idFalta) {
-            // Se já existe um ID (ele está a editar uma justificativa antiga)
-            const dadosFreq = abaFrequencia.getDataRange().getValues();
-            let linhaAtualizar = -1;
-            for (let i = 1; i < dadosFreq.length; i++) {
-              if (String(dadosFreq[i][0]).trim() === idFalta) { linhaAtualizar = i + 1; break; }
+            let nomeAluno = "Aluno";
+            if (planBase) {
+              const dadosBase = planBase.getDataRange().getValues();
+              for (let i = 1; i < dadosBase.length; i++) {
+                if (String(dadosBase[i][2]).trim() === matricula) { nomeAluno = String(dadosBase[i][0]); break; }
+              }
             }
 
-            if (linhaAtualizar > -1) {
-              abaFrequencia.getRange(linhaAtualizar, 7).setValue(justificativa); // Coluna G
-              abaFrequencia.getRange(linhaAtualizar, 6).setValue(0); // XP = 0
+            if (idFalta) {
+              // Se já existe um ID (ele está a editar uma justificativa antiga)
+              const dadosFreq = abaFrequencia.getDataRange().getValues();
+              let linhaAtualizar = -1;
+              for (let i = 1; i < dadosFreq.length; i++) {
+                if (String(dadosFreq[i][0]).trim() === idFalta) { linhaAtualizar = i + 1; break; }
+              }
+
+              if (linhaAtualizar > -1) {
+                abaFrequencia.getRange(linhaAtualizar, 6, 1, 2).setValues([[0, justificativa]]); // Coluna F e G
+              } else {
+                return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Registro não encontrado para edição." })).setMimeType(ContentService.MimeType.JSON);
+              }
+
             } else {
-              return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Registro não encontrado para edição." })).setMimeType(ContentService.MimeType.JSON);
+              // Se ele não tinha justificado antes (Nova Justificativa)
+              const novoId = "FALTA-" + new Date().getTime();
+              // Colunas: [id, mat, nome, data, hora, xp, justificativa]
+              abaFrequencia.appendRow([novoId, matricula, nomeAluno, dataBR, "00:00:00", 0, justificativa]);
             }
 
-          } else {
-            // Se ele não tinha justificado antes (Nova Justificativa)
-            const novoId = "FALTA-" + new Date().getTime();
-            // Colunas: [id, mat, nome, data, hora, xp, justificativa]
-            abaFrequencia.appendRow([novoId, matricula, nomeAluno, dataBR, "00:00:00", 0, justificativa]);
-          }
+            // Invalida cache de frequencia
+            const cache = CacheService.getScriptCache();
+            let keys = ["CACHE_frequencia", "CACHE_frequencia_CHUNKS"];
+            for (let i = 0; i < 15; i++) keys.push("CACHE_frequencia_" + i);
+            cache.removeAll(keys);
 
-          return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Falta justificada com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
+            return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Falta justificada com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
+          } catch (e) {
+            return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao justificar falta. Tente novamente." })).setMimeType(ContentService.MimeType.JSON);
+          } finally {
+            lock.releaseLock();
+          }
         }
 
     // ==========================================
@@ -1862,26 +2014,40 @@ function doPost(e) {
       if (action === "salvar_links_whatsapp") {
         const link1Ano = String(dadosApp.link1Ano || "").trim();
         const link2Ano = String(dadosApp.link2Ano || "").trim();
-        const abaConfig = planilha.getSheetByName("configuracoes");
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(15000);
+          const abaConfig = planilha.getSheetByName("configuracoes");
 
-        if (abaConfig) {
-          const dados = abaConfig.getDataRange().getValues();
-          let achouT1 = false;
-          let achouT2 = false;
+          if (abaConfig) {
+            const dados = abaConfig.getDataRange().getValues();
+            let achouT1 = false;
+            let achouT2 = false;
 
-          for (let i = 1; i < dados.length; i++) {
-            let chave = String(dados[i][0]).trim();
-            if (chave === "WHATSAPP_1ANO") { abaConfig.getRange(i + 1, 2).setValue(link1Ano); achouT1 = true; }
-            if (chave === "WHATSAPP_2ANO") { abaConfig.getRange(i + 1, 2).setValue(link2Ano); achouT2 = true; }
+            for (let i = 1; i < dados.length; i++) {
+              let chave = String(dados[i][0]).trim();
+              if (chave === "WHATSAPP_1ANO") { abaConfig.getRange(i + 1, 2).setValue(link1Ano); achouT1 = true; }
+              if (chave === "WHATSAPP_2ANO") { abaConfig.getRange(i + 1, 2).setValue(link2Ano); achouT2 = true; }
+            }
+
+            if (!achouT1) abaConfig.appendRow(["WHATSAPP_1ANO", link1Ano]);
+            if (!achouT2) abaConfig.appendRow(["WHATSAPP_2ANO", link2Ano]);
+            
+            // Invalida cache de configuracoes
+            const cache = CacheService.getScriptCache();
+            let keys = ["CACHE_configuracoes", "CACHE_configuracoes_CHUNKS"];
+            for (let i = 0; i < 15; i++) keys.push("CACHE_configuracoes_" + i);
+            cache.removeAll(keys);
           }
 
-          if (!achouT1) abaConfig.appendRow(["WHATSAPP_1ANO", link1Ano]);
-          if (!achouT2) abaConfig.appendRow(["WHATSAPP_2ANO", link2Ano]);
+          return ContentService.createTextOutput(JSON.stringify({ 
+            status: "sucesso", mensagem: "Links atualizados!" 
+          })).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao salvar links. Tente novamente." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
         }
-
-        return ContentService.createTextOutput(JSON.stringify({ 
-          status: "sucesso", mensagem: "Links atualizados!" 
-        })).setMimeType(ContentService.MimeType.JSON);
       }
 
       if (action === "status_whatsapp_aluno") {
@@ -1914,17 +2080,32 @@ function doPost(e) {
 
       if (action === "confirmar_whatsapp") {
         const matricula = String(dadosApp.matricula).trim();
-        let abaTrilha = planilha.getSheetByName("trilhatech");
-        if (abaTrilha) {
-          let dadosTrilha = abaTrilha.getDataRange().getValues();
-          for (let i = 1; i < dadosTrilha.length; i++) {
-            if (String(dadosTrilha[i][0]).trim() === matricula) {
-              abaTrilha.getRange(i + 1, 7).setValue("SIM"); // Grava SIM na Coluna G
-              break;
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(15000);
+          let abaTrilha = planilha.getSheetByName("trilhatech");
+          if (abaTrilha) {
+            let dadosTrilha = abaTrilha.getDataRange().getValues();
+            for (let i = 1; i < dadosTrilha.length; i++) {
+              if (String(dadosTrilha[i][0]).trim() === matricula) {
+                abaTrilha.getRange(i + 1, 7).setValue("SIM"); // Grava SIM na Coluna G
+                
+                // Invalida cache de trilhatech
+                const cache = CacheService.getScriptCache();
+                let keys = ["CACHE_trilhatech", "CACHE_trilhatech_CHUNKS"];
+                for (let k = 0; k < 15; k++) keys.push("CACHE_trilhatech_" + k);
+                cache.removeAll(keys);
+                
+                break;
+              }
             }
           }
+          return ContentService.createTextOutput(JSON.stringify({ status: "sucesso" })).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao confirmar WhatsApp." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
         }
-        return ContentService.createTextOutput(JSON.stringify({ status: "sucesso" })).setMimeType(ContentService.MimeType.JSON);
       }
 
     // ==========================================
@@ -2029,16 +2210,31 @@ function doPost(e) {
       if (action === "criar_senha_pix") {
         const matricula = String(dadosApp.matricula).trim();
         const senha = String(dadosApp.senha).trim();
-        let abaTrilha = planilha.getSheetByName("trilhatech");
-        let dadosTrilha = abaTrilha.getDataRange().getValues();
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(15000);
+          let abaTrilha = planilha.getSheetByName("trilhatech");
+          let dadosTrilha = abaTrilha.getDataRange().getValues();
 
-        for(let i=1; i<dadosTrilha.length; i++) {
-          if(String(dadosTrilha[i][0]).trim() === matricula) {
-              abaTrilha.getRange(i+1, 8).setValue(senha); 
-              return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON);
+          for(let i=1; i<dadosTrilha.length; i++) {
+            if(String(dadosTrilha[i][0]).trim() === matricula) {
+                abaTrilha.getRange(i+1, 8).setValue(senha); 
+                
+                // Invalida cache de trilhatech
+                const cache = CacheService.getScriptCache();
+                let keys = ["CACHE_trilhatech", "CACHE_trilhatech_CHUNKS"];
+                for (let k = 0; k < 15; k++) keys.push("CACHE_trilhatech_" + k);
+                cache.removeAll(keys);
+
+                return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON);
+            }
           }
+          return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Aluno não encontrado."})).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Servidor ocupado ao criar PIN."})).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
         }
-        return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Aluno não encontrado."})).setMimeType(ContentService.MimeType.JSON);
       }
 
       // 3. TRANSFERIR XP (Mestre burla todas as travas anti-fraude)
@@ -2054,85 +2250,110 @@ function doPost(e) {
 
         if(quantidade <= 0) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Quantidade inválida."})).setMimeType(ContentService.MimeType.JSON);
 
-        let abaTrilha = planilha.getSheetByName("trilhatech");
-        let abaEntregas = planilha.getSheetByName("entregas");
-        let abaConfig = planilha.getSheetByName("configuracoes");
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(25000); // 🔒 Protege contra gasto duplo
+          
+          let abaTrilha = planilha.getSheetByName("trilhatech");
+          let abaEntregas = planilha.getSheetByName("entregas");
+          let abaConfig = planilha.getSheetByName("configuracoes");
 
-        let limiteDiario = 50;
-        if (abaConfig) {
-          let dadosConf = abaConfig.getDataRange().getValues();
-          for(let i=1; i<dadosConf.length; i++) { if(dadosConf[i][0] === "LIMITE_PIX_DIARIO") limiteDiario = Number(dadosConf[i][1]) || 50; }
-        }
-
-        let linhaOrigem = -1, linhaDestino = -1, xpOrigem = 0, xpDestino = 0, senhaReal = "";
-        let dadosTrilha = abaTrilha.getDataRange().getValues();
-        for(let i=1; i<dadosTrilha.length; i++) {
-          let mat = String(dadosTrilha[i][0]).trim();
-          if(mat === matriculaOrigem) { linhaOrigem = i+1; xpOrigem = Number(dadosTrilha[i][4]) || 0; senhaReal = String(dadosTrilha[i][7] || "").trim(); }
-          if(mat === matriculaDestino) { linhaDestino = i+1; xpDestino = Number(dadosTrilha[i][4]) || 0; }
-        }
-
-        if (linhaOrigem === -1 || linhaDestino === -1) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Contas não encontradas."})).setMimeType(ContentService.MimeType.JSON);
-        if (senhaDigitada !== senhaReal) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Senha PIN incorreta."})).setMimeType(ContentService.MimeType.JSON);
-        
-        // Se não for o Mestre, verifica se tem saldo
-        if (!ehMestre && xpOrigem < quantidade) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Você não tem XP suficiente."})).setMimeType(ContentService.MimeType.JSON);
-
-        let xpRecebidoHojeDestino = 0;
-        let xpEnviadoSemana = 0;
-        let temBloqueio = false;
-        let dataBloqueio = "";
-
-        const timezone = Session.getScriptTimeZone();
-        const agoraTime = new Date().getTime();
-        const hojeStr = Utilities.formatDate(new Date(), timezone, "yyyyMMdd");
-        const prefixoHoje = "PIX-" + hojeStr;
-        const seteDiasAtras = agoraTime - (7 * 24 * 60 * 60 * 1000);
-
-        const dadosEntregas = abaEntregas.getDataRange().getValues();
-        let xpDoadoHoje = 0;
-
-        for(let i=1; i<dadosEntregas.length; i++) {
-          let id = String(dadosEntregas[i][0]).trim();
-          let matRow = String(dadosEntregas[i][1]).trim();
-          let desc = String(dadosEntregas[i][3]).trim();
-          let xpLido = Number(dadosEntregas[i][5]) || 0;
-          let tstamp = Number(dadosEntregas[i][6]) || 0;
-
-          if (id === "BLOCK-" + matriculaOrigem + "-" + matriculaDestino) {
-              if (agoraTime < tstamp) { temBloqueio = true; dataBloqueio = Utilities.formatDate(new Date(tstamp), timezone, "dd/MM/yyyy HH:mm"); }
+          let limiteDiario = 50;
+          if (abaConfig) {
+            let dadosConf = abaConfig.getDataRange().getValues();
+            for(let i=1; i<dadosConf.length; i++) { if(dadosConf[i][0] === "LIMITE_PIX_DIARIO") limiteDiario = Number(dadosConf[i][1]) || 50; }
           }
-          if (matRow === matriculaDestino && id.startsWith(prefixoHoje) && id.includes("-RECEBEU")) { xpRecebidoHojeDestino += xpLido; }
-          if (matRow === matriculaOrigem && id.includes("-ENVIOU") && tstamp >= seteDiasAtras) {
-              if (desc.includes("Enviou para " + matriculaDestino + ":")) { xpEnviadoSemana += Math.abs(xpLido); }
-          }
-          if (matRow === matriculaOrigem && id.startsWith(prefixoHoje) && id.includes("-ENVIOU")) { xpDoadoHoje += Math.abs(xpLido); }
-        }
 
-        // REGRAS APLICADAS APENAS SE NÃO FOR O MESTRE
-        if (!ehMestre) {
-            if (temBloqueio) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "🔒 Você está bloqueado de enviar XP para este colega até " + dataBloqueio + "."})).setMimeType(ContentService.MimeType.JSON);
-            if (xpDoadoHoje + quantidade > limiteDiario) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: `Limite global excedido! Você só pode doar mais ${limiteDiario - xpDoadoHoje} XP hoje.`})).setMimeType(ContentService.MimeType.JSON);
-            if (xpRecebidoHojeDestino + quantidade > 50) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "🔒 O colega de destino já atingiu o limite de receber 50 XP por dia."})).setMimeType(ContentService.MimeType.JSON);
-            if (xpEnviadoSemana + quantidade > 100) {
-                let expira = agoraTime + (7 * 24 * 60 * 60 * 1000);
-                abaEntregas.appendRow(["BLOCK-" + matriculaOrigem + "-" + matriculaDestino, matriculaOrigem, "PIX-BLOCK", matriculaDestino, "Bloqueado", 0, expira]);
-                return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "🚨 Você foi bloqueado de transferir para este colega por 7 dias!"})).setMimeType(ContentService.MimeType.JSON);
+          let linhaOrigem = -1, linhaDestino = -1, xpOrigem = 0, xpDestino = 0, senhaReal = "";
+          let dadosTrilha = abaTrilha.getDataRange().getValues();
+          for(let i=1; i<dadosTrilha.length; i++) {
+            let mat = String(dadosTrilha[i][0]).trim();
+            if(mat === matriculaOrigem) { linhaOrigem = i+1; xpOrigem = Number(dadosTrilha[i][4]) || 0; senhaReal = String(dadosTrilha[i][7] || "").trim(); }
+            if(mat === matriculaDestino) { linhaDestino = i+1; xpDestino = Number(dadosTrilha[i][4]) || 0; }
+          }
+
+          if (linhaOrigem === -1 || linhaDestino === -1) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Contas não encontradas."})).setMimeType(ContentService.MimeType.JSON);
+          if (senhaDigitada !== senhaReal) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Senha PIN incorreta."})).setMimeType(ContentService.MimeType.JSON);
+          
+          // Se não for o Mestre, verifica se tem saldo
+          if (!ehMestre && xpOrigem < quantidade) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Você não tem XP suficiente."})).setMimeType(ContentService.MimeType.JSON);
+
+          let xpRecebidoHojeDestino = 0;
+          let xpEnviadoSemana = 0;
+          let temBloqueio = false;
+          let dataBloqueio = "";
+
+          const timezone = Session.getScriptTimeZone();
+          const agoraTime = new Date().getTime();
+          const hojeStr = Utilities.formatDate(new Date(), timezone, "yyyyMMdd");
+          const prefixoHoje = "PIX-" + hojeStr;
+          const seteDiasAtras = agoraTime - (7 * 24 * 60 * 60 * 1000);
+
+          const dadosEntregas = abaEntregas.getDataRange().getValues();
+          let xpDoadoHoje = 0;
+
+          for(let i=1; i<dadosEntregas.length; i++) {
+            let id = String(dadosEntregas[i][0]).trim();
+            let matRow = String(dadosEntregas[i][1]).trim();
+            let desc = String(dadosEntregas[i][3]).trim();
+            let xpLido = Number(dadosEntregas[i][5]) || 0;
+            let tstamp = Number(dadosEntregas[i][6]) || 0;
+
+            if (id === "BLOCK-" + matriculaOrigem + "-" + matriculaDestino) {
+                if (agoraTime < tstamp) { temBloqueio = true; dataBloqueio = Utilities.formatDate(new Date(tstamp), timezone, "dd/MM/yyyy HH:mm"); }
             }
+            if (matRow === matriculaDestino && id.startsWith(prefixoHoje) && id.includes("-RECEBEU")) { xpRecebidoHojeDestino += xpLido; }
+            if (matRow === matriculaOrigem && id.includes("-ENVIOU") && tstamp >= seteDiasAtras) {
+                if (desc.includes("Enviou para " + matriculaDestino + ":")) { xpEnviadoSemana += Math.abs(xpLido); }
+            }
+            if (matRow === matriculaOrigem && id.startsWith(prefixoHoje) && id.includes("-ENVIOU")) { xpDoadoHoje += Math.abs(xpLido); }
+          }
+
+          // REGRAS APLICADAS APENAS SE NÃO FOR O MESTRE
+          if (!ehMestre) {
+              if (temBloqueio) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "🔒 Você está bloqueado de enviar XP para este colega até " + dataBloqueio + "."})).setMimeType(ContentService.MimeType.JSON);
+              if (xpDoadoHoje + quantidade > limiteDiario) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: `Limite global excedido! Você só pode doar mais ${limiteDiario - xpDoadoHoje} XP hoje.`})).setMimeType(ContentService.MimeType.JSON);
+              if (xpRecebidoHojeDestino + quantidade > 50) return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "🔒 O colega de destino já atingiu o limite de receber 50 XP por dia."})).setMimeType(ContentService.MimeType.JSON);
+              if (xpEnviadoSemana + quantidade > 100) {
+                  let expira = agoraTime + (7 * 24 * 60 * 60 * 1000);
+                  abaEntregas.appendRow(["BLOCK-" + matriculaOrigem + "-" + matriculaDestino, matriculaOrigem, "PIX-BLOCK", matriculaDestino, "Bloqueado", 0, expira]);
+                  
+                  // Invalida cache de entregas
+                  const cache = CacheService.getScriptCache();
+                  let keys = ["CACHE_entregas", "CACHE_entregas_CHUNKS"];
+                  for (let k = 0; k < 15; k++) keys.push("CACHE_entregas_" + k);
+                  cache.removeAll(keys);
+                  
+                  return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "🚨 Você foi bloqueado de transferir para este colega por 7 dias!"})).setMimeType(ContentService.MimeType.JSON);
+              }
+          }
+
+          // Se não for o Mestre, desconta do remetente. O Mestre cria XP do nada!
+          if (!ehMestre) { abaTrilha.getRange(linhaOrigem, 5).setValue(xpOrigem - quantidade); }
+          
+          // Paga ao destino
+          abaTrilha.getRange(linhaDestino, 5).setValue(xpDestino + quantidade);
+
+          let timestamp = new Date().getTime();
+          let idBase = prefixoHoje + "-" + timestamp;
+          abaEntregas.appendRow([idBase + "-ENVIOU", matriculaOrigem, "PIX-XP", `Enviou para ${matriculaDestino}: ${motivo}`, "Avaliado", -quantidade, timestamp]);
+          abaEntregas.appendRow([idBase + "-RECEBEU", matriculaDestino, "PIX-XP", `Recebeu de ${matriculaOrigem}: ${motivo}`, "Avaliado", quantidade, timestamp]);
+
+          // Invalida cache de entregas e trilhatech
+          const cache = CacheService.getScriptCache();
+          let keys = ["CACHE_entregas", "CACHE_entregas_CHUNKS", "CACHE_trilhatech", "CACHE_trilhatech_CHUNKS"];
+          for (let i = 0; i < 15; i++) {
+            keys.push("CACHE_entregas_" + i);
+            keys.push("CACHE_trilhatech_" + i);
+          }
+          cache.removeAll(keys);
+
+          return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({status: "erro", mensagem: "Servidor ocupado ao processar transferência de XP. Tente novamente."})).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
         }
-
-        // Se não for o Mestre, desconta do remetente. O Mestre cria XP do nada!
-        if (!ehMestre) { abaTrilha.getRange(linhaOrigem, 5).setValue(xpOrigem - quantidade); }
-        
-        // Paga ao destino
-        abaTrilha.getRange(linhaDestino, 5).setValue(xpDestino + quantidade);
-
-        let timestamp = new Date().getTime();
-        let idBase = prefixoHoje + "-" + timestamp;
-        abaEntregas.appendRow([idBase + "-ENVIOU", matriculaOrigem, "PIX-XP", `Enviou para ${matriculaDestino}: ${motivo}`, "Avaliado", -quantidade, timestamp]);
-        abaEntregas.appendRow([idBase + "-RECEBEU", matriculaDestino, "PIX-XP", `Recebeu de ${matriculaOrigem}: ${motivo}`, "Avaliado", quantidade, timestamp]);
-
-        return ContentService.createTextOutput(JSON.stringify({status: "sucesso"})).setMimeType(ContentService.MimeType.JSON);
       }
 
     // ==========================================
@@ -2140,67 +2361,18 @@ function doPost(e) {
     // ==========================================
       if (action === "carregar_portal_aluno") {
         const matricula = String(dadosApp.matricula).trim();
-        const cache = CacheService.getScriptCache(); 
         const timezone = Session.getScriptTimeZone();
-
-        const abaTrilha = planilha.getSheetByName("trilhatech");
-        const abaEntregas = planilha.getSheetByName("entregas");
-        const abaFrequencia = planilha.getSheetByName("frequencia");
-        const abaCurtidas = planilha.getSheetByName("curtidas");
         
-        // ⚡ LÓGICA DE CACHE BLINDADA COM CHUNKING (ANTI-100KB)
-        function lerComCache(nomeAba, tempoSegundos) {
-          const cacheChave = "CACHE_" + nomeAba;
-          let dadosString = cache.get(cacheChave);
+        // As abas são carregadas pela função global
+        const dadosBase = lerComCacheSeguro("basededados", 1800); 
+        const dadosModulos = lerComCacheSeguro("controle_modulos", 900); 
+        const dadosAtiv = lerComCacheSeguro("atividades", 300); 
+        const dadosConf = lerComCacheSeguro("configuracoes", 1800); 
+        const dadosTrilha = lerComCacheSeguro("trilhatech", 60);
+        const dadosEntregas = lerComCacheSeguro("entregas", 60);
+        const dadosFrequencia = lerComCacheSeguro("frequencia", 60);
+        const dadosCurtidas = lerComCacheSeguro("curtidas", 60);
 
-          // 1. Tenta ler o dado inteiro ou fatiado
-          if (!dadosString) {
-            let chunksTotal = cache.get(cacheChave + "_CHUNKS");
-            if (chunksTotal) {
-              let reconstruido = "";
-              for (let c = 0; c < Number(chunksTotal); c++) {
-                reconstruido += cache.get(cacheChave + "_" + c) || "";
-              }
-              if (reconstruido) return JSON.parse(reconstruido);
-            }
-          } else {
-            return JSON.parse(dadosString);
-          }
-
-          // 2. Se não achou na memória, vai no banco (Planilha)
-          let aba = planilha.getSheetByName(nomeAba);
-          if (!aba) return [];
-
-          let dados = aba.getDataRange().getValues();
-          let timezone = Session.getScriptTimeZone();
-          let dadosProcessados = dados.map(linha => linha.map(celula => (celula instanceof Date) ? Utilities.formatDate(celula, timezone, "yyyy-MM-dd") : celula));
-          let jsonStr = JSON.stringify(dadosProcessados);
-
-          // 3. Salva na memória dividindo em blocos seguros de 90.000 caracteres
-          try {
-            if (jsonStr.length < 90000) {
-              cache.put(cacheChave, jsonStr, tempoSegundos);
-            } else {
-              let numChunks = Math.ceil(jsonStr.length / 90000);
-              cache.put(cacheChave + "_CHUNKS", String(numChunks), tempoSegundos);
-              for (let c = 0; c < numChunks; c++) {
-                cache.put(cacheChave + "_" + c, jsonStr.substring(c * 90000, (c + 1) * 90000), tempoSegundos);
-              }
-            }
-          } catch (e) {
-            // Falha silenciosa: Se o Google recusar, apenas devolve os dados para não quebrar a tela do aluno
-          }
-
-          return dadosProcessados;
-        }
-
-        // Lê da memória ao invés do Google Sheets!
-        const dadosBase = lerComCache("basededados", 1800); 
-        const dadosModulos = lerComCache("controle_modulos", 900); 
-        const dadosAtiv = lerComCache("atividades", 300); 
-        const dadosConf = lerComCache("configuracoes", 1800); 
-
-        // 1. LER MÓDULOS (Direto da memória)
         let statusModulosMap = {};
         for (let i = 1; i < dadosModulos.length; i++) {
           let nomeMod = String(dadosModulos[i][0]).trim();
@@ -2210,7 +2382,7 @@ function doPost(e) {
         }
 
         let dadosRetorno = {
-          status: "sucesso", xpTotal: 0, nivel: "Iniciante", avatar: "avatar-padrao",
+          status: "sucesso", nomeAluno: "", xpTotal: 0, nivel: "Iniciante", avatar: "avatar-padrao",
           totalCurtidas: 0, ofensivaDias: 0, whatsapp: { confirmado: true, link: "" },
           aniversario: { isAniversario: false, jaResgatado: false }, atividades: [],
           notificacoes: [], extratoPix: [], badgesResgatadas: [], taxaPresenca: 100,
@@ -2227,13 +2399,11 @@ function doPost(e) {
           { nome: "Titã da Nuvem", min: 35000, max: 49999 }, { nome: "Deus da Lógica", min: 50000, max: 999999 }
         ];
 
-        if (abaTrilha) {
-          const dadosTrilha = abaTrilha.getDataRange().getValues();
+        if (dadosTrilha && dadosTrilha.length > 0) {
           for (let t = 1; t < dadosTrilha.length; t++) {
             if (String(dadosTrilha[t][0]).trim() === matricula) {
               turmaDoAlunoNoProjeto = String(dadosTrilha[t][1]).trim();
               let xpTotalAtual = Number(dadosTrilha[t][4]) || 0; 
-              let nivelAtualSheet = String(dadosTrilha[t][5]).trim(); 
               let xpGasto = Number(dadosTrilha[t][11]) || 0;     
 
               dadosRetorno.avatar = String(dadosTrilha[t][8]).trim() || "avatar-padrao";
@@ -2249,8 +2419,6 @@ function doPost(e) {
                 }
               }
 
-              if (nivelCalculado.nome !== nivelAtualSheet) abaTrilha.getRange(t + 1, 6).setValue(nivelCalculado.nome);
-
               let xpBaseNivel = nivelCalculado.min;
               let xpParaProximo = proximoNivel.min;
               let progressoAtual = xpTotalAtual - xpBaseNivel;
@@ -2264,7 +2432,6 @@ function doPost(e) {
           }
         }
 
-        // LER CONFIGURAÇÕES (Direto da memória)
         for(let i = 1; i < dadosConf.length; i++) {
           if(turmaDoAlunoNoProjeto.includes("1º") && dadosConf[i][0] === "WHATSAPP_1ANO") dadosRetorno.whatsapp.link = dadosConf[i][1];
           if(turmaDoAlunoNoProjeto.includes("2º") && dadosConf[i][0] === "WHATSAPP_2ANO") dadosRetorno.whatsapp.link = dadosConf[i][1];
@@ -2276,12 +2443,12 @@ function doPost(e) {
         const anoHoje = Utilities.formatDate(dataHoje, timezone, "yyyy");
         const idNiver = "BDAY-" + anoHoje + "-" + matricula;
 
-        // LER BASEDEDADOS (Direto da memória)
         let nomesMap = {};
         for (let i = 1; i < dadosBase.length; i++) {
           let mat = String(dadosBase[i][2]).trim();
           nomesMap[mat] = String(dadosBase[i][0]).trim();
           if (mat === matricula) {
+            dadosRetorno.nomeAluno = nomesMap[mat];
             let strNasc = String(dadosBase[i][1]).trim();
             let diaNasc = "", mesNasc = "";
             if (strNasc.includes("/")) {
@@ -2294,8 +2461,7 @@ function doPost(e) {
         }
 
         let entregasMap = {};
-        if (abaEntregas) {
-          const dadosEntregas = abaEntregas.getDataRange().getValues();
+        if (dadosEntregas && dadosEntregas.length > 0) {
           for (let i = 1; i < dadosEntregas.length; i++) {
             let idEntrega = String(dadosEntregas[i][0]).trim();
             let mat = String(dadosEntregas[i][1]).trim();
@@ -2310,7 +2476,6 @@ function doPost(e) {
               if (idEntrega.includes("PIX") && idEntrega.includes("-RECEBEU")) {
                   dadosRetorno.stats.xpRecebido += Number(dadosEntregas[i][5]) || 0;
                   dadosRetorno.extratoPix.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: Number(dadosEntregas[i][5]), tempo: Number(dadosEntregas[i][6]) || 0, tipo: "RECEBEU" });
-                  dadosRetorno.notificacoes.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: Number(dadosEntregas[i][5]), tempo: Number(dadosEntregas[i][6]) || 0, tipo: "PIX" });
               }
               if (idEntrega.includes("PIX") && idEntrega.includes("-ENVIOU")) {
                   let xpD = Math.abs(Number(dadosEntregas[i][5]) || 0);
@@ -2318,20 +2483,20 @@ function doPost(e) {
                   dadosRetorno.extratoPix.push({ id: idEntrega, mensagem: String(dadosEntregas[i][3]), xp: -xpD, tempo: Number(dadosEntregas[i][6]) || 0, tipo: "ENVIOU" });
               }
               if (idEntrega === idNiver) dadosRetorno.aniversario.jaResgatado = true;
+              
               if (idEntrega.startsWith("BADGE-")){
-                let prefix = "BADGE-"; let suffix = "-" + matricula;
-                dadosRetorno.badgesResgatadas.push(idEntrega.substring(prefix.length, idEntrega.length - suffix.length));
+                let badgeId = idEntrega.replace("BADGE-", "").replace("-" + matricula, "");
+                dadosRetorno.badgesResgatadas.push(badgeId);
               }
             }
           }
         }
 
-        if (abaCurtidas) {
-          const dadosCurt = abaCurtidas.getDataRange().getValues();
-          for (let i = 1; i < dadosCurt.length; i++) {
-              if (String(dadosCurt[i][2]).trim() === matricula) {
-                  let remetente = String(dadosCurt[i][1]).trim();
-                  dadosRetorno.notificacoes.push({ id: String(dadosCurt[i][0]).trim(), mensagem: `${nomesMap[remetente] ? nomesMap[remetente].split(" ")[0] : "Um colega"} curtiu o seu perfil! ❤️`, xp: 0, tempo: Number(String(dadosCurt[i][0]).trim().split("-")[1]) || new Date().getTime(), tipo: "LIKE" });
+        if (dadosCurtidas && dadosCurtidas.length > 0) {
+          for (let i = 1; i < dadosCurtidas.length; i++) {
+              if (String(dadosCurtidas[i][2]).trim() === matricula) {
+                  let remetente = String(dadosCurtidas[i][1]).trim();
+                  dadosRetorno.notificacoes.push({ id: String(dadosCurtidas[i][0]).trim(), mensagem: `${nomesMap[remetente] ? nomesMap[remetente].split(" ")[0] : "Um colega"} curtiu o seu perfil! ❤️`, xp: 0, tempo: Number(String(dadosCurtidas[i][0]).trim().split("-")[1]) || new Date().getTime(), tipo: "LIKE" });
               }
           }
         }
@@ -2341,24 +2506,26 @@ function doPost(e) {
         dadosRetorno.extratoPix.sort((a, b) => b.tempo - a.tempo);
         dadosRetorno.extratoPix = dadosRetorno.extratoPix.slice(0, 20);
 
-        if (abaFrequencia && turmaDoAlunoNoProjeto) {
+        if (dadosFrequencia && dadosFrequencia.length > 0 && turmaDoAlunoNoProjeto) {
             let alunosDaMesmaTurma = new Set();
-            if(abaTrilha) {
-                const dTrilha = abaTrilha.getDataRange().getValues();
-                for (let i = 1; i < dTrilha.length; i++) if (String(dTrilha[i][1]).trim() === turmaDoAlunoNoProjeto && String(dTrilha[i][2]).trim().toLowerCase() === "ativo") alunosDaMesmaTurma.add(String(dTrilha[i][0]).trim());
+            if(dadosTrilha && dadosTrilha.length > 0) {
+                for (let i = 1; i < dadosTrilha.length; i++) {
+                  if (String(dadosTrilha[i][1]).trim() === turmaDoAlunoNoProjeto && String(dadosTrilha[i][2]).trim().toLowerCase() === "ativo") {
+                    alunosDaMesmaTurma.add(String(dadosTrilha[i][0]).trim());
+                  }
+                }
             }
 
             let diasComAulaSet = new Set(); let checkinsMap = {}; let presencasAluno = 0;
-            const dadosFreq = abaFrequencia.getDataRange().getValues();
-            for (let i = 1; i < dadosFreq.length; i++) {
-              let idCheckin = String(dadosFreq[i][0]).trim();
+            for (let i = 1; i < dadosFrequencia.length; i++) {
+              let idCheckin = String(dadosFrequencia[i][0]).trim();
               if (idCheckin.startsWith("BDAY")) continue;
-              let matFreq = String(dadosFreq[i][1]).trim();
-              let dataBruta = dadosFreq[i][3];
-              let dataFormatada = dataBruta instanceof Date ? Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy") : String(dataBruta).trim();
+              let matFreq = String(dadosFrequencia[i][1]).trim();
+              
+              let dataFormatada = String(dadosFrequencia[i][3]).trim(); 
 
               if (alunosDaMesmaTurma.has(matFreq)) diasComAulaSet.add(dataFormatada);
-              if (matFreq === matricula && String(dadosFreq[i][4]).trim() !== "00:00:00" && String(dadosFreq[i][4]).trim() !== "") {
+              if (matFreq === matricula && String(dadosFrequencia[i][4]).trim() !== "00:00:00" && String(dadosFrequencia[i][4]).trim() !== "") {
                   presencasAluno++; dadosRetorno.stats.totalCheckins++; checkinsMap[dataFormatada] = true;
               }
             }
@@ -2376,7 +2543,6 @@ function doPost(e) {
             dadosRetorno.ofensivaDias = streak;
         }
 
-        // LER ATIVIDADES (Direto da Memória)
         let hojeTime = new Date(); hojeTime.setHours(0,0,0,0);
         for (let i = 1; i < dadosAtiv.length; i++) {
           if (String(dadosAtiv[i][13] || "Publicada").trim() !== "Publicada") continue;
@@ -2385,7 +2551,7 @@ function doPost(e) {
           if (turmaAlvo.toLowerCase() === "todas" || turmaAlvo === turmaDoAlunoNoProjeto) {
             let idAtiv = String(dadosAtiv[i][0]).trim();
             let entregaAluno = entregasMap[idAtiv];
-            let dataLimiteStr = String(dadosAtiv[i][3]); // O cache já converteu para string YYYY-MM-DD ou pegou nativa
+            let dataLimiteStr = String(dadosAtiv[i][3]);
             
             let statusPrazo = "No Prazo";
             if (!entregaAluno && dataLimiteStr) {
@@ -2420,48 +2586,54 @@ function doPost(e) {
     // ROTA 29: RESGATAR RECOMPENSA DE CONQUISTA (BADGE - BLINDADA)
     // ==========================================
       if (action === "resgatar_badge") {
+        const matricula = String(dadosApp.matricula).trim();
+        const badgeId = String(dadosApp.badgeId).trim();
+        const xpGanho = Number(dadosApp.xpGanho) || 0;
+        const nomeBadge = String(dadosApp.nomeBadge).trim();
+        const timestampAtual = new Date().getTime();
+        const idUnico = "BADGE-" + badgeId + "-" + matricula;
+
+        // 1. LEITURA FORA DO LOCK (Mata o travamento de carregamento do portal)
+        const dadosEntregas = lerComCacheSeguro("entregas", 60);
+        const dadosTrilha = lerComCacheSeguro("trilhatech", 60);
+
+        for (let i = 1; i < dadosEntregas.length; i++) {
+          if (String(dadosEntregas[i][0]).trim() === idUnico) {
+            return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Recompensa já resgatada!" })).setMimeType(ContentService.MimeType.JSON);
+          }
+        }
+
+        let linhaTrilhaAluno = -1;
+        for(let t = 1; t < dadosTrilha.length; t++) {
+            if(String(dadosTrilha[t][0]).trim() === matricula) {
+              linhaTrilhaAluno = t + 1;
+              break;
+            }
+        }
+
+        // 2. LOCK CIRÚRGICO APENAS PARA ESCREVER
         const lock = LockService.getScriptLock();
         try {
-          lock.waitLock(10000); // 🔒 Tranca a porta
-
-          const matricula = String(dadosApp.matricula).trim();
-          const badgeId = String(dadosApp.badgeId).trim();
-          const xpGanho = Number(dadosApp.xpGanho) || 0;
-          const nomeBadge = String(dadosApp.nomeBadge).trim();
-
+          lock.waitLock(15000); 
+          const planilha = SpreadsheetApp.getActiveSpreadsheet(); // Abre só aqui
           const abaEntregas = planilha.getSheetByName("entregas");
           const abaTrilha = planilha.getSheetByName("trilhatech");
-          const timestampAtual = new Date().getTime();
-          const idUnico = "BADGE-" + badgeId + "-" + matricula;
 
-          if (!abaEntregas || !abaTrilha) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Abas não encontradas." })).setMimeType(ContentService.MimeType.JSON);
+          if (!abaEntregas || !abaTrilha) throw new Error("Planilhas inacessíveis.");
 
-          // 🛡️ Proteção anti-fraude: A verificação final e absoluta dentro do cofre
-          const dadosEntregas = abaEntregas.getDataRange().getValues();
-          for (let i = 1; i < dadosEntregas.length; i++) {
-            if (String(dadosEntregas[i][0]).trim() === idUnico) {
-              return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Recompensa já resgatada!" })).setMimeType(ContentService.MimeType.JSON);
-            }
-          }
-
-          // 1. Gera o recibo
           abaEntregas.appendRow([idUnico, matricula, "CONQUISTA-BADGE", `Desbloqueou: ${nomeBadge}`, "Avaliado", xpGanho, timestampAtual]);
 
-          // 2. Soma o XP
-          const dadosTrilha = abaTrilha.getDataRange().getValues();
-          for(let t = 1; t < dadosTrilha.length; t++) {
-              if(String(dadosTrilha[t][0]).trim() === matricula) {
-                let xpAtual = Number(dadosTrilha[t][4]) || 0;
-                abaTrilha.getRange(t+1, 5).setValue(xpAtual + xpGanho);
-                break;
-              }
+          if (linhaTrilhaAluno > -1) {
+              let xpAtualReal = Number(abaTrilha.getRange(linhaTrilhaAluno, 5).getValue()) || 0;
+              abaTrilha.getRange(linhaTrilhaAluno, 5).setValue(xpAtualReal + xpGanho);
           }
+
           return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: `+${xpGanho} XP Resgatado!` })).setMimeType(ContentService.MimeType.JSON);
           
         } catch (e) {
-          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Processando conquista. Tente de novo em 2 segundos." })).setMimeType(ContentService.MimeType.JSON);
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Processando conquista. A página será atualizada." })).setMimeType(ContentService.MimeType.JSON);
         } finally {
-          lock.releaseLock(); // 🔓 Destranca a porta
+          lock.releaseLock();
         }
       }
 
@@ -2712,7 +2884,7 @@ function doPost(e) {
     // ROTA 32: BUSCAR CONFIGURAÇÕES DO SISTEMA (WHITE-LABEL)
     // ==========================================
       if (action === "buscar_configuracoes") {
-        const abaConfig = planilha.getSheetByName("configuracoes");
+        const dadosConf = lerComCacheSeguro("configuracoes", 1800);
 
         // Valores padrão caso a aba esteja vazia ou incompleta
         let configuracoes = {
@@ -2727,28 +2899,25 @@ function doPost(e) {
           modoReposicao: "DESLIGADO"
         };
 
-        if (abaConfig) {
-          const dadosConf = abaConfig.getDataRange().getValues();
-          for (let i = 1; i < dadosConf.length; i++) {
-            let chave = String(dadosConf[i][0]).trim();
-            let valor = String(dadosConf[i][1]).trim();
+        for (let i = 1; i < dadosConf.length; i++) {
+          let chave = String(dadosConf[i][0]).trim();
+          let valor = String(dadosConf[i][1]).trim();
 
-            if (!chave) continue;
+          if (!chave) continue;
 
-            // Injeta a chave EXATA da planilha no JSON enviado ao portal
-            configuracoes[chave] = valor;
+          // Injeta a chave EXATA da planilha no JSON enviado ao portal
+          configuracoes[chave] = valor;
 
-            // MANTÉM AS TRADUÇÕES ANTIGAS
-            if (chave === "NOME_ESCOLA") configuracoes.nomeEscola = valor;
-            if (chave === "NOME_PROJETO") configuracoes.nomeProjeto = valor;
-            if (chave === "TURMAS_PROJETO") configuracoes.turmas = valor.split(",").map(t => t.trim()).filter(t => t !== "");
-            if (chave === "LINK_PLANILHA") configuracoes.linkPlanilha = valor;
-            if (chave === "LINK_CLASSROOM") configuracoes.linkClassroom = valor;
-            if (chave === "LINK_MATRIZ") configuracoes.linkMatriz = valor;
-            if (chave === "LINK_AJUDA") configuracoes.linkAjuda = valor;
-            if (chave === "LINK_CRONOGRAMA") configuracoes.linkCronograma = valor;
-            if (chave === "MODO_REPOSICAO") configuracoes.modoReposicao = valor.toUpperCase();
-          }
+          // MANTÉM AS TRADUÇÕES ANTIGAS
+          if (chave === "NOME_ESCOLA") configuracoes.nomeEscola = valor;
+          if (chave === "NOME_PROJETO") configuracoes.nomeProjeto = valor;
+          if (chave === "TURMAS_PROJETO") configuracoes.turmas = valor.split(",").map(t => t.trim()).filter(t => t !== "");
+          if (chave === "LINK_PLANILHA") configuracoes.linkPlanilha = valor;
+          if (chave === "LINK_CLASSROOM") configuracoes.linkClassroom = valor;
+          if (chave === "LINK_MATRIZ") configuracoes.linkMatriz = valor;
+          if (chave === "LINK_AJUDA") configuracoes.linkAjuda = valor;
+          if (chave === "LINK_CRONOGRAMA") configuracoes.linkCronograma = valor;
+          if (chave === "MODO_REPOSICAO") configuracoes.modoReposicao = valor.toUpperCase();
         }
 
         return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", configuracoes })).setMimeType(ContentService.MimeType.JSON);
@@ -2759,72 +2928,99 @@ function doPost(e) {
     // ==========================================
       if (action === "salvar_configuracoes") {
         const configs = dadosApp.configs; // Objeto no formato { CHAVE: "VALOR", CHAVE2: "VALOR2" }
-        const abaConfig = planilha.getSheetByName("configuracoes");
-
-        if (!abaConfig) {
-          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aba configuracoes não encontrada." })).setMimeType(ContentService.MimeType.JSON);
-        }
-
-        const dadosConf = abaConfig.getDataRange().getValues();
-        let chavesPlanilha = {};
-
-        // 1. Mapeia em qual linha está cada chave atual (para não duplicar)
-        for (let i = 1; i < dadosConf.length; i++) {
-          let chave = String(dadosConf[i][0]).trim();
-          if (chave) chavesPlanilha[chave] = i + 1; // Guarda o número da linha
-        }
-
-        // 2. Percorre as configurações que chegaram do Frontend
-        for (let chave in configs) {
-          let valor = String(configs[chave]);
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(15000);
           
-          if (chavesPlanilha[chave]) {
-            // Se a chave já existe, atualiza a Coluna B (Valor)
-            abaConfig.getRange(chavesPlanilha[chave], 2).setValue(valor);
-          } else {
-            // Se a chave não existir, adiciona uma nova linha no final
-            abaConfig.appendRow([chave, valor]);
+          const abaConfig = planilha.getSheetByName("configuracoes");
+          if (!abaConfig) {
+            return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aba configuracoes não encontrada." })).setMimeType(ContentService.MimeType.JSON);
           }
-        }
 
-        return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Configurações salvas com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
+          let dadosConf = abaConfig.getDataRange().getValues();
+          let chavesPlanilha = {};
+
+          // Mapeia em qual linha está cada chave atual (para não duplicar)
+          for (let i = 1; i < dadosConf.length; i++) {
+            let chave = String(dadosConf[i][0]).trim();
+            if (chave) chavesPlanilha[chave] = i; // Guarda o índice do array dadosConf
+          }
+
+          // Percorre as configurações que chegaram do Frontend e atualiza em memória
+          for (let chave in configs) {
+            let valor = String(configs[chave]);
+            if (chavesPlanilha[chave] !== undefined) {
+              dadosConf[chavesPlanilha[chave]][1] = valor;
+            } else {
+              dadosConf.push([chave, valor]);
+            }
+          }
+
+          // Escreve tudo de volta em lote
+          abaConfig.getRange(1, 1, dadosConf.length, 2).setValues(dadosConf);
+
+          // Invalida cache de configuracoes
+          const cache = CacheService.getScriptCache();
+          let keys = ["CACHE_configuracoes", "CACHE_configuracoes_CHUNKS"];
+          for (let i = 0; i < 15; i++) keys.push("CACHE_configuracoes_" + i);
+          cache.removeAll(keys);
+
+          return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Configurações salvas com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao salvar configurações. Tente novamente." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
+        }
       }
 
     // ==========================================
     // ROTA 34: LIGAR/DESLIGAR MODO DE REPOSIÇÃO
     // ==========================================
       if (action === "toggle_modo_reposicao") {
-        const abaConfig = planilha.getSheetByName("configuracoes");
         const novoStatus = String(dadosApp.status).toUpperCase(); // "LIGADO" ou "DESLIGADO"
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(15000);
+          const abaConfig = planilha.getSheetByName("configuracoes");
 
-        if (abaConfig) {
-          const dadosConf = abaConfig.getDataRange().getValues();
-          let encontrou = false;
-          
-          for (let i = 1; i < dadosConf.length; i++) {
-            if (String(dadosConf[i][0]).trim() === "MODO_REPOSICAO") {
-              abaConfig.getRange(i + 1, 2).setValue(novoStatus);
-              encontrou = true;
-              break;
+          if (abaConfig) {
+            const dadosConf = abaConfig.getDataRange().getValues();
+            let encontrou = false;
+            
+            for (let i = 1; i < dadosConf.length; i++) {
+              if (String(dadosConf[i][0]).trim() === "MODO_REPOSICAO") {
+                abaConfig.getRange(i + 1, 2).setValue(novoStatus);
+                encontrou = true;
+                break;
+              }
             }
-          }
-          
-          // Se a chave não existir na planilha, ele cria automaticamente
-          if (!encontrou) {
-            abaConfig.appendRow(["MODO_REPOSICAO", novoStatus]);
+            
+            // Se a chave não existir na planilha, ele cria automaticamente
+            if (!encontrou) {
+              abaConfig.appendRow(["MODO_REPOSICAO", novoStatus]);
+            }
+            
+            // Invalida cache de configuracoes
+            const cache = CacheService.getScriptCache();
+            let keys = ["CACHE_configuracoes", "CACHE_configuracoes_CHUNKS"];
+            for (let i = 0; i < 15; i++) keys.push("CACHE_configuracoes_" + i);
+            cache.removeAll(keys);
+
+            return ContentService.createTextOutput(JSON.stringify({ 
+              status: "sucesso", 
+              mensagem: "Modo Reposição " + (novoStatus === "LIGADO" ? "Ativado" : "Desativado") + "!"
+            })).setMimeType(ContentService.MimeType.JSON);
           }
           
           return ContentService.createTextOutput(JSON.stringify({ 
-            status: "sucesso", 
-            mensagem: "Modo Reposição " + (novoStatus === "LIGADO" ? "Ativado" : "Desativado") + "!"
+            status: "erro", 
+            mensagem: "Aba de configurações não encontrada." 
           })).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao alternar modo reposição." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
         }
-        
-        invalidarCacheGeral();
-        return ContentService.createTextOutput(JSON.stringify({ 
-          status: "erro", 
-          mensagem: "Aba de configurações não encontrada." 
-        })).setMimeType(ContentService.MimeType.JSON);
       }
 
     // ==========================================
@@ -2833,19 +3029,34 @@ function doPost(e) {
       if (action === "salvar_avatar") {
         const matricula = String(dadosApp.matricula).trim();
         const avatarId = String(dadosApp.avatarId).trim();
-        const abaTrilha = planilha.getSheetByName("trilhatech");
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(15000);
+          const abaTrilha = planilha.getSheetByName("trilhatech");
 
-        if (abaTrilha) {
-          const dadosTrilha = abaTrilha.getDataRange().getValues();
-          for (let i = 1; i < dadosTrilha.length; i++) {
-            if (String(dadosTrilha[i][0]).trim() === matricula) {
-              // Salva o ID do Avatar na Coluna I (índice 9)
-              abaTrilha.getRange(i + 1, 9).setValue(avatarId); 
-              return ContentService.createTextOutput(JSON.stringify({ status: "sucesso" })).setMimeType(ContentService.MimeType.JSON);
+          if (abaTrilha) {
+            const dadosTrilha = abaTrilha.getDataRange().getValues();
+            for (let i = 1; i < dadosTrilha.length; i++) {
+              if (String(dadosTrilha[i][0]).trim() === matricula) {
+                // Salva o ID do Avatar na Coluna I (índice 9)
+                abaTrilha.getRange(i + 1, 9).setValue(avatarId); 
+                
+                // Invalida cache de trilhatech
+                const cache = CacheService.getScriptCache();
+                let keys = ["CACHE_trilhatech", "CACHE_trilhatech_CHUNKS"];
+                for (let k = 0; k < 15; k++) keys.push("CACHE_trilhatech_" + k);
+                cache.removeAll(keys);
+                
+                return ContentService.createTextOutput(JSON.stringify({ status: "sucesso" })).setMimeType(ContentService.MimeType.JSON);
+              }
             }
           }
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aluno não encontrado." })).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao salvar avatar." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
         }
-        return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aluno não encontrado." })).setMimeType(ContentService.MimeType.JSON);
       }
 
     // ==========================================
@@ -2859,47 +3070,65 @@ function doPost(e) {
           return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Você não pode curtir o próprio perfil!" })).setMimeType(ContentService.MimeType.JSON);
         }
 
-        // Cria a aba de curtidas se não existir
-        let abaCurtidas = planilha.getSheetByName("curtidas");
-        if (!abaCurtidas) {
-          abaCurtidas = planilha.insertSheet("curtidas");
-          abaCurtidas.appendRow(["ID_CURTIDA", "REMETENTE", "DESTINATARIO", "DATA"]);
-        }
-
-        const timezone = Session.getScriptTimeZone();
-        const dataHoje = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
-
-        // Regra de Ouro: Verifica se o Remetente JÁ CURTIU o Destinatário HOJE
-        const dadosCurtidas = abaCurtidas.getDataRange().getValues();
-        for (let i = 1; i < dadosCurtidas.length; i++) {
-          let rem = String(dadosCurtidas[i][1]).trim();
-          let dest = String(dadosCurtidas[i][2]).trim();
-          let dataBruta = dadosCurtidas[i][3];
-          let dataStr = dataBruta instanceof Date ? Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy") : String(dataBruta).trim();
-
-          if (rem === matriculaRemetente && dest === matriculaDestinatario && dataStr === dataHoje) {
-            return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Você já curtiu o perfil desta Lenda hoje. Volte amanhã!" })).setMimeType(ContentService.MimeType.JSON);
+        const lock = LockService.getScriptLock();
+        try {
+          lock.waitLock(15000);
+          
+          // Cria a aba de curtidas se não existir
+          let abaCurtidas = planilha.getSheetByName("curtidas");
+          if (!abaCurtidas) {
+            abaCurtidas = planilha.insertSheet("curtidas");
+            abaCurtidas.appendRow(["ID_CURTIDA", "REMETENTE", "DESTINATARIO", "DATA"]);
           }
-        }
 
-        // Se passou no teste, registra a curtida no banco
-        const idCurtida = "LIKE-" + new Date().getTime();
-        abaCurtidas.appendRow([idCurtida, matriculaRemetente, matriculaDestinatario, dataHoje]);
+          const timezone = Session.getScriptTimeZone();
+          const dataHoje = Utilities.formatDate(new Date(), timezone, "dd/MM/yyyy");
 
-        // Soma +1 Curtida no perfil do destinatário (Aba trilhatech, Coluna J / Índice 10)
-        const abaTrilha = planilha.getSheetByName("trilhatech");
-        if (abaTrilha) {
-          const dadosTrilha = abaTrilha.getDataRange().getValues();
-          for (let i = 1; i < dadosTrilha.length; i++) {
-            if (String(dadosTrilha[i][0]).trim() === matriculaDestinatario) {
-              let curtidasAtuais = Number(dadosTrilha[i][9]) || 0;
-              abaTrilha.getRange(i + 1, 10).setValue(curtidasAtuais + 1);
-              break;
+          // Regra de Ouro: Verifica se o Remetente JÁ CURTIU o Destinatário HOJE
+          const dadosCurtidas = abaCurtidas.getDataRange().getValues();
+          for (let i = 1; i < dadosCurtidas.length; i++) {
+            let rem = String(dadosCurtidas[i][1]).trim();
+            let dest = String(dadosCurtidas[i][2]).trim();
+            let dataBruta = dadosCurtidas[i][3];
+            let dataStr = dataBruta instanceof Date ? Utilities.formatDate(dataBruta, timezone, "dd/MM/yyyy") : String(dataBruta).trim();
+
+            if (rem === matriculaRemetente && dest === matriculaDestinatario && dataStr === dataHoje) {
+              return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Você já curtiu o perfil desta Lenda hoje. Volte amanhã!" })).setMimeType(ContentService.MimeType.JSON);
             }
           }
-        }
 
-        return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Perfil curtido com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
+          // Se passou no teste, registra a curtida no banco
+          const idCurtida = "LIKE-" + new Date().getTime();
+          abaCurtidas.appendRow([idCurtida, matriculaRemetente, matriculaDestinatario, dataHoje]);
+
+          // Soma +1 Curtida no perfil do destinatário (Aba trilhatech, Coluna J / Índice 10)
+          const abaTrilha = planilha.getSheetByName("trilhatech");
+          if (abaTrilha) {
+            const dadosTrilha = abaTrilha.getDataRange().getValues();
+            for (let i = 1; i < dadosTrilha.length; i++) {
+              if (String(dadosTrilha[i][0]).trim() === matriculaDestinatario) {
+                let curtidasAtuais = Number(dadosTrilha[i][9]) || 0;
+                abaTrilha.getRange(i + 1, 10).setValue(curtidasAtuais + 1);
+                break;
+              }
+            }
+          }
+
+          // Invalida cache de curtidas e trilhatech
+          const cache = CacheService.getScriptCache();
+          let keys = ["CACHE_curtidas", "CACHE_curtidas_CHUNKS", "CACHE_trilhatech", "CACHE_trilhatech_CHUNKS"];
+          for (let i = 0; i < 15; i++) {
+            keys.push("CACHE_curtidas_" + i);
+            keys.push("CACHE_trilhatech_" + i);
+          }
+          cache.removeAll(keys);
+
+          return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Perfil curtido com sucesso!" })).setMimeType(ContentService.MimeType.JSON);
+        } catch (e) {
+          return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao curtir perfil. Tente novamente." })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
+        }
       }
 
     // ==========================================
@@ -3118,7 +3347,9 @@ function doPost(e) {
     // ROTA 40: COROAR ELITE (TROFÉU ROTATIVO)
     // ==========================================
       if (action === "coroar_elite") {
+        const lock = LockService.getScriptLock();
         try {
+          lock.waitLock(15000);
           const matriculaNova = String(dadosApp.matricula).trim();
           const tipoPlaca = dadosApp.tipoPlaca; // Ex: "Elite Ouro"
 
@@ -3154,6 +3385,12 @@ function doPost(e) {
             "token-" + newId
           ]);
 
+          // Invalida cache de entregas
+          const cache = CacheService.getScriptCache();
+          let keys = ["CACHE_entregas", "CACHE_entregas_CHUNKS"];
+          for (let k = 0; k < 15; k++) keys.push("CACHE_entregas_" + k);
+          cache.removeAll(keys);
+
           return ContentService.createTextOutput(JSON.stringify({
             status: "sucesso",
             mensagem: `${tipoPlaca} transferida com sucesso para o novo Campeão!`
@@ -3161,6 +3398,8 @@ function doPost(e) {
 
         } catch (erro) {
           return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: erro.toString() })).setMimeType(ContentService.MimeType.JSON);
+        } finally {
+          lock.releaseLock();
         }
       }
 
@@ -3296,33 +3535,45 @@ function doPost(e) {
                   return idUrl; 
               }
 
-              const cacheUser = {};
+              const cacheAlunosCurso = {}; // courseId -> { userId -> { nomeNorm, email } }
+
+              function carregarAlunosCurso(courseId) {
+                  if (cacheAlunosCurso[courseId]) return cacheAlunosCurso[courseId];
+                  let mapa = {};
+                  try {
+                      let pageToken = null;
+                      do {
+                          const res = Classroom.Courses.Students.list(courseId, { pageToken: pageToken });
+                          const students = res.students || [];
+                          students.forEach(s => {
+                              if (s.userId && s.profile) {
+                                  let email = (s.profile.emailAddress || "").toLowerCase().trim();
+                                  let nome = s.profile.name ? (s.profile.name.fullName || "") : "";
+                                  mapa[s.userId] = { nomeNorm: normalizar(nome), email: email };
+                              }
+                          });
+                          pageToken = res.nextPageToken;
+                      } while (pageToken);
+                  } catch(e) {
+                      // Fallback se falhar
+                  }
+                  cacheAlunosCurso[courseId] = mapa;
+                  return mapa;
+              }
+
               function resolverUsuario(userId, courseId) {
-                  if (cacheUser[userId]) return cacheUser[userId];
+                  let mapaCurso = carregarAlunosCurso(courseId);
+                  if (mapaCurso[userId]) return mapaCurso[userId];
+                  
                   let nome = "", email = "";
                   try {
-                      const alunosTurma = Classroom.Courses.Students.list(courseId).students || [];
-                      const alunoEncontrado = alunosTurma.find(a => a.userId === userId);
-                      if (alunoEncontrado && alunoEncontrado.profile) {
-                          if (alunoEncontrado.profile.emailAddress) email = alunoEncontrado.profile.emailAddress.toLowerCase().trim();
-                          if (alunoEncontrado.profile.name && alunoEncontrado.profile.name.fullName) nome = alunoEncontrado.profile.name.fullName;
-                      }
+                      const prof = Classroom.UserProfiles.get(userId);
+                      if (prof && prof.emailAddress) email = prof.emailAddress.toLowerCase().trim();
+                      if (prof && prof.name && prof.name.fullName) nome = prof.name.fullName;
                   } catch(e) {}
-                  if (!email) {
-                      try {
-                          const prof = Classroom.UserProfiles.get(userId);
-                          if (prof && prof.emailAddress) email = prof.emailAddress.toLowerCase().trim();
-                          if (prof && prof.name && prof.name.fullName) nome = prof.name.fullName;
-                      } catch(e) {}
-                  }
-                  if (!email) {
-                      try {
-                          const files = DriveApp.searchFiles(`'${userId}' in owners`);
-                          if (files.hasNext()) email = (files.next().getOwner().getEmail() || "").toLowerCase().trim();
-                      } catch(e) {}
-                  }
+                  
                   const final = { nomeNorm: normalizar(nome), email: email, id: userId };
-                  cacheUser[userId] = final;
+                  mapaCurso[userId] = final;
                   return final;
               }
 
@@ -3616,35 +3867,43 @@ function doPost(e) {
               return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Acesso Negado. Credenciais inválidas." })).setMimeType(ContentService.MimeType.JSON);
           }
           
-          const turmaSorteio = String(dadosApp.turma).trim();
-          const abaRifa = planilha.getSheetByName("rifa_bilhetes");
-          
-          if (!abaRifa) {
-              return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aba rifa_bilhetes não encontrada." })).setMimeType(ContentService.MimeType.JSON);
-          }
-
-          const dadosRifa = abaRifa.getDataRange().getValues();
-          let bilhetesValidos = [];
-          
-          // Separa apenas os bilhetes daquela turma que ainda não ganharam
-          for (let i = 1; i < dadosRifa.length; i++) {
-              if (String(dadosRifa[i][3]).trim() === turmaSorteio && String(dadosRifa[i][5]).trim() === "ATIVO") {
-                  bilhetesValidos.push({ linha: i + 1, id: dadosRifa[i][0], matricula: dadosRifa[i][1], nome: dadosRifa[i][2] });
+          const lock = LockService.getScriptLock();
+          try {
+              lock.waitLock(15000);
+              const turmaSorteio = String(dadosApp.turma).trim();
+              const abaRifa = planilha.getSheetByName("rifa_bilhetes");
+              
+              if (!abaRifa) {
+                  return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Aba rifa_bilhetes não encontrada." })).setMimeType(ContentService.MimeType.JSON);
               }
+
+              const dadosRifa = abaRifa.getDataRange().getValues();
+              let bilhetesValidos = [];
+              
+              // Separa apenas os bilhetes daquela turma que ainda não ganharam
+              for (let i = 1; i < dadosRifa.length; i++) {
+                  if (String(dadosRifa[i][3]).trim() === turmaSorteio && String(dadosRifa[i][5]).trim() === "ATIVO") {
+                      bilhetesValidos.push({ linha: i + 1, id: dadosRifa[i][0], matricula: dadosRifa[i][1], nome: dadosRifa[i][2] });
+                  }
+              }
+
+              if (bilhetesValidos.length === 0) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Nenhum bilhete ativo encontrado nesta turma!" })).setMimeType(ContentService.MimeType.JSON);
+
+              // 🎲 Algoritmo de Sorteio Aleatório (O Coração da Roleta)
+              const vencedor = bilhetesValidos[Math.floor(Math.random() * bilhetesValidos.length)];
+              
+              // Queima o bilhete vencedor para ele não poder ganhar duas vezes na mesma rifa
+              abaRifa.getRange(vencedor.linha, 6).setValue("SORTEADO_GANHADOR");
+
+              return ContentService.createTextOutput(JSON.stringify({ 
+                  status: "sucesso", 
+                  ganhador: { nome: vencedor.nome, matricula: vencedor.matricula, bilhete: vencedor.id } 
+              })).setMimeType(ContentService.MimeType.JSON);
+          } catch (e) {
+              return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Servidor ocupado ao sortear rifa. Tente novamente." })).setMimeType(ContentService.MimeType.JSON);
+          } finally {
+              lock.releaseLock();
           }
-
-          if (bilhetesValidos.length === 0) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Nenhum bilhete ativo encontrado nesta turma!" })).setMimeType(ContentService.MimeType.JSON);
-
-          // 🎲 Algoritmo de Sorteio Aleatório (O Coração da Roleta)
-          const vencedor = bilhetesValidos[Math.floor(Math.random() * bilhetesValidos.length)];
-          
-          // Queima o bilhete vencedor para ele não poder ganhar duas vezes na mesma rifa
-          abaRifa.getRange(vencedor.linha, 6).setValue("SORTEADO_GANHADOR");
-
-          return ContentService.createTextOutput(JSON.stringify({ 
-              status: "sucesso", 
-              ganhador: { nome: vencedor.nome, matricula: vencedor.matricula, bilhete: vencedor.id } 
-          })).setMimeType(ContentService.MimeType.JSON);
       }
 
     // ==========================================
@@ -3690,12 +3949,20 @@ function registrarLogSeguranca(matricula, nome, acao, detalhes) {
 // ==========================================
 // FUNÇÃO AUXILIAR: LIMPEZA DE CACHE (INVALIDAÇÃO)
 // ==========================================
-function invalidarCacheGeral() {
+function invalidarCacheGeral(abasAdicionais) {
   const cache = CacheService.getScriptCache();
-  const abas = ["basededados", "controle_modulos", "atividades", "configuracoes"];
+  let abas = ["basededados", "controle_modulos", "atividades", "configuracoes"];
+  if (abasAdicionais && Array.isArray(abasAdicionais)) {
+    abas = abas.concat(abasAdicionais);
+  } else if (abasAdicionais && typeof abasAdicionais === "string") {
+    abas.push(abasAdicionais);
+  }
+  
   let chavesParaRemover = [];
   
-  // Mapeia tanto a chave principal quanto os possíveis "pedaços" (chunks)
+  // Remove duplicatas
+  abas = Array.from(new Set(abas));
+  
   abas.forEach(aba => {
     chavesParaRemover.push("CACHE_" + aba);
     chavesParaRemover.push("CACHE_" + aba + "_CHUNKS");
@@ -3704,6 +3971,61 @@ function invalidarCacheGeral() {
   
   cache.removeAll(chavesParaRemover);
 }
+
+// ==========================================
+// FUNÇÃO AUXILIAR: LEITURA DE CACHE ULTRA RÁPIDA (BLINDADA)
+// ==========================================
+  function lerComCacheSeguro(nomeAba, tempoSegundos) {
+    const cache = CacheService.getScriptCache();
+    const cacheChave = "CACHE_" + nomeAba;
+    let dadosString = cache.get(cacheChave);
+
+    try {
+      if (!dadosString) {
+        let chunksTotal = cache.get(cacheChave + "_CHUNKS");
+        if (chunksTotal) {
+          let reconstruido = "";
+          for (let c = 0; c < Number(chunksTotal); c++) reconstruido += cache.get(cacheChave + "_" + c) || "";
+          if (reconstruido) return JSON.parse(reconstruido);
+        }
+      } else {
+        return JSON.parse(dadosString);
+      }
+    } catch(e) {}
+
+    const planilha = SpreadsheetApp.getActiveSpreadsheet();
+    let aba = planilha.getSheetByName(nomeAba);
+    if (!aba) return [];
+
+    let dados = aba.getDataRange().getValues();
+    let timezone = Session.getScriptTimeZone();
+    
+    let dadosProcessados = dados.map(linha => linha.map(celula => {
+      if (celula instanceof Date) {
+        let d = String(celula.getDate()).padStart(2, '0');
+        let m = String(celula.getMonth() + 1).padStart(2, '0');
+        let y = celula.getFullYear();
+        return `${d}/${m}/${y}`; 
+      }
+      return celula;
+    }));
+
+    let jsonStr = JSON.stringify(dadosProcessados);
+
+    try {
+      if (jsonStr.length < 90000) {
+        cache.put(cacheChave, jsonStr, tempoSegundos);
+      } else {
+        let numChunks = Math.ceil(jsonStr.length / 90000);
+        cache.put(cacheChave + "_CHUNKS", String(numChunks), tempoSegundos);
+        for (let c = 0; c < numChunks; c++) {
+          cache.put(cacheChave + "_" + c, jsonStr.substring(c * 90000, (c + 1) * 90000), tempoSegundos);
+        }
+      }
+    } catch (e) {}
+
+    return dadosProcessados;
+  }
 
 // ==========================================
 // GATILHO AUTOMÁTICO (Vigia edições manuais na Planilha)

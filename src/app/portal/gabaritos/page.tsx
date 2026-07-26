@@ -7,6 +7,7 @@ import { DadosAluno, Atividade } from "@/src/types";
 import PortalHeader from "@/src/components/PortalHeader";
 import { apiAluno, apiGeral } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext"; // <-- IMPORTAÇÃO DO CONTEXTO
+import ThreeInteractiveBg from "@/src/components/ThreeInteractiveBg";
 
 export default function GabaritosPage() {
   const router = useRouter();
@@ -157,7 +158,14 @@ export default function GabaritosPage() {
   if (!montado || !aluno) return null;
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-12 transition-colors duration-300">
+    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans pb-12 transition-colors duration-300 relative overflow-hidden">
+      {/* Three.js interactive custom background */}
+      <ThreeInteractiveBg />
+
+      {/* Ambient background glows */}
+      <div className="absolute top-[-10%] right-[-10%] w-[35vw] h-[35vw] rounded-full aurora-bg-blob-1 animate-float-slow pointer-events-none" />
+      <div className="absolute bottom-[-15%] left-[-15%] w-[40vw] h-[40vw] rounded-full aurora-bg-blob-2 animate-float-medium pointer-events-none" />
+      
       {/* 🔥 CORREÇÃO DA SOBREPOSIÇÃO: Envolvendo o Header numa div com z-index alto */}
       <div className="relative z-90">
         <PortalHeader
@@ -195,24 +203,24 @@ export default function GabaritosPage() {
         />
       </div>
 
-      <div className="bg-white dark:bg-slate-900/80 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors duration-300 relative z-10">
-        <div className="max-w-384 w-full mx-auto p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+      <div className="bg-white/60 dark:bg-slate-950/40 border-b border-slate-200 dark:border-white/5 relative z-10 transition-colors duration-300">
+        <div className="max-w-[1536px] w-full mx-auto p-4 md:p-6 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push("/portal")}
-              className="text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 font-bold px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg shadow-sm transition-colors cursor-pointer"
+              className="text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white font-bold px-4 py-2 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-white/5 rounded-xl shadow-sm transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 text-sm"
             >
-              ← Voltar
+              <span>←</span> Voltar
             </button>
-            <h2 className="text-xl md:text-2xl font-black text-emerald-800 dark:text-emerald-400 flex items-center gap-2">
-              <span>🗝️</span> Central de Recuperação
+            <h2 className="text-xl md:text-2xl font-display font-black text-slate-800 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-brand-secondary dark:to-indigo-300 dark:text-neon-glow flex items-center gap-2">
+              <span>🗝️</span> Central de Gabaritos
             </h2>
           </div>
 
           {/* BOTÃO DE FOCO (PENDÊNCIAS) */}
           <button
             onClick={() => setOcultarConcluidas(!ocultarConcluidas)}
-            className={`cursor-pointer px-4 py-2 text-sm rounded-lg font-bold flex items-center gap-2 transition-all shadow-sm ${ocultarConcluidas ? "bg-amber-500 hover:bg-amber-600 text-white" : "bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700"}`}
+            className={`cursor-pointer px-4 py-2 text-xs uppercase tracking-wider rounded-xl font-bold flex items-center gap-2 transition-all border shadow-sm ${ocultarConcluidas ? "bg-amber-500/20 text-amber-300 border-amber-500/40" : "bg-slate-900 text-slate-400 border-white/5 hover:bg-slate-800 hover:text-white"}`}
           >
             {ocultarConcluidas
               ? "👁️ Mostrando Apenas Pendentes"
@@ -221,31 +229,31 @@ export default function GabaritosPage() {
         </div>
       </div>
 
-      <div className="max-w-384 w-full mx-auto p-4 md:p-8 mt-2 relative z-0">
+      <div className="max-w-[1536px] w-full mx-auto p-4 md:p-8 mt-2 relative z-0">
         {/* 🔥 GUIA DE WORKFLOW COMPACTO (Inspirado no seu Notion) */}
-        <div className="bg-slate-900 dark:bg-slate-950 rounded-2xl p-5 mb-8 flex flex-col md:flex-row gap-6 items-center justify-between shadow-md border-l-4 border-amber-500 transition-colors">
+        <div className="glass-panel rounded-2xl p-5 mb-8 flex flex-col md:flex-row gap-6 items-center justify-between shadow-md border-l-4 border-amber-500 border-t border-r border-b border-white/5 transition-colors">
           <div className="flex items-center gap-4 w-full">
             <div className="text-4xl shrink-0">📓</div>
             <div className="flex-1">
-              <h3 className="text-white font-black text-lg mb-2">
+              <h3 className="text-white font-display font-black text-lg mb-2">
                 Guia Rápido de Entrega
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-medium">
-                <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                <div className="bg-slate-950/40 p-3 rounded-xl border border-white/5 shadow-inner">
                   <strong className="text-emerald-400 block mb-1">
                     Para os Desafios Teóricos:
                   </strong>
-                  <p className="text-slate-300">
+                  <p className="text-slate-400 leading-relaxed">
                     Clique na <strong>letra correspondente (A, B, C, D)</strong>{" "}
                     na tabela para ser redirecionado imediatamente para o link
                     de entrega do AVA.
                   </p>
                 </div>
-                <div className="bg-slate-800 p-3 rounded-lg border border-slate-700">
+                <div className="bg-slate-950/40 p-3 rounded-xl border border-white/5 shadow-inner">
                   <strong className="text-amber-400 block mb-1">
                     Para os Miniprojetos (CodePen):
                   </strong>
-                  <p className="text-slate-300">
+                  <p className="text-slate-400 leading-relaxed">
                     Clique no Link Base para criar o seu <strong>Fork</strong>.
                     Depois, clique no nome da{" "}
                     <strong className="text-amber-400">AULA</strong> na última
@@ -259,8 +267,8 @@ export default function GabaritosPage() {
 
         {carregando ? (
           <div className="flex flex-col items-center justify-center py-20 opacity-60">
-            <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-emerald-600 dark:border-emerald-400 mb-4"></div>
-            <p className="font-bold text-slate-500 dark:text-slate-400">
+            <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-brand-primary mb-4"></div>
+            <p className="font-bold text-slate-400 animate-pulse">
               Descriptografando matrizes...
             </p>
           </div>

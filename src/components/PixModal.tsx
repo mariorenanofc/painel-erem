@@ -3,7 +3,8 @@
 import { useState, useEffect } from "react";
 import { PixModalProps, ItemExtrato, ColegaPix } from "../types";
 import { apiAluno } from "@/src/services/api";
-import { useToast } from "@/src/contexts/ToastContext"; // <-- IMPORTAÇÃO DO CONTEXTO
+import { useToast } from "@/src/contexts/ToastContext";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function PixModal({
   aluno,
@@ -11,7 +12,7 @@ export default function PixModal({
   onSuccess,
   alunoAlvoInicial,
 }: PixModalProps) {
-  const { toast } = useToast(); // <-- INICIALIZAÇÃO DO HOOK
+  const { toast } = useToast();
 
   const [carregandoPix, setCarregandoPix] = useState(true);
   const [dadosPix, setDadosPix] = useState<{
@@ -153,46 +154,77 @@ export default function PixModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/80 dark:bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-70 p-4 animate-in fade-in transition-colors duration-300">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border dark:border-slate-800 w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] transition-colors duration-300">
-        <div className="bg-gradient-to-r from-emerald-500 to-teal-600 dark:from-emerald-700 dark:to-teal-800 p-5 border-b dark:border-slate-800 flex justify-between items-center text-white shrink-0 transition-colors duration-300">
-          <div>
-            <h2 className="font-black text-xl flex items-center gap-2">
-              <span>💸</span> Pix de XP
+    <div className="fixed inset-0 z-70 flex items-center justify-center p-4">
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+      />
+
+      {/* Container Principal */}
+      <motion.div
+        initial={{ scale: 0.93, opacity: 0, y: 15 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        exit={{ scale: 0.93, opacity: 0, y: 15 }}
+        transition={{ type: "spring", damping: 25, stiffness: 350 }}
+        className="glass-panel-heavy bg-white/90 dark:bg-slate-900/90 rounded-[2rem] shadow-[0_0_50px_rgba(16,185,129,0.15)] border border-slate-200/80 dark:border-white/5 w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] relative z-10"
+      >
+        {/* Cabeçalho do modal */}
+        <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 dark:from-emerald-700 dark:to-teal-800 p-5.5 flex justify-between items-center text-white shrink-0 relative">
+          <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
+          <div className="relative z-10">
+            <h2 className="font-display font-black text-xl flex items-center gap-2 tracking-tight">
+              <span className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center text-sm shadow-inner">
+                💸
+              </span>{" "}
+              Pix de XP
             </h2>
-            <p className="text-emerald-100 text-xs mt-1">Sua conta de pontos</p>
+            <p className="text-emerald-100 text-xs mt-1 font-semibold tracking-wide uppercase opacity-90">
+              Sua conta de pontos
+            </p>
           </div>
           <button
             onClick={onClose}
-            className="cursor-pointer text-3xl leading-none hover:text-emerald-200 transition-colors"
+            className="cursor-pointer w-8 h-8 flex items-center justify-center rounded-full bg-white/10 hover:bg-white/20 text-white text-2xl transition-colors duration-200"
           >
             &times;
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto">
+        <div className="p-6 overflow-y-auto custom-scrollbar bg-white/40 dark:bg-transparent">
           {carregandoPix ? (
-            <div className="flex justify-center py-12">
-              <div className="animate-spin rounded-full h-10 w-10 border-b-4 border-emerald-500"></div>
+            <div className="flex flex-col justify-center items-center py-16">
+              <div className="relative w-10 h-10 mb-4">
+                <div className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-800" />
+                <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-emerald-500 animate-spin" />
+              </div>
+              <span className="text-slate-500 dark:text-slate-400 font-bold text-xs tracking-wider uppercase">
+                Buscando chaves...
+              </span>
             </div>
           ) : dadosPix && !dadosPix.temSenhaPix ? (
             <form
               onSubmit={criarSenhaPix}
-              className="text-center animate-in zoom-in"
+              className="text-center animate-in zoom-in duration-300"
             >
-              <div className="text-5xl mb-4">🔐</div>
-              <h3 className="font-bold text-slate-800 dark:text-slate-100 text-lg mb-2 transition-colors">
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-3xl mx-auto mb-4 border border-amber-500/20 shadow-inner">
+                🔐
+              </div>
+              <h3 className="font-display font-black text-slate-800 dark:text-slate-100 text-lg mb-2 tracking-tight">
                 Crie sua Senha Pix
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 transition-colors">
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
                 Para sua segurança, crie uma senha numérica de{" "}
-                <strong className="dark:text-slate-300">6 dígitos</strong>. Você
-                vai usá-la sempre que quiser enviar XP.
+                <strong className="text-slate-700 dark:text-slate-300">6 dígitos</strong>.
+                Você precisará dela para confirmar todas as transferências.
               </p>
 
               <div className="space-y-4 text-left mb-6">
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
+                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase mb-1.5 tracking-wider">
                     Nova Senha (6 números)
                   </label>
                   <input
@@ -203,12 +235,12 @@ export default function PixModal({
                       setNovaSenhaPix(e.target.value.replace(/\D/g, ""))
                     }
                     required
-                    className="w-full text-center text-slate-800 dark:text-slate-100 bg-transparent dark:bg-slate-800 text-2xl tracking-widest border-2 border-slate-300 dark:border-slate-700 rounded p-2 outline-none focus:border-emerald-500 transition-colors duration-300"
+                    className="w-full text-center text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-950/60 text-2xl tracking-widest border border-slate-200 dark:border-slate-800 rounded-2xl p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                     placeholder="••••••"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
+                  <label className="block text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase mb-1.5 tracking-wider">
                     Repita a Senha
                   </label>
                   <input
@@ -221,219 +253,274 @@ export default function PixModal({
                       )
                     }
                     required
-                    className="w-full text-center text-slate-800 dark:text-slate-100 bg-transparent dark:bg-slate-800 text-2xl tracking-widest border-2 border-slate-300 dark:border-slate-700 rounded p-2 outline-none focus:border-emerald-500 transition-colors duration-300"
+                    className="w-full text-center text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-950/60 text-2xl tracking-widest border border-slate-200 dark:border-slate-800 rounded-2xl p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                     placeholder="••••••"
                   />
                 </div>
               </div>
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 type="submit"
                 disabled={enviandoPix}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow transition-colors disabled:opacity-50"
+                className="cursor-pointer w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-sm py-4 rounded-2xl shadow-lg shadow-emerald-500/10 uppercase tracking-wider disabled:opacity-50"
               >
-                {enviandoPix ? "Salvando..." : "Cadastrar Senha"}
-              </button>
+                {enviandoPix ? "Salvando PIN..." : "Cadastrar Senha"}
+              </motion.button>
             </form>
           ) : dadosPix && dadosPix.temSenhaPix ? (
-            <div className="animate-in slide-in-from-bottom-4">
-              <div className="flex border-b border-slate-200 dark:border-slate-800 mb-5 transition-colors duration-300">
+            <div>
+              {/* Abas */}
+              <div className="flex border-b border-slate-200/80 dark:border-slate-800/80 mb-5 relative">
                 <button
                   onClick={() => setAbaAtiva("enviar")}
-                  className={`cursor-pointer flex-1 py-3 font-bold text-sm transition-colors ${abaAtiva === "enviar" ? "border-b-2 border-emerald-500 text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
+                  className={`cursor-pointer flex-1 py-3 font-black text-xs uppercase tracking-wider transition-colors relative z-10 ${
+                    abaAtiva === "enviar"
+                      ? "text-emerald-600 dark:text-emerald-450 font-black"
+                      : "text-slate-500 dark:text-slate-450 hover:text-slate-700 dark:hover:text-slate-350"
+                  }`}
                 >
                   Transferir XP
+                  {abaAtiva === "enviar" && (
+                    <motion.div
+                      layoutId="activeTabIndicator"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 dark:bg-emerald-400"
+                    />
+                  )}
                 </button>
                 <button
                   onClick={() => setAbaAtiva("extrato")}
-                  className={`cursor-pointer flex-1 py-3 font-bold text-sm transition-colors ${abaAtiva === "extrato" ? "border-b-2 border-emerald-500 text-emerald-600 dark:text-emerald-400" : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/50"}`}
+                  className={`cursor-pointer flex-1 py-3 font-black text-xs uppercase tracking-wider transition-colors relative z-10 ${
+                    abaAtiva === "extrato"
+                      ? "text-emerald-600 dark:text-emerald-450 font-black"
+                      : "text-slate-500 dark:text-slate-450 hover:text-slate-700 dark:hover:text-slate-350"
+                  }`}
                 >
                   Ver Extrato
+                  {abaAtiva === "extrato" && (
+                    <motion.div
+                      layoutId="activeTabIndicator"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 dark:bg-emerald-400"
+                    />
+                  )}
                 </button>
               </div>
 
-              {abaAtiva === "enviar" ? (
-                <form onSubmit={enviarPix}>
-                  <div className="flex justify-between items-center bg-slate-100 dark:bg-slate-800/50 p-3 rounded-lg border border-slate-200 dark:border-slate-700 mb-5 transition-colors duration-300">
-                    <div>
-                      <p className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">
-                        Seu Saldo Total
-                      </p>
-                      <p className="font-black text-emerald-600 dark:text-emerald-400 text-lg">
-                        {dadosPix.meuXpTotal} XP
-                      </p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-[10px] uppercase font-bold text-slate-500 dark:text-slate-400">
-                        Limite Diário Restante
-                      </p>
-                      <p className="font-black text-blue-600 dark:text-blue-400 text-lg">
-                        {Math.max(
-                          0,
-                          dadosPix.limiteDiario - dadosPix.xpDoadoHoje,
-                        )}{" "}
-                        XP
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
-                        Para quem você quer enviar?
-                      </label>
-                      <select
-                        value={pixColega}
-                        onChange={(e) => setPixColega(e.target.value)}
-                        required
-                        className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded p-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 transition-colors duration-300"
-                      >
-                        <option value="">Selecione um colega...</option>
-                        {dadosPix.colegas.map((c) => (
-                          <option key={c.matricula} value={c.matricula}>
-                            {c.nome}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div className="flex gap-4">
-                      <div className="flex-1">
-                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
-                          Valor (XP)
-                        </label>
-                        <input
-                          type="number"
-                          min="1"
-                          max={Math.min(
-                            dadosPix.meuXpTotal,
-                            dadosPix.limiteDiario - dadosPix.xpDoadoHoje,
-                          )}
-                          value={pixQuantidade}
-                          onChange={(e) =>
-                            setPixQuantidade(Number(e.target.value))
-                          }
-                          required
-                          className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-emerald-700 dark:text-emerald-400 font-black rounded p-2.5 outline-none focus:ring-2 focus:ring-emerald-500 transition-colors duration-300"
-                          placeholder="Ex: 10"
-                        />
+              <AnimatePresence mode="wait">
+                {abaAtiva === "enviar" ? (
+                  <motion.form
+                    key="enviar"
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 10 }}
+                    transition={{ duration: 0.2 }}
+                    onSubmit={enviarPix}
+                  >
+                    {/* Bento Boxes de Saldos */}
+                    <div className="grid grid-cols-2 gap-3.5 bg-slate-50/50 dark:bg-slate-950/20 p-3.5 rounded-2xl border border-slate-200/60 dark:border-slate-850 mb-5">
+                      <div className="space-y-0.5 border-r border-slate-200/80 dark:border-slate-800/80 pr-2">
+                        <p className="text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 tracking-wider">
+                          Seu Saldo
+                        </p>
+                        <p className="font-black text-emerald-600 dark:text-emerald-400 text-lg font-mono">
+                          {dadosPix.meuXpTotal} XP
+                        </p>
                       </div>
-                      <div className="flex-2">
-                        <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-1 transition-colors">
-                          Motivo / Mensagem
+                      <div className="space-y-0.5 pl-2">
+                        <p className="text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 tracking-wider">
+                          Limite Diário Restante
+                        </p>
+                        <p className="font-black text-blue-600 dark:text-blue-400 text-lg font-mono">
+                          {Math.max(
+                            0,
+                            dadosPix.limiteDiario - dadosPix.xpDoadoHoje,
+                          )}{" "}
+                          XP
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4.5">
+                      <div>
+                        <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase mb-1.5 tracking-wider">
+                          Para quem você quer enviar?
                         </label>
                         <select
-                          value={pixMotivo}
-                          onChange={(e) => setPixMotivo(e.target.value)}
+                          value={pixColega}
+                          onChange={(e) => setPixColega(e.target.value)}
                           required
-                          className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-100 rounded p-2.5 text-sm outline-none focus:ring-2 focus:ring-emerald-500 transition-colors duration-300"
+                          className="cursor-pointer w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl p-3 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
                         >
-                          <option>🤝 Parceria de Equipe</option>
-                          <option>🧠 Mestre do Código (Me ajudou)</option>
-                          <option>🍕 Pagando uma aposta/lanche</option>
-                          <option>🎁 Presente de Aniversário</option>
-                          <option>🚀 Incentivo para não desistir</option>
-                          <option>🏅 Recompensa por ajudar</option>
-                          <option>🪙 Negocios são negocios</option>
+                          <option value="">Selecione um colega...</option>
+                          {dadosPix.colegas.map((c) => (
+                            <option key={c.matricula} value={c.matricula}>
+                              {c.nome}
+                            </option>
+                          ))}
                         </select>
                       </div>
-                    </div>
 
-                    <div className="pt-4 border-t border-slate-200 dark:border-slate-800 mt-2 transition-colors duration-300">
-                      <label className="block text-xs font-bold text-amber-600 dark:text-amber-500 uppercase mb-1 text-center transition-colors">
-                        Digite sua Senha Pix
-                      </label>
-                      <input
-                        type="password"
-                        maxLength={6}
-                        value={pixSenha}
-                        onChange={(e) =>
-                          setPixSenha(e.target.value.replace(/\D/g, ""))
-                        }
-                        required
-                        className="w-full max-w-200 text-slate-800 dark:text-slate-100 mx-auto block text-center text-xl tracking-widest border-2 border-amber-300 dark:border-amber-700/50 bg-amber-50 dark:bg-amber-900/20 rounded p-2 outline-none focus:border-amber-500 transition-colors duration-300"
-                        placeholder="••••••"
-                      />
-                    </div>
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={
-                      enviandoPix ||
-                      dadosPix.limiteDiario - dadosPix.xpDoadoHoje <= 0
-                    }
-                    className="cursor-pointer w-full mt-6 bg-emerald-600 hover:bg-emerald-700 text-white font-black py-3 rounded-lg shadow-md transition-all disabled:opacity-50 hover:-translate-y-0.5"
-                  >
-                    {enviandoPix
-                      ? "Transferindo..."
-                      : "Confirmar Transferência 🚀"}
-                  </button>
-                </form>
-              ) : (
-                <div className="space-y-3 animate-in fade-in">
-                  {dadosPix.extrato.length === 0 ? (
-                    <div className="text-center py-10 opacity-60">
-                      <div className="text-4xl mb-3">📭</div>
-                      <p className="text-sm font-bold text-slate-500 dark:text-slate-400">
-                        Seu extrato está vazio.
-                      </p>
-                      <p className="text-xs text-slate-400 dark:text-slate-500">
-                        Você ainda não fez nem recebeu PIX.
-                      </p>
-                    </div>
-                  ) : (
-                    dadosPix.extrato.map((item) => (
-                      <div
-                        key={item.id}
-                        className="flex justify-between items-center bg-slate-50 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-slate-700 transition-colors duration-300"
-                      >
-                        <div className="flex items-center gap-3">
-                          <div
-                            className={`p-2.5 rounded-full shrink-0 ${item.tipo === "RECEBEU" ? "bg-emerald-100 dark:bg-emerald-900/50 text-emerald-600 dark:text-emerald-400" : "bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300"}`}
-                          >
-                            {item.tipo === "RECEBEU" ? "↙️" : "↗️"}
-                          </div>
-                          <div>
-                            <p className="text-sm font-bold text-slate-800 dark:text-slate-200 leading-tight">
-                              {item.tipo === "RECEBEU"
-                                ? "Pix Recebido"
-                                : "Pix Enviado"}
-                            </p>
-                            <p
-                              className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 font-medium line-clamp-1"
-                              title={item.mensagem}
-                            >
-                              {item.mensagem}
-                            </p>
-                            <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 flex items-center gap-1 font-medium">
-                              <span>🕒</span>{" "}
-                              {new Date(item.tempo)
-                                .toLocaleString("pt-BR", {
-                                  day: "2-digit",
-                                  month: "2-digit",
-                                  year: "numeric",
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                })
-                                .replace(",", " às")}
-                            </p>
-                          </div>
+                      <div className="flex flex-col sm:flex-row gap-4">
+                        <div className="flex-1">
+                          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase mb-1.5 tracking-wider">
+                            Valor (XP)
+                          </label>
+                          <input
+                            type="number"
+                            min="1"
+                            max={Math.min(
+                              dadosPix.meuXpTotal,
+                              dadosPix.limiteDiario - dadosPix.xpDoadoHoje,
+                            )}
+                            value={pixQuantidade}
+                            onChange={(e) =>
+                              setPixQuantidade(Number(e.target.value))
+                            }
+                            required
+                            className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-emerald-700 dark:text-emerald-450 font-black rounded-2xl p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors font-mono placeholder-slate-450"
+                            placeholder="10"
+                          />
                         </div>
-                        <div
-                          className={`font-black shrink-0 ml-2 ${item.tipo === "RECEBEU" ? "text-emerald-600 dark:text-emerald-400" : "text-slate-700 dark:text-slate-300"}`}
-                        >
-                          {item.tipo === "RECEBEU" ? "+" : ""}
-                          {item.xp} XP
+                        <div className="flex-1 sm:flex-[1.5]">
+                          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase mb-1.5 tracking-wider">
+                            Motivo
+                          </label>
+                          <select
+                            value={pixMotivo}
+                            onChange={(e) => setPixMotivo(e.target.value)}
+                            required
+                            className="cursor-pointer w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-slate-850 dark:text-slate-150 rounded-2xl p-3 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors"
+                          >
+                            <option>🤝 Parceria de Equipe</option>
+                            <option>🧠 Mestre do Código (Me ajudou)</option>
+                            <option>🍕 Pagando uma aposta/lanche</option>
+                            <option>🎁 Presente de Aniversário</option>
+                            <option>🚀 Incentivo para não desistir</option>
+                            <option>🏅 Recompensa por ajudar</option>
+                            <option>🪙 Negócios são negócios</option>
+                          </select>
                         </div>
                       </div>
-                    ))
-                  )}
-                </div>
-              )}
+
+                      <div className="pt-5 border-t border-slate-200/80 dark:border-slate-800/80 mt-2">
+                        <label className="block text-[10px] font-black text-amber-600 dark:text-amber-500 uppercase mb-2 text-center tracking-wider">
+                          🔒 Confirmar com sua Senha Pix
+                        </label>
+                        <input
+                          type="password"
+                          maxLength={6}
+                          value={pixSenha}
+                          onChange={(e) =>
+                            setPixSenha(e.target.value.replace(/\D/g, ""))
+                          }
+                          required
+                          className="w-40 text-slate-850 dark:text-slate-50 mx-auto block text-center text-2xl tracking-widest border border-amber-250 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-950/15 rounded-2xl p-2.5 outline-none focus:border-amber-500 transition-colors"
+                          placeholder="••••••"
+                        />
+                      </div>
+                    </div>
+
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      type="submit"
+                      disabled={
+                        enviandoPix ||
+                        dadosPix.limiteDiario - dadosPix.xpDoadoHoje <= 0
+                      }
+                      className="cursor-pointer w-full mt-6 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-sm py-4 rounded-2xl shadow-lg shadow-emerald-500/10 uppercase tracking-wider disabled:opacity-50 select-none"
+                    >
+                      {enviandoPix
+                        ? "Transferindo XP..."
+                        : "Confirmar Transferência 🚀"}
+                    </motion.button>
+                  </motion.form>
+                ) : (
+                  <motion.div
+                    key="extrato"
+                    initial={{ opacity: 0, x: 10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: -10 }}
+                    transition={{ duration: 0.2 }}
+                    className="space-y-3"
+                  >
+                    {dadosPix.extrato.length === 0 ? (
+                      <div className="text-center py-12 opacity-60 bg-slate-50/30 dark:bg-slate-950/10 rounded-2xl border border-dashed border-slate-200 dark:border-slate-800">
+                        <div className="text-4xl mb-3">📭</div>
+                        <p className="text-sm font-black text-slate-500 dark:text-slate-400">
+                          Seu extrato está vazio.
+                        </p>
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">
+                          Envie ou receba XP de seus colegas primeiro!
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2.5 max-h-[42vh] overflow-y-auto pr-1.5 custom-scrollbar">
+                        {dadosPix.extrato.map((item, idx) => (
+                          <motion.div
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: idx * 0.05 }}
+                            key={item.id}
+                            className="flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/40 p-3 rounded-2xl border border-slate-200/50 dark:border-slate-850 transition-colors duration-300"
+                          >
+                            <div className="flex items-center gap-3">
+                              <div
+                                className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
+                                  item.tipo === "RECEBEU"
+                                    ? "bg-emerald-100/80 dark:bg-emerald-950/45 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/30"
+                                    : "bg-slate-100 dark:bg-slate-950/60 text-slate-550 dark:text-slate-350 border-slate-200 dark:border-slate-850"
+                                }`}
+                              >
+                                {item.tipo === "RECEBEU" ? "↙️" : "↗️"}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="text-xs font-black text-slate-850 dark:text-slate-200 leading-tight">
+                                  {item.tipo === "RECEBEU"
+                                    ? "Pix Recebido"
+                                    : "Pix Enviado"}
+                                </p>
+                                <p
+                                  className="text-[10px] text-slate-450 dark:text-slate-400 mt-0.5 font-bold truncate line-clamp-1"
+                                  title={item.mensagem}
+                                >
+                                  {item.mensagem}
+                                </p>
+                                <p className="text-[9px] text-slate-400 dark:text-slate-500 mt-1 flex items-center gap-1 font-semibold uppercase">
+                                  🕒{" "}
+                                  {new Date(item.tempo)
+                                    .toLocaleString("pt-BR", {
+                                      day: "2-digit",
+                                      month: "2-digit",
+                                      year: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })
+                                    .replace(",", " às")}
+                                </p>
+                              </div>
+                            </div>
+                            <div
+                              className={`font-black shrink-0 ml-2 font-mono text-sm ${
+                                item.tipo === "RECEBEU"
+                                  ? "text-emerald-600 dark:text-emerald-450"
+                                  : "text-slate-650 dark:text-slate-300"
+                              }`}
+                            >
+                              {item.tipo === "RECEBEU" ? "+" : "-"}
+                              {item.xp} XP
+                            </div>
+                          </motion.div>
+                        ))}
+                      </div>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           ) : null}
         </div>
-      </div>
+      </motion.div>
     </div>
   );
 }

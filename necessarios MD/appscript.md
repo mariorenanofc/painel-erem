@@ -690,6 +690,7 @@ function doPost(e) {
 
         let ativXp = 0; let ativTipo = "Projeto"; let ativRespostaCorreta = ""; 
         let moduloAtiv = ""; let turmaAlvoAtiv = ""; let dataLimObj = null;
+        let linkClassroom = ""; let isGabaritoLiberado = false;
 
         for (let i = 1; i < dadosAtiv.length; i++) {
             if (String(dadosAtiv[i][0]).trim() === idAtividade) {
@@ -698,6 +699,8 @@ function doPost(e) {
                 ativTipo = String(dadosAtiv[i][6]).trim();
                 ativRespostaCorreta = String(dadosAtiv[i][11]).trim();
                 moduloAtiv = String(dadosAtiv[i][15]).trim().toLowerCase();
+                linkClassroom = String(dadosAtiv[i][12] || "").trim();
+                isGabaritoLiberado = dadosAtiv[i][17] === true || String(dadosAtiv[i][17]).toLowerCase() === "true";
                 
                 let strDate = String(dadosAtiv[i][3]).trim();
                 if (strDate.includes("-")) {
@@ -735,18 +738,44 @@ function doPost(e) {
         let msgDesconto = "";
         let isCorreto = (ativTipo === "Material") ? true : (resposta === ativRespostaCorreta);
 
-        if (ativTipo === "Quiz" || ativTipo === "Material") {
-            statusFinal = "Avaliado";
-            if (isCorreto) {
-                let desconto = 0;
-                if (atrasoDias > 0 && xpFinalPermitido > 0) {
-                    let teto = Math.floor(xpFinalPermitido / 2); 
-                    desconto = atrasoDias; 
-                    if (desconto > teto) desconto = teto;
-                    msgDesconto = ` (Desconto de -${desconto} XP pelo atraso)`;
+        // Se a atividade possui link do Classroom, entra como "Aguardando Validação" no portal
+        if (linkClassroom && linkClassroom.includes("classroom.google.com")) {
+            statusFinal = "Aguardando Validação";
+            xpGanhoFinal = 0;
+        } else {
+            if (ativTipo === "Quiz" || ativTipo === "Material") {
+                statusFinal = "Avaliado";
+                if (isCorreto) {
+                    if (xpFinalPermitido > 0) {
+                        let descontoAtraso = 0;
+                        if (atrasoDias > 0) {
+                            let teto = Math.floor(xpFinalPermitido / 2); 
+                            descontoAtraso = atrasoDias; 
+                            if (descontoAtraso > teto) descontoAtraso = teto;
+                        }
+                        
+                        let descontoGabarito = 0;
+                        if (atrasoDias > 0 && isGabaritoLiberado) {
+                            descontoGabarito = Math.floor(ativXp * 0.3);
+                        }
+                        
+                        let descontoTotal = descontoAtraso + descontoGabarito;
+                        xpGanhoFinal = xpFinalPermitido - descontoTotal;
+                        
+                        let piso = Math.ceil(ativXp * 0.1);
+                        if (xpGanhoFinal < piso) xpGanhoFinal = piso;
+
+                        if (descontoTotal > 0) {
+                            let msgs = [];
+                            if (descontoAtraso > 0) msgs.push(`-${descontoAtraso} XP por atraso`);
+                            if (descontoGabarito > 0) msgs.push(`-30% por gabarito liberado`);
+                            msgDesconto = ` (${msgs.join(", ")})`;
+                        }
+                    } else {
+                        xpGanhoFinal = 0;
+                        msgDesconto = " (0 XP: O módulo desta atividade já foi encerrado!)";
+                    }
                 }
-                xpGanhoFinal = xpFinalPermitido - desconto;
-                if (xpFinalPermitido === 0) msgDesconto = " (0 XP: O módulo desta atividade já foi encerrado!)";
             }
         }
 
@@ -3513,6 +3542,30 @@ function doPost(e) {
 
               const dadosTrilha = abaTrilha.getDataRange().getValues();
               const mapaBuscaAluno = {}; 
+              const listaAlunosAtivos = [];
+
+              function compararNomes(nome1, nome2) {
+                  if (!nome1 || !nome2) return false;
+                  let n1 = normalizar(nome1);
+                  let n2 = normalizar(nome2);
+                  if (n1 === n2) return true;
+                  
+                  if (n1.indexOf(n2) === 0 || n2.indexOf(n1) === 0) return true;
+                  
+                  let p1 = n1.split(/\s+/);
+                  let p2 = n2.split(/\s+/);
+                  if (p1.length > 0 && p2.length > 0) {
+                      if (p1[0] === p2[0]) {
+                          for (let i = 1; i < p1.length; i++) {
+                              if (p1[i].length > 2 && p2.indexOf(p1[i]) !== -1) {
+                                  return true;
+                              }
+                          }
+                      }
+                  }
+                  return false;
+              }
+
               for (let i = 1; i < dadosTrilha.length; i++) {
                   let matricula = String(dadosTrilha[i][0]).trim();
                   let status = String(dadosTrilha[i][2]).trim().toLowerCase();
@@ -3520,12 +3573,19 @@ function doPost(e) {
 
                   if (filtroTurma !== "Todas" && turmaAluno !== filtroTurma) continue; 
 
-                  if (matricula && (status === "ativo" || status === "reserva")) {
+                  if (matricula && status === "ativo") {
                       let info = mapaMatricula[matricula];
                       if (info) {
-                          let objTrilha = { matricula: matricula, linhaTrilha: i + 1, xpAtual: Number(dadosTrilha[i][4]) || 0 };
+                          let objTrilha = { 
+                              matricula: matricula, 
+                              linhaTrilha: i + 1, 
+                              xpAtual: Number(dadosTrilha[i][4]) || 0,
+                              email: info.email,
+                              nomeNorm: info.nomeNorm
+                          };
                           if (info.email) mapaBuscaAluno[info.email] = objTrilha;
                           if (info.nomeNorm) mapaBuscaAluno[info.nomeNorm] = objTrilha;
+                          listaAlunosAtivos.push(objTrilha);
                       }
                   }
               }
@@ -3670,14 +3730,30 @@ function doPost(e) {
                                   if (sub.state === "TURNED_IN" || sub.state === "RETURNED") {
 
                                       let usr = resolverUsuario(sub.userId, courseId);
-                                      let alunoDb = mapaBuscaAluno[usr.email] || mapaBuscaAluno[usr.nomeNorm];
+                                      let alunoDb = null;
+                                      if (usr.email) alunoDb = mapaBuscaAluno[usr.email];
+                                      if (!alunoDb && usr.nomeNorm) alunoDb = mapaBuscaAluno[usr.nomeNorm];
+                                      
+                                      // Fallback robusto por comparação de nome parcial
+                                      if (!alunoDb && usr.nomeNorm) {
+                                          for (let k = 0; k < listaAlunosAtivos.length; k++) {
+                                              if (compararNomes(listaAlunosAtivos[k].nomeNorm, usr.nomeNorm)) {
+                                                  alunoDb = listaAlunosAtivos[k];
+                                                  break;
+                                              }
+                                          }
+                                      }
 
                                       if (alunoDb) {
                                           let chaveEntrega = alunoDb.matricula + "_" + idAtiv;
                                           let entregaExistente = mapaEntregas[chaveEntrega];
 
                                           // FUSÃO INTELIGENTE
-                                          if (!entregaExistente || entregaExistente.status === "Aguardando Correção" || entregaExistente.status === "Pendente") {
+                                          if (!entregaExistente || 
+                                              entregaExistente.status === "Aguardando Correção" || 
+                                              entregaExistente.status === "Pendente" || 
+                                              entregaExistente.status === "Aguardando Validação" ||
+                                              entregaExistente.status === "Aguardando Validacao") {
                                               
                                               let dataEntregaAVA = sub.updateTime ? new Date(sub.updateTime) : new Date();
                                               let timestampRealDaEntrega = dataEntregaAVA.getTime();
@@ -3699,12 +3775,30 @@ function doPost(e) {
                                                       }
                                                   }
 
+                                                  let descontoAtraso = 0;
                                                   if (atrasoDias > 0 && xpAtiv > 0) {
                                                       let teto = Math.floor(xpAtiv / 2);
-                                                      let desconto = atrasoDias;
-                                                      if (desconto > teto) desconto = teto;
-                                                      xpGanhoFinal = xpAtiv - desconto;
-                                                      notaAdicional = ` (-${desconto}XP por Atraso)`;
+                                                      descontoAtraso = atrasoDias;
+                                                      if (descontoAtraso > teto) descontoAtraso = teto;
+                                                  }
+
+                                                  let isGabaritoLiberado = ativ[17] === true || String(ativ[17]).toLowerCase() === "true";
+                                                  let descontoGabarito = 0;
+                                                  if (atrasoDias > 0 && isGabaritoLiberado && xpAtiv > 0) {
+                                                      descontoGabarito = Math.floor(xpAtiv * 0.3);
+                                                  }
+
+                                                  let descontoTotal = descontoAtraso + descontoGabarito;
+                                                  xpGanhoFinal = xpAtiv - descontoTotal;
+
+                                                  let piso = Math.ceil(xpAtiv * 0.1);
+                                                  if (xpGanhoFinal < piso) xpGanhoFinal = piso;
+
+                                                  if (descontoTotal > 0) {
+                                                      let msgs = [];
+                                                      if (descontoAtraso > 0) msgs.push(`-${descontoAtraso}XP por Atraso`);
+                                                      if (descontoGabarito > 0) msgs.push(`-30% por Gabarito Liberado`);
+                                                      notaAdicional = ` (${msgs.join(", ")})`;
                                                   }
                                               }
 

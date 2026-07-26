@@ -499,6 +499,11 @@ export default function PortalDashboard() {
   };
 
   // ================= CÁLCULOS E FILTROS =================
+  const atividadesAguardandoValidacao = atividades.filter((a) => {
+    const st = a.status?.toLowerCase().trim() || "";
+    return st === "aguardando validação" || st === "aguardando validacao";
+  });
+
   const missoesPendentes = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
     const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
@@ -529,7 +534,7 @@ export default function PortalDashboard() {
 
   const qtdConcluidas = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
-    return st !== "pendente" && st !== "devolvida";
+    return st !== "pendente" && st !== "devolvida" && st !== "aguardando validação" && st !== "aguardando validacao";
   }).length;
 
   const atividadesFiltradas = atividades.filter((a) => {
@@ -556,7 +561,7 @@ export default function PortalDashboard() {
       );
     }
     if (abaAtividade === "Concluidas")
-      return st !== "pendente" && st !== "devolvida";
+      return st !== "pendente" && st !== "devolvida" && st !== "aguardando validação" && st !== "aguardando validacao";
     return true;
   });
 
@@ -935,6 +940,49 @@ export default function PortalDashboard() {
         </motion.div>
       </div>
 
+      {/* SEÇÃO: ATIVIDADES AGUARDANDO VALIDAÇÃO */}
+      {atividadesAguardandoValidacao.length > 0 && (
+        <div className="max-w-[1536px] w-full mx-auto px-4 md:px-8 mt-6 relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="glass-panel p-6 rounded-3xl border border-amber-500/20 bg-amber-500/5 shadow-xl">
+            <h3 className="text-lg font-display font-black text-amber-600 dark:text-amber-400 flex items-center gap-2 mb-4">
+              <span>⏳</span> Atividades Enviadas mas Não Validadas ({atividadesAguardandoValidacao.length})
+            </h3>
+            <p className="text-xs text-slate-550 dark:text-slate-400 mb-4">
+              Estas missões foram entregues no Portal, mas ainda precisam ser validadas no Google Classroom.
+              Enquanto não forem validadas, o XP correspondente não será creditado. Se a atividade for validada com atraso,
+              descontos de XP serão aplicados regressivamente.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {atividadesAguardandoValidacao.map((ativ) => (
+                <div 
+                  key={ativ.id} 
+                  className="bg-white dark:bg-slate-900/60 rounded-2xl p-4 border border-amber-500/30 flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-amber-500 transition-all duration-300"
+                >
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-amber-500/10 transition-all"></div>
+                  <div>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 px-2 py-0.5 bg-amber-500/10 rounded-md border border-amber-500/20">
+                      {ativ.tipo}
+                    </span>
+                    <h4 className="font-display font-bold text-sm text-slate-805 dark:text-white mt-2 leading-tight">
+                      {ativ.titulo}
+                    </h4>
+                    <p className="text-xs text-slate-550 dark:text-slate-400 mt-1 line-clamp-2">
+                      {ativ.descricao}
+                    </p>
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs">
+                    <span className="text-slate-400">XP Estimado: <strong className="text-slate-300">{ativ.xp}</strong></span>
+                    <span className="text-amber-500 font-bold animate-pulse flex items-center gap-1">
+                      <span>⚠️</span> Pendente no AVA
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ÁREA DE CURSOS E MISSÕES */}
       <div className="max-w-[1536px] w-full mx-auto mt-8 relative z-10">
         <div className="glass-panel p-6 md:p-8 rounded-3xl border border-white/10 shadow-2xl">
@@ -1270,14 +1318,15 @@ export default function PortalDashboard() {
                                         st === "avaliada" ||
                                         st === "aguardando correção";
                                       const isDevolvida = st === "devolvida";
+                                      const isAguardandoValidacao = st === "aguardando validação" || st === "aguardando validacao";
 
                                       return (
                                         <div
                                           key={ativ.id}
-                                          className={`bg-slate-950/60 rounded-2xl border shadow-sm flex flex-col overflow-hidden relative transition-all hover:shadow-xl hover:-translate-y-1 ${isConcluida ? "border-emerald-500/20" : isDevolvida ? "border-red-500/30" : "border-white/5 hover:border-brand-primary/30"}`}
+                                          className={`bg-slate-950/60 rounded-2xl border shadow-sm flex flex-col overflow-hidden relative transition-all hover:shadow-xl hover:-translate-y-1 ${isConcluida ? "border-emerald-500/20" : isAguardandoValidacao ? "border-amber-500/30 shadow-amber-500/5" : isDevolvida ? "border-red-500/30" : "border-white/5 hover:border-brand-primary/30"}`}
                                         >
                                           <div
-                                            className={`h-2 w-full ${isConcluida ? "bg-emerald-500" : isDevolvida ? "bg-red-500" : ativ.tipo === "Quiz" ? "bg-amber-400" : ativ.tipo === "Material" ? "bg-emerald-400" : "bg-brand-primary"}`}
+                                            className={`h-2 w-full ${isConcluida ? "bg-emerald-500" : isAguardandoValidacao ? "bg-amber-500" : isDevolvida ? "bg-red-500" : ativ.tipo === "Quiz" ? "bg-amber-400" : ativ.tipo === "Material" ? "bg-emerald-400" : "bg-brand-primary"}`}
                                           ></div>
                                           <div className="p-5 flex-1 flex flex-col">
                                             <div className="flex justify-between items-start mb-4">
@@ -1302,6 +1351,18 @@ export default function PortalDashboard() {
                                                   </span>
                                                   <span className="bg-emerald-900 text-emerald-300 text-[10px] font-black px-2 py-1 rounded uppercase shadow-sm">
                                                     ⭐ {ativ.xpGanho || ativ.xp} XP
+                                                  </span>
+                                                </div>
+                                              ) : isAguardandoValidacao ? (
+                                                <div className="bg-amber-950/20 border border-amber-900/30 rounded-xl p-3 flex justify-between items-center">
+                                                  <span className="text-amber-400 font-bold text-xs flex items-center gap-1.5 animate-pulse">
+                                                    <span className="text-base">
+                                                      ⏳
+                                                    </span>{" "}
+                                                    Em Validação
+                                                  </span>
+                                                  <span className="bg-amber-900/40 text-amber-300 text-[10px] font-black px-2 py-1 rounded uppercase shadow-sm">
+                                                    Pendente
                                                   </span>
                                                 </div>
                                               ) : isDevolvida ? (
@@ -1335,9 +1396,9 @@ export default function PortalDashboard() {
                                                     ].status,
                                                   )
                                                 }
-                                                className={`cursor-pointer w-full text-white text-sm font-black py-3 px-4 rounded-xl transition-all active:scale-95 shadow-md ${isConcluida ? "bg-slate-800 hover:bg-slate-700" : isDevolvida ? "bg-red-500 hover:bg-red-600" : "bg-brand-primary hover:bg-indigo-600"}`}
+                                                className={`cursor-pointer w-full text-white text-sm font-black py-3 px-4 rounded-xl transition-all active:scale-95 shadow-md ${isConcluida ? "bg-slate-800 hover:bg-slate-700" : isAguardandoValidacao ? "bg-amber-600/20 text-amber-300 hover:bg-amber-600/30 border border-amber-500/30" : isDevolvida ? "bg-red-500 hover:bg-red-600" : "bg-brand-primary hover:bg-indigo-600"}`}
                                               >
-                                                {isConcluida
+                                                {isConcluida || isAguardandoValidacao
                                                   ? "Ver Detalhes"
                                                   : "Abrir Atividade"}
                                               </button>
@@ -1361,6 +1422,7 @@ export default function PortalDashboard() {
                                           st === "avaliada" ||
                                           st === "aguardando correção";
                                         const isDevolvida = st === "devolvida";
+                                        const isAguardandoValidacao = st === "aguardando validação" || st === "aguardando validacao";
 
                                         // Determina se fica à esquerda ou direita no desktop
                                         const isLeft = index % 2 === 0;
@@ -1377,16 +1439,18 @@ export default function PortalDashboard() {
                                               className={`absolute left-8 md:left-1/2 w-12 h-12 rounded-[1.25rem] flex items-center justify-center text-base font-black bg-slate-900 border-2 z-20 transform -translate-x-1/2 shadow-lg transition-transform duration-300 hover:scale-110 ${
                                                 isConcluida
                                                   ? "border-emerald-500 text-emerald-405 shadow-emerald-500/10"
-                                                  : isDevolvida
-                                                    ? "border-red-500 text-red-400 shadow-red-500/10 animate-pulse"
-                                                    : ativ.tipo === "Quiz"
-                                                      ? "border-amber-400 text-amber-400 shadow-amber-400/10"
-                                                      : ativ.tipo === "Material"
-                                                        ? "border-emerald-450 text-emerald-400 shadow-emerald-450/10"
-                                                        : "border-brand-primary text-brand-primary shadow-brand-primary/10"
+                                                  : isAguardandoValidacao
+                                                    ? "border-amber-500 text-amber-400 shadow-amber-500/10 animate-pulse"
+                                                    : isDevolvida
+                                                      ? "border-red-500 text-red-400 shadow-red-500/10 animate-pulse"
+                                                      : ativ.tipo === "Quiz"
+                                                        ? "border-amber-400 text-amber-400 shadow-amber-400/10"
+                                                        : ativ.tipo === "Material"
+                                                          ? "border-emerald-450 text-emerald-400 shadow-emerald-450/10"
+                                                          : "border-brand-primary text-brand-primary shadow-brand-primary/10"
                                               }`}
                                             >
-                                              {isConcluida ? "✓" : isDevolvida ? "!" : ativ.tipo === "Quiz" ? "🎯" : ativ.tipo === "Material" ? "📚" : "🚀"}
+                                              {isConcluida ? "✓" : isAguardandoValidacao ? "⏳" : isDevolvida ? "!" : ativ.tipo === "Quiz" ? "🎯" : ativ.tipo === "Material" ? "📚" : "🚀"}
                                             </div>
 
                                             {/* Card da atividade */}
@@ -1394,13 +1458,15 @@ export default function PortalDashboard() {
                                               className={`ml-16 md:ml-0 w-[calc(100%-5rem)] md:w-[calc(50%-3rem)] bg-slate-950/60 backdrop-blur-md rounded-3xl border shadow-md transition-all hover:shadow-xl hover:-translate-y-0.5 ${
                                                 isConcluida
                                                   ? "border-emerald-500/20"
-                                                  : isDevolvida
-                                                    ? "border-red-500/30"
-                                                    : ativ.tipo === "Quiz"
-                                                      ? "border-amber-500/10 hover:border-amber-500/30"
-                                                      : ativ.tipo === "Material"
-                                                        ? "border-emerald-500/10 hover:border-emerald-500/30"
-                                                        : "border-brand-primary/10 hover:border-brand-primary/30"
+                                                  : isAguardandoValidacao
+                                                    ? "border-amber-500/30"
+                                                    : isDevolvida
+                                                      ? "border-red-500/30"
+                                                      : ativ.tipo === "Quiz"
+                                                        ? "border-amber-500/10 hover:border-amber-500/30"
+                                                        : ativ.tipo === "Material"
+                                                          ? "border-emerald-500/10 hover:border-emerald-500/30"
+                                                          : "border-brand-primary/10 hover:border-brand-primary/30"
                                               }`}
                                             >
                                               <div className="p-5">
@@ -1430,6 +1496,10 @@ export default function PortalDashboard() {
                                                     <span className="text-emerald-400 font-bold text-xs flex items-center gap-1">
                                                       <span>✅</span> Concluída
                                                     </span>
+                                                  ) : isAguardandoValidacao ? (
+                                                    <span className="text-amber-400 font-bold text-xs flex items-center gap-1 animate-pulse">
+                                                      <span>⏳</span> Em Validação
+                                                    </span>
                                                   ) : isDevolvida ? (
                                                     <span className="text-red-400 font-bold text-xs flex items-center gap-1">
                                                       <span>⚠️</span> Devolvida
@@ -1440,7 +1510,7 @@ export default function PortalDashboard() {
                                                     </span>
                                                   )}
                                                   <span className="text-[10px] text-slate-300 font-black">
-                                                    ⭐ {ativ.xpGanho || ativ.xp} XP
+                                                    ⭐ {isAguardandoValidacao ? "Pendente" : `${ativ.xpGanho || ativ.xp} XP`}
                                                   </span>
                                                 </div>
 
@@ -1456,12 +1526,14 @@ export default function PortalDashboard() {
                                                   className={`cursor-pointer w-full mt-4 text-white text-xs font-black py-3 px-4 rounded-xl transition-all active:scale-95 shadow-md ${
                                                     isConcluida
                                                       ? "bg-slate-800 hover:bg-slate-700"
-                                                      : isDevolvida
-                                                        ? "bg-red-500 hover:bg-red-600"
-                                                        : "bg-brand-primary hover:bg-indigo-650"
+                                                      : isAguardandoValidacao
+                                                        ? "bg-amber-600/20 text-amber-300 hover:bg-amber-600/30 border border-amber-500/30"
+                                                        : isDevolvida
+                                                          ? "bg-red-500 hover:bg-red-600"
+                                                          : "bg-brand-primary hover:bg-indigo-650"
                                                   }`}
                                                 >
-                                                  {isConcluida
+                                                  {isConcluida || isAguardandoValidacao
                                                     ? "Ver Detalhes"
                                                     : "Abrir Atividade"}
                                                 </button>

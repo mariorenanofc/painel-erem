@@ -394,12 +394,12 @@ export default function ThreeInteractiveBg() {
 
     // ANIMATION LOOP
     let animationFrameId: number;
-    const clock = new THREE.Clock();
+    const startTime = performance.now();
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
 
-      const elapsedTime = clock.getElapsedTime();
+      const elapsedTime = (performance.now() - startTime) / 1000;
 
       // Smooth mouse coordinates lerp
       targetX += (mouseX - targetX) * 0.05;

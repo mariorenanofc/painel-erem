@@ -898,7 +898,7 @@ export default function GestaoAulasPage() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              onClick={iniciarSincronizacaoAVA}
+              onClick={() => setModalSyncAberto(true)}
               className="cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-650 hover:brightness-110 text-white font-black py-2.5 px-4.5 rounded-xl shadow-md shadow-blue-500/5 flex items-center gap-1.5 text-xs uppercase tracking-wider border-none"
             >
               <span>🔄</span> Sincronizar AVA

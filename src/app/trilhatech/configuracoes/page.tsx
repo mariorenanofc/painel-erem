@@ -311,7 +311,7 @@ export default function ConfiguracoesPage() {
                             type="text"
                             value={configs.SENHA_CHECKIN}
                             onChange={(e) => handleChange("SENHA_CHECKIN", e.target.value.toUpperCase())}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-slate-800 dark:text-slate-100 font-bold font-mono focus:border-blue-500 outline-none transition-all"
+                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-slate-800 dark:text-slate-100 font-bold font-mono focus:border-blue-500 outline-none transition-all"
                           />
                         </div>
                         <div>
@@ -373,7 +373,7 @@ export default function ConfiguracoesPage() {
                             type="url"
                             value={configs.LINK_WPP_T1}
                             onChange={(e) => handleChange("LINK_WPP_T1", e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-slate-800 dark:text-slate-100 font-bold focus:border-blue-500 outline-none transition-all"
+                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-slate-800 dark:text-slate-100 font-bold focus:border-blue-500 outline-none transition-all"
                           />
                         </div>
                         <div>
@@ -384,7 +384,7 @@ export default function ConfiguracoesPage() {
                             type="url"
                             value={configs.LINK_WPP_T2}
                             onChange={(e) => handleChange("LINK_WPP_T2", e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-slate-800 dark:text-slate-100 font-bold focus:border-blue-500 outline-none transition-all"
+                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-slate-800 dark:text-slate-100 font-bold focus:border-blue-500 outline-none transition-all"
                           />
                         </div>
                         <div className="md:col-span-2">
@@ -395,7 +395,7 @@ export default function ConfiguracoesPage() {
                             type="url"
                             value={configs.LINK_PLANILHA}
                             onChange={(e) => handleChange("LINK_PLANILHA", e.target.value)}
-                            className="w-full bg-slate-50 dark:bg-slate-955 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-slate-800 dark:text-slate-100 font-mono text-xs focus:border-blue-500 outline-none transition-all"
+                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-slate-800 dark:text-slate-100 font-mono text-xs focus:border-blue-500 outline-none transition-all"
                           />
                         </div>
                         <div>

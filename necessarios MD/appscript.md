@@ -3630,7 +3630,9 @@ function doPost(e) {
                   try {
                       let pageToken = null;
                       do {
-                          const res = Classroom.Courses.Students.list(courseId, { pageToken: pageToken });
+                          let options = { pageSize: 500 };
+                          if (pageToken) options.pageToken = pageToken;
+                          const res = Classroom.Courses.Students.list(courseId, options);
                           const students = res.students || [];
                           students.forEach(s => {
                               if (s.userId && s.profile) {
@@ -3641,24 +3643,33 @@ function doPost(e) {
                           });
                           pageToken = res.nextPageToken;
                       } while (pageToken);
-                  } catch(e) {
-                      // Fallback se falhar
-                  }
+                  } catch(e) {}
                   cacheAlunosCurso[courseId] = mapa;
                   return mapa;
               }
 
               function resolverUsuario(userId, courseId) {
                   let mapaCurso = carregarAlunosCurso(courseId);
-                  if (mapaCurso[userId]) return mapaCurso[userId];
+                  if (mapaCurso[userId] && mapaCurso[userId].email) return mapaCurso[userId];
                   
                   let nome = "", email = "";
-                  try {
-                      const prof = Classroom.UserProfiles.get(userId);
-                      if (prof && prof.emailAddress) email = prof.emailAddress.toLowerCase().trim();
-                      if (prof && prof.name && prof.name.fullName) nome = prof.name.fullName;
-                  } catch(e) {}
-                  
+                  if (mapaCurso[userId]) {
+                      nome = mapaCurso[userId].nomeNorm || "";
+                      email = mapaCurso[userId].email || "";
+                  }
+                  if (!email) {
+                      try {
+                          const prof = Classroom.UserProfiles.get(userId);
+                          if (prof && prof.emailAddress) email = prof.emailAddress.toLowerCase().trim();
+                          if (prof && prof.name && prof.name.fullName) nome = prof.name.fullName;
+                      } catch(e) {}
+                  }
+                  if (!email) {
+                      try {
+                          const files = DriveApp.searchFiles(`'${userId}' in owners`);
+                          if (files.hasNext()) email = (files.next().getOwner().getEmail() || "").toLowerCase().trim();
+                      } catch(e) {}
+                  }
                   const final = { nomeNorm: normalizar(nome), email: email, id: userId };
                   mapaCurso[userId] = final;
                   return final;

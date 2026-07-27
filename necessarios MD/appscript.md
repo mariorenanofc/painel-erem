@@ -588,15 +588,23 @@ function doPost(e) {
           }
         }
 
-        // 🔥 2. MAPA DE PENDÊNCIAS (Para o alerta vermelho)
+        // 🔥 2. MAPA DE STATUS (Para contagens de pendências, validadas AVA e pendentes AVA)
         let pendentesMap = {};
+        let aguardandoValidacaoMap = {};
+        let validadasAVAMap = {};
         if (abaEntregas) {
           const dadosEntregas = abaEntregas.getDataRange().getValues();
           for (let i = 1; i < dadosEntregas.length; i++) {
+            let idAtiv = String(dadosEntregas[i][2]).trim();
             let statusEntrega = String(dadosEntregas[i][4]).trim();
+            let feedback = String(dadosEntregas[i][7] || "").trim();
+            
             if (statusEntrega === "Aguardando Correção") {
-              let idAtiv = String(dadosEntregas[i][2]).trim();
               pendentesMap[idAtiv] = (pendentesMap[idAtiv] || 0) + 1;
+            } else if (statusEntrega === "Aguardando Validação" || statusEntrega === "Aguardando Validacao") {
+              aguardandoValidacaoMap[idAtiv] = (aguardandoValidacaoMap[idAtiv] || 0) + 1;
+            } else if (statusEntrega === "Avaliado" && (feedback.includes("Classroom") || feedback.includes("AVA") || feedback.includes("sincronizada"))) {
+              validadasAVAMap[idAtiv] = (validadasAVAMap[idAtiv] || 0) + 1;
             }
           }
         }
@@ -642,6 +650,8 @@ function doPost(e) {
               gabarito: String(dadosAtiv[i][16] || ""),
               gabaritoLiberado: dadosAtiv[i][17] === true || String(dadosAtiv[i][17]).toLowerCase() === "true",
               pendentes: pendentesMap[idAtiv] || 0,
+              aguardandoValidacao: aguardandoValidacaoMap[idAtiv] || 0,
+              validadasAVA: validadasAVAMap[idAtiv] || 0,
               statusModulo: statusModulosMap[nomeModulo + "|" + turmaAtiv] || statusModulosMap[nomeModulo + "|Todas"] || "Aberto"
             });
           }
@@ -3845,11 +3855,28 @@ function doPost(e) {
 
               logProgresso(100, "Concluído! Salvando dados...");
 
+              let totalPendentesPosSync = 0;
+              try {
+                  const dadosEntregasFim = abaEntregas.getDataRange().getValues();
+                  for (let i = 1; i < dadosEntregasFim.length; i++) {
+                      let statusEnt = String(dadosEntregasFim[i][4]).trim();
+                      if (statusEnt === "Aguardando Validação" || statusEnt === "Aguardando Validacao") {
+                          totalPendentesPosSync++;
+                      }
+                  }
+              } catch(e) {}
+
               let mensagemFinal = "";
               if (entregasNovas > 0) {
-                  mensagemFinal = `Sincronização Perfeita! Projetos pendentes avaliados e novas notas importadas.`;
+                  mensagemFinal = `Sincronização Perfeita! ${entregasNovas} nova(s) entrega(s) validadas e pontuadas pelo AVA.`;
               } else {
-                  mensagemFinal = `Sincronização concluída. Nenhuma nota nova para importar.`;
+                  mensagemFinal = `Sincronização concluída. Nenhuma nova nota importada do AVA.`;
+              }
+
+              if (totalPendentesPosSync > 0) {
+                  mensagemFinal += `\n\n⏳ Ainda restam ${totalPendentesPosSync} entrega(s) pendentes de validação (aguardando envio no Classroom pelo aluno).`;
+              } else {
+                  mensagemFinal += `\n\n🎉 Todas as entregas do portal foram validadas com sucesso!`;
               }
 
               if (logsErro.length > 0) {

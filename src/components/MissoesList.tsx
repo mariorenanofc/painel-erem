@@ -368,6 +368,17 @@ export default function MissoesList({
                                                   {qtdPendentes} Para Corrigir
                                                 </span>
                                               )}
+                                              {/* CONTADORES DO AVA (Validadas e Nao Sincronizadas) */}
+                                              {(ativ as any).aguardandoValidacao > 0 && (
+                                                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-450 border border-amber-250 dark:border-amber-900/35 shadow-sm">
+                                                  ⏳ {(ativ as any).aguardandoValidacao} Pendentes AVA
+                                                </span>
+                                              )}
+                                              {(ativ as any).validadasAVA > 0 && (
+                                                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-450 border border-emerald-250 dark:border-emerald-900/35 shadow-sm">
+                                                  ✅ {(ativ as any).validadasAVA} Validadas AVA
+                                                </span>
+                                              )}
                                               <span className="text-[10px] text-slate-400 dark:text-slate-550 font-mono">
                                                 ID: {ativ.id?.split("-")[1] || ativ.id}
                                               </span>

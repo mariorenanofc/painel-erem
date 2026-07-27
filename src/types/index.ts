@@ -54,6 +54,8 @@ export interface Atividade {
   gabarito?: string;
   gabaritoLiberado?: boolean;
   pendentes?: number;
+  aguardandoValidacao?: number;
+  validadasAVA?: number;
 }
 
 export interface PerfilAluno {

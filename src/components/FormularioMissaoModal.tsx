@@ -85,6 +85,16 @@ export default function FormularioMissaoModal({
   limparFormulario,
   salvarNovaAtividade,
 }: FormularioMissaoModalProps) {
+  React.useEffect(() => {
+    if (!dataLimite) {
+      const hoje = new Date();
+      const yyyy = hoje.getFullYear();
+      const mm = String(hoje.getMonth() + 1).padStart(2, "0");
+      const dd = String(hoje.getDate()).padStart(2, "0");
+      setDataLimite(`${yyyy}-${mm}-${dd}`);
+    }
+  }, [dataLimite, setDataLimite]);
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">

@@ -5,9 +5,9 @@ import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const TABELA_XP_PADRAO = {
-  Material: 10,
-  Quiz: 50,
-  Projeto: 100,
+  Material: 7,
+  Quiz: 25,
+  Projeto: 150,
 };
 
 interface AtividadeParseada {
@@ -71,60 +71,66 @@ export default function ImportadorLoteModal({
       const linha = linhas[index];
 
       // Padrão de entrada do Classroom: "Aula 01 - Apresentação (Assunto...)"
-      // Aceita: "Aula 1", "Aula 01", "Aula 10", etc.
-      const matchAula = linha.match(/^Aula\s*(\d+)\s*-\s*(.*)/i);
+      // Aceita: "Aula 1", "Aula 01", "Aula 10", etc., com traços normais, longos, en-dash ou dois pontos.
+      const matchAula = linha.match(/^Aula\s*(\d+)\s*[-–—:]\s*(.*)/i);
       if (matchAula) {
-        const numAula = matchAula[1].length === 1 ? `0${matchAula[1]}` : matchAula[1];
+        const numAula = matchAula[1].padStart(2, "0");
         const resto = matchAula[2].trim();
 
         // Detecta se a linha de baixo é "Rascunho"
         const proximaLinha = linhas[index + 1] ? linhas[index + 1].trim() : "";
         const isRascunho = proximaLinha.toLowerCase() === "rascunho";
 
-        // Mapeamento de tipo e assunto do Classroom
-        // Ex: "Desafio 1.1 (Primeiros Passos)" ou "Apresentação (O que é JS?)"
-        const matchDetalhes = resto.match(/^(Desafio|Mini Projeto|Material de Apoio|Apresentação|Broadcast|Feedback)\s*([\d.]+)?\s*\((.*)\)/i);
+        // Separa o tipo/título bruto do assunto (entre parênteses no final da linha)
+        const matchDetalhes = resto.match(/(.*?)\s*\(([^)]+)\)$/);
 
-        let tipoOriginal = "Material";
-        let assunto = resto;
+        let tipoBruto = resto;
+        let assunto = "";
 
         if (matchDetalhes) {
-          tipoOriginal = matchDetalhes[1].trim();
-          assunto = matchDetalhes[3].trim();
+          tipoBruto = matchDetalhes[1].trim();
+          assunto = matchDetalhes[2].trim();
         }
 
         // Traduz para as nomenclaturas do painel-erem
         let tipoPortal = "Material";
         let xp = TABELA_XP_PADRAO.Material;
-        let nomeFormatado = tipoOriginal;
+        let nomeFormatado = tipoBruto;
 
-        const nomeLower = tipoOriginal.toLowerCase();
-        if (nomeLower.includes("desafio")) {
+        const tipoBrutoLower = tipoBruto.toLowerCase();
+        if (tipoBrutoLower.includes("desafio")) {
           tipoPortal = "Quiz";
           xp = TABELA_XP_PADRAO.Quiz;
-          nomeFormatado = "Desafio 1"; // Mantém no padrão simplificado se necessário
-        } else if (nomeLower.includes("projeto")) {
+
+          const temp = tipoBruto.replace(/desafio/i, "Desafio");
+          if (/\b\d+\.2\b/.test(temp)) {
+            nomeFormatado = "Desafio_2 -";
+          } else {
+            nomeFormatado = temp;
+          }
+        } else if (tipoBrutoLower.includes("projeto")) {
           tipoPortal = "Projeto";
           xp = TABELA_XP_PADRAO.Projeto;
-          nomeFormatado = "Mini projeto";
+          nomeFormatado = "Mini Projeto -";
         } else {
           tipoPortal = "Material";
           xp = TABELA_XP_PADRAO.Material;
 
-          if (nomeLower.includes("apoio"))
-            nomeFormatado = "Materiais de Apoio";
-          else if (nomeLower.includes("feedback"))
-            nomeFormatado = "Feedback da Aula";
-          else if (nomeLower.includes("broadcast"))
+          if (tipoBrutoLower.includes("apoio")) {
+            nomeFormatado = "Materiais de apoio";
+          } else if (tipoBrutoLower.includes("feedback")) {
+            nomeFormatado = "Feedback da aula";
+          } else if (tipoBrutoLower.includes("broadcast")) {
             nomeFormatado = "Broadcast";
-          else if (
-            nomeLower.includes("apresentação") ||
-            nomeLower.includes("apresentacao")
-          )
+          } else if (
+            tipoBrutoLower.includes("apresentação") ||
+            tipoBrutoLower.includes("apresentacao")
+          ) {
             nomeFormatado = "Apresentação";
+          }
         }
 
-        const tituloFinal = `[Aula ${numAula}] ${nomeFormatado} (${assunto})`;
+        const tituloFinal = assunto ? `[Aula ${numAula}] ${nomeFormatado} (${assunto})` : `[Aula ${numAula}] ${nomeFormatado}`;
 
         encontradas.push({
           idTemp: Math.random().toString(36).substring(7),
@@ -303,7 +309,7 @@ export default function ImportadorLoteModal({
                       className="cursor-pointer w-full bg-slate-900 dark:bg-white text-white dark:text-slate-900 font-black py-4 rounded-2xl shadow-lg transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2 select-none"
                     >
                       🤖 Analisar e Formatar Textos
-                  </motion.button>
+                    </motion.button>
                   </motion.div>
                 ) : (
                   /* ETAPA 2: REVISÃO DE ESTRUTURA */
@@ -339,11 +345,10 @@ export default function ImportadorLoteModal({
                       {atividades.map((ativ) => (
                         <label
                           key={ativ.idTemp}
-                          className={`flex items-start gap-4 p-4.5 rounded-2xl border cursor-pointer transition-all duration-355 shadow-sm hover:translate-x-0.5 ${
-                            ativ.selecionado
+                          className={`flex items-start gap-4 p-4.5 rounded-2xl border cursor-pointer transition-all duration-355 shadow-sm hover:translate-x-0.5 ${ativ.selecionado
                               ? "bg-white dark:bg-slate-800 border-blue-400 dark:border-blue-650 shadow-md"
                               : "bg-slate-50/40 dark:bg-slate-950/15 border-slate-200/50 dark:border-slate-800 opacity-60 hover:opacity-85"
-                          }`}
+                            }`}
                         >
                           <input
                             type="checkbox"

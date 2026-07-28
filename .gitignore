@@ -45,3 +45,4 @@ next-env.d.ts
 # temp files
 /temp-ui-ux/
 *.bak
+*.csv

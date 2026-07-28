@@ -16,23 +16,34 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 });
 
 export const metadata: Metadata = {
-  title: "Portal Educacional",
+  title: "Portal TrilhaTech | EREM Barão do Exu",
   description:
-    "Plataforma gamificada de gestão de alunos, acompanhamento de missões e ranking.",
+    "Plataforma gamificada de gestão de alunos, acompanhamento de missões e ranking da Escola de Programação Web TrilhaTech.",
   metadataBase: new URL("https://painel-erem.vercel.app"),
+  manifest: "/manifest.webmanifest?v=2",
+
+  icons: {
+    icon: [
+      { url: "/favicon.ico?v=2" },
+      { url: "/icon.png?v=2", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-icon.png?v=2", sizes: "180x180", type: "image/png" },
+    ],
+  },
 
   // CONFIGURAÇÃO DO OPEN GRAPH
   openGraph: {
-    title: "Portal Educacional | Área Restrita",
-    description: "Acesse suas missões, XP, ranking e muito mais.",
+    title: "Portal TrilhaTech | Área Restrita",
+    description: "Acesse suas missões, XP, ranking e muito mais no Portal TrilhaTech.",
     type: "website",
     url: "https://painel-erem.vercel.app",
     images: [
       {
-        url: "https://painel-erem.vercel.app/img-share.png",
+        url: "https://painel-erem.vercel.app/img-share.png?v=2",
         width: 1200,
         height: 630,
-        alt: "Imagem de visualização do Portal Educacional",
+        alt: "Imagem de visualização do Portal TrilhaTech",
       },
     ],
   },

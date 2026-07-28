@@ -131,11 +131,10 @@ export default function MissoesList({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setFiltroPendentes(!filtroPendentes)}
-            className={`cursor-pointer px-5 py-2.5 rounded-2xl text-sm font-black border transition-colors whitespace-nowrap ${
-              filtroPendentes
+            className={`cursor-pointer px-5 py-2.5 rounded-2xl text-sm font-black border transition-colors whitespace-nowrap ${filtroPendentes
                 ? "bg-gradient-to-r from-red-500 to-rose-600 text-white border-transparent shadow-md shadow-red-500/20"
                 : "bg-white dark:bg-slate-900/40 text-red-500 dark:text-red-400 border-red-200 dark:border-red-900/30 hover:bg-red-50 dark:hover:bg-red-955/35"
-            }`}
+              }`}
           >
             {filtroPendentes ? "🚨 Limpar Filtro" : "🚨 Só Pendentes"}
           </motion.button>
@@ -144,11 +143,10 @@ export default function MissoesList({
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setFiltrosAvançadosAbertos(!filtrosAvançadosAbertos)}
-            className={`cursor-pointer px-5 py-2.5 rounded-2xl text-sm font-black border transition-colors ${
-              filtrosAvançadosAbertos
+            className={`cursor-pointer px-5 py-2.5 rounded-2xl text-sm font-black border transition-colors ${filtrosAvançadosAbertos
                 ? "bg-slate-800 dark:bg-slate-700 text-white border-transparent"
                 : "bg-white dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800"
-            }`}
+              }`}
           >
             Filtros ⚙️
           </motion.button>
@@ -244,9 +242,8 @@ export default function MissoesList({
                       {qtdMissoesModulo} {qtdMissoesModulo === 1 ? "item" : "itens"}
                     </span>
                     <span
-                      className={`text-slate-400 font-black text-xs transition-transform duration-350 ${
-                        isModuloAberto ? "rotate-180" : ""
-                      }`}
+                      className={`text-slate-400 font-black text-xs transition-transform duration-350 ${isModuloAberto ? "rotate-180" : ""
+                        }`}
                     >
                       ▼
                     </span>
@@ -297,9 +294,8 @@ export default function MissoesList({
                                     {missoes.length} {missoes.length === 1 ? "missão" : "missões"}
                                   </span>
                                   <span
-                                    className={`text-slate-400 text-[10px] transition-transform duration-300 ${
-                                      isAulaAberta ? "rotate-180" : ""
-                                    }`}
+                                    className={`text-slate-400 text-[10px] transition-transform duration-300 ${isAulaAberta ? "rotate-180" : ""
+                                      }`}
                                   >
                                     ▼
                                   </span>
@@ -347,13 +343,12 @@ export default function MissoesList({
                                           <div className="flex-1 min-w-0 pr-4">
                                             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                                               <span
-                                                className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg border transition-colors ${
-                                                  ativ.tipo === "Quiz"
+                                                className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg border transition-colors ${ativ.tipo === "Quiz"
                                                     ? "bg-amber-100/80 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200/50 dark:border-amber-800/30"
                                                     : ativ.tipo === "Material"
                                                       ? "bg-emerald-100/80 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/30"
                                                       : "bg-blue-100/80 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-800/30"
-                                                }`}
+                                                  }`}
                                               >
                                                 {ativ.tipo}
                                               </span>

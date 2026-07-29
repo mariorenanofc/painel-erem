@@ -3735,7 +3735,7 @@ function doPost(e) {
                   }
                   if (dataLimObj) dataLimObj.setHours(0,0,0,0);
 
-                  const match = link.match(/\/c\/([^\/\?]+)\/a\/([^\/\?]+)/i);
+                  const match = link.match(/\/c\/([^\/\?]+)\/(?:a|sa|q|mc)\/([^\/\?]+)/i);
                   if (match && match[1] && match[2]) {
 
                       let courseId = decodificarId(match[1]);

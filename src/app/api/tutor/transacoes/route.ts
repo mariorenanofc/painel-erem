@@ -20,7 +20,7 @@ function formatResposta(resposta: string, alunosMap: Record<string, string>) {
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const page = Math.max(1, Number(searchParams.get("page") || 1));
-  const limit = Math.max(1, Number(searchParams.get("limit") || 50));
+  const limit = Math.max(1, Number(searchParams.get("limit") || 20));
   const busca = String(searchParams.get("busca") || "").trim().toLowerCase();
   const categoria = String(searchParams.get("categoria") || "").trim();
   const status = String(searchParams.get("status") || "").trim();

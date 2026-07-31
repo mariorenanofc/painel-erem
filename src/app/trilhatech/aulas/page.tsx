@@ -152,6 +152,7 @@ export default function GestaoAulasPage() {
   const [buscaTransacoes, setBuscaTransacoes] = useState("");
   const [filtroCategoriaTransacoes, setFiltroCategoriaTransacoes] = useState("");
   const [filtroStatusTransacoes, setFiltroStatusTransacoes] = useState("");
+  const [limiteTransacoes, setLimiteTransacoes] = useState(20);
   const [transacaoEditando, setTransacaoEditando] = useState<any | null>(null);
   const [editXpGanho, setEditXpGanho] = useState<number>(0);
   const [editStatus, setEditStatus] = useState("");
@@ -378,7 +379,7 @@ export default function GestaoAulasPage() {
   const carregarTransacoes = async () => {
     setCarregandoTransacoes(true);
     try {
-      const url = `/api/tutor/transacoes?page=${paginaTransacoes}&limit=50&busca=${encodeURIComponent(buscaTransacoes)}&categoria=${filtroCategoriaTransacoes}&status=${filtroStatusTransacoes}`;
+      const url = `/api/tutor/transacoes?page=${paginaTransacoes}&limit=${limiteTransacoes}&busca=${encodeURIComponent(buscaTransacoes)}&categoria=${filtroCategoriaTransacoes}&status=${filtroStatusTransacoes}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.status === "sucesso") {
@@ -398,7 +399,7 @@ export default function GestaoAulasPage() {
     if (activeTab === "transacoes") {
       carregarTransacoes();
     }
-  }, [activeTab, paginaTransacoes, buscaTransacoes, filtroCategoriaTransacoes, filtroStatusTransacoes]);
+  }, [activeTab, paginaTransacoes, buscaTransacoes, filtroCategoriaTransacoes, filtroStatusTransacoes, limiteTransacoes]);
 
   const abrirModalEditarTransacao = (t: any) => {
     setTransacaoEditando(t);
@@ -1054,10 +1055,10 @@ export default function GestaoAulasPage() {
           </div>
 
           {/* TAB SWITCHER MODERN/PREMIUM (SEGMENTED CONTROL STYLE) - MOBILE AND DESKTOP COMPATIBLE */}
-          <div className="bg-slate-150 dark:bg-slate-950 p-1.5 rounded-2xl flex gap-1 w-full sm:w-auto overflow-x-auto border border-slate-200 dark:border-slate-850">
+          <div className="bg-slate-150 dark:bg-slate-950 p-1.5 rounded-2xl flex gap-2.5 w-full sm:w-auto overflow-x-auto border border-slate-200 dark:border-slate-850">
             <button
               onClick={() => setActiveTab("missoes")}
-              className={`cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none ${
+              className={`cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none min-w-[120px] sm:min-w-[140px] ${
                 activeTab === "missoes"
                   ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
@@ -1067,7 +1068,7 @@ export default function GestaoAulasPage() {
             </button>
             <button
               onClick={() => setActiveTab("transacoes")}
-              className={`cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none ${
+              className={`cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none min-w-[120px] sm:min-w-[140px] ${
                 activeTab === "transacoes"
                   ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
@@ -1077,7 +1078,7 @@ export default function GestaoAulasPage() {
             </button>
             <button
               onClick={() => setActiveTab("ferramentas")}
-              className={`xl:hidden cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none ${
+              className={`xl:hidden cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none min-w-[120px] sm:min-w-[140px] ${
                 activeTab === "ferramentas"
                   ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
@@ -1087,7 +1088,7 @@ export default function GestaoAulasPage() {
             </button>
             <button
               onClick={() => setActiveTab("links")}
-              className={`xl:hidden cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none ${
+              className={`xl:hidden cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none min-w-[120px] sm:min-w-[140px] ${
                 activeTab === "links"
                   ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
@@ -1220,8 +1221,8 @@ export default function GestaoAulasPage() {
         )}
 
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          {/* PAINEL LATERAL DE CONFIGURAÇÕES - ALWAYS BLOCK ON DESKTOP, CONDITIONAL ON MOBILE */}
-          <div className={`${activeTab === "ferramentas" ? "block" : "hidden"} xl:block xl:col-span-1 space-y-4`}>
+          {/* PAINEL LATERAL DE CONFIGURAÇÕES - ALWAYS BLOCK ON DESKTOP, HIDE ON TRANSACTIONS, CONDITIONAL ON MOBILE */}
+          <div className={`${activeTab === "ferramentas" ? "block" : "hidden"} ${activeTab === "transacoes" ? "xl:hidden" : "xl:block"} xl:col-span-1 space-y-4`}>
             {aniversariantes.length > 0 && (
               <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800/50 p-4 rounded-xl shadow-sm transition-colors">
                 <h3 className="font-black text-sm uppercase tracking-tight text-amber-800 dark:text-amber-400 mb-1 flex items-center gap-2 transition-colors">
@@ -1357,7 +1358,7 @@ export default function GestaoAulasPage() {
           </div>
 
           {/* ÁREA PRINCIPAL: CENTRAL DE TRANSAÇÕES */}
-          <div className={`${activeTab === "transacoes" ? "block" : "hidden"} xl:col-span-3`}>
+          <div className={`${activeTab === "transacoes" ? "block" : "hidden"} xl:col-span-4`}>
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
               
               {/* CABEÇALHO E FILTROS */}
@@ -1374,7 +1375,7 @@ export default function GestaoAulasPage() {
                 </div>
 
                 {/* FILTROS E PESQUISA */}
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
                   <div className="sm:col-span-2">
                     <input
                       type="text"
@@ -1418,6 +1419,20 @@ export default function GestaoAulasPage() {
                       <option value="Avaliado">Avaliado</option>
                       <option value="Devolvida">Devolvida</option>
                       <option value="EXCLUIDA">Excluída</option>
+                    </select>
+                  </div>
+                  <div>
+                    <select
+                      value={limiteTransacoes}
+                      onChange={(e) => {
+                        setLimiteTransacoes(Number(e.target.value));
+                        setPaginaTransacoes(1);
+                      }}
+                      className="w-full text-xs border border-slate-250 dark:border-slate-800 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-350 bg-slate-50 dark:bg-slate-950 outline-none transition-all shadow-sm font-bold font-black"
+                    >
+                      <option value={20}>Exibir 20</option>
+                      <option value={50}>Exibir 50</option>
+                      <option value={100}>Exibir 100</option>
                     </select>
                   </div>
                 </div>

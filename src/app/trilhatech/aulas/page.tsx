@@ -885,8 +885,77 @@ export default function GestaoAulasPage() {
             </div>
           </div>
 
-          {/* TAB SWITCHER MODERN/PREMIUM (SEGMENTED CONTROL STYLE) */}
-          <div className="bg-slate-150 dark:bg-slate-950 p-1.5 rounded-2xl flex gap-1 w-full sm:w-auto overflow-x-auto border border-slate-200 dark:border-slate-850">
+          {/* DASHBOARD SUPERIOR (SHORTCUTS) - DESKTOP ONLY */}
+          <div className="hidden xl:flex flex-wrap gap-2.5">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => router.push("/trilhatech/configuracoes")}
+              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-fuchsia-500/35 dark:hover:border-fuchsia-500/35 hover:bg-fuchsia-500/5 dark:hover:bg-fuchsia-500/10 shadow-sm transition-all flex items-center gap-1.5"
+            >
+              ⚙️ Configs
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setModalSyncAberto(true)}
+              className="cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-650 hover:brightness-110 text-white font-black py-2.5 px-4.5 rounded-xl shadow-md shadow-blue-500/5 flex items-center gap-1.5 text-xs uppercase tracking-wider border-none"
+            >
+              <span>🔄</span> Sincronizar AVA
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => setModalSorteioAberto(true)}
+              className="cursor-pointer px-4.5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 text-white rounded-xl text-xs font-black shadow-md shadow-amber-500/5 flex items-center gap-1.5 border-none uppercase tracking-wider"
+            >
+              🎰 Sortear Rifa
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                setModalRankingAberto(true);
+                carregarRankingTutor("geral");
+              }}
+              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-amber-500/35 hover:bg-amber-500/5 dark:hover:bg-amber-500/10 shadow-sm transition-all flex items-center gap-1.5"
+            >
+              🏆 Ranking
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={abrirRelatorioFrequencia}
+              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-emerald-500/35 hover:bg-emerald-500/5 dark:hover:bg-emerald-500/10 shadow-sm transition-all flex items-center gap-1.5"
+            >
+              📍 Diário
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => router.push("/trilhatech/analytics")}
+              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-indigo-500/35 hover:bg-indigo-500/5 dark:hover:bg-indigo-500/10 shadow-sm transition-all flex items-center gap-1.5"
+            >
+              📈 Analytics
+            </motion.button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => router.push("/trilhatech/gabaritos")}
+              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-emerald-555 hover:bg-emerald-500/5 dark:hover:bg-emerald-500/10 shadow-sm transition-all flex items-center gap-1.5"
+            >
+              📋 Gabaritos
+            </motion.button>
+          </div>
+
+          {/* TAB SWITCHER MODERN/PREMIUM (SEGMENTED CONTROL STYLE) - MOBILE ONLY */}
+          <div className="xl:hidden bg-slate-150 dark:bg-slate-950 p-1.5 rounded-2xl flex gap-1 w-full sm:w-auto overflow-x-auto border border-slate-200 dark:border-slate-850">
             <button
               onClick={() => setActiveTab("missoes")}
               className={`flex-1 sm:flex-initial cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none ${
@@ -923,316 +992,187 @@ export default function GestaoAulasPage() {
 
       <div className="max-w-[1536px] w-full mx-auto px-6 lg:px-8">
         
-        {/* CONDICIONAL: SE A TAB FOR LINKS */}
-        {activeTab === "links" && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4 mb-8"
+        {/* BARRA DE LINKS EXTERNOS COMPACTA - ALWAYS FLEX ON DESKTOP, CONDITIONAL ON MOBILE */}
+        <div className={`${activeTab === "links" ? "flex" : "hidden"} xl:flex flex-wrap gap-2 mb-6`}>
+          <a
+            href={linksGerais.planilha}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-md text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
           >
-            <a
-              href={linksGerais.planilha}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500/40 dark:hover:border-emerald-500/40 transition-all hover:-translate-y-0.5 group shadow-sm flex flex-col justify-between"
-            >
-              <div>
-                <div className="text-2xl mb-2">📊</div>
-                <h4 className="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider group-hover:text-emerald-555">Planilha BD</h4>
-                <p className="text-[10px] text-slate-450 dark:text-slate-455 mt-1 leading-relaxed">Acesse a base de dados central no Google Sheets contendo todos os dados brutos de alunos e pontuações.</p>
-              </div>
-            </a>
-
-            <a
-              href={linksGerais.classroom}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500/40 dark:hover:border-indigo-500/40 transition-all hover:-translate-y-0.5 group shadow-sm flex flex-col justify-between"
-            >
-              <div>
-                <div className="text-2xl mb-2">🏫</div>
-                <h4 className="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider group-hover:text-indigo-500">AVA Classroom</h4>
-                <p className="text-[10px] text-slate-455 dark:text-slate-450 mt-1 leading-relaxed">Acesse o ambiente virtual de aprendizagem do Google Classroom para verificar as publicações e turmas.</p>
-              </div>
-            </a>
-
-            <a
-              href={linksGerais.matriz}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/40 dark:hover:border-blue-500/40 transition-all hover:-translate-y-0.5 group shadow-sm flex flex-col justify-between"
-            >
-              <div>
-                <div className="text-2xl mb-2">📑</div>
-                <h4 className="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider group-hover:text-blue-500">Matriz Curricular</h4>
-                <p className="text-[10px] text-slate-455 dark:text-slate-450 mt-1 leading-relaxed">Verifique a matriz pedagógica do curso contendo todas as competências e trilhas de conteúdos.</p>
-              </div>
-            </a>
-
-            <a
-              href={linksGerais.cronograma}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-amber-500/40 dark:hover:border-amber-500/40 transition-all hover:-translate-y-0.5 group shadow-sm flex flex-col justify-between"
-            >
-              <div>
-                <div className="text-2xl mb-2">🗓️</div>
-                <h4 className="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider group-hover:text-amber-500">Cronograma</h4>
-                <p className="text-[10px] text-slate-455 dark:text-slate-450 mt-1 leading-relaxed">Consulte o calendário letivo, datas das aulas presenciais, eventos e prazos finais.</p>
-              </div>
-            </a>
-
-            <a
-              href={linksGerais.ajuda}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-red-500/40 dark:hover:border-red-500/40 transition-all hover:-translate-y-0.5 group shadow-sm flex flex-col justify-between"
-            >
-              <div>
-                <div className="text-2xl mb-2">🆘</div>
-                <h4 className="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider group-hover:text-red-500">Manual & Ajuda</h4>
-                <p className="text-[10px] text-slate-455 dark:text-slate-450 mt-1 leading-relaxed">Acesse a documentação do tutor e regras da gamificação para esclarecer dúvidas frequentes.</p>
-              </div>
-            </a>
-          </motion.div>
-        )}
-
-        {/* CONDICIONAL: SE A TAB FOR FERRAMENTAS */}
-        {activeTab === "ferramentas" && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8"
+            <span>📊</span> Planilha BD
+          </a>
+          <a
+            href={linksGerais.classroom}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-md text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
           >
-            {/* CARD 1: CONFIGURAÇÕES DA AULA */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-              <div>
-                <h3 className="font-black text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2 mb-4">
-                  Configurações da Aula
+            <span>🏫</span> AVA Classroom
+          </a>
+          <a
+            href={linksGerais.matriz}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-md text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
+          >
+            <span>📑</span> Matriz Curricular
+          </a>
+          <a
+            href={linksGerais.cronograma}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-md text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
+          >
+            <span>🗓️</span> Cronograma
+          </a>
+          <a
+            href={linksGerais.ajuda}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-md text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
+          >
+            <span>🆘</span> Ajuda
+          </a>
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+          {/* PAINEL LATERAL DE CONFIGURAÇÕES - ALWAYS BLOCK ON DESKTOP, CONDITIONAL ON MOBILE */}
+          <div className={`${activeTab === "ferramentas" ? "block" : "hidden"} xl:block xl:col-span-1 space-y-4`}>
+            {aniversariantes.length > 0 && (
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800/50 p-4 rounded-xl shadow-sm transition-colors">
+                <h3 className="font-black text-sm uppercase tracking-tight text-amber-800 dark:text-amber-400 mb-1 flex items-center gap-2 transition-colors">
+                  <span>🎂</span> Aniversariantes!
                 </h3>
-
-                <div className="mb-5 bg-slate-50 dark:bg-slate-950 p-4 rounded-lg border border-slate-100 dark:border-slate-800">
-                  <div className="flex justify-between items-center mb-1">
-                    <span className={`text-xs font-bold flex items-center gap-2 ${modoReposicao ? "text-indigo-600 dark:text-indigo-400" : "text-slate-600 dark:text-slate-400"}`}>
-                      ⚙️ Modo Reposição
-                    </span>
-                    <button
-                      onClick={toggleModoReposicao}
-                      disabled={carregandoReposicao}
-                      className={`cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${modoReposicao ? "bg-indigo-600 dark:bg-indigo-500" : "bg-slate-300 dark:bg-slate-700"}`}
-                    >
-                      <span className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${modoReposicao ? "translate-x-5" : "translate-x-1"}`} />
-                    </button>
-                  </div>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">
-                    Ignora o dia da semana para permitir check-ins atrasados em aulas de reposição.
-                  </p>
-                </div>
-
-                <div className="mb-4">
-                  <label className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-2 mb-1.5">
-                    <span>🔐</span> Senha da Lousa (Check-in)
-                  </label>
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      value={senhaLousa}
-                      onChange={(e) => setSenhaLousa(e.target.value.toUpperCase())}
-                      className="w-full font-mono font-black text-center border border-slate-200 dark:border-slate-700 rounded-md p-2 text-slate-800 dark:text-slate-100 uppercase text-sm focus:border-blue-500 dark:focus:border-blue-400 outline-none bg-slate-50 dark:bg-slate-950"
-                    />
-                    <button
-                      onClick={salvarNovaSenha}
-                      disabled={salvandoSenha}
-                      className="cursor-pointer bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold px-4 rounded-md transition-colors text-xs"
-                    >
-                      {salvandoSenha ? "..." : "OK"}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* CARD 2: AÇÕES DIRETAS (TRIGGERS) */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-              <div>
-                <h3 className="font-black text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-slate-105 dark:border-slate-800 pb-2 mb-4">
-                  Ações Rápidas (Gatilhos)
-                </h3>
-                <p className="text-[10px] text-slate-450 dark:text-slate-500 leading-normal mb-4">
-                  Gatilhos e sorteios gerais da gamificação da trilha letiva.
+                <p className="text-xs font-medium text-amber-700 dark:text-amber-500 transition-colors">
+                  Parabéns:{" "}
+                  <strong>
+                    {aniversariantes.map((a) => a.nome).join(", ")}
+                  </strong>
                 </p>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setModalSyncAberto(true)}
-                    className="cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-650 hover:brightness-110 text-white font-black py-3 px-4 rounded-xl shadow-sm flex flex-col items-center justify-center gap-1.5 text-xs uppercase tracking-wider border-none text-center"
-                  >
-                    <span className="text-lg">🔄</span>
-                    Sincronizar AVA
-                  </motion.button>
+              </div>
+            )}
 
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => setModalSorteioAberto(true)}
-                    className="cursor-pointer bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 text-white font-black py-3 px-4 rounded-xl shadow-sm flex flex-col items-center justify-center gap-1.5 text-xs uppercase tracking-wider border-none text-center"
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
+              <h3 className="font-black text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2 mb-4 transition-colors">
+                Configurações Rápidas
+              </h3>
+
+              <div className="mb-5 bg-slate-50 dark:bg-slate-950 p-3 rounded-lg border border-slate-100 dark:border-slate-800 transition-colors">
+                <div className="flex justify-between items-center mb-1">
+                  <span
+                    className={`text-xs font-bold flex items-center gap-2 transition-colors ${modoReposicao ? "text-indigo-650 dark:text-indigo-400" : "text-slate-650 dark:text-slate-400"}`}
                   >
-                    <span className="text-lg">🎰</span>
-                    Sortear Rifa
-                  </motion.button>
+                    ⚙️ Modo Reposição
+                  </span>
+                  <button
+                    onClick={toggleModoReposicao}
+                    disabled={carregandoReposicao}
+                    className={`cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${modoReposicao ? "bg-indigo-600 dark:bg-indigo-500" : "bg-slate-300 dark:bg-slate-700"}`}
+                  >
+                    <span
+                      className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${modoReposicao ? "translate-x-5" : "translate-x-1"}`}
+                    />
+                  </button>
+                </div>
+                <p className="text-[9px] text-slate-400 dark:text-slate-500 leading-tight transition-colors">
+                  Ignora o dia da semana para permitir check-ins atrasados.
+                </p>
+              </div>
+
+              <div className="mb-4">
+                <label className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-2 mb-1.5 transition-colors">
+                  <span>🔐</span> Senha da Lousa
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={senhaLousa}
+                    onChange={(e) =>
+                      setSenhaLousa(e.target.value.toUpperCase())
+                    }
+                    className="w-full font-mono font-black text-center border border-slate-200 dark:border-slate-700 rounded-md p-1.5 text-slate-800 dark:text-slate-100 uppercase text-sm focus:border-blue-500 dark:focus:border-blue-400 outline-none bg-slate-50 dark:bg-slate-950 transition-colors"
+                  />
+                  <button
+                    onClick={salvarNovaSenha}
+                    disabled={salvandoSenha}
+                    className="cursor-pointer bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold px-3 rounded-md transition-colors text-xs"
+                  >
+                    {salvandoSenha ? "..." : "OK"}
+                  </button>
                 </div>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-100 dark:border-slate-800">
+              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800 transition-colors">
+                <button
+                  onClick={() => router.push("/trilhatech/configuracoes")}
+                  className="cursor-pointer w-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700"
+                >
+                  <span>⚙️</span> Painel de Configurações
+                </button>
+                <button
+                  onClick={() => setModalGodModeAberto(true)}
+                  className="cursor-pointer w-full bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-2 border border-slate-800 dark:border-slate-700"
+                >
+                  <span>⚡</span> God Mode
+                </button>
                 <button
                   onClick={() => setModalFechamentoAberto(true)}
-                  className="cursor-pointer w-full bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 text-white text-xs font-black py-3 rounded-lg shadow-sm transition-all flex items-center justify-center gap-2 border border-amber-650 dark:border-amber-500 uppercase tracking-wide"
+                  className="cursor-pointer w-full bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 text-white text-xs font-black py-2.5 rounded-lg shadow-md transition-all flex items-center justify-center gap-2 border border-amber-600 dark:border-amber-500 mt-2 uppercase tracking-wide"
                 >
                   <span>🏆</span> Fechar Ranking
                 </button>
               </div>
             </div>
+          </div>
 
-            {/* CARD 3: PAINÉIS DE CONSULTA E CONTROLE */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between">
-              <div>
-                <h3 className="font-black text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-slate-105 dark:border-slate-800 pb-2 mb-4">
-                  Painéis e Relatórios
-                </h3>
-                <p className="text-[10px] text-slate-450 dark:text-slate-500 mb-4 leading-normal">
-                  Acesse relatórios, controle de diários, análises do painel e gerenciamento de notas.
-                </p>
+          {/* ÁREA PRINCIPAL: CENTRAL DE MISSÕES - ALWAYS BLOCK ON DESKTOP, CONDITIONAL ON MOBILE */}
+          <div className={`${activeTab === "missoes" ? "block" : "hidden"} xl:block xl:col-span-3`}>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
+              {/* CABEÇALHO E AÇÕES PRIMÁRIAS */}
+              <div className="p-4 md:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-colors">
+                <div>
+                  <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 transition-colors">
+                    Central de Missões
+                  </h2>
+                  <p className="text-sm text-slate-500 dark:text-slate-400 transition-colors">
+                    Gira o conteúdo, prazos e os XP da turma.
+                  </p>
+                </div>
 
-                <div className="grid grid-cols-2 gap-2">
+                <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => setModalImportadorAberto(true)}
+                    className="cursor-pointer bg-white dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-800/50 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-4 py-2 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
+                  >
+                    <span className="text-base leading-none">⚡</span> Importar Lote
+                  </button>
                   <button
                     onClick={() => {
-                      setModalRankingAberto(true);
-                      carregarRankingTutor("geral");
+                      limparFormulario();
+                      setModalNovaMissaoAberto(true);
                     }}
-                    className="cursor-pointer bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-800/80 p-2.5 rounded-lg border border-slate-200 dark:border-slate-850 text-slate-700 dark:text-slate-200 text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5"
+                    className="cursor-pointer bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-black shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-2 justify-center text-xs uppercase tracking-wider border-none"
                   >
-                    🏆 Ranking
-                  </button>
-                  
-                  <button
-                    onClick={abrirRelatorioFrequencia}
-                    className="cursor-pointer bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-800/80 p-2.5 rounded-lg border border-slate-200 dark:border-slate-850 text-slate-700 dark:text-slate-200 text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5"
-                  >
-                    📍 Diário
-                  </button>
-
-                  <button
-                    onClick={() => router.push("/trilhatech/analytics")}
-                    className="cursor-pointer bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-200 text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5"
-                  >
-                    📈 Analytics
-                  </button>
-
-                  <button
-                    onClick={() => router.push("/trilhatech/gabaritos")}
-                    className="cursor-pointer bg-slate-50 hover:bg-slate-100 dark:bg-slate-950 dark:hover:bg-slate-850 text-slate-700 dark:text-slate-200 text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5"
-                  >
-                    📋 Gabaritos
+                    <span className="text-lg leading-none">+</span> Nova Missão
                   </button>
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-slate-100 dark:border-slate-800">
-                <button
-                  onClick={() => router.push("/trilhatech/configuracoes")}
-                  className="cursor-pointer w-full bg-white dark:bg-slate-950 hover:bg-slate-50 dark:hover:bg-slate-800/50 text-slate-600 dark:text-slate-300 text-[10px] font-black py-2.5 rounded-lg border border-slate-200 dark:border-slate-800 flex items-center justify-center gap-1.5 uppercase"
-                >
-                  ⚙️ Configs
-                </button>
-                <button
-                  onClick={() => setModalGodModeAberto(true)}
-                  className="cursor-pointer w-full bg-slate-955 dark:bg-slate-800 hover:brightness-110 text-white text-[10px] font-black py-2.5 rounded-lg flex items-center justify-center gap-1.5 uppercase border-none"
-                >
-                  ⚡ God Mode
-                </button>
+              {/* LISTA COMPACTA */}
+              <div className="p-4 md:p-6 bg-slate-50/50 dark:bg-slate-950/50 rounded-b-2xl min-h-125 transition-colors duration-300">
+                <MissoesList
+                  atividades={atividades}
+                  isLoading={isLoading}
+                  turmasDisponiveis={turmasDisponiveis}
+                  onEdit={preencherEdicao}
+                  onDelete={excluirAtividade}
+                  onViewEntregas={abrirModalEntregas}
+                />
               </div>
             </div>
-          </motion.div>
-        )}
-
-        {/* CONDICIONAL: SE A TAB FOR MISSÕES */}
-        {activeTab === "missoes" && (
-          <motion.div 
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="grid grid-cols-1 xl:grid-cols-4 gap-6"
-          >
-            {/* ANIVERSARIANTES (SE HOUVER) */}
-            {aniversariantes.length > 0 && (
-              <div className="xl:col-span-4 bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/10 dark:to-orange-900/10 border border-amber-200 dark:border-amber-800/40 p-4 rounded-xl shadow-sm transition-colors flex items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">🎂</span>
-                  <div>
-                    <h3 className="font-black text-sm uppercase tracking-tight text-amber-800 dark:text-amber-400">
-                      Aniversariantes do Dia!
-                    </h3>
-                    <p className="text-xs font-medium text-amber-700 dark:text-amber-500">
-                      Parabéns aos alunos de hoje:{" "}
-                      <strong>
-                        {aniversariantes.map((a) => `${a.nome}`).join(", ")}
-                      </strong>
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* ÁREA PRINCIPAL: CENTRAL DE MISSÕES */}
-            <div className="xl:col-span-4">
-              <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
-                {/* CABEÇALHO E AÇÕES PRIMÁRIAS */}
-                <div className="p-4 md:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-colors">
-                  <div>
-                    <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 transition-colors">
-                      Central de Missões
-                    </h2>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 transition-colors">
-                      Gerenciamento de conteúdos, prazos, questionários e XP da turma.
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
-                    <button
-                      onClick={() => setModalImportadorAberto(true)}
-                      className="cursor-pointer bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800/50 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-4 py-2.5 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
-                    >
-                      <span className="text-base leading-none">⚡</span> Importar Lote
-                    </button>
-                    <button
-                      onClick={() => {
-                        limparFormulario();
-                        setModalNovaMissaoAberto(true);
-                      }}
-                      className="cursor-pointer bg-blue-600 hover:bg-blue-700 dark:bg-blue-600 dark:hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl font-black shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center gap-2 justify-center text-xs uppercase tracking-wider border-none"
-                    >
-                      <span className="text-lg leading-none">+</span> Nova Missão
-                    </button>
-                  </div>
-                </div>
-
-                {/* LISTA COMPACTA */}
-                <div className="p-4 md:p-6 bg-slate-50/50 dark:bg-slate-950/50 rounded-b-2xl min-h-125 transition-colors duration-300">
-                  <MissoesList
-                    atividades={atividades}
-                    isLoading={isLoading}
-                    turmasDisponiveis={turmasDisponiveis}
-                    onEdit={preencherEdicao}
-                    onDelete={excluirAtividade}
-                    onViewEntregas={abrirModalEntregas}
-                  />
-                </div>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </div>
+          </div>
+        </div>      </div>
     </main>
   );
 }

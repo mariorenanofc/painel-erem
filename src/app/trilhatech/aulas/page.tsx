@@ -992,8 +992,8 @@ export default function GestaoAulasPage() {
 
       <div className="max-w-[1536px] w-full mx-auto px-6 lg:px-8">
         
-        {/* BARRA DE LINKS EXTERNOS COMPACTA - ALWAYS FLEX ON DESKTOP, CONDITIONAL ON MOBILE */}
-        <div className={`${activeTab === "links" ? "flex" : "hidden"} xl:flex flex-wrap gap-2 mb-6`}>
+        {/* BARRA DE LINKS EXTERNOS COMPACTA - DESKTOP ONLY */}
+        <div className="hidden xl:flex flex-wrap gap-2 mb-6">
           <a
             href={linksGerais.planilha}
             target="_blank"
@@ -1035,6 +1035,80 @@ export default function GestaoAulasPage() {
             <span>🆘</span> Ajuda
           </a>
         </div>
+
+        {/* DETALHE DE LINKS - MOBILE ONLY */}
+        {activeTab === "links" && (
+          <motion.div 
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="xl:hidden grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8"
+          >
+            <a
+              href={linksGerais.planilha}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-emerald-500/40 dark:hover:border-emerald-500/40 transition-all shadow-sm flex flex-col justify-between"
+            >
+              <div>
+                <div className="text-2xl mb-2">📊</div>
+                <h4 className="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider">Planilha BD</h4>
+                <p className="text-[10px] text-slate-450 dark:text-slate-455 mt-1 leading-relaxed">Acesse a base de dados central no Google Sheets contendo todos os dados brutos de alunos e pontuações.</p>
+              </div>
+            </a>
+
+            <a
+              href={linksGerais.classroom}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-indigo-500/40 dark:hover:border-indigo-500/40 transition-all shadow-sm flex flex-col justify-between"
+            >
+              <div>
+                <div className="text-2xl mb-2">🏫</div>
+                <h4 className="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider">AVA Classroom</h4>
+                <p className="text-[10px] text-slate-455 dark:text-slate-450 mt-1 leading-relaxed">Acesse o ambiente virtual de aprendizagem do Google Classroom para verificar as publicações e turmas.</p>
+              </div>
+            </a>
+
+            <a
+              href={linksGerais.matriz}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-blue-500/40 dark:hover:border-blue-500/40 transition-all shadow-sm flex flex-col justify-between"
+            >
+              <div>
+                <div className="text-2xl mb-2">📑</div>
+                <h4 className="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider">Matriz Curricular</h4>
+                <p className="text-[10px] text-slate-455 dark:text-slate-450 mt-1 leading-relaxed">Verifique a matriz pedagógica do curso contendo todas as competências e trilhas de conteúdos.</p>
+              </div>
+            </a>
+
+            <a
+              href={linksGerais.cronograma}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-amber-500/40 dark:hover:border-amber-500/40 transition-all shadow-sm flex flex-col justify-between"
+            >
+              <div>
+                <div className="text-2xl mb-2">🗓️</div>
+                <h4 className="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider">Cronograma</h4>
+                <p className="text-[10px] text-slate-455 dark:text-slate-450 mt-1 leading-relaxed">Consulte o calendário letivo, datas das aulas presenciais, eventos e prazos finais.</p>
+              </div>
+            </a>
+
+            <a
+              href={linksGerais.ajuda}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-white dark:bg-slate-900 p-5 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-red-500/40 dark:hover:border-red-500/40 transition-all shadow-sm flex flex-col justify-between col-span-1 sm:col-span-2"
+            >
+              <div>
+                <div className="text-2xl mb-2">🆘</div>
+                <h4 className="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider">Manual & Ajuda</h4>
+                <p className="text-[10px] text-slate-455 dark:text-slate-450 mt-1 leading-relaxed">Acesse a documentação do tutor e regras da gamificação para esclarecer dúvidas frequentes.</p>
+              </div>
+            </a>
+          </motion.div>
+        )}
 
         <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           {/* PAINEL LATERAL DE CONFIGURAÇÕES - ALWAYS BLOCK ON DESKTOP, CONDITIONAL ON MOBILE */}

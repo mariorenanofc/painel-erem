@@ -1,0 +1,187 @@
+import { NextResponse } from "next/server";
+import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
+
+const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json();
+    const { action, token } = body;
+
+    if (token !== TUTOR_TOKEN) {
+      return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
+    }
+
+    console.log(`[Tutor Sync Local] Ação: ${action}`);
+
+    if (action === "salvar_atividade") {
+      const ativ = body;
+      const id = String(ativ.id || ativ.idAtividade || "").trim();
+      if (id) {
+        await dbAdmin.collection("atividades").doc(id).set({
+          id,
+          titulo: String(ativ.titulo || ""),
+          descricao: String(ativ.descricao || ""),
+          dataLimite: String(ativ.dataLimite || ""),
+          xp: Number(ativ.xp) || 0,
+          turmaAlvo: String(ativ.turmaAlvo || "Todas").trim(),
+          tipo: String(ativ.tipo || "Projeto").trim(),
+          opcaoA: String(ativ.opcaoA || ""),
+          opcaoB: String(ativ.opcaoB || ""),
+          opcaoC: String(ativ.opcaoC || ""),
+          opcaoD: String(ativ.opcaoD || ""),
+          respostaCorreta: String(ativ.respostaCorreta || ""),
+          linkClassroom: String(ativ.linkClassroom || ""),
+          statusPublicacao: String(ativ.statusPublicacao || "Publicada").trim(),
+          imageUrl: String(ativ.imageUrl || ""),
+          modulo: String(ativ.modulo || "Geral").trim(),
+          gabarito: String(ativ.gabarito || ""),
+          gabaritoLiberado: ativ.gabaritoLiberado === true || String(ativ.gabaritoLiberado).toLowerCase() === "true"
+        }, { merge: true });
+        invalidateRankingCache();
+      }
+    }
+
+    else if (action === "excluir_atividade") {
+      const id = String(body.idAtividade).trim();
+      if (id) {
+        await dbAdmin.collection("atividades").doc(id).delete();
+        invalidateRankingCache();
+      }
+    }
+
+    else if (action === "avaliar_entrega") {
+      const { idEntrega, matricula, xpGanho, novoStatus, feedback } = body;
+      const mat = String(matricula).trim();
+      if (idEntrega && mat) {
+        const entregaRef = dbAdmin.collection("entregas").doc(idEntrega);
+        const alunoRef = dbAdmin.collection("alunos").doc(mat);
+
+        await dbAdmin.runTransaction(async (transaction: any) => {
+          const entregaDoc = await transaction.get(entregaRef);
+          const alunoDoc = await transaction.get(alunoRef);
+
+          let statusAnterior = "Aguardando Correção";
+          let xpAnterior = 0;
+
+          if (entregaDoc.exists) {
+            statusAnterior = entregaDoc.data()?.status || "Aguardando Correção";
+            xpAnterior = Number(entregaDoc.data()?.xpGanho) || 0;
+          }
+
+          const xpDiff = Number(xpGanho) - xpAnterior;
+
+          transaction.set(entregaRef, {
+            id: idEntrega,
+            matricula: mat,
+            status: novoStatus,
+            xpGanho: Number(xpGanho),
+            feedback: String(feedback || ""),
+            timestamp: Date.now()
+          }, { merge: true });
+
+          if (alunoDoc.exists) {
+            const currentXp = Number(alunoDoc.data()?.xp) || 0;
+            transaction.update(alunoRef, {
+              xp: currentXp + xpDiff,
+              lastUpdated: Date.now()
+            });
+          }
+        });
+
+        invalidatePortalCache(mat);
+        invalidateRankingCache();
+      }
+    }
+
+    else if (action === "injetar_xp_manual") {
+      const { matriculaAlvo, quantidadeXP, motivo } = body;
+      const mat = String(matriculaAlvo).trim();
+      const xp = Number(quantidadeXP) || 0;
+      if (mat && xp !== 0) {
+        const alunoRef = dbAdmin.collection("alunos").doc(mat);
+        const timestamp = Date.now();
+        const idEntrega = `NOTIF-${timestamp}-${mat}`;
+
+        await dbAdmin.runTransaction(async (transaction: any) => {
+          const alunoDoc = await transaction.get(alunoRef);
+          if (alunoDoc.exists) {
+            const currentXp = Number(alunoDoc.data()?.xp) || 0;
+            transaction.update(alunoRef, {
+              xp: currentXp + xp,
+              lastUpdated: timestamp
+            });
+
+            transaction.set(dbAdmin.collection("entregas").doc(idEntrega), {
+              id: idEntrega,
+              matricula: mat,
+              idAtividade: "BÔNUS/MULTA",
+              resposta: String(motivo || "XP Injetado pelo Tutor"),
+              status: xp > 0 ? "Bônus" : "Multa",
+              xpGanho: xp,
+              timestamp
+            });
+          }
+        });
+
+        invalidatePortalCache(mat);
+        invalidateRankingCache();
+      }
+    }
+
+    else if (action === "atualizar_senha_checkin") {
+      const { novaSenha } = body;
+      if (novaSenha) {
+        await dbAdmin.collection("configuracoes").doc("SENHA_CHECKIN").set({ valor: String(novaSenha).trim() });
+      }
+    }
+
+    else if (action === "toggle_modo_reposicao") {
+      const { status } = body;
+      if (status) {
+        await dbAdmin.collection("configuracoes").doc("MODO_REPOSICAO").set({ valor: String(status).trim() });
+      }
+    }
+
+    else if (action === "salvar_configuracoes") {
+      const { configs } = body;
+      if (configs && typeof configs === "object") {
+        const promises = Object.keys(configs).map(key => {
+          return dbAdmin.collection("configuracoes").doc(key).set({ valor: configs[key] });
+        });
+        await Promise.all(promises);
+      }
+    }
+
+    else if (action === "toggle_gabarito") {
+      const { idAtividade } = body;
+      if (idAtividade) {
+        const ref = dbAdmin.collection("atividades").doc(idAtividade);
+        const doc = await ref.get();
+        if (doc.exists) {
+          const current = doc.data()?.gabaritoLiberado === true;
+          await ref.update({ gabaritoLiberado: !current });
+        }
+      }
+    }
+
+    else if (action === "salvar_gabaritos_lote") {
+      const { atualizacoes } = body;
+      if (Array.isArray(atualizacoes)) {
+        const promises = atualizacoes.map((item: any) => {
+          return dbAdmin.collection("atividades").doc(item.id).set({
+            gabarito: String(item.gabarito || ""),
+            gabaritoLiberado: item.gabaritoLiberado === true
+          }, { merge: true });
+        });
+        await Promise.all(promises);
+      }
+    }
+
+    return NextResponse.json({ status: "sucesso" });
+  } catch (error: any) {
+    console.error("[Tutor Sync Local Error]", error);
+    return NextResponse.json({ status: "sucesso", warning: "Erro no sync local: " + error.message });
+  }
+}

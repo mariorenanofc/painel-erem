@@ -28,7 +28,22 @@ async function fetchApi(payload: any) {
     });
 
     clearTimeout(timeoutId);
-    return await response.json();
+    const result = await response.json();
+
+    const ACTIONS_TO_SYNC = [
+      "salvar_atividade", "excluir_atividade", "avaliar_entrega", 
+      "injetar_xp_manual", "atualizar_senha_checkin", "toggle_modo_reposicao",
+      "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote"
+    ];
+    if (result.status === "sucesso" && ACTIONS_TO_SYNC.includes(payload.action)) {
+      fetch("/api/tutor/sync-local", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      }).catch(err => console.error("Falha no sync local do tutor:", err));
+    }
+
+    return result;
   } catch (error: any) {
     clearTimeout(timeoutId);
     if (error.name === "AbortError") {
@@ -68,20 +83,36 @@ export const apiAluno = {
   ) =>
     fetchApi({ action: "coroar_elite", matricula: matriculaNova, tipoPlaca }),
 
-  buscarPerfil: (matricula: string) =>
-    fetchApi({ action: "buscar_perfil_aluno", matricula }),
+  buscarPerfil: async (matricula: string) => {
+    const res = await fetch(`/api/alunos/perfil?matricula=${matricula}`);
+    return res.json();
+  },
 
-  carregarPortal: (matricula: string) =>
-    fetchApi({ action: "carregar_portal_aluno", matricula }),
+  carregarPortal: async (matricula: string) => {
+    const res = await fetch(`/api/alunos/portal?matricula=${matricula}`);
+    return res.json();
+  },
 
-  fazerCheckin: (matricula: string, senha: string) =>
-    fetchApi({ action: "fazer_checkin", matricula, senha }),
+  fazerCheckin: async (matricula: string, senha: string) => {
+    const res = await fetch("/api/alunos/checkin", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matricula, senha })
+    });
+    return res.json();
+  },
 
   minhaFrequencia: (matricula: string) =>
     fetchApi({ action: "minha_frequencia", matricula }),
 
-  enviarMissao: (matricula: string, idAtividade: string, resposta: string) =>
-    fetchApi({ action: "enviar_atividade", matricula, idAtividade, resposta }),
+  enviarMissao: async (matricula: string, idAtividade: string, resposta: string) => {
+    const res = await fetch("/api/alunos/enviar-missao", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matricula, idAtividade, resposta })
+    });
+    return res.json();
+  },
 
   atualizarContatos: (
     matricula: string,
@@ -97,22 +128,28 @@ export const apiAluno = {
       telefoneResponsavel,
     }),
 
-  salvarAvatar: (matricula: string, avatarId: string) =>
-    fetchApi({ action: "salvar_avatar", matricula, avatarId }),
+  salvarAvatar: async (matricula: string, avatarId: string) => {
+    const res = await fetch("/api/alunos/salvar-avatar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matricula, avatarId })
+    });
+    return res.json();
+  },
 
-  buscarPerfilPublico: (matriculaVisualizador: string, matriculaAlvo: string) =>
-    fetchApi({
-      action: "buscar_perfil_publico",
-      matriculaVisualizador,
-      matriculaAlvo,
-    }),
+  buscarPerfilPublico: async (matriculaVisualizador: string, matriculaAlvo: string) => {
+    const res = await fetch(`/api/alunos/perfil-publico?matriculaVisualizador=${matriculaVisualizador}&matriculaAlvo=${matriculaAlvo}`);
+    return res.json();
+  },
 
-  curtirPerfil: (matriculaRemetente: string, matriculaDestinatario: string) =>
-    fetchApi({
-      action: "curtir_perfil",
-      matriculaRemetente,
-      matriculaDestinatario,
-    }),
+  curtirPerfil: async (matriculaRemetente: string, matriculaDestinatario: string) => {
+    const res = await fetch("/api/alunos/curtir-perfil", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matriculaRemetente, matriculaDestinatario })
+    });
+    return res.json();
+  },
 
   resgatarAniversario: (matricula: string) =>
     fetchApi({ action: "resgatar_aniversario", matricula }),
@@ -140,28 +177,29 @@ export const apiAluno = {
   criarSenhaPix: (matricula: string, senha: string) =>
     fetchApi({ action: "criar_senha_pix", matricula, senha }),
 
-  transferirXP: (
+  transferirXP: async (
     matriculaOrigem: string,
     senha: string,
     matriculaDestino: string,
     quantidade: number,
     motivo: string,
-  ) =>
-    fetchApi({
-      action: "transferir_xp",
-      matriculaOrigem,
-      senha,
-      matriculaDestino,
-      quantidade,
-      motivo,
-    }),
+  ) => {
+    const res = await fetch("/api/alunos/transferir-xp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matriculaOrigem, senha, matriculaDestino, quantidade, motivo })
+    });
+    return res.json();
+  },
 
-  comprarRifa: (matricula: string, pacote: string) =>
-    fetchApi({
-      action: "comprar_rifa",
-      matricula,
-      pacote,
-    }),
+  comprarRifa: async (matricula: string, pacote: string) => {
+    const res = await fetch("/api/alunos/comprar-rifa", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matricula, pacote })
+    });
+    return res.json();
+  },
 
   buscarMeusBilhetes: (matricula: string) =>
     fetchApi({
@@ -179,8 +217,10 @@ export const apiTutor = {
     fetchApi({ action: "sincronizar_ava", token: TUTOR_TOKEN }),
 
   // --- RANKING E ANALYTICS ---
-  buscarRanking: (filtroTempo: "geral" | "semanal" | "mensal") =>
-    fetchApi({ action: "buscar_ranking", filtroTempo, token: TUTOR_TOKEN }),
+  buscarRanking: async (filtroTempo: "geral" | "semanal" | "mensal") => {
+    const res = await fetch(`/api/alunos/ranking?filtroTempo=${filtroTempo}`);
+    return res.json();
+  },
 
   buscarAnalyticsGeral: () =>
     fetchApi({ action: "buscar_analytics_geral", token: TUTOR_TOKEN }),

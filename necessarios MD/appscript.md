@@ -4077,6 +4077,171 @@ function doPost(e) {
           return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", bilhetes: meusBilhetes })).setMimeType(ContentService.MimeType.JSON);
       }
 
+      // ==========================================
+      // ROTA MIGRACAO: EXPORTAR TODOS OS DADOS PARA FIRESTORE
+      // ==========================================
+      if (action === "exportar_dados_migracao") {
+          const TOKEN_TUTOR = "TrilhaTech_Seguranca_Total_2026";
+          if (dadosApp.token !== TOKEN_TUTOR) {
+              return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Não autorizado." })).setMimeType(ContentService.MimeType.JSON);
+          }
+          const getAbaValues = (nome) => {
+              const aba = planilha.getSheetByName(nome);
+              return aba ? aba.getDataRange().getValues() : [];
+          };
+          return ContentService.createTextOutput(JSON.stringify({
+              status: "sucesso",
+              basededados: getAbaValues("basededados"),
+              trilhatech: getAbaValues("trilhatech"),
+              atividades: getAbaValues("atividades"),
+              entregas: getAbaValues("entregas"),
+              frequencia: getAbaValues("frequencia"),
+              controle_modulos: getAbaValues("controle_modulos"),
+              rifa_bilhetes: getAbaValues("rifa_bilhetes"),
+              configuracoes: getAbaValues("configuracoes"),
+              curtidas: getAbaValues("curtidas")
+          })).setMimeType(ContentService.MimeType.JSON);
+      }
+
+      // ==========================================
+      // ROTA MIGRACAO: RECEBER DADOS EM LOTE E ATUALIZAR PLANILHA
+      // ==========================================
+      if (action === "sincronizar_dados_portal") {
+          const TOKEN_TUTOR = "TrilhaTech_Seguranca_Total_2026";
+          if (dadosApp.token !== TOKEN_TUTOR) {
+              return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Não autorizado." })).setMimeType(ContentService.MimeType.JSON);
+          }
+
+          const lock = LockService.getScriptLock();
+          try {
+              lock.waitLock(30000);
+              
+              const abaTrilha = planilha.getSheetByName("trilhatech");
+              const abaEntregas = planilha.getSheetByName("entregas");
+              const abaFrequencia = planilha.getSheetByName("frequencia");
+              const abaRifa = planilha.getSheetByName("rifa_bilhetes");
+              const abaCurtidas = planilha.getSheetByName("curtidas");
+
+              // 1. ATUALIZAR ALUNOS (trilhatech)
+              if (dadosApp.alunos && dadosApp.alunos.length > 0 && abaTrilha) {
+                  const trilhaValues = abaTrilha.getDataRange().getValues();
+                  const trilhaMap = {};
+                  for (let i = 1; i < trilhaValues.length; i++) {
+                      trilhaMap[String(trilhaValues[i][0]).trim()] = i + 1;
+                  }
+
+                  for (let aluno of dadosApp.alunos) {
+                      let matricula = String(aluno.matricula).trim();
+                      let linha = trilhaMap[matricula];
+                      if (linha) {
+                          abaTrilha.getRange(linha, 5).setValue(Number(aluno.xp) || 0);
+                          abaTrilha.getRange(linha, 7).setValue(aluno.whatsappConfirmado ? "SIM" : "NÃO");
+                          abaTrilha.getRange(linha, 9).setValue(String(aluno.avatarId || "avatar_01"));
+                          abaTrilha.getRange(linha, 10).setValue(Number(aluno.likes) || 0);
+                          abaTrilha.getRange(linha, 12).setValue(Number(aluno.xpGasto) || 0);
+                          if (aluno.pinPix) abaTrilha.getRange(linha, 8).setValue(String(aluno.pinPix));
+                      }
+                  }
+              }
+
+              // Helper para inserir ou atualizar linhas em lote
+              const syncAbaComDados = (aba, dados, getChave, getValoresRow, colunasCount) => {
+                  if (!aba || !dados || dados.length === 0) return;
+                  const values = aba.getDataRange().getValues();
+                  const rowMap = {};
+                  for (let i = 1; i < values.length; i++) {
+                      rowMap[String(values[i][0]).trim()] = i + 1;
+                  }
+
+                  for (let item of dados) {
+                      let chave = getChave(item);
+                      let linha = rowMap[chave];
+                      let rowValues = getValoresRow(item);
+                      if (linha) {
+                          aba.getRange(linha, 1, 1, colunasCount).setValues([rowValues]);
+                      } else {
+                          aba.appendRow(rowValues);
+                      }
+                  }
+              };
+
+              // 2. ATUALIZAR ENTREGAS
+              syncAbaComDados(
+                  abaEntregas,
+                  dadosApp.entregas,
+                  (item) => String(item.id).trim(),
+                  (item) => [
+                      String(item.id),
+                      String(item.matricula),
+                      String(item.idAtividade),
+                      String(item.resposta),
+                      String(item.status),
+                      Number(item.xpGanho) || 0,
+                      Number(item.timestamp) || 0,
+                      String(item.feedback || "")
+                  ],
+                  8
+              );
+
+              // 3. ATUALIZAR FREQUENCIA
+              syncAbaComDados(
+                  abaFrequencia,
+                  dadosApp.frequencia,
+                  (item) => String(item.id).trim(),
+                  (item) => [
+                      String(item.id),
+                      String(item.matricula),
+                      String(item.nome),
+                      String(item.data),
+                      String(item.hora),
+                      Number(item.xpGanho || 10)
+                  ],
+                  6
+              );
+
+              // 4. ATUALIZAR RIFA BILHETES
+              syncAbaComDados(
+                  abaRifa,
+                  dadosApp.rifa_bilhetes,
+                  (item) => String(item.id).trim(),
+                  (item) => [
+                      String(item.id),
+                      String(item.matricula),
+                      String(item.nomeAluno),
+                      String(item.turma),
+                      String(item.data),
+                      String(item.status)
+                  ],
+                  6
+              );
+
+              // 5. ATUALIZAR CURTIDAS
+              syncAbaComDados(
+                  abaCurtidas,
+                  dadosApp.curtidas,
+                  (item) => String(item.id).trim(),
+                  (item) => [
+                      String(item.id),
+                      String(item.remetente),
+                      String(item.destinatario),
+                      String(item.data)
+                  ],
+                  4
+              );
+
+              invalidarCacheGeral();
+
+              return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Sincronização com a Planilha concluída!" })).setMimeType(ContentService.MimeType.JSON);
+
+          } catch (e) {
+              return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Erro ao sincronizar com planilha: " + e.toString() })).setMimeType(ContentService.MimeType.JSON);
+          } finally {
+              lock.releaseLock();
+          }
+      }
+
+
+
 
   } catch (erro) {
     return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: erro.toString() })).setMimeType(ContentService.MimeType.JSON);
@@ -4344,3 +4509,46 @@ function repararXP() {
 
   SpreadsheetApp.getUi().alert("XP de todos os alunos recalculado com sucesso!");
 }
+
+// ==========================================
+// MIGRACAO: GATILHO AUTOMÁTICO DE SINCRONIA COM O FIREBASE
+// ==========================================
+function configurarGatilhoSincronia() {
+  const gatilhos = ScriptApp.getProjectTriggers();
+  for (let i = 0; i < gatilhos.length; i++) {
+    if (gatilhos[i].getHandlerFunction() === "sincronizarComPortal") {
+      ScriptApp.deleteTrigger(gatilhos[i]);
+    }
+  }
+  ScriptApp.newTrigger("sincronizarComPortal")
+    .timeBased()
+    .everyMinutes(10)
+    .create();
+}
+
+function sincronizarComPortal() {
+  const planilha = SpreadsheetApp.getActiveSpreadsheet();
+  const abaConf = planilha.getSheetByName("configuracoes");
+  let urlPortal = "";
+  if (abaConf) {
+    const dadosConf = abaConf.getDataRange().getValues();
+    for (let i = 1; i < dadosConf.length; i++) {
+      if (String(dadosConf[i][0]).trim() === "URL_PORTAL") {
+        urlPortal = String(dadosConf[i][1]).trim();
+        break;
+      }
+    }
+  }
+  if (!urlPortal) {
+    Logger.log("URL_PORTAL não configurada nas configurações da planilha.");
+    return;
+  }
+
+  const url = urlPortal + "/api/sync/planilha";
+  try {
+    const resposta = UrlFetchApp.fetch(url);
+    Logger.log("Sincronia acionada com sucesso: " + resposta.getContentText());
+  } catch (e) {
+    Logger.log("Erro ao acionar sincronia: " + e.toString());
+  }
+}

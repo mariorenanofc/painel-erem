@@ -39,7 +39,7 @@ export default function GestaoAulasPage() {
       : "",
   );
   const [montado, setMontado] = useState(false);
-  const [activeTab, setActiveTab] = useState<"missoes" | "ferramentas" | "links">("missoes");
+  const [activeTab, setActiveTab] = useState<"missoes" | "ferramentas" | "links" | "transacoes">("missoes");
 
   const [turmasDisponiveis, setTurmasDisponiveis] = useState<string[]>([
     "Turma 1 - 1º Ano",
@@ -143,6 +143,21 @@ export default function GestaoAulasPage() {
   const [ordenacaoFreq, setOrdenacaoFreq] = useState<
     "alfabetica" | "mais_faltas"
   >("mais_faltas");
+
+  // Estados de Transações/Extrato do Tutor
+  const [transacoes, setTransacoes] = useState<any[]>([]);
+  const [carregandoTransacoes, setCarregandoTransacoes] = useState(false);
+  const [totalTransacoes, setTotalTransacoes] = useState(0);
+  const [paginaTransacoes, setPaginaTransacoes] = useState(1);
+  const [buscaTransacoes, setBuscaTransacoes] = useState("");
+  const [filtroCategoriaTransacoes, setFiltroCategoriaTransacoes] = useState("");
+  const [filtroStatusTransacoes, setFiltroStatusTransacoes] = useState("");
+  const [transacaoEditando, setTransacaoEditando] = useState<any | null>(null);
+  const [editXpGanho, setEditXpGanho] = useState<number>(0);
+  const [editStatus, setEditStatus] = useState("");
+  const [editFeedback, setEditFeedback] = useState("");
+  const [editResposta, setEditResposta] = useState("");
+  const [salvandoEdicaoTransacao, setSalvandoEdicaoTransacao] = useState(false);
 
   const { data, isLoading, mutate } = useSWR(
     nomeUsuario ? "atividades_tutor" : null,
@@ -357,6 +372,90 @@ export default function GestaoAulasPage() {
       mutate();
     } catch {
       toast("Erro ao excluir.", "error");
+    }
+  };
+
+  const carregarTransacoes = async () => {
+    setCarregandoTransacoes(true);
+    try {
+      const url = `/api/tutor/transacoes?page=${paginaTransacoes}&limit=50&busca=${encodeURIComponent(buscaTransacoes)}&categoria=${filtroCategoriaTransacoes}&status=${filtroStatusTransacoes}`;
+      const res = await fetch(url);
+      const data = await res.json();
+      if (data.status === "sucesso") {
+        setTransacoes(data.transacoes);
+        setTotalTransacoes(data.total);
+      } else {
+        toast(data.mensagem || "Erro ao carregar transações.", "error");
+      }
+    } catch (err: any) {
+      toast("Erro de conexão ao carregar transações.", "error");
+    } finally {
+      setCarregandoTransacoes(false);
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === "transacoes") {
+      carregarTransacoes();
+    }
+  }, [activeTab, paginaTransacoes, buscaTransacoes, filtroCategoriaTransacoes, filtroStatusTransacoes]);
+
+  const abrirModalEditarTransacao = (t: any) => {
+    setTransacaoEditando(t);
+    setEditXpGanho(t.xpGanho);
+    setEditStatus(t.status);
+    setEditFeedback(t.feedback || "");
+    setEditResposta(t.resposta || "");
+  };
+
+  const salvarEdicaoTransacao = async () => {
+    if (!transacaoEditando) return;
+    setSalvandoEdicaoTransacao(true);
+    try {
+      const res = await fetch("/api/tutor/transacoes", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: transacaoEditando.id,
+          matricula: transacaoEditando.matricula,
+          xpGanho: editXpGanho,
+          status: editStatus,
+          feedback: editFeedback,
+          resposta: editResposta
+        })
+      });
+      const data = await res.json();
+      if (data.status === "sucesso") {
+        toast("Transação atualizada com sucesso!", "success");
+        setTransacaoEditando(null);
+        carregarTransacoes();
+        mutate();
+      } else {
+        toast(data.mensagem || "Erro ao atualizar transação.", "error");
+      }
+    } catch {
+      toast("Erro de conexão ao atualizar transação.", "error");
+    } finally {
+      setSalvandoEdicaoTransacao(false);
+    }
+  };
+
+  const excluirTransacao = async (t: any) => {
+    if (!confirm(`Tem certeza que deseja excluir/estornar esta transação? O saldo de XP do aluno será ajustado.`)) return;
+    try {
+      const res = await fetch(`/api/tutor/transacoes?id=${t.id}&matricula=${t.matricula}`, {
+        method: "DELETE"
+      });
+      const data = await res.json();
+      if (data.status === "sucesso") {
+        toast("Transação estornada e excluída!", "success");
+        carregarTransacoes();
+        mutate();
+      } else {
+        toast(data.mensagem || "Erro ao excluir transação.", "error");
+      }
+    } catch {
+      toast("Erro de conexão ao excluir transação.", "error");
     }
   };
 
@@ -954,11 +1053,11 @@ export default function GestaoAulasPage() {
             </motion.button>
           </div>
 
-          {/* TAB SWITCHER MODERN/PREMIUM (SEGMENTED CONTROL STYLE) - MOBILE ONLY */}
-          <div className="xl:hidden bg-slate-150 dark:bg-slate-950 p-1.5 rounded-2xl flex gap-1 w-full sm:w-auto overflow-x-auto border border-slate-200 dark:border-slate-850">
+          {/* TAB SWITCHER MODERN/PREMIUM (SEGMENTED CONTROL STYLE) - MOBILE AND DESKTOP COMPATIBLE */}
+          <div className="bg-slate-150 dark:bg-slate-950 p-1.5 rounded-2xl flex gap-1 w-full sm:w-auto overflow-x-auto border border-slate-200 dark:border-slate-850">
             <button
               onClick={() => setActiveTab("missoes")}
-              className={`flex-1 sm:flex-initial cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none ${
+              className={`cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none ${
                 activeTab === "missoes"
                   ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
@@ -967,8 +1066,18 @@ export default function GestaoAulasPage() {
               📋 Missões
             </button>
             <button
+              onClick={() => setActiveTab("transacoes")}
+              className={`cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none ${
+                activeTab === "transacoes"
+                  ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
+              }`}
+            >
+              🔄 Transações
+            </button>
+            <button
               onClick={() => setActiveTab("ferramentas")}
-              className={`flex-1 sm:flex-initial cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none ${
+              className={`xl:hidden cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none ${
                 activeTab === "ferramentas"
                   ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
@@ -978,7 +1087,7 @@ export default function GestaoAulasPage() {
             </button>
             <button
               onClick={() => setActiveTab("links")}
-              className={`flex-1 sm:flex-initial cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none ${
+              className={`xl:hidden cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none ${
                 activeTab === "links"
                   ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
@@ -1200,8 +1309,8 @@ export default function GestaoAulasPage() {
             </div>
           </div>
 
-          {/* ÁREA PRINCIPAL: CENTRAL DE MISSÕES - ALWAYS BLOCK ON DESKTOP, CONDITIONAL ON MOBILE */}
-          <div className={`${activeTab === "missoes" ? "block" : "hidden"} xl:block xl:col-span-3`}>
+          {/* ÁREA PRINCIPAL: CENTRAL DE MISSÕES - CONDITIONAL ON BOTH DESKTOP AND MOBILE */}
+          <div className={`${activeTab === "missoes" ? "block" : "hidden"} xl:col-span-3`}>
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
               {/* CABEÇALHO E AÇÕES PRIMÁRIAS */}
               <div className="p-4 md:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 transition-colors">
@@ -1246,7 +1355,304 @@ export default function GestaoAulasPage() {
               </div>
             </div>
           </div>
-        </div>      </div>
+
+          {/* ÁREA PRINCIPAL: CENTRAL DE TRANSAÇÕES */}
+          <div className={`${activeTab === "transacoes" ? "block" : "hidden"} xl:col-span-3`}>
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
+              
+              {/* CABEÇALHO E FILTROS */}
+              <div className="p-4 md:p-6 border-b border-slate-100 dark:border-slate-800 transition-colors">
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
+                  <div>
+                    <h2 className="text-xl font-black text-slate-800 dark:text-slate-100 transition-colors">
+                      Histórico de Transações
+                    </h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 transition-colors">
+                      Consulte, filtre e gerencie todas as movimentações e logs em tempo real.
+                    </p>
+                  </div>
+                </div>
+
+                {/* FILTROS E PESQUISA */}
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  <div className="sm:col-span-2">
+                    <input
+                      type="text"
+                      placeholder="Pesquisar por aluno, matrícula ou detalhes..."
+                      value={buscaTransacoes}
+                      onChange={(e) => {
+                        setBuscaTransacoes(e.target.value);
+                        setPaginaTransacoes(1);
+                      }}
+                      className="w-full text-xs border border-slate-250 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-950 focus:border-indigo-500 outline-none transition-all shadow-sm"
+                    />
+                  </div>
+                  <div>
+                    <select
+                      value={filtroCategoriaTransacoes}
+                      onChange={(e) => {
+                        setFiltroCategoriaTransacoes(e.target.value);
+                        setPaginaTransacoes(1);
+                      }}
+                      className="w-full text-xs border border-slate-250 dark:border-slate-800 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-350 bg-slate-50 dark:bg-slate-950 outline-none transition-all shadow-sm font-bold"
+                    >
+                      <option value="">Todas Categorias</option>
+                      <option value="MISSOES">Missões</option>
+                      <option value="TRANSFERENCIA-XP">Transferência XP</option>
+                      <option value="COMPRA_RIFA">Compra Rifa</option>
+                      <option value="AJUSTE-MANUAL">Ajuste Manual</option>
+                      <option value="SISTEMA">Sistema</option>
+                    </select>
+                  </div>
+                  <div>
+                    <select
+                      value={filtroStatusTransacoes}
+                      onChange={(e) => {
+                        setFiltroStatusTransacoes(e.target.value);
+                        setPaginaTransacoes(1);
+                      }}
+                      className="w-full text-xs border border-slate-250 dark:border-slate-800 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-350 bg-slate-50 dark:bg-slate-950 outline-none transition-all shadow-sm font-bold"
+                    >
+                      <option value="">Todos Status</option>
+                      <option value="Aguardando Correção">Aguardando Correção</option>
+                      <option value="Avaliado">Avaliado</option>
+                      <option value="Devolvida">Devolvida</option>
+                      <option value="EXCLUIDA">Excluída</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              {/* TABELA DE REGISTROS */}
+              <div className="p-4 md:p-6 bg-slate-50/50 dark:bg-slate-950/50 rounded-b-2xl min-h-125 transition-colors duration-300">
+                {carregandoTransacoes ? (
+                  <div className="flex flex-col items-center justify-center py-20 gap-3">
+                    <span className="animate-spin text-3xl">🔄</span>
+                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Buscando transações...</p>
+                  </div>
+                ) : transacoes.length === 0 ? (
+                  <div className="text-center py-20">
+                    <p className="text-sm font-bold text-slate-450 dark:text-slate-500">Nenhuma transação encontrada para os filtros atuais.</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors shadow-sm">
+                    <table className="w-full border-collapse text-left text-xs">
+                      <thead>
+                        <tr className="bg-slate-50 dark:bg-slate-950 text-slate-500 dark:text-slate-400 font-black uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 transition-colors">
+                          <th className="p-4">Data/Hora</th>
+                          <th className="p-4">Estudante</th>
+                          <th className="p-4">Tipo/Atividade</th>
+                          <th className="p-4">Detalhes</th>
+                          <th className="p-4 text-center">XP</th>
+                          <th className="p-4">Status</th>
+                          <th className="p-4 text-right">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300 transition-colors">
+                        {transacoes.map((t) => {
+                          const dataFormatada = new Date(t.timestamp).toLocaleString("pt-BR", {
+                            day: "2-digit",
+                            month: "2-digit",
+                            year: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit"
+                          });
+
+                          let xpBadgeColor = "text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/40";
+                          if (t.xpGanho > 0) xpBadgeColor = "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20";
+                          else if (t.xpGanho < 0) xpBadgeColor = "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20";
+
+                          let statusBadge = "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-450";
+                          if (t.status === "Aguardando Correção") statusBadge = "bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900/30";
+                          else if (t.status === "Avaliado") statusBadge = "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 border border-emerald-250 dark:border-emerald-900/30";
+                          else if (t.status === "Devolvida") statusBadge = "bg-blue-100 dark:bg-blue-950/40 text-blue-800 dark:text-blue-400 border border-blue-200 dark:border-blue-900/30";
+                          else if (t.status === "EXCLUIDA") statusBadge = "bg-rose-100 dark:bg-rose-950/40 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-900/30";
+
+                          return (
+                            <tr key={t.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-950/20 transition-colors">
+                              <td className="p-4 font-medium text-slate-500 whitespace-nowrap">{dataFormatada}</td>
+                              <td className="p-4 font-black text-slate-900 dark:text-white">
+                                {t.nomeAluno}
+                                <span className="block text-[9px] font-bold text-slate-400 dark:text-slate-500">{t.matricula}</span>
+                              </td>
+                              <td className="p-4 font-bold text-slate-600 dark:text-slate-400">
+                                <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 text-[10px] uppercase font-black tracking-wide">
+                                  {t.idAtividade === "TRANSFERENCIA-XP" ? "💸 Transferência" : 
+                                   t.idAtividade === "COMPRA_RIFA" ? "🎰 Compra Rifa" : 
+                                   t.idAtividade === "AJUSTE-MANUAL" ? "⚡ Ajuste Manual" : 
+                                   t.idAtividade === "SISTEMA" ? "🤖 Sistema" : `📋 Missão: ${t.idAtividade}`}
+                                </span>
+                              </td>
+                              <td className="p-4 font-medium max-w-xs truncate" title={t.respostaFormatada}>
+                                {t.respostaFormatada}
+                                {t.feedback && (
+                                  <span className="block text-[10px] text-slate-400 dark:text-slate-500 italic mt-0.5">Feedback: {t.feedback}</span>
+                                )}
+                              </td>
+                              <td className="p-4 text-center">
+                                <span className={`px-2 py-0.5 rounded-md font-mono font-black ${xpBadgeColor}`}>
+                                  {t.xpGanho >= 0 ? `+${t.xpGanho}` : t.xpGanho} XP
+                                </span>
+                              </td>
+                              <td className="p-4 whitespace-nowrap">
+                                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider ${statusBadge}`}>
+                                  {t.status === "EXCLUIDA" ? "Excluída" : t.status}
+                                </span>
+                              </td>
+                              <td className="p-4 text-right whitespace-nowrap">
+                                {t.status !== "EXCLUIDA" && (
+                                  <div className="inline-flex gap-1.5">
+                                    <button
+                                      onClick={() => abrirModalEditarTransacao(t)}
+                                      className="cursor-pointer px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded text-[10px] font-bold text-slate-700 dark:text-slate-350 border border-slate-250 dark:border-slate-700 transition-colors"
+                                    >
+                                      Editar
+                                    </button>
+                                    <button
+                                      onClick={() => excluirTransacao(t)}
+                                      className="cursor-pointer px-2 py-1 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-950/40 rounded text-[10px] font-bold text-rose-700 dark:text-rose-450 border border-rose-200 dark:border-rose-900/30 transition-colors"
+                                    >
+                                      Excluir
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+
+                {/* PAGINAÇÃO */}
+                {!carregandoTransacoes && totalTransacoes > 50 && (
+                  <div className="flex justify-between items-center mt-5 px-1">
+                    <span className="text-[11px] font-bold text-slate-550 dark:text-slate-400">
+                      Mostrando {Math.min(totalTransacoes, (paginaTransacoes - 1) * 50 + 1)} - {Math.min(totalTransacoes, paginaTransacoes * 50)} de {totalTransacoes} registros
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        disabled={paginaTransacoes === 1}
+                        onClick={() => setPaginaTransacoes(prev => prev - 1)}
+                        className="cursor-pointer px-3 py-1.5 bg-white dark:bg-slate-900 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-50 text-slate-750 dark:text-slate-300"
+                      >
+                        Anterior
+                      </button>
+                      <button
+                        disabled={paginaTransacoes * 50 >= totalTransacoes}
+                        onClick={() => setPaginaTransacoes(prev => prev + 1)}
+                        className="cursor-pointer px-3 py-1.5 bg-white dark:bg-slate-900 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-50 text-slate-750 dark:text-slate-300"
+                      >
+                        Próxima
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* MODAL DE EDIÇÃO DE TRANSAÇÃO */}
+        {transacaoEditando && (
+          <div className="fixed inset-0 bg-slate-900/80 dark:bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-md w-full shadow-2xl overflow-hidden"
+            >
+              <div className="p-6 border-b border-slate-100 dark:border-slate-800 flex justify-between items-center">
+                <h3 className="text-base font-black text-slate-800 dark:text-white uppercase tracking-wider">
+                  Editar Transação
+                </h3>
+                <button
+                  onClick={() => setTransacaoEditando(null)}
+                  className="cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-white border-none bg-transparent font-black"
+                >
+                  ✕
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <div>
+                  <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Aluno / Matrícula</p>
+                  <p className="text-sm font-black text-slate-800 dark:text-white">{transacaoEditando.nomeAluno} ({transacaoEditando.matricula})</p>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1.5">
+                    Descrição / Resposta
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={editResposta}
+                    onChange={(e) => setEditResposta(e.target.value)}
+                    className="w-full text-xs border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 outline-none focus:border-indigo-500 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-medium"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1.5">
+                      Pontuação (XP)
+                    </label>
+                    <input
+                      type="number"
+                      value={editXpGanho}
+                      onChange={(e) => setEditXpGanho(Number(e.target.value))}
+                      className="w-full text-xs font-mono font-black border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 outline-none focus:border-indigo-500 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1.5">
+                      Status
+                    </label>
+                    <select
+                      value={editStatus}
+                      onChange={(e) => setEditStatus(e.target.value)}
+                      className="w-full text-xs font-bold border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 outline-none focus:border-indigo-500 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100"
+                    >
+                      <option value="Aguardando Correção">Aguardando Correção</option>
+                      <option value="Avaliado">Avaliado</option>
+                      <option value="Devolvida">Devolvida</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1.5">
+                    Feedback / Mensagem ao Aluno
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Excelente trabalho!"
+                    value={editFeedback}
+                    onChange={(e) => setEditFeedback(e.target.value)}
+                    className="w-full text-xs border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 outline-none focus:border-indigo-500 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-medium"
+                  />
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 flex justify-end gap-2.5">
+                <button
+                  onClick={() => setTransacaoEditando(null)}
+                  className="cursor-pointer px-4 py-2 border border-slate-250 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 bg-white dark:bg-slate-900 transition-colors"
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={salvarEdicaoTransacao}
+                  disabled={salvandoEdicaoTransacao}
+                  className="cursor-pointer px-4.5 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-black uppercase tracking-wider border-none shadow-md transition-all active:scale-95"
+                >
+                  {salvandoEdicaoTransacao ? "Salvando..." : "Salvar Alterações"}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </div>
     </main>
   );
 }

@@ -159,13 +159,15 @@ export async function GET(request: Request) {
       }
       
       if (!idEntrega.startsWith("BDAY") && !idEntrega.startsWith("PIX") && !idEntrega.startsWith("BADGE") && !idEntrega.startsWith("BLOCK")) {
-        entregasMap[idAtiv] = {
-          resposta: val.resposta || "",
-          status: val.status || "Aguardando Correção",
-          xpGanho: val.xpGanho || 0,
-          dataEnvio: val.timestamp || 0,
-          feedback: val.feedback || ""
-        };
+        if (val.status !== "EXCLUIDA") {
+          entregasMap[idAtiv] = {
+            resposta: val.resposta || "",
+            status: val.status || "Aguardando Correção",
+            xpGanho: val.xpGanho || 0,
+            dataEnvio: val.timestamp || 0,
+            feedback: val.feedback || ""
+          };
+        }
       }
 
       if (idEntrega.includes("PIX") && idEntrega.includes("-RECEBEU")) {

@@ -55,7 +55,7 @@ export async function GET(request: Request) {
         const nomeBadge = String(v.resposta || "").replace("Desbloqueou: ", "").trim();
         perfil.badges.push(nomeBadge);
       }
-      if (!idEntrega.startsWith("PIX") && !idEntrega.startsWith("BDAY") && !idEntrega.startsWith("BADGE") && !idEntrega.startsWith("BLOCK") && v.status !== "Pendente") {
+      if (!idEntrega.startsWith("PIX") && !idEntrega.startsWith("BDAY") && !idEntrega.startsWith("BADGE") && !idEntrega.startsWith("BLOCK") && v.status !== "Pendente" && v.status !== "EXCLUIDA") {
         missoesUnicas.add(String(v.idAtividade));
       }
     });

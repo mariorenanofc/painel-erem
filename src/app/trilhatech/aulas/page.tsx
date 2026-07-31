@@ -1055,10 +1055,10 @@ export default function GestaoAulasPage() {
           </div>
 
           {/* TAB SWITCHER MODERN/PREMIUM (SEGMENTED CONTROL STYLE) - MOBILE AND DESKTOP COMPATIBLE */}
-          <div className="bg-slate-150 dark:bg-slate-950 p-1.5 rounded-2xl flex gap-2.5 w-full sm:w-auto overflow-x-auto border border-slate-200 dark:border-slate-850">
+          <div className="bg-slate-150 dark:bg-slate-950 p-1 rounded-2xl flex gap-1 w-full max-w-xl sm:w-auto overflow-hidden border border-slate-200 dark:border-slate-850">
             <button
               onClick={() => setActiveTab("missoes")}
-              className={`cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none min-w-[120px] sm:min-w-[140px] whitespace-nowrap ${
+              className={`flex-1 sm:flex-initial cursor-pointer text-[10px] sm:text-xs font-black uppercase tracking-wider px-2 sm:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1 border-none whitespace-nowrap ${
                 activeTab === "missoes"
                   ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
@@ -1068,7 +1068,7 @@ export default function GestaoAulasPage() {
             </button>
             <button
               onClick={() => setActiveTab("transacoes")}
-              className={`cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none min-w-[120px] sm:min-w-[140px] whitespace-nowrap ${
+              className={`flex-1 sm:flex-initial cursor-pointer text-[10px] sm:text-xs font-black uppercase tracking-wider px-2 sm:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1 border-none whitespace-nowrap ${
                 activeTab === "transacoes"
                   ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
@@ -1078,7 +1078,7 @@ export default function GestaoAulasPage() {
             </button>
             <button
               onClick={() => setActiveTab("ferramentas")}
-              className={`xl:hidden cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none min-w-[120px] sm:min-w-[140px] ${
+              className={`xl:hidden flex-1 sm:flex-initial cursor-pointer text-[10px] sm:text-xs font-black uppercase tracking-wider px-2 sm:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1 border-none whitespace-nowrap ${
                 activeTab === "ferramentas"
                   ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
@@ -1088,7 +1088,7 @@ export default function GestaoAulasPage() {
             </button>
             <button
               onClick={() => setActiveTab("links")}
-              className={`xl:hidden cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none min-w-[120px] sm:min-w-[140px] ${
+              className={`xl:hidden flex-1 sm:flex-initial cursor-pointer text-[10px] sm:text-xs font-black uppercase tracking-wider px-2 sm:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1 border-none whitespace-nowrap ${
                 activeTab === "links"
                   ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"

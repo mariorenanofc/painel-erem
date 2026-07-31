@@ -1058,7 +1058,7 @@ export default function GestaoAulasPage() {
           <div className="bg-slate-150 dark:bg-slate-950 p-1.5 rounded-2xl flex gap-2.5 w-full sm:w-auto overflow-x-auto border border-slate-200 dark:border-slate-850">
             <button
               onClick={() => setActiveTab("missoes")}
-              className={`cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none min-w-[120px] sm:min-w-[140px] ${
+              className={`cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none min-w-[120px] sm:min-w-[140px] whitespace-nowrap ${
                 activeTab === "missoes"
                   ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
@@ -1068,7 +1068,7 @@ export default function GestaoAulasPage() {
             </button>
             <button
               onClick={() => setActiveTab("transacoes")}
-              className={`cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none min-w-[120px] sm:min-w-[140px] ${
+              className={`cursor-pointer text-xs font-black uppercase tracking-wider px-5 py-3 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none min-w-[120px] sm:min-w-[140px] whitespace-nowrap ${
                 activeTab === "transacoes"
                   ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"

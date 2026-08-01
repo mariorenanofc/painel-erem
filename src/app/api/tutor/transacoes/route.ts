@@ -119,13 +119,40 @@ export async function GET(request: Request) {
     };
   });
 
-  // Filtrar por Categoria
+  // Filtrar por Categoria (tratar variações case-insensitive e sinônimos do banco de dados)
   if (categoria) {
-    if (categoria === "TRANSFERENCIA-XP" || categoria === "COMPRA_RIFA" || categoria === "AJUSTE-MANUAL" || categoria === "SISTEMA") {
-      resultadosFiltrados = resultadosFiltrados.filter(t => t.idAtividade === categoria);
-    } else if (categoria === "MISSOES") {
-      const categoriasNaoMissoes = ["TRANSFERENCIA-XP", "COMPRA_RIFA", "AJUSTE-MANUAL", "SISTEMA"];
-      resultadosFiltrados = resultadosFiltrados.filter(t => !categoriasNaoMissoes.includes(t.idAtividade) && !t.id.startsWith("NOTIF-"));
+    const catUpper = categoria.toUpperCase();
+    
+    if (catUpper === "TRANSFERENCIA-XP") {
+      resultadosFiltrados = resultadosFiltrados.filter(t => {
+        const act = String(t.idAtividade || "").toUpperCase();
+        return act.includes("TRANSFER") || act.includes("PIX") || act.includes("ENVIOU") || act.includes("RECEBEU");
+      });
+    } else if (catUpper === "COMPRA_RIFA") {
+      resultadosFiltrados = resultadosFiltrados.filter(t => {
+        const act = String(t.idAtividade || "").toUpperCase();
+        return act.includes("RIFA") || act.includes("LOJA") || act.includes("VIRTUAL") || act.includes("COMPRA");
+      });
+    } else if (catUpper === "AJUSTE-MANUAL") {
+      resultadosFiltrados = resultadosFiltrados.filter(t => {
+        const act = String(t.idAtividade || "").toUpperCase();
+        return act.includes("AJUSTE") || act.includes("MANUAL") || act.includes("BÔNUS") || act.includes("BONUS") || act.includes("MULTA") || act.includes("INJET") || act.includes("NOTIF");
+      });
+    } else if (catUpper === "SISTEMA") {
+      resultadosFiltrados = resultadosFiltrados.filter(t => {
+        const act = String(t.idAtividade || "").toUpperCase();
+        return act.includes("SISTEMA") || act.includes("AUTO") || act.includes("BOT");
+      });
+    } else if (catUpper === "MISSOES") {
+      resultadosFiltrados = resultadosFiltrados.filter(t => {
+        const act = String(t.idAtividade || "").toUpperCase();
+        const ehEspecial = act.includes("TRANSFER") || act.includes("PIX") || act.includes("ENVIOU") || act.includes("RECEBEU") ||
+                           act.includes("RIFA") || act.includes("LOJA") || act.includes("VIRTUAL") || act.includes("COMPRA") ||
+                           act.includes("AJUSTE") || act.includes("MANUAL") || act.includes("BÔNUS") || act.includes("BONUS") ||
+                           act.includes("MULTA") || act.includes("INJET") || act.includes("SISTEMA") || act.includes("AUTO") ||
+                           t.id.startsWith("NOTIF-");
+        return !ehEspecial;
+      });
     }
   }
 

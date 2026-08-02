@@ -119,9 +119,10 @@ export async function GET(request: Request) {
     setCachedRanking(filtroTempo, finalResponse);
 
     return NextResponse.json(finalResponse);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as Error;
     // 🛡️ FAILOVER PARA GOOGLE SHEETS
-    console.warn(`[Failover] Erro ao carregar ranking do Firestore: ${error.message}. Redirecionando para Google Sheets...`);
+    console.warn(`[Failover] Erro ao carregar ranking do Firestore: ${err.message}. Redirecionando para Google Sheets...`);
 
     if (GOOGLE_API_URL) {
       try {
@@ -132,11 +133,12 @@ export async function GET(request: Request) {
         });
         const data = await response.json();
         return NextResponse.json(data);
-      } catch (sheetsErr: any) {
-        return NextResponse.json({ error: "Erro crítico em ambos os bancos: " + sheetsErr.message }, { status: 500 });
+      } catch (sheetsErr: unknown) {
+        const sErr = sheetsErr as Error;
+        return NextResponse.json({ error: "Erro crítico em ambos os bancos: " + sErr.message }, { status: 500 });
       }
     }
 
-    return NextResponse.json({ error: "Erro ao carregar o ranking: " + error.message }, { status: 500 });
+    return NextResponse.json({ error: "Erro ao carregar o ranking: " + err.message }, { status: 500 });
   }
 }

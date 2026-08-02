@@ -379,9 +379,29 @@ export async function GET(request: Request) {
         const response = await fetch(GOOGLE_API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "carregar_portal_aluno", matricula }),
+          body: JSON.stringify({ action: "buscar_atividades", matricula }),
         });
         const data = await response.json();
+        
+        // Polyfill para compatibilidade com o layout do front-end e evitar falhas de undefined
+        if (data.status === "sucesso") {
+          if (!data.nomeAluno) data.nomeAluno = "";
+          if (data.xpTotal === undefined) data.xpTotal = 0;
+          if (data.saldoCarteira === undefined) data.saldoCarteira = data.xpTotal || 0;
+          if (!data.nivel) data.nivel = "Hello World";
+          if (!data.avatar) data.avatar = "avatar-padrao";
+          if (data.totalCurtidas === undefined) data.totalCurtidas = 0;
+          if (data.ofensivaDias === undefined) data.ofensivaDias = 0;
+          if (!data.whatsapp) data.whatsapp = { confirmado: false, link: "" };
+          if (!data.aniversario) data.aniversario = { isAniversario: false, jaResgatado: false };
+          if (!data.atividades) data.atividades = [];
+          if (!data.notificacoes) data.notificacoes = [];
+          if (!data.extratoPix) data.extratoPix = [];
+          if (!data.badgesResgatadas) data.badgesResgatadas = [];
+          if (data.taxaPresenca === undefined) data.taxaPresenca = 100;
+          if (!data.stats) data.stats = { xpDoado: 0, xpRecebido: 0, totalCheckins: 0 };
+        }
+        
         return NextResponse.json(data);
       } catch (sheetsErr: unknown) {
         const sErr = sheetsErr as Error;

@@ -3,6 +3,56 @@ import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { getCachedPortal, setCachedPortal } from "@/src/lib/cache";
 
+interface AtividadePortal {
+  id: string;
+  titulo: string;
+  descricao: string;
+  dataLimite: string;
+  xp: number;
+  tipo: string;
+  opcaoA?: string;
+  opcaoB?: string;
+  opcaoC?: string;
+  opcaoD?: string;
+  status: string;
+  respostaEnviada: string;
+  xpGanho: number;
+  dataEnvio: number;
+  statusPrazo: string;
+  feedback: string;
+  linkClassroom: string;
+  imagemUrl: string;
+  modulo: string;
+  gabarito: string;
+  statusModulo: string;
+}
+
+interface PortalData {
+  status: string;
+  nomeAluno: string;
+  xpTotal: number;
+  xpGasto?: number;
+  saldoCarteira?: number;
+  nivel: string;
+  avatar: string;
+  totalCurtidas: number;
+  ofensivaDias: number;
+  whatsapp: { confirmado: boolean; link: string };
+  aniversario: { isAniversario: boolean; jaResgatado: boolean };
+  atividades: AtividadePortal[];
+  notificacoes: { id: string; mensagem: string; xp: number; tempo: number; tipo: string }[];
+  extratoPix: { id: string; mensagem: string; xp: number; tempo: number; tipo: string }[];
+  badgesResgatadas: string[];
+  taxaPresenca: number;
+  stats: { xpDoado: number; xpRecebido: number; totalCheckins: number };
+  progressoNivel?: {
+    porcentagem: number;
+    faltam: number;
+    nomeProximo: string;
+    isMaximo: boolean;
+  };
+}
+
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
 const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
 
@@ -59,7 +109,7 @@ export async function GET(request: Request) {
       }
     });
 
-    const dadosRetorno: any = {
+    const dadosRetorno: PortalData = {
       status: "sucesso",
       nomeAluno: aluno.nome || "",
       xpTotal: aluno.xp || 0,
@@ -107,7 +157,7 @@ export async function GET(request: Request) {
 
     // 4. WhatsApp link da turma
     const configSnap = await dbAdmin.collection("configuracoes").get();
-    const configMap: Record<string, any> = {};
+    const configMap: Record<string, string> = {};
     configSnap.forEach((doc: QueryDocumentSnapshot) => {
       configMap[doc.id] = doc.data().valor;
     });
@@ -141,7 +191,13 @@ export async function GET(request: Request) {
 
     // 6. Entregas, Notificações, Pix, Badges
     const entregasSnap = await dbAdmin.collection("entregas").where("matricula", "==", matricula).get();
-    const entregasMap: Record<string, any> = {};
+    const entregasMap: Record<string, {
+      resposta: string;
+      status: string;
+      xpGanho: number;
+      dataEnvio: number;
+      feedback: string;
+    }> = {};
 
     entregasSnap.forEach((doc: QueryDocumentSnapshot) => {
       const idEntrega = doc.id;
@@ -228,7 +284,7 @@ export async function GET(request: Request) {
     const checkinsMap: Record<string, boolean> = {};
     let presencasAluno = 0;
 
-    freqSnap.forEach((doc: any) => {
+    freqSnap.forEach((doc: QueryDocumentSnapshot) => {
       const f = doc.data();
       if (String(f.id || doc.id).startsWith("BDAY")) return;
       const dataFormatada = f.data || "";

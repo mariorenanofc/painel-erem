@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
+import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache } from "@/src/lib/cache";
 
 const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
 
@@ -134,6 +134,7 @@ export async function POST(request: Request) {
       const { novaSenha } = body;
       if (novaSenha) {
         await dbAdmin.collection("configuracoes").doc("SENHA_CHECKIN").set({ valor: String(novaSenha).trim() });
+        invalidateConfigCache();
       }
     }
 
@@ -141,6 +142,7 @@ export async function POST(request: Request) {
       const { status } = body;
       if (status) {
         await dbAdmin.collection("configuracoes").doc("MODO_REPOSICAO").set({ valor: String(status).trim() });
+        invalidateConfigCache();
       }
     }
 
@@ -151,6 +153,7 @@ export async function POST(request: Request) {
           return dbAdmin.collection("configuracoes").doc(key).set({ valor: configs[key] });
         });
         await Promise.all(promises);
+        invalidateConfigCache();
       }
     }
 

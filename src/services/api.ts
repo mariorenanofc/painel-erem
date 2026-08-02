@@ -70,7 +70,10 @@ export const apiGeral = {
   recuperarMatricula: (nome: string, dataNasc: string) =>
     fetchApi({ action: "recuperar_matricula", nome, dataNasc }),
 
-  buscarConfiguracoes: () => fetchApi({ action: "buscar_configuracoes" }),
+  buscarConfiguracoes: async () => {
+    const res = await fetch("/api/configuracoes");
+    return res.json();
+  },
 };
 
 // ==========================================

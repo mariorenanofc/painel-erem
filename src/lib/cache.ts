@@ -1,6 +1,7 @@
 // Cache simples em memória para reduzir leituras no Firestore e otimizar performance
 export const rankingCache: Record<string, { data: unknown; timestamp: number }> = {};
 export const portalCache: Record<string, { data: unknown; timestamp: number }> = {};
+let configCache: { data: unknown; timestamp: number } | null = null;
 
 export function getCachedPortal(matricula: string): unknown | null {
   const cached = portalCache[matricula.trim()];
@@ -30,6 +31,24 @@ export function setCachedRanking(filtro: string, data: unknown) {
     data,
     timestamp: Date.now()
   };
+}
+
+export function getCachedConfigs(): unknown | null {
+  if (configCache && Date.now() - configCache.timestamp < 600000) { // 10 minutos
+    return configCache.data;
+  }
+  return null;
+}
+
+export function setCachedConfigs(data: unknown) {
+  configCache = {
+    data,
+    timestamp: Date.now()
+  };
+}
+
+export function invalidateConfigCache() {
+  configCache = null;
 }
 
 export function invalidatePortalCache(matricula: string) {

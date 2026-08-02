@@ -104,13 +104,7 @@ export default function ImportadorLoteModal({
         if (tipoBrutoLower.includes("desafio")) {
           tipoPortal = "Quiz";
           xp = TABELA_XP_PADRAO.Quiz;
-
-          // Se contiver ".2" ou " 2" ou "_2", vira "Desafio 2", senão "Desafio 1"
-          if (tipoBrutoLower.includes(".2") || tipoBrutoLower.includes(" 2") || tipoBrutoLower.includes("_2") || tipoBrutoLower.endsWith("2")) {
-            nomeFormatado = "Desafio 2";
-          } else {
-            nomeFormatado = "Desafio 1";
-          }
+          nomeFormatado = tipoBruto.replace(/desafio/i, "Desafio");
         } else if (tipoBrutoLower.includes("projeto") || tipoBrutoLower.includes("miniprojeto")) {
           tipoPortal = "Projeto";
           xp = TABELA_XP_PADRAO.Projeto;

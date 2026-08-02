@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     }
 
     // 5. Calcular Taxa de Presença para determinar o XP de recompensa
-    const freqSnap = await dbAdmin.collection("frequencia").where("turma", "==", turmaDoAluno).get();
+    const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "==", matricula).get();
     const diasComAulaSet = new Set<string>();
     let presencasAluno = 0;
 
@@ -75,7 +75,7 @@ export async function POST(request: Request) {
       if (doc.id.startsWith("BDAY")) return;
       const dataFormatada = f.data || "";
       if (dataFormatada) diasComAulaSet.add(dataFormatada);
-      if (f.matricula === matricula && f.status === "Presente") presencasAluno++;
+      if (f.status === "Presente") presencasAluno++;
     });
 
     const totalAulas = diasComAulaSet.size;

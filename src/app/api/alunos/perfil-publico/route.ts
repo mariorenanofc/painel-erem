@@ -85,7 +85,7 @@ export async function GET(request: Request) {
 
     // 4. Calcular Streak do Aluno Alvo
     if (perfil.turma) {
-      const freqSnap = await dbAdmin.collection("frequencia").where("turma", "==", perfil.turma).get();
+      const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "==", matriculaAlvo).get();
       const diasComAulaSet = new Set<string>();
       const checkinsMap: Record<string, boolean> = {};
 
@@ -95,7 +95,7 @@ export async function GET(request: Request) {
         const dataFormatada = f.data || "";
         if (dataFormatada) diasComAulaSet.add(dataFormatada);
 
-        if (f.matricula === matriculaAlvo && f.status === "Presente") {
+        if (f.status === "Presente") {
           checkinsMap[dataFormatada] = true;
         }
       });

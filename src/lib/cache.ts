@@ -4,7 +4,7 @@ export const portalCache: Record<string, { data: any; timestamp: number }> = {};
 
 export function getCachedPortal(matricula: string): any | null {
   const cached = portalCache[matricula.trim()];
-  if (cached && Date.now() - cached.timestamp < 30000) { // 30 segundos
+  if (cached && Date.now() - cached.timestamp < 300000) { // 5 minutos
     return cached.data;
   }
   return null;
@@ -19,7 +19,7 @@ export function setCachedPortal(matricula: string, data: any) {
 
 export function getCachedRanking(filtro: string): any | null {
   const cached = rankingCache[filtro.trim()];
-  if (cached && Date.now() - cached.timestamp < 60000) { // 1 minuto
+  if (cached && Date.now() - cached.timestamp < 600000) { // 10 minutos
     return cached.data;
   }
   return null;

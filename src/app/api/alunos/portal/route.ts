@@ -222,7 +222,7 @@ export async function GET(request: Request) {
     dadosRetorno.extratoPix = dadosRetorno.extratoPix.slice(0, 20);
 
     // 8. Frequência / Streak / Presença
-    const freqSnap = await dbAdmin.collection("frequencia").where("turma", "==", studentTurma(aluno)).get();
+    const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "==", matricula).get();
     const diasComAulaSet = new Set<string>();
     const checkinsMap: Record<string, boolean> = {};
     let presencasAluno = 0;
@@ -233,7 +233,7 @@ export async function GET(request: Request) {
       const dataFormatada = f.data || "";
       if (dataFormatada) diasComAulaSet.add(dataFormatada);
 
-      if (f.matricula === matricula && f.status === "Presente") {
+      if (f.status === "Presente") {
         presencasAluno++;
         dadosRetorno.stats.totalCheckins++;
         checkinsMap[dataFormatada] = true;

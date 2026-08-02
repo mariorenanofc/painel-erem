@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -40,9 +39,10 @@ export async function GET(request: Request) {
     };
 
     return NextResponse.json({ status: "sucesso", perfil });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as Error;
     // 🛡️ REGRAS DE FAILOVER PARA GOOGLE SHEETS
-    console.warn(`[Failover] Erro ao buscar perfil no Firestore: ${error.message}. Redirecionando para Google Sheets...`);
+    console.warn(`[Failover] Erro ao buscar perfil no Firestore: ${err.message}. Redirecionando para Google Sheets...`);
     
     if (GOOGLE_API_URL) {
       try {
@@ -53,11 +53,12 @@ export async function GET(request: Request) {
         });
         const data = await response.json();
         return NextResponse.json(data);
-      } catch (sheetsErr: any) {
-        return NextResponse.json({ error: "Erro crítico em ambos os bancos: " + sheetsErr.message }, { status: 500 });
+      } catch (sheetsErr: unknown) {
+        const sErr = sheetsErr as Error;
+        return NextResponse.json({ error: "Erro crítico em ambos os bancos: " + sErr.message }, { status: 500 });
       }
     }
 
-    return NextResponse.json({ error: "Erro ao buscar perfil: " + error.message }, { status: 500 });
+    return NextResponse.json({ error: "Erro ao buscar perfil: " + err.message }, { status: 500 });
   }
 }

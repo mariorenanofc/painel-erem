@@ -54,7 +54,6 @@ interface PortalData {
 }
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
 
 const niveisGamificacao = [
   { nome: "Hello World", min: 0, max: 499 },
@@ -262,7 +261,6 @@ export async function GET(request: Request) {
     // 7. Curtidas recebidas
     const curtidasSnap = await dbAdmin.collection("curtidas").where("destinatario", "==", matricula).get();
     curtidasSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const c = doc.data();
       const tempo = Number(doc.id.split("-")[1]) || hj.getTime();
       dadosRetorno.notificacoes.push({
         id: doc.id,
@@ -393,8 +391,4 @@ export async function GET(request: Request) {
     
     return NextResponse.json({ error: "Erro ao carregar o portal: " + err.message }, { status: 500 });
   }
-}
-
-function studentTurma(aluno: { turma?: string; turmaTrilha?: string }) {
-  return aluno.turma || aluno.turmaTrilha || "";
 }

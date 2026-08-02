@@ -91,7 +91,7 @@ export async function GET(request: Request) {
 
       freqSnap.forEach((doc: any) => {
         const f = doc.data();
-        if (f.id?.startsWith("BDAY")) return;
+        if (String(f.id || doc.id).startsWith("BDAY")) return;
         const dataFormatada = f.data || "";
         if (dataFormatada) diasComAulaSet.add(dataFormatada);
 

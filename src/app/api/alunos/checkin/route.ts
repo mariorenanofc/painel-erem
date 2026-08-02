@@ -72,7 +72,7 @@ export async function POST(request: Request) {
 
     freqSnap.forEach((doc: any) => {
       const f = doc.data();
-      if (doc.id.startsWith("BDAY")) return;
+      if (String(f.id || doc.id).startsWith("BDAY")) return;
       const dataFormatada = f.data || "";
       if (dataFormatada) diasComAulaSet.add(dataFormatada);
       if (f.status === "Presente") presencasAluno++;

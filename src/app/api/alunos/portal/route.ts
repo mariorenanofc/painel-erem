@@ -229,7 +229,7 @@ export async function GET(request: Request) {
 
     freqSnap.forEach((doc: any) => {
       const f = doc.data();
-      if (f.id?.startsWith("BDAY")) return;
+      if (String(f.id || doc.id).startsWith("BDAY")) return;
       const dataFormatada = f.data || "";
       if (dataFormatada) diasComAulaSet.add(dataFormatada);
 
@@ -246,7 +246,7 @@ export async function GET(request: Request) {
     const diasOrdenados = Array.from(diasComAulaSet).sort((a, b) => {
       const pA = a.split("/");
       const pB = b.split("/");
-      return new Date(Number(pB[2]), Number(pB[1]) - 1, Number(pA[2]), Number(pA[1]) - 1, Number(pA[0])).getTime(); // Adjusted safe parsing
+      return new Date(Number(pB[2]), Number(pB[1]) - 1, Number(pB[0])).getTime() - new Date(Number(pA[2]), Number(pA[1]) - 1, Number(pA[0])).getTime();
     });
 
     let streak = 0;

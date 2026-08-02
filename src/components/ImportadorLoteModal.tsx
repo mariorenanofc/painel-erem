@@ -81,15 +81,18 @@ export default function ImportadorLoteModal({
         const proximaLinha = linhas[index + 1] ? linhas[index + 1].trim() : "";
         const isRascunho = proximaLinha.toLowerCase() === "rascunho";
 
-        // Separa o tipo/título bruto do assunto (entre parênteses no final da linha)
-        const matchDetalhes = resto.match(/(.*?)\s*\(([^)]+)\)$/);
-
+        // Separa o tipo/título bruto do assunto (identificando a primeira abertura de parêntese e removendo o fechamento no final)
         let tipoBruto = resto;
         let assunto = "";
+        const indexParen = resto.indexOf("(");
 
-        if (matchDetalhes) {
-          tipoBruto = matchDetalhes[1].trim();
-          assunto = matchDetalhes[2].trim();
+        if (indexParen !== -1) {
+          tipoBruto = resto.substring(0, indexParen).trim();
+          let rawAssunto = resto.substring(indexParen + 1).trim();
+          if (rawAssunto.endsWith(")")) {
+            rawAssunto = rawAssunto.slice(0, -1).trim();
+          }
+          assunto = rawAssunto;
         }
 
         // Traduz para as nomenclaturas do painel-erem
@@ -102,24 +105,24 @@ export default function ImportadorLoteModal({
           tipoPortal = "Quiz";
           xp = TABELA_XP_PADRAO.Quiz;
 
-          const temp = tipoBruto.replace(/desafio/i, "Desafio");
-          if (/\b\d+\.2\b/.test(temp)) {
-            nomeFormatado = "Desafio_2 -";
+          // Se contiver ".2" ou " 2" ou "_2", vira "Desafio 2", senão "Desafio 1"
+          if (tipoBrutoLower.includes(".2") || tipoBrutoLower.includes(" 2") || tipoBrutoLower.includes("_2") || tipoBrutoLower.endsWith("2")) {
+            nomeFormatado = "Desafio 2";
           } else {
-            nomeFormatado = temp;
+            nomeFormatado = "Desafio 1";
           }
-        } else if (tipoBrutoLower.includes("projeto")) {
+        } else if (tipoBrutoLower.includes("projeto") || tipoBrutoLower.includes("miniprojeto")) {
           tipoPortal = "Projeto";
           xp = TABELA_XP_PADRAO.Projeto;
-          nomeFormatado = "Mini Projeto -";
+          nomeFormatado = "Material (Miniprojeto)";
         } else {
           tipoPortal = "Material";
           xp = TABELA_XP_PADRAO.Material;
 
           if (tipoBrutoLower.includes("apoio")) {
-            nomeFormatado = "Materiais de apoio";
+            nomeFormatado = "Material (Materiais de apoio)";
           } else if (tipoBrutoLower.includes("feedback")) {
-            nomeFormatado = "Feedback da aula";
+            nomeFormatado = "Material (Feedback da aula)";
           } else if (tipoBrutoLower.includes("broadcast")) {
             nomeFormatado = "Broadcast";
           } else if (

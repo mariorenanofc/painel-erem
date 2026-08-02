@@ -243,16 +243,13 @@ export const apiTutor = {
     }),
 
   // --- MISSÕES ---
-  buscarTodasAtividades: (
+  buscarTodasAtividades: async (
     filtroTurma: string = "Todas",
     filtroTipo: string = "Todos",
-  ) =>
-    fetchApi({
-      action: "buscar_todas_atividades",
-      filtroTurma,
-      filtroTipo,
-      token: TUTOR_TOKEN,
-    }),
+  ) => {
+    const res = await fetch(`/api/tutor/atividades?filtroTurma=${filtroTurma}&filtroTipo=${filtroTipo}`);
+    return res.json();
+  },
 
   salvarAtividade: (dados: any) =>
     fetchApi({ action: "salvar_atividade", ...dados, token: TUTOR_TOKEN }),
@@ -334,8 +331,10 @@ export const apiTutor = {
     }),
 
   // --- CONFIGURAÇÕES ---
-  buscarSenhaCheckin: () =>
-    fetchApi({ action: "buscar_senha_checkin", token: TUTOR_TOKEN }),
+  buscarSenhaCheckin: async () => {
+    const res = await fetch("/api/tutor/senha-checkin");
+    return res.json();
+  },
 
   atualizarSenhaCheckin: (novaSenha: string) =>
     fetchApi({
@@ -347,8 +346,10 @@ export const apiTutor = {
   toggleModoReposicao: (status: "LIGADO" | "DESLIGADO") =>
     fetchApi({ action: "toggle_modo_reposicao", status, token: TUTOR_TOKEN }),
 
-  buscarAniversariantes: () =>
-    fetchApi({ action: "buscar_aniversariantes_dia", token: TUTOR_TOKEN }),
+  buscarAniversariantes: async () => {
+    const res = await fetch("/api/tutor/aniversariantes");
+    return res.json();
+  },
 
   // 🔥 NOVA ROTA DE CONFIGURAÇÕES INTEGRADAS
   salvarConfiguracoes: (configs: Record<string, any>) =>

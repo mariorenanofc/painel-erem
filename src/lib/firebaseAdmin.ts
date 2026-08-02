@@ -1,7 +1,7 @@
 import { getApps, initializeApp, cert } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { Firestore, getFirestore } from "firebase-admin/firestore";
 
-let dbAdmin: any;
+let dbAdmin: Firestore;
 
 const cleanString = (val?: string) => {
   if (!val) return "";
@@ -41,7 +41,7 @@ if (!isPlaceholder(projectId) && !isPlaceholder(clientEmail) && !isPlaceholder(p
         throw new Error(`Firestore Admin acionado para a propriedade '${String(prop)}' sem credenciais válidas configuradas no arquivo .env.local.`);
       };
     }
-  });
+  }) as unknown as Firestore;
 }
 
 export { dbAdmin };

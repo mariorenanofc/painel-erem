@@ -2,6 +2,7 @@ import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { QueryDocumentSnapshot, Transaction } from "firebase-admin/firestore";
 
 export async function POST(request: Request) {
   let matricula = "";
@@ -70,7 +71,7 @@ export async function POST(request: Request) {
     const diasComAulaSet = new Set<string>();
     let presencasAluno = 0;
 
-    freqSnap.forEach((doc: any) => {
+    freqSnap.forEach((doc: QueryDocumentSnapshot) => {
       const f = doc.data();
       if (String(f.id || doc.id).startsWith("BDAY")) return;
       const dataFormatada = f.data || "";
@@ -92,7 +93,7 @@ export async function POST(request: Request) {
     }
 
     // 6. Gravar Check-in e atualizar XP usando Transação atômica (Protege contra concorrência)
-    await dbAdmin.runTransaction(async (transaction: any) => {
+    await dbAdmin.runTransaction(async (transaction: Transaction) => {
       const freshAlunoDoc = await transaction.get(alunoRef);
       const freshAluno = freshAlunoDoc.data()!;
       const currentXp = Number(freshAluno.xp) || 0;
@@ -122,8 +123,9 @@ export async function POST(request: Request) {
       mensagem: `Check-in realizado! +${xpGanho} XP garantidos.${msgFogo}`
     });
 
-  } catch (error: any) {
-    console.warn("[Failover] Erro no check-in do Firestore:", error.message);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.warn("[Failover] Erro no check-in do Firestore:", err.message);
     if (GOOGLE_API_URL) {
       try {
         const response = await fetch(GOOGLE_API_URL, {
@@ -132,8 +134,11 @@ export async function POST(request: Request) {
           body: JSON.stringify({ action: "fazer_checkin", matricula, senha: senhaInformada }),
         });
         return NextResponse.json(await response.json());
-      } catch (sheetsErr) {}
+      } catch (sheetsErr: unknown) {
+        const sErr = sheetsErr as Error;
+        console.error("[Failover] Erro na planilha de checkin:", sErr.message);
+      }
     }
-    return NextResponse.json({ status: "erro", mensagem: "Erro ao processar o check-in: " + error.message }, { status: 500 });
+    return NextResponse.json({ status: "erro", mensagem: "Erro ao processar o check-in: " + err.message }, { status: 500 });
   }
 }

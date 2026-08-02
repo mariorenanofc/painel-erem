@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { getCachedPortal, setCachedPortal } from "@/src/lib/cache";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
@@ -48,7 +49,7 @@ export async function GET(request: Request) {
     // 3. Carregar Controle de Módulos
     const modulosSnap = await dbAdmin.collection("controle_modulos").get();
     const statusModulosMap: Record<string, string> = {};
-    modulosSnap.forEach((doc: any) => {
+    modulosSnap.forEach((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
       const nomeMod = String(data.id || doc.id).trim();
       const statusMod = String(data.status || "Aberto").trim();
@@ -107,11 +108,11 @@ export async function GET(request: Request) {
     // 4. WhatsApp link da turma
     const configSnap = await dbAdmin.collection("configuracoes").get();
     const configMap: Record<string, any> = {};
-    configSnap.forEach((doc: any) => {
+    configSnap.forEach((doc: QueryDocumentSnapshot) => {
       configMap[doc.id] = doc.data().valor;
     });
 
-    const turmaDoAluno = aluno.turma || aluno.turmaTrilha || "";
+    const turmaDoAluno: string = aluno.turma || aluno.turmaTrilha || "";
     if (turmaDoAluno.includes("1º") || turmaDoAluno.includes("1")) {
       dadosRetorno.whatsapp.link = configMap["WHATSAPP_1ANO"] || "";
     } else if (turmaDoAluno.includes("2º") || turmaDoAluno.includes("2")) {
@@ -142,7 +143,7 @@ export async function GET(request: Request) {
     const entregasSnap = await dbAdmin.collection("entregas").where("matricula", "==", matricula).get();
     const entregasMap: Record<string, any> = {};
 
-    entregasSnap.forEach((doc: any) => {
+    entregasSnap.forEach((doc: QueryDocumentSnapshot) => {
       const idEntrega = doc.id;
       const val = doc.data();
       const idAtiv = String(val.idAtividade || "").trim();
@@ -204,7 +205,7 @@ export async function GET(request: Request) {
 
     // 7. Curtidas recebidas
     const curtidasSnap = await dbAdmin.collection("curtidas").where("destinatario", "==", matricula).get();
-    curtidasSnap.forEach((doc: any) => {
+    curtidasSnap.forEach((doc: QueryDocumentSnapshot) => {
       const c = doc.data();
       const tempo = Number(doc.id.split("-")[1]) || hj.getTime();
       dadosRetorno.notificacoes.push({
@@ -216,9 +217,9 @@ export async function GET(request: Request) {
       });
     });
 
-    dadosRetorno.notificacoes.sort((a: any, b: any) => b.tempo - a.tempo);
+    dadosRetorno.notificacoes.sort((a: { tempo: number }, b: { tempo: number }) => b.tempo - a.tempo);
     dadosRetorno.notificacoes = dadosRetorno.notificacoes.slice(0, 10);
-    dadosRetorno.extratoPix.sort((a: any, b: any) => b.tempo - a.tempo);
+    dadosRetorno.extratoPix.sort((a: { tempo: number }, b: { tempo: number }) => b.tempo - a.tempo);
     dadosRetorno.extratoPix = dadosRetorno.extratoPix.slice(0, 20);
 
     // 8. Frequência / Streak / Presença
@@ -263,7 +264,7 @@ export async function GET(request: Request) {
     const hojeTime = new Date();
     hojeTime.setHours(0, 0, 0, 0);
 
-    atividadesSnap.forEach((doc: any) => {
+    atividadesSnap.forEach((doc: QueryDocumentSnapshot) => {
       const ativ = doc.data();
       const turmaAlvo = ativ.turmaAlvo || "Todas";
 
@@ -314,9 +315,10 @@ export async function GET(request: Request) {
     setCachedPortal(matricula, dadosRetorno);
 
     return NextResponse.json(dadosRetorno);
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as Error;
     // 🛡️ REGRAS DE FAILOVER (Se esgotar cota ou der erro no Firebase, consome a Planilha)
-    console.warn(`[Failover] Erro ao carregar portal do Firestore: ${error.message}. Redirecionando para Google Sheets...`);
+    console.warn(`[Failover] Erro ao carregar portal do Firestore: ${err.message}. Redirecionando para Google Sheets...`);
     
     if (GOOGLE_API_URL) {
       try {
@@ -327,15 +329,16 @@ export async function GET(request: Request) {
         });
         const data = await response.json();
         return NextResponse.json(data);
-      } catch (sheetsErr: any) {
-        return NextResponse.json({ error: "Erro crítico em ambos os bancos: " + sheetsErr.message }, { status: 500 });
+      } catch (sheetsErr: unknown) {
+        const sErr = sheetsErr as Error;
+        return NextResponse.json({ error: "Erro crítico em ambos os bancos: " + sErr.message }, { status: 500 });
       }
     }
     
-    return NextResponse.json({ error: "Erro ao carregar o portal: " + error.message }, { status: 500 });
+    return NextResponse.json({ error: "Erro ao carregar o portal: " + err.message }, { status: 500 });
   }
 }
 
-function studentTurma(aluno: any) {
+function studentTurma(aluno: { turma?: string; turmaTrilha?: string }) {
   return aluno.turma || aluno.turmaTrilha || "";
 }

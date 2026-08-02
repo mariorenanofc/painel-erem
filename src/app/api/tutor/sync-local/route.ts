@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache } from "@/src/lib/cache";
+import { Transaction } from "firebase-admin/firestore";
 
 const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
 
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
         const entregaRef = dbAdmin.collection("entregas").doc(idEntrega);
         const alunoRef = dbAdmin.collection("alunos").doc(mat);
 
-        await dbAdmin.runTransaction(async (transaction: any) => {
+        await dbAdmin.runTransaction(async (transaction: Transaction) => {
           const entregaDoc = await transaction.get(entregaRef);
           const alunoDoc = await transaction.get(alunoRef);
 
@@ -104,7 +105,7 @@ export async function POST(request: Request) {
         const timestamp = Date.now();
         const idEntrega = `NOTIF-${timestamp}-${mat}`;
 
-        await dbAdmin.runTransaction(async (transaction: any) => {
+        await dbAdmin.runTransaction(async (transaction: Transaction) => {
           const alunoDoc = await transaction.get(alunoRef);
           if (alunoDoc.exists) {
             const currentXp = Number(alunoDoc.data()?.xp) || 0;
@@ -172,7 +173,7 @@ export async function POST(request: Request) {
     else if (action === "salvar_gabaritos_lote") {
       const { atualizacoes } = body;
       if (Array.isArray(atualizacoes)) {
-        const promises = atualizacoes.map((item: any) => {
+        const promises = atualizacoes.map((item: { id: string; gabarito?: string; gabaritoLiberado?: boolean }) => {
           return dbAdmin.collection("atividades").doc(item.id).set({
             gabarito: String(item.gabarito || ""),
             gabaritoLiberado: item.gabaritoLiberado === true
@@ -183,8 +184,9 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ status: "sucesso" });
-  } catch (error: any) {
-    console.error("[Tutor Sync Local Error]", error);
-    return NextResponse.json({ status: "sucesso", warning: "Erro no sync local: " + error.message });
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("[Tutor Sync Local Error]", err);
+    return NextResponse.json({ status: "sucesso", warning: "Erro no sync local: " + err.message });
   }
 }

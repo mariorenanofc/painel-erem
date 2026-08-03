@@ -374,13 +374,15 @@ function doPost(e) {
 
         if (abaTrilha) {
           const dadosTrilha = abaTrilha.getDataRange().getValues();
+          const trilhaMap = {};
           for (let t = 1; t < dadosTrilha.length; t++) {
-            if (String(dadosTrilha[t][0]).trim() === matricula) {
-              turmaDoAlunoNoProjeto = String(dadosTrilha[t][1]).trim();
-              xpTotalDoAluno = Number(dadosTrilha[t][4]) || 0; 
-              nivelDoAluno = String(dadosTrilha[t][5]) || "Iniciante"; 
-              break;
-            }
+            trilhaMap[String(dadosTrilha[t][0]).trim()] = dadosTrilha[t];
+          }
+          const info = trilhaMap[matricula];
+          if (info) {
+            turmaDoAlunoNoProjeto = String(info[1]).trim();
+            xpTotalDoAluno = Number(info[4]) || 0;
+            nivelDoAluno = String(info[5]) || "Iniciante";
           }
         }
 
@@ -685,56 +687,76 @@ function doPost(e) {
         let xpAnterior = 0;
         let ehEntregaClassroom = false;
 
+        // Otimização: Mapeamento de entregas para busca instantânea O(1)
+        const entregasMap = {};
         for (let i = 1; i < dadosEntregas.length; i++) {
-            if (String(dadosEntregas[i][1]).trim() === matricula && String(dadosEntregas[i][2]).trim() === idAtividade) {
-                linhaExistente = i + 1;
-                statusAtualBD = String(dadosEntregas[i][4]).trim().toLowerCase();
-                xpAnterior = Number(dadosEntregas[i][5]) || 0;
-                if (String(dadosEntregas[i][7]).toLowerCase().includes("classroom") || String(dadosEntregas[i][7]).toLowerCase().includes("ava")) ehEntregaClassroom = true;
-                break;
+            const mat = String(dadosEntregas[i][1]).trim();
+            const idAtiv = String(dadosEntregas[i][2]).trim();
+            entregasMap[mat + "|" + idAtiv] = {
+                linha: i + 1,
+                status: String(dadosEntregas[i][4]).trim().toLowerCase(),
+                xpGanho: Number(dadosEntregas[i][5]) || 0,
+                feedback: String(dadosEntregas[i][7] || "")
+            };
+        }
+
+        const entregaExistente = entregasMap[matricula + "|" + idAtividade];
+        if (entregaExistente) {
+            linhaExistente = entregaExistente.linha;
+            statusAtualBD = entregaExistente.status;
+            xpAnterior = entregaExistente.xpGanho;
+            if (entregaExistente.feedback.toLowerCase().includes("classroom") || entregaExistente.feedback.toLowerCase().includes("ava")) {
+                ehEntregaClassroom = true;
             }
         }
 
         if (ehEntregaClassroom) return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Você não precisa entregar por aqui! O sistema já avaliou automaticamente pelo Classroom. 🤖" })).setMimeType(ContentService.MimeType.JSON);
         if (linhaExistente > 0 && statusAtualBD !== "devolvida") return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Você já enviou esta missão! Não é possível reenviar." })).setMimeType(ContentService.MimeType.JSON);
 
-        let ativXp = 0; let ativTipo = "Projeto"; let ativRespostaCorreta = ""; 
+        let ativXp = 0; let ativTipo = "Quiz"; let ativRespostaCorreta = ""; 
         let moduloAtiv = ""; let turmaAlvoAtiv = ""; let dataLimObj = null;
         let linkClassroom = ""; let isGabaritoLiberado = false;
 
+        // Otimização: Mapeamento de atividades para busca instantânea O(1)
+        const atividadesMap = {};
         for (let i = 1; i < dadosAtiv.length; i++) {
-            if (String(dadosAtiv[i][0]).trim() === idAtividade) {
-                ativXp = Number(dadosAtiv[i][4]) || 0;
-                turmaAlvoAtiv = String(dadosAtiv[i][5]).trim().toLowerCase();
-                ativTipo = String(dadosAtiv[i][6]).trim();
-                ativRespostaCorreta = String(dadosAtiv[i][11]).trim();
-                moduloAtiv = String(dadosAtiv[i][15]).trim().toLowerCase();
-                linkClassroom = String(dadosAtiv[i][12] || "").trim();
-                isGabaritoLiberado = dadosAtiv[i][17] === true || String(dadosAtiv[i][17]).toLowerCase() === "true";
-                
-                let strDate = String(dadosAtiv[i][3]).trim();
-                if (strDate.includes("-")) {
-                    let p = strDate.split("T")[0].split("-");
-                    if (p.length === 3) dataLimObj = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
-                } else if (strDate.includes("/")) {
-                    let p = strDate.split("/");
-                    if (p.length === 3) dataLimObj = new Date(Number(p[2]), Number(p[1])-1, Number(p[0]));
-                }
-                if (dataLimObj) dataLimObj.setHours(0,0,0,0);
-                break;
+            atividadesMap[String(dadosAtiv[i][0]).trim()] = dadosAtiv[i];
+        }
+
+        const ativRow = atividadesMap[idAtividade];
+        if (ativRow) {
+            ativXp = Number(ativRow[4]) || 0;
+            turmaAlvoAtiv = String(ativRow[5]).trim().toLowerCase();
+            ativTipo = String(ativRow[6]).trim();
+            ativRespostaCorreta = String(ativRow[11]).trim();
+            moduloAtiv = String(ativRow[15]).trim().toLowerCase();
+            linkClassroom = String(ativRow[12] || "").trim();
+            isGabaritoLiberado = ativRow[17] === true || String(ativRow[17]).toLowerCase() === "true";
+            
+            let strDate = String(ativRow[3]).trim();
+            if (strDate.includes("-")) {
+                let p = strDate.split("T")[0].split("-");
+                if (p.length === 3) dataLimObj = new Date(Number(p[0]), Number(p[1])-1, Number(p[2]));
+            } else if (strDate.includes("/")) {
+                let p = strDate.split("/");
+                if (p.length === 3) dataLimObj = new Date(Number(p[2]), Number(p[1])-1, Number(p[0]));
             }
+            if (dataLimObj) dataLimObj.setHours(0,0,0,0);
         }
 
         let xpFinalPermitido = ativXp;
+        // Otimização: Mapeamento de módulos para busca instantânea O(1)
+        const modulosMap = {};
         for (let i = 1; i < dadosModulos.length; i++) {
-            let nomeModBD = String(dadosModulos[i][0]).trim().toLowerCase();
-            let statusModBD = String(dadosModulos[i][1]).trim().toLowerCase();
-            let turmaModBD = String(dadosModulos[i][2]).trim().toLowerCase();
-            
-            if (nomeModBD === moduloAtiv && (turmaModBD === turmaAlvoAtiv || turmaModBD === "todas")) {
-                if (statusModBD === "encerrado") xpFinalPermitido = 0;
-                break;
-            }
+            const nomeModBD = String(dadosModulos[i][0]).trim().toLowerCase();
+            const statusModBD = String(dadosModulos[i][1]).trim().toLowerCase();
+            const turmaModBD = String(dadosModulos[i][2]).trim().toLowerCase();
+            modulosMap[nomeModBD + "|" + turmaModBD] = statusModBD;
+        }
+
+        const statusModulo = modulosMap[moduloAtiv + "|" + turmaAlvoAtiv] || modulosMap[moduloAtiv + "|todas"];
+        if (statusModulo === "encerrado") {
+            xpFinalPermitido = 0;
         }
 
         let atrasoDias = 0;
@@ -790,12 +812,12 @@ function doPost(e) {
         }
 
         let linhaTrilhaAluno = -1;
+        // Otimização: Mapeamento de linhas do trilhatech para busca instantânea O(1)
+        const trilhaRowMap = {};
         for (let t = 1; t < dadosTrilha.length; t++) {
-            if (String(dadosTrilha[t][0]).trim() === matricula) {
-                linhaTrilhaAluno = t + 1;
-                break;
-            }
+            trilhaRowMap[String(dadosTrilha[t][0]).trim()] = t + 1;
         }
+        linhaTrilhaAluno = trilhaRowMap[matricula] || -1;
 
         // 3. TRANCA O SERVIDOR APENAS PARA ESCREVER (Chama as abas SÓ AQUI)
         const lock = LockService.getScriptLock();

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache } from "@/src/lib/cache";
-import { Transaction } from "firebase-admin/firestore";
+import { Transaction, FieldValue } from "firebase-admin/firestore";
 
 const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
 
@@ -81,6 +81,32 @@ export async function POST(request: Request) {
             feedback: String(feedback || ""),
             timestamp: Date.now()
           }, { merge: true });
+
+          // Atualizar contadores estatísticos de agregação
+          const idAtividade = entregaDoc.exists 
+            ? (entregaDoc.data()?.idAtividade || idEntrega.split("-")[0]) 
+            : idEntrega.split("-")[0];
+
+          const getStatusCategory = (status: string, fb: string = "") => {
+            const s = String(status).trim();
+            if (s === "Aguardando Correção") return "pendentes";
+            if (s === "Aguardando Validação" || s === "Aguardando Validacao") return "aguardandoValidacao";
+            if (s === "Avaliado" && (fb.includes("Classroom") || fb.includes("AVA") || fb.includes("sincronizada"))) {
+              return "validadasAVA";
+            }
+            return null;
+          };
+
+          const oldCat = getStatusCategory(statusAnterior, entregaDoc.data()?.feedback || "");
+          const newCat = getStatusCategory(novoStatus, feedback || "");
+
+          if (idAtividade && oldCat !== newCat) {
+            const statsRef = dbAdmin.collection("estatisticas_atividades").doc(idAtividade);
+            const statsUpdates: Record<string, any> = {};
+            if (oldCat) statsUpdates[oldCat] = FieldValue.increment(-1);
+            if (newCat) statsUpdates[newCat] = FieldValue.increment(1);
+            transaction.set(statsRef, statsUpdates, { merge: true });
+          }
 
           if (alunoDoc.exists) {
             const currentXp = Number(alunoDoc.data()?.xp) || 0;

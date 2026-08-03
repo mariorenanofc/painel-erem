@@ -54,25 +54,17 @@ export async function GET(request: Request) {
       }
     });
 
-    // 3. Contabilizar Entregas por Status
-    const entregasSnap = await dbAdmin.collection("entregas").get();
-    const pendentesMap: Record<string, number> = {};
-    const aguardandoValidacaoMap: Record<string, number> = {};
-    const validadasAVAMap: Record<string, number> = {};
+    // 3. Obter Estatísticas Consolidadas (Contadores de Agregação)
+    const statsSnap = await dbAdmin.collection("estatisticas_atividades").get();
+    const statsMap: Record<string, { pendentes: number; aguardandoValidacao: number; validadasAVA: number }> = {};
 
-    entregasSnap.forEach((doc: QueryDocumentSnapshot) => {
+    statsSnap.forEach((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
-      const idAtiv = String(data.idAtividade || "").trim();
-      const statusEntrega = String(data.status || "").trim();
-      const feedback = String(data.feedback || "").trim();
-
-      if (statusEntrega === "Aguardando Correção") {
-        pendentesMap[idAtiv] = (pendentesMap[idAtiv] || 0) + 1;
-      } else if (statusEntrega === "Aguardando Validação" || statusEntrega === "Aguardando Validacao") {
-        aguardandoValidacaoMap[idAtiv] = (aguardandoValidacaoMap[idAtiv] || 0) + 1;
-      } else if (statusEntrega === "Avaliado" && (feedback.includes("Classroom") || feedback.includes("AVA") || feedback.includes("sincronizada"))) {
-        validadasAVAMap[idAtiv] = (validadasAVAMap[idAtiv] || 0) + 1;
-      }
+      statsMap[doc.id] = {
+        pendentes: Number(data.pendentes) || 0,
+        aguardandoValidacao: Number(data.aguardandoValidacao) || 0,
+        validadasAVA: Number(data.validadasAVA) || 0
+      };
     });
 
     const atividades: TutorAtividade[] = [];
@@ -88,6 +80,7 @@ export async function GET(request: Request) {
 
       const dataLimiteStr = d.dataLimite || "";
       const nomeModulo = String(d.modulo || "Geral").trim();
+      const stats = statsMap[idAtiv] || { pendentes: 0, aguardandoValidacao: 0, validadasAVA: 0 };
 
       atividades.push({
         id: idAtiv,
@@ -108,9 +101,9 @@ export async function GET(request: Request) {
         modulo: nomeModulo,
         gabarito: String(d.gabarito || ""),
         gabaritoLiberado: d.gabaritoLiberado === true,
-        pendentes: pendentesMap[idAtiv] || 0,
-        aguardandoValidacao: aguardandoValidacaoMap[idAtiv] || 0,
-        validadasAVA: validadasAVAMap[idAtiv] || 0,
+        pendentes: stats.pendentes,
+        aguardandoValidacao: stats.aguardandoValidacao,
+        validadasAVA: stats.validadasAVA,
         statusModulo: statusModulosMap[`${nomeModulo}|${turmaAtiv}`] || statusModulosMap[`${nomeModulo}|Todas`] || "Aberto"
       });
     });

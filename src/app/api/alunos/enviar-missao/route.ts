@@ -2,6 +2,7 @@ import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { Transaction, FieldValue } from "firebase-admin/firestore";
 
 export async function POST(request: Request) {
   let matricula = "";
@@ -152,7 +153,9 @@ export async function POST(request: Request) {
     }
 
     // 6. Transação atômica no Firestore
-    await dbAdmin.runTransaction(async (transaction: any) => {
+    const statusAnterior = entregaDoc.exists ? (entregaDoc.data()?.status || null) : null;
+
+    await dbAdmin.runTransaction(async (transaction: Transaction) => {
       const freshAlunoDoc = await transaction.get(alunoRef);
       const freshAluno = freshAlunoDoc.data()!;
       const currentXp = Number(freshAluno.xp) || 0;
@@ -168,6 +171,29 @@ export async function POST(request: Request) {
         timestamp: timestampAtual,
         feedback: ""
       });
+
+      // Atualizar contadores estatísticos de agregação
+      const getStatusCategory = (status: string | null, fb: string = "") => {
+        if (!status) return null;
+        const s = String(status).trim();
+        if (s === "Aguardando Correção") return "pendentes";
+        if (s === "Aguardando Validação" || s === "Aguardando Validacao") return "aguardandoValidacao";
+        if (s === "Avaliado" && (fb.includes("Classroom") || fb.includes("AVA") || fb.includes("sincronizada"))) {
+          return "validadasAVA";
+        }
+        return null;
+      };
+
+      const oldCat = getStatusCategory(statusAnterior, entregaDoc.exists ? (entregaDoc.data()?.feedback || "") : "");
+      const newCat = getStatusCategory(statusFinal, "");
+
+      if (oldCat !== newCat) {
+        const statsRef = dbAdmin.collection("estatisticas_atividades").doc(idAtividade);
+        const statsUpdates: Record<string, any> = {};
+        if (oldCat) statsUpdates[oldCat] = FieldValue.increment(-1);
+        if (newCat) statsUpdates[newCat] = FieldValue.increment(1);
+        transaction.set(statsRef, statsUpdates, { merge: true });
+      }
 
       // Atualizar XP se ganhou pontos e registrar lastUpdated
       const updatePayload: any = {

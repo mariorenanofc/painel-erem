@@ -367,6 +367,11 @@ function doPost(e) {
 
         let atividades = [];
         let entregasMap = {};
+        let badgesResgatadas = [];
+        
+        let anoAtual = new Date().getFullYear();
+        let idNiver = "NIVER-" + anoAtual + "-" + matricula;
+        let jaResgatadoNiver = false;
 
         let turmaDoAlunoNoProjeto = "";
         let xpTotalDoAluno = 0;
@@ -391,6 +396,19 @@ function doPost(e) {
           for (let i = 1; i < dadosEntregas.length; i++) {
             let mat = String(dadosEntregas[i][1]).trim();
             if (mat === matricula) {
+              let idUnico = String(dadosEntregas[i][0]).trim();
+              // Identificar conquistas (badges) resgatadas
+              if (idUnico.indexOf("BADGE-") === 0) {
+                let badgeId = idUnico.replace("BADGE-", "").replace("-" + matricula, "");
+                if (badgesResgatadas.indexOf(badgeId) === -1) {
+                  badgesResgatadas.push(badgeId);
+                }
+              }
+
+              // Identificar aniversário resgatado
+              if (idUnico === idNiver) {
+                jaResgatadoNiver = true;
+              }
               let idAtividade = String(dadosEntregas[i][2]).trim();
               entregasMap[idAtividade] = {
                 resposta: String(dadosEntregas[i][3]).trim(),
@@ -462,9 +480,18 @@ function doPost(e) {
           }
         }
 
-        return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", atividades: atividades, xpTotal: xpTotalDoAluno, nivel: nivelDoAluno })).setMimeType(ContentService.MimeType.JSON);
+        return ContentService.createTextOutput(JSON.stringify({ 
+          status: "sucesso", 
+          atividades: atividades, 
+          xpTotal: xpTotalDoAluno, 
+          nivel: nivelDoAluno,
+          badgesResgatadas: badgesResgatadas,
+          aniversario: {
+            isAniversario: false, 
+            jaResgatado: jaResgatadoNiver
+          }
+        })).setMimeType(ContentService.MimeType.JSON);
       }
-
     // ==========================================
     // ROTA 7: SALVAR OU EDITAR ATIVIDADE (Professor)
     // ==========================================
@@ -4573,4 +4600,4 @@ function sincronizarComPortal() {
   } catch (e) {
     Logger.log("Erro ao acionar sincronia: " + e.toString());
   }
-}
+}

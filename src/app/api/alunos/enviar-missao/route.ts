@@ -1,6 +1,8 @@
 import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
+const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
+  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
+  : undefined;
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { Transaction, FieldValue } from "firebase-admin/firestore";
 
@@ -70,8 +72,8 @@ export async function POST(request: Request) {
     const modKey = `${ativ.modulo}|${turmaAlvo}`;
     const modKeyTodas = `${ativ.modulo}|Todas`;
     
-    const modDoc = await dbAdmin.collection("controle_modulos").doc(modKey).get();
-    const modDocTodas = await dbAdmin.collection("controle_modulos").doc(modKeyTodas).get();
+    const modDoc = await dbAdmin.collection("modulos").doc(modKey).get();
+    const modDocTodas = await dbAdmin.collection("modulos").doc(modKeyTodas).get();
 
     const statusMod = modDoc.exists 
       ? String(modDoc.data()?.status || "Aberto").toLowerCase().trim()
@@ -215,20 +217,20 @@ export async function POST(request: Request) {
 
     invalidatePortalCache(matricula);
     invalidateRankingCache();
+
+    // Sincronizar com Google Sheets em segundo plano (assíncrono, sem travar o usuário)
+    if (GOOGLE_API_URL) {
+      fetch(GOOGLE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "enviar_atividade", matricula, idAtividade, resposta }),
+      }).catch((e) => console.error("[Background Sync Error] Enviar atividade:", e.message));
+    }
+
     return NextResponse.json({ status: "sucesso", mensagem: msgRetorno });
 
   } catch (error: any) {
-    console.warn("[Failover] Erro no envio de missão do Firestore:", error.message);
-    if (GOOGLE_API_URL) {
-      try {
-        const response = await fetch(GOOGLE_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "enviar_atividade", matricula, idAtividade, resposta }),
-        });
-        return NextResponse.json(await response.json());
-      } catch (sheetsErr) {}
-    }
+    console.error("[API Error] Erro no envio de missão:", error.message);
     return NextResponse.json({ status: "erro", mensagem: "Erro ao processar envio: " + error.message }, { status: 500 });
   }
 }

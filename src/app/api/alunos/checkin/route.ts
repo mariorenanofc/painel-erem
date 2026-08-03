@@ -1,6 +1,8 @@
 import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
+const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
+  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
+  : undefined;
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot, Transaction } from "firebase-admin/firestore";
 
@@ -118,6 +120,15 @@ export async function POST(request: Request) {
       });
     });
 
+    // Sincronizar com Google Sheets em segundo plano (assíncrono, sem travar o usuário)
+    if (GOOGLE_API_URL) {
+      fetch(GOOGLE_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify({ action: "fazer_checkin", matricula, senha: senhaInformada }),
+      }).catch((e) => console.error("[Background Sync Error] Check-in:", e.message));
+    }
+
     return NextResponse.json({
       status: "sucesso",
       mensagem: `Check-in realizado! +${xpGanho} XP garantidos.${msgFogo}`
@@ -125,20 +136,7 @@ export async function POST(request: Request) {
 
   } catch (error: unknown) {
     const err = error as Error;
-    console.warn("[Failover] Erro no check-in do Firestore:", err.message);
-    if (GOOGLE_API_URL) {
-      try {
-        const response = await fetch(GOOGLE_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "fazer_checkin", matricula, senha: senhaInformada }),
-        });
-        return NextResponse.json(await response.json());
-      } catch (sheetsErr: unknown) {
-        const sErr = sheetsErr as Error;
-        console.error("[Failover] Erro na planilha de checkin:", sErr.message);
-      }
-    }
+    console.error("[API Error] Erro no check-in:", err.message);
     return NextResponse.json({ status: "erro", mensagem: "Erro ao processar o check-in: " + err.message }, { status: 500 });
   }
 }

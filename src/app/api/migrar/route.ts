@@ -169,22 +169,45 @@ export async function GET() {
     let currentBatch = dbAdmin.batch();
     let opCount = 0;
     const entregasPromises = [];
+    const statsTempMap: Record<string, { pendentes: number; aguardandoValidacao: number; validadasAVA: number }> = {};
 
     for (let i = 1; i < entregasValues.length; i++) {
       const id = String(entregasValues[i][0]).trim();
       if (!id) continue;
 
+      const matricula = String(entregasValues[i][1]).trim();
+      const idAtiv = String(entregasValues[i][2]).trim();
+      const resposta = String(entregasValues[i][3] || "");
+      const statusEntrega = String(entregasValues[i][4] || "Aguardando Correção").trim();
+      const xpGanho = Number(entregasValues[i][5]) || 0;
+      const timestamp = Number(entregasValues[i][6]) || 0;
+      const feedback = String(entregasValues[i][7] || "").trim();
+
       const ref = dbAdmin.collection("entregas").doc(id);
       currentBatch.set(ref, {
         id,
-        matricula: String(entregasValues[i][1]).trim(),
-        idAtividade: String(entregasValues[i][2]).trim(),
-        resposta: String(entregasValues[i][3] || ""),
-        status: String(entregasValues[i][4] || "Aguardando Correção").trim(),
-        xpGanho: Number(entregasValues[i][5]) || 0,
-        timestamp: Number(entregasValues[i][6]) || 0,
-        feedback: String(entregasValues[i][7] || "").trim()
+        matricula,
+        idAtividade: idAtiv,
+        resposta,
+        status: statusEntrega,
+        xpGanho,
+        timestamp,
+        feedback
       });
+
+      // Acumular estatísticas se for atividade escolar real
+      if (idAtiv && !id.startsWith("BADGE-") && !id.startsWith("NIVER-") && !id.startsWith("COMPRA-") && !id.startsWith("DOACAO-")) {
+        if (!statsTempMap[idAtiv]) {
+          statsTempMap[idAtiv] = { pendentes: 0, aguardandoValidacao: 0, validadasAVA: 0 };
+        }
+        if (statusEntrega === "Aguardando Correção") {
+          statsTempMap[idAtiv].pendentes++;
+        } else if (statusEntrega === "Aguardando Validação" || statusEntrega === "Aguardando Validacao") {
+          statsTempMap[idAtiv].aguardandoValidacao++;
+        } else if (statusEntrega === "Avaliado" && (feedback.includes("Classroom") || feedback.includes("AVA") || feedback.includes("sincronizada"))) {
+          statsTempMap[idAtiv].validadasAVA++;
+        }
+      }
 
       opCount++;
       if (opCount === 400) {
@@ -298,6 +321,35 @@ export async function GET() {
       curtidasPromises.push(currentBatch.commit());
     }
     await Promise.all(curtidasPromises);
+
+    // I. MODULOS (Controle de Módulos)
+    console.log("Migrando controle de módulos...");
+    const moduloValues = data.controle_modulos || [];
+    const moduloBatch = dbAdmin.batch();
+    for (let i = 1; i < moduloValues.length; i++) {
+      const nomeMod = String(moduloValues[i][0]).trim();
+      const statusMod = String(moduloValues[i][1]).trim();
+      const turmaMod = String(moduloValues[i][2] || "Todas").trim();
+      if (nomeMod) {
+        const docId = `${nomeMod}|${turmaMod}`;
+        const ref = dbAdmin.collection("modulos").doc(docId);
+        moduloBatch.set(ref, {
+          nome: nomeMod,
+          status: statusMod,
+          turma: turmaMod
+        });
+      }
+    }
+    await moduloBatch.commit();
+
+    // J. ESTATISTICAS ATIVIDADES (Contadores Consolidados)
+    console.log("Migrando estatísticas consolidadas de atividades...");
+    const statsBatch = dbAdmin.batch();
+    for (const idAtiv of Object.keys(statsTempMap)) {
+      const ref = dbAdmin.collection("estatisticas_atividades").doc(idAtiv);
+      statsBatch.set(ref, statsTempMap[idAtiv]);
+    }
+    await statsBatch.commit();
 
     console.log("Migração concluída com sucesso no Firestore!");
     return NextResponse.json({ status: "sucesso", mensagem: "Migração completa para o Firestore!" });

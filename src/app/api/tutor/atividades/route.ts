@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
+import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
 
 interface TutorAtividade {
   id: string;
@@ -27,7 +28,9 @@ interface TutorAtividade {
   statusModulo: string;
 }
 
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
+const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
+  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
+  : undefined;
 const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
 
 export async function GET(request: Request) {
@@ -119,21 +122,7 @@ export async function GET(request: Request) {
     });
   } catch (error: unknown) {
     const err = error as Error;
-    console.warn(`[Failover] Erro ao buscar atividades do tutor no Firestore: ${err.message}. Redirecionando para Google Sheets...`);
-    if (GOOGLE_API_URL) {
-      try {
-        const response = await fetch(GOOGLE_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "buscar_todas_atividades", token: TUTOR_TOKEN, filtroTurma, filtroTipo }),
-        });
-        const data = await response.json();
-        return NextResponse.json(data);
-      } catch (sheetsErr: unknown) {
-        const sErr = sheetsErr as Error;
-        return NextResponse.json({ status: "erro", error: "Erro em ambos os bancos: " + sErr.message }, { status: 500 });
-      }
-    }
+    console.error(`[API Error] Erro ao buscar atividades do tutor no Firestore: ${err.message}`);
     return NextResponse.json({ status: "erro", error: err.message }, { status: 500 });
   }
 }

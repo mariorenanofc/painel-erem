@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { getCachedPortal, setCachedPortal } from "@/src/lib/cache";
+import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
 
 interface AtividadePortal {
   id: string;
@@ -53,7 +54,9 @@ interface PortalData {
   };
 }
 
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
+const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
+  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
+  : undefined;
 
 const niveisGamificacao = [
   { nome: "Hello World", min: 0, max: 499 },
@@ -96,13 +99,13 @@ export async function GET(request: Request) {
     const aluno = alunoDoc.data()!;
 
     // 3. Carregar Controle de Módulos
-    const modulosSnap = await dbAdmin.collection("controle_modulos").get();
+    const modulosSnap = await dbAdmin.collection("modulos").get();
     const statusModulosMap: Record<string, string> = {};
     modulosSnap.forEach((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
-      const nomeMod = String(data.id || doc.id).trim();
+      const nomeMod = String(data.nome || doc.id.split("|")[0]).trim();
       const statusMod = String(data.status || "Aberto").trim();
-      const turmaMod = String(data.turma || "Todas").trim();
+      const turmaMod = String(data.turma || doc.id.split("|")[1] || "Todas").trim();
       if (nomeMod) {
         statusModulosMap[`${nomeMod}|${turmaMod}`] = statusMod;
       }
@@ -375,51 +378,7 @@ export async function GET(request: Request) {
     });
   } catch (error: unknown) {
     const err = error as Error;
-    // 🛡️ REGRAS DE FAILOVER (Se esgotar cota ou der erro no Firebase, consome a Planilha)
-    console.warn(`[Failover] Erro ao carregar portal do Firestore: ${err.message}. Redirecionando para Google Sheets...`);
-    
-    if (GOOGLE_API_URL) {
-      try {
-        const response = await fetch(GOOGLE_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "buscar_atividades", matricula }),
-        });
-        const responseText = await response.text();
-        let data;
-        try {
-          data = JSON.parse(responseText);
-        } catch (parseErr) {
-          console.error("[Failover Debug] Apps Script non-JSON:", responseText.substring(0, 300));
-          throw new Error(`Google Sheets retornou HTML inválido. Possível bloqueio de IP da Vercel ou URL inexistente. Início: ${responseText.substring(0, 80)}`);
-        }
-        
-        // Polyfill para compatibilidade com o layout do front-end e evitar falhas de undefined
-        if (data.status === "sucesso") {
-          if (!data.nomeAluno) data.nomeAluno = "";
-          if (data.xpTotal === undefined) data.xpTotal = 0;
-          if (data.saldoCarteira === undefined) data.saldoCarteira = data.xpTotal || 0;
-          if (!data.nivel) data.nivel = "Hello World";
-          if (!data.avatar) data.avatar = "avatar-padrao";
-          if (data.totalCurtidas === undefined) data.totalCurtidas = 0;
-          if (data.ofensivaDias === undefined) data.ofensivaDias = 0;
-          if (!data.whatsapp) data.whatsapp = { confirmado: false, link: "" };
-          if (!data.aniversario) data.aniversario = { isAniversario: false, jaResgatado: false };
-          if (!data.atividades) data.atividades = [];
-          if (!data.notificacoes) data.notificacoes = [];
-          if (!data.extratoPix) data.extratoPix = [];
-          if (!data.badgesResgatadas) data.badgesResgatadas = [];
-          if (data.taxaPresenca === undefined) data.taxaPresenca = 100;
-          if (!data.stats) data.stats = { xpDoado: 0, xpRecebido: 0, totalCheckins: 0 };
-        }
-        
-        return NextResponse.json(data);
-      } catch (sheetsErr: unknown) {
-        const sErr = sheetsErr as Error;
-        return NextResponse.json({ error: "Erro crítico em ambos os bancos: " + sErr.message }, { status: 500 });
-      }
-    }
-    
-    return NextResponse.json({ error: "Erro ao carregar o portal: " + err.message }, { status: 500 });
+    console.error(`[API Error] Erro ao carregar portal do Firestore: ${err.message}`);
+    return NextResponse.json({ status: "erro", error: err.message }, { status: 500 });
   }
 }

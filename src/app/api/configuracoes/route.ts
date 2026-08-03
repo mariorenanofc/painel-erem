@@ -1,9 +1,12 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { getCachedConfigs, setCachedConfigs } from "@/src/lib/cache";
+import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
+const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
+  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
+  : undefined;
 
 export async function GET() {
   // 1. Verificar Cache
@@ -25,23 +28,7 @@ export async function GET() {
     return NextResponse.json(result);
   } catch (error: unknown) {
     const err = error as Error;
-    console.warn(`[Failover] Erro ao carregar configurações do Firestore: ${err.message}. Redirecionando para Google Sheets...`);
-
-    if (GOOGLE_API_URL) {
-      try {
-        const response = await fetch(GOOGLE_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "buscar_configuracoes" }),
-        });
-        const data = await response.json();
-        return NextResponse.json(data);
-      } catch (sheetsErr: unknown) {
-        const sErr = sheetsErr as Error;
-        return NextResponse.json({ error: "Erro crítico em ambos os bancos: " + sErr.message }, { status: 500 });
-      }
-    }
-
-    return NextResponse.json({ error: "Erro ao carregar configurações: " + err.message }, { status: 500 });
+    console.error(`[API Error] Erro ao carregar configurações do Firestore: ${err.message}`);
+    return NextResponse.json({ status: "erro", error: err.message }, { status: 500 });
   }
 }

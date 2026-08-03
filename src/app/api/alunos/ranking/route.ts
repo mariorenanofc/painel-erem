@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { getCachedRanking, setCachedRanking } from "@/src/lib/cache";
 
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
+const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
+  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
+  : undefined;
 const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
 const CONTA_MESTRE = "1234567";
 

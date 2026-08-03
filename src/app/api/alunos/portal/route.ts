@@ -385,7 +385,14 @@ export async function GET(request: Request) {
           headers: { "Content-Type": "text/plain;charset=utf-8" },
           body: JSON.stringify({ action: "buscar_atividades", matricula }),
         });
-        const data = await response.json();
+        const responseText = await response.text();
+        let data;
+        try {
+          data = JSON.parse(responseText);
+        } catch (parseErr) {
+          console.error("[Failover Debug] Apps Script non-JSON:", responseText.substring(0, 300));
+          throw new Error(`Google Sheets retornou HTML inválido. Possível bloqueio de IP da Vercel ou URL inexistente. Início: ${responseText.substring(0, 80)}`);
+        }
         
         // Polyfill para compatibilidade com o layout do front-end e evitar falhas de undefined
         if (data.status === "sucesso") {

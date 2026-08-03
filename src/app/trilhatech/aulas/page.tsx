@@ -163,7 +163,7 @@ export default function GestaoAulasPage() {
   const { data, isLoading, mutate } = useSWR(
     nomeUsuario ? "atividades_tutor" : null,
     fetcherAtividades,
-    { revalidateOnFocus: true },
+    { revalidateOnFocus: false, revalidateOnReconnect: false },
   );
 
   const atividades: Atividade[] =

@@ -119,6 +119,10 @@ export async function GET(request: Request) {
       status: "sucesso",
       atividades,
       modulosMatriz: listaModulos
+    }, {
+      headers: {
+        "Cache-Control": "s-maxage=60, stale-while-revalidate=300"
+      }
     });
   } catch (error: unknown) {
     const err = error as Error;

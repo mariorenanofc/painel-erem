@@ -118,7 +118,11 @@ export async function GET(request: Request) {
     // Salvar no Cache
     setCachedRanking(filtroTempo, finalResponse);
 
-    return NextResponse.json(finalResponse);
+    return NextResponse.json(finalResponse, {
+      headers: {
+        "Cache-Control": "s-maxage=60, stale-while-revalidate=300"
+      }
+    });
   } catch (error: unknown) {
     const err = error as Error;
     // 🛡️ FAILOVER PARA GOOGLE SHEETS

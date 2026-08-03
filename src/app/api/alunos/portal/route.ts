@@ -368,7 +368,11 @@ export async function GET(request: Request) {
     // Guardar no Cache
     setCachedPortal(matricula, dadosRetorno);
 
-    return NextResponse.json(dadosRetorno);
+    return NextResponse.json(dadosRetorno, {
+      headers: {
+        "Cache-Control": "s-maxage=60, stale-while-revalidate=300"
+      }
+    });
   } catch (error: unknown) {
     const err = error as Error;
     // 🛡️ REGRAS DE FAILOVER (Se esgotar cota ou der erro no Firebase, consome a Planilha)

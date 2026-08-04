@@ -66,6 +66,13 @@ export async function GET(request: Request) {
 
     // Processar Entregas (Apenas no filtro de tempo ativo)
     if (filtroTempo !== "geral") {
+      // 1. Carregar atividades para verificar prazos e detectar atrasos
+      const atividadesSnap = await dbAdmin.collection("atividades").get();
+      const atividadesMap: Record<string, any> = {};
+      atividadesSnap.forEach((doc: any) => {
+        atividadesMap[doc.id] = doc.data();
+      });
+
       const entregasSnap = await dbAdmin.collection("entregas")
         .where("status", "==", "Avaliado")
         .where("timestamp", ">=", timeInicio)
@@ -79,7 +86,30 @@ export async function GET(request: Request) {
 
         if (alunosRankMap[mat]) {
           if (timestampEnvio <= timeFim) {
-            alunosRankMap[mat].xpCalculado += xp;
+            // Verificar se o envio foi com atraso
+            const ativ = atividadesMap[val.idAtividade];
+            let ehAtrasado = false;
+            if (ativ && ativ.dataLimite) {
+              const dataLimiteStr = String(ativ.dataLimite).trim();
+              let dataLimObj: Date | null = null;
+              if (dataLimiteStr.includes("-")) {
+                const p = dataLimiteStr.split("T")[0].split("-");
+                if (p.length === 3) dataLimObj = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), 23, 59, 59);
+              } else if (dataLimiteStr.includes("/")) {
+                const p = dataLimiteStr.split("/");
+                if (p.length === 3) dataLimObj = new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]), 23, 59, 59);
+              }
+              if (dataLimObj && timestampEnvio > dataLimObj.getTime()) {
+                ehAtrasado = true;
+              }
+            }
+
+            if (ehAtrasado) {
+              alunosRankMap[mat].xpAtrasadoAcumulado = (alunosRankMap[mat].xpAtrasadoAcumulado || 0) + xp;
+            } else {
+              alunosRankMap[mat].xpCalculado += xp;
+            }
+
             if (timestampEnvio > 0 && timestampEnvio < alunosRankMap[mat].ultimoEnvio) {
               alunosRankMap[mat].ultimoEnvio = timestampEnvio;
             }
@@ -107,6 +137,18 @@ export async function GET(request: Request) {
 
     // Ordenar e Formatar o Ranking
     let ranking = Object.values(alunosRankMap);
+
+    // Aplicar o limite de XP de atraso (Cap) se não for o ranking geral
+    if (filtroTempo !== "geral") {
+      const limiteAtrasoCap = filtroTempo === "semanal" ? 15 : 60;
+      ranking = ranking.map((aluno: any) => {
+        const xpAtrasado = aluno.xpAtrasadoAcumulado || 0;
+        const xpAtrasadoCapped = Math.min(xpAtrasado, limiteAtrasoCap);
+        aluno.xpCalculado += xpAtrasadoCapped;
+        return aluno;
+      });
+    }
+
     ranking.sort((a: any, b: any) => {
       if (b.xpCalculado !== a.xpCalculado) {
         return b.xpCalculado - a.xpCalculado;

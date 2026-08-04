@@ -79,7 +79,9 @@ export async function GET() {
         imageUrl: String(ativValues[i][14] || ""),
         modulo: String(ativValues[i][15] || "Geral").trim(),
         gabarito: String(ativValues[i][16] || ""),
-        gabaritoLiberado: ativValues[i][17] === true || String(ativValues[i][17]).toLowerCase() === "true"
+        gabaritoLiberado: ativValues[i][17] === true || String(ativValues[i][17]).toLowerCase() === "true",
+        resolucaoTyping: String(ativValues[i][18] || "").trim(),
+        limiteTempoTyping: Number(ativValues[i][19]) || 0
       });
 
       ativCount++;

@@ -332,7 +332,7 @@ export default function PortalDashboard() {
     router.push("/portal/login");
   };
 
-  const enviarMissao = async (respostaFinal: string) => {
+  const enviarMissao = async (respostaFinal: string, xpCalculado?: number) => {
     if (!aluno || !missaoAberta) return;
     setEnviando(true);
     try {
@@ -340,6 +340,7 @@ export default function PortalDashboard() {
         aluno.matricula,
         missaoAberta.id,
         respostaFinal,
+        xpCalculado,
       );
       if (data.status === "sucesso") {
         // 🔥 LÓGICA INTELIGENTE DE FEEDBACK PARA QUIZ VS PROJETO

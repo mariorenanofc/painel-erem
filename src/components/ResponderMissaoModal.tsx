@@ -5,11 +5,12 @@ import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Atividade } from "@/src/types";
+import CodingPractice from "./CodingPractice";
 
 interface ResponderMissaoModalProps {
   missaoAberta: Atividade;
   onClose: () => void;
-  onEnviar: (respostaFinal: string) => Promise<void>;
+  onEnviar: (respostaFinal: string, xpCalculado?: number) => Promise<void>;
   enviando: boolean;
   respostaInicial: string;
 }
@@ -172,6 +173,9 @@ export default function ResponderMissaoModal({
           ? "🚀"
           : "🎯";
 
+  const isPendenteOuDevolvida = statusAtual === "pendente" || statusAtual === "devolvida";
+  const isTypingActivity = !!missaoAberta.resolucaoTyping && String(missaoAberta.resolucaoTyping).trim() !== "";
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-md flex items-center justify-center z-50 p-2 md:p-4 animate-in fade-in duration-200 transition-colors">
@@ -180,12 +184,43 @@ export default function ResponderMissaoModal({
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 10 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="glass-panel-heavy w-full max-w-2xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-[0_12px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] border border-slate-200 dark:border-white/5 transition-colors duration-300"
+          className={`glass-panel-heavy w-full ${isTypingActivity && isPendenteOuDevolvida ? "max-w-3xl" : "max-w-2xl"} rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-[0_12px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] border border-slate-200 dark:border-white/5 transition-colors duration-300`}
         >
-          {/* ═══ HEADER PREMIUM ═══ */}
-          <div
-            className={`bg-gradient-to-r ${headerGradient} p-5 flex justify-between items-center text-white shrink-0 shadow-md relative transition-colors duration-300`}
-          >
+          {isTypingActivity && isPendenteOuDevolvida ? (
+            <>
+              {/* Header Simplificado do Treinador */}
+              <div className="bg-gradient-to-r from-indigo-600 to-pink-600 p-5 flex justify-between items-center text-white shrink-0 relative">
+                <div className="relative z-10 flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-2xl">⌨️</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/70">
+                      Prática de Digitação Orientada
+                    </span>
+                  </div>
+                  <h2 className="font-display font-black text-lg md:text-xl leading-tight truncate text-white drop-shadow-sm">
+                    {missaoAberta.titulo}
+                  </h2>
+                </div>
+                <button
+                  onClick={onClose}
+                  className="cursor-pointer text-3xl leading-none text-white/80 hover:text-white transition-colors relative z-10 ml-4 shrink-0"
+                >
+                  &times;
+                </button>
+              </div>
+              <CodingPractice
+                missaoAberta={missaoAberta}
+                onClose={onClose}
+                onEnviar={onEnviar}
+                enviando={enviando}
+              />
+            </>
+          ) : (
+            <>
+              {/* ═══ HEADER PREMIUM ═══ */}
+              <div
+                className={`bg-gradient-to-r ${headerGradient} p-5 flex justify-between items-center text-white shrink-0 shadow-md relative transition-colors duration-300`}
+              >
             {/* Textura sutil do header */}
             <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none" />
 
@@ -537,6 +572,8 @@ export default function ResponderMissaoModal({
               </div>
             </form>
           </div>
+          </>
+          )}
         </motion.div>
       </div>
     </AnimatePresence>

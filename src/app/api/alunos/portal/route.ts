@@ -26,6 +26,8 @@ interface AtividadePortal {
   modulo: string;
   gabarito: string;
   statusModulo: string;
+  resolucaoTyping?: string;
+  limiteTempoTyping?: number;
 }
 
 interface PortalData {
@@ -363,7 +365,9 @@ export async function GET(request: Request) {
           imagemUrl: ativ.imageUrl || "",
           modulo: ativ.modulo || "Geral",
           gabarito: isGabaritoLiberado ? (ativ.gabarito || "") : "",
-          statusModulo: statusModulosMap[`${ativ.modulo}|${turmaDoAluno}`] || statusModulosMap[`${ativ.modulo}|Todas`] || "Aberto"
+          statusModulo: statusModulosMap[`${ativ.modulo}|${turmaDoAluno}`] || statusModulosMap[`${ativ.modulo}|Todas`] || "Aberto",
+          resolucaoTyping: ativ.resolucaoTyping || "",
+          limiteTempoTyping: Number(ativ.limiteTempoTyping) || 0
         });
       }
     });

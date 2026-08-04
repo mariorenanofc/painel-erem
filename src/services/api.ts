@@ -108,11 +108,11 @@ export const apiAluno = {
   minhaFrequencia: (matricula: string) =>
     fetchApi({ action: "minha_frequencia", matricula }),
 
-  enviarMissao: async (matricula: string, idAtividade: string, resposta: string) => {
+  enviarMissao: async (matricula: string, idAtividade: string, resposta: string, xpGanho?: number) => {
     const res = await fetch("/api/alunos/enviar-missao", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ matricula, idAtividade, resposta })
+      body: JSON.stringify({ matricula, idAtividade, resposta, xpGanho })
     });
     return res.json();
   },

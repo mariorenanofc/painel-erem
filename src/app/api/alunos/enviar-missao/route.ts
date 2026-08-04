@@ -15,6 +15,7 @@ export async function POST(request: Request) {
     matricula = String(body.matricula || "").trim();
     idAtividade = String(body.idAtividade || "").trim();
     resposta = String(body.resposta || "").trim();
+    const xpGanhoBody = body.xpGanho !== undefined ? Number(body.xpGanho) : undefined;
     const timestampAtual = Date.now();
 
     if (!matricula || !idAtividade) {
@@ -112,43 +113,55 @@ export async function POST(request: Request) {
     let msgDesconto = "";
     const isCorreto = ativ.tipo === "Material" ? true : (resposta.toUpperCase() === String(ativ.respostaCorreta || "").toUpperCase());
 
-    const linkClassroom = String(ativ.linkClassroom || "").trim();
-    if (linkClassroom && linkClassroom.includes("classroom.google.com")) {
-      statusFinal = "Aguardando Validação";
-      xpGanhoFinal = 0;
+    const isTyping = ativ.resolucaoTyping && String(ativ.resolucaoTyping).trim() !== "";
+
+    if (isTyping) {
+      statusFinal = "Avaliado";
+      if (xpFinalPermitido > 0) {
+        xpGanhoFinal = xpGanhoBody !== undefined ? xpGanhoBody : xpFinalPermitido;
+      } else {
+        xpGanhoFinal = 0;
+        msgDesconto = " (0 XP: O módulo desta atividade já foi encerrado!)";
+      }
     } else {
-      if (ativ.tipo === "Quiz" || ativ.tipo === "Material") {
-        statusFinal = "Avaliado";
-        if (isCorreto) {
-          if (xpFinalPermitido > 0) {
-            let descontoAtraso = 0;
-            if (atrasoDias > 0) {
-              const teto = Math.floor(xpFinalPermitido / 2);
-              descontoAtraso = atrasoDias;
-              if (descontoAtraso > teto) descontoAtraso = teto;
+      const linkClassroom = String(ativ.linkClassroom || "").trim();
+      if (linkClassroom && linkClassroom.includes("classroom.google.com")) {
+        statusFinal = "Aguardando Validação";
+        xpGanhoFinal = 0;
+      } else {
+        if (ativ.tipo === "Quiz" || ativ.tipo === "Material") {
+          statusFinal = "Avaliado";
+          if (isCorreto) {
+            if (xpFinalPermitido > 0) {
+              let descontoAtraso = 0;
+              if (atrasoDias > 0) {
+                const teto = Math.floor(xpFinalPermitido / 2);
+                descontoAtraso = atrasoDias;
+                if (descontoAtraso > teto) descontoAtraso = teto;
+              }
+
+              const isGabaritoLiberado = ativ.gabaritoLiberado === true;
+              let descontoGabarito = 0;
+              if (atrasoDias > 0 && isGabaritoLiberado) {
+                descontoGabarito = Math.floor((ativ.xp || 0) * 0.3);
+              }
+
+              const descontoTotal = descontoAtraso + descontoGabarito;
+              xpGanhoFinal = xpFinalPermitido - descontoTotal;
+
+              const piso = Math.ceil((ativ.xp || 0) * 0.1);
+              if (xpGanhoFinal < piso) xpGanhoFinal = piso;
+
+              if (descontoTotal > 0) {
+                const msgs = [];
+                if (descontoAtraso > 0) msgs.push(`-${descontoAtraso} XP por atraso`);
+                if (descontoGabarito > 0) msgs.push(`-30% por gabarito liberado`);
+                msgDesconto = ` (${msgs.join(", ")})`;
+              }
+            } else {
+              xpGanhoFinal = 0;
+              msgDesconto = " (0 XP: O módulo desta atividade já foi encerrado!)";
             }
-
-            const isGabaritoLiberado = ativ.gabaritoLiberado === true;
-            let descontoGabarito = 0;
-            if (atrasoDias > 0 && isGabaritoLiberado) {
-              descontoGabarito = Math.floor((ativ.xp || 0) * 0.3);
-            }
-
-            const descontoTotal = descontoAtraso + descontoGabarito;
-            xpGanhoFinal = xpFinalPermitido - descontoTotal;
-
-            const piso = Math.ceil((ativ.xp || 0) * 0.1);
-            if (xpGanhoFinal < piso) xpGanhoFinal = piso;
-
-            if (descontoTotal > 0) {
-              const msgs = [];
-              if (descontoAtraso > 0) msgs.push(`-${descontoAtraso} XP por atraso`);
-              if (descontoGabarito > 0) msgs.push(`-30% por gabarito liberado`);
-              msgDesconto = ` (${msgs.join(", ")})`;
-            }
-          } else {
-            xpGanhoFinal = 0;
-            msgDesconto = " (0 XP: O módulo desta atividade já foi encerrado!)";
           }
         }
       }
@@ -223,7 +236,7 @@ export async function POST(request: Request) {
       fetch(GOOGLE_API_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "enviar_atividade", matricula, idAtividade, resposta }),
+        body: JSON.stringify({ action: "enviar_atividade", matricula, idAtividade, resposta, xpGanho: xpGanhoFinal }),
       }).catch((e) => console.error("[Background Sync Error] Enviar atividade:", e.message));
     }
 

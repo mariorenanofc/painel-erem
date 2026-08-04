@@ -53,6 +53,8 @@ export interface Atividade {
   dataEnvio?: number;
   gabarito?: string;
   gabaritoLiberado?: boolean;
+  resolucaoTyping?: string;
+  limiteTempoTyping?: number;
   pendentes?: number;
   aguardandoValidacao?: number;
   validadasAVA?: number;

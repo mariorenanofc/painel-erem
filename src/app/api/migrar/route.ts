@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { clearAllPortalCaches, invalidateRankingCache, invalidateConfigCache } from "@/src/lib/cache";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
 const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
@@ -361,7 +362,10 @@ export async function GET() {
     }
     await statsBatch.commit();
 
-    console.log("Migração concluída com sucesso no Firestore!");
+    console.log("Migração concluída com sucesso no Firestore! Invalidando caches...");
+    clearAllPortalCaches();
+    invalidateRankingCache();
+    invalidateConfigCache();
     return NextResponse.json({ status: "sucesso", mensagem: "Migração completa para o Firestore!" });
   } catch (error: any) {
     console.error("Erro durante a migração:", error);

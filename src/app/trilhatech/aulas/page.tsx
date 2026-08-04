@@ -669,7 +669,18 @@ export default function GestaoAulasPage() {
       clearInterval(intervalStatus);
 
       if (data.status === "sucesso") {
-        toast(data.mensagem, "sync", "Varredura Concluída!");
+        toast("Atualizando banco de dados local...", "info", "Aguarde");
+        try {
+          const migRes = await fetch("/api/migrar");
+          const migData = await migRes.json();
+          if (migData.status === "sucesso") {
+            toast(data.mensagem, "sync", "Varredura e Sincronização Concluídas!");
+          } else {
+            toast("Varredura feita, mas erro ao sincronizar local: " + migData.error, "warning", "Sync Parcial");
+          }
+        } catch (migErr: any) {
+          toast("Erro de conexão ao sincronizar Firestore.", "error");
+        }
         mutate();
       } else {
         toast(data.mensagem, "error", "Falha na Sincronização");

@@ -37,6 +37,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const filtroTurma = searchParams.get("filtroTurma") || "Todas";
   const filtroTipo = searchParams.get("filtroTipo") || "Todos";
+  const nocache = searchParams.get("nocache") === "true";
 
   try {
     // 1. Buscar Atividades
@@ -117,7 +118,7 @@ export async function GET(request: Request) {
       modulosMatriz: listaModulos
     }, {
       headers: {
-        "Cache-Control": "s-maxage=60, stale-while-revalidate=300"
+        "Cache-Control": "no-store, max-age=0, must-revalidate"
       }
     });
   } catch (error: unknown) {

@@ -154,10 +154,11 @@ export default function PortalDashboard() {
       );
   }, []);
 
-  const carregarPortal = useCallback(async () => {
+  const carregarPortal = useCallback(async (nocache?: boolean | unknown) => {
     if (!aluno) return;
+    const skipCache = nocache === true;
     try {
-      const data = await apiAluno.carregarPortal(aluno.matricula);
+      const data = await apiAluno.carregarPortal(aluno.matricula, skipCache);
       if (data.status === "sucesso") {
         setXpTotalSistema(data.xpTotal);
         if (data.progressoNivel) setProgressoNivel(data.progressoNivel);
@@ -353,7 +354,7 @@ export default function PortalDashboard() {
         }
 
         setMissaoAberta(null);
-        carregarPortal();
+        carregarPortal(true);
       } else {
         toast(data.mensagem, "warning", "Atenção!");
       }
@@ -389,7 +390,7 @@ export default function PortalDashboard() {
         setCheckinRealizado(true);
         setModalSenhaAberto(false);
         setSenhaDigitada("");
-        carregarPortal();
+        carregarPortal(true);
       } else {
         toast(data.mensagem, "warning", "Não foi possível");
         if (data.mensagem.includes("já garantiu")) {
@@ -476,7 +477,7 @@ export default function PortalDashboard() {
           "Feliz Aniversário!",
         );
         setModalPresenteAberto(false);
-        carregarPortal();
+        carregarPortal(true);
       } else {
         toast(data.mensagem, "warning", "Ops!");
       }
@@ -661,7 +662,7 @@ export default function PortalDashboard() {
             setModalPixAberto(false);
             setAlvoPix(null);
           }}
-          onSuccess={carregarPortal}
+          onSuccess={() => carregarPortal(true)}
         />
       )}
       {rankingAberto && (
@@ -703,7 +704,7 @@ export default function PortalDashboard() {
           onClose={() => setLojaAberta(false)}
           matricula={aluno.matricula}
           saldoCarteira={saldoCarteira}
-          onCompraSucesso={carregarPortal} // 🔥 CHAMA A SUA FUNÇÃO LOCAL
+          onCompraSucesso={() => carregarPortal(true)} // 🔥 CHAMA A SUA FUNÇÃO LOCAL
         />
       )}
 

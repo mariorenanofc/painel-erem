@@ -91,8 +91,8 @@ export const apiAluno = {
     return res.json();
   },
 
-  carregarPortal: async (matricula: string) => {
-    const res = await fetch(`/api/alunos/portal?matricula=${matricula}`);
+  carregarPortal: async (matricula: string, nocache?: boolean) => {
+    const res = await fetch(`/api/alunos/portal?matricula=${matricula}${nocache ? "&nocache=true" : ""}`);
     return res.json();
   },
 
@@ -220,8 +220,8 @@ export const apiTutor = {
     fetchApi({ action: "sincronizar_ava", token: TUTOR_TOKEN }),
 
   // --- RANKING E ANALYTICS ---
-  buscarRanking: async (filtroTempo: "geral" | "semanal" | "mensal") => {
-    const res = await fetch(`/api/alunos/ranking?filtroTempo=${filtroTempo}`);
+  buscarRanking: async (filtroTempo: "geral" | "semanal" | "mensal", nocache?: boolean) => {
+    const res = await fetch(`/api/alunos/ranking?filtroTempo=${filtroTempo}${nocache ? "&nocache=true" : ""}`);
     return res.json();
   },
 
@@ -246,8 +246,9 @@ export const apiTutor = {
   buscarTodasAtividades: async (
     filtroTurma: string = "Todas",
     filtroTipo: string = "Todos",
+    nocache?: boolean,
   ) => {
-    const res = await fetch(`/api/tutor/atividades?filtroTurma=${filtroTurma}&filtroTipo=${filtroTipo}`);
+    const res = await fetch(`/api/tutor/atividades?filtroTurma=${filtroTurma}&filtroTipo=${filtroTipo}${nocache ? "&nocache=true" : ""}`);
     return res.json();
   },
 

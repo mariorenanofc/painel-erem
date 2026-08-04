@@ -11,12 +11,17 @@ const CONTA_MESTRE = "1234567";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const filtroTempo = String(searchParams.get("filtroTempo") || "geral").trim();
+  const nocache = searchParams.get("nocache") === "true";
 
   // 1. Verificar Cache
-  const cachedData = getCachedRanking(filtroTempo);
+  const cachedData = nocache ? null : getCachedRanking(filtroTempo);
   if (cachedData) {
     console.log(`[Cache Hit] Ranking: ${filtroTempo}`);
-    return NextResponse.json(cachedData);
+    return NextResponse.json(cachedData, {
+      headers: {
+        "Cache-Control": "s-maxage=60, stale-while-revalidate=300"
+      }
+    });
   }
 
   try {
@@ -122,7 +127,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(finalResponse, {
       headers: {
-        "Cache-Control": "s-maxage=60, stale-while-revalidate=300"
+        "Cache-Control": nocache ? "no-store, max-age=0, must-revalidate" : "s-maxage=60, stale-while-revalidate=300"
       }
     });
   } catch (error: unknown) {

@@ -312,12 +312,13 @@ export async function GET(request: Request) {
 
       diasComAulaSet.add(dataFormatada);
 
+      checkinsMap[dataFormatada] = true;
+
       const st = String(f.status || "").toLowerCase().trim();
       const isPresence = !idFreq.startsWith("FALTA-") && (st === "presente" || st === "p");
       if (isPresence) {
         presencasAluno++;
         dadosRetorno.stats.totalCheckins++;
-        checkinsMap[dataFormatada] = true;
       }
     });
 

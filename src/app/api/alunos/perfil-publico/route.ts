@@ -110,11 +110,7 @@ export async function GET(request: Request) {
 
         diasComAulaSet.add(dataFormatada);
 
-        const st = String(f.status || "").toLowerCase().trim();
-        const isPresence = !idFreq.startsWith("FALTA-") && (st === "presente" || st === "p");
-        if (isPresence) {
-          checkinsMap[dataFormatada] = true;
-        }
+        checkinsMap[dataFormatada] = true;
       });
 
       const diasOrdenados = Array.from(diasComAulaSet).sort((a, b) => {

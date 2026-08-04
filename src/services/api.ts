@@ -282,17 +282,15 @@ export const apiTutor = {
     }),
 
   // --- FREQUÊNCIA ---
-  buscarDiarioClasse: (turma: string, mes: string, ano: string) =>
-    fetchApi({
-      action: "buscar_diario_classe",
-      turma,
-      mes,
-      ano,
-      token: TUTOR_TOKEN,
-    }),
+  buscarDiarioClasse: async (turma: string, mes: string, ano: string) => {
+    const res = await fetch(`/api/tutor/diario-classe?turma=${encodeURIComponent(turma)}&mes=${encodeURIComponent(mes)}&ano=${encodeURIComponent(ano)}`);
+    return res.json();
+  },
 
-  buscarFrequenciaHoje: (turma: string) =>
-    fetchApi({ action: "buscar_frequencia_hoje", turma, token: TUTOR_TOKEN }),
+  buscarFrequenciaHoje: async (turma: string) => {
+    const res = await fetch(`/api/tutor/frequencia-hoje?turma=${encodeURIComponent(turma)}`);
+    return res.json();
+  },
 
   justificarFalta: (
     matricula: string,

@@ -18,7 +18,7 @@ export async function GET() {
     const diaBuscado = parts.find(p => p.type === "day")?.value || String(hoje.getDate()).padStart(2, "0");
     const mesBuscado = parts.find(p => p.type === "month")?.value || String(hoje.getMonth() + 1).padStart(2, "0");
 
-    const activeSnap = await dbAdmin.collection("alunos").where("statusTrilha", "==", "ativo").get();
+    const activeSnap = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
     const list: { nome: string; turma: string }[] = [];
 
     activeSnap.forEach((doc: QueryDocumentSnapshot) => {

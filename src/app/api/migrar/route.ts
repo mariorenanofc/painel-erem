@@ -238,6 +238,14 @@ export async function GET() {
 
       if (!dataStr || !matricula) continue;
 
+      let docTimestamp = Date.now();
+      let p: string[] = [];
+      if (dataStr.includes("/")) p = dataStr.split("/");
+      else if (dataStr.includes("-")) p = dataStr.split("-");
+      if (p.length === 3) {
+        docTimestamp = new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]), 12, 0, 0).getTime();
+      }
+
       const docId = `${dataStr.replace(/\//g, "-")}_${matricula}`;
       const ref = dbAdmin.collection("frequencia").doc(docId);
       currentBatch.set(ref, {
@@ -247,7 +255,7 @@ export async function GET() {
         turma,
         status,
         justificativa,
-        timestamp: Date.now() // data-driven fallback if needed
+        timestamp: docTimestamp
       });
 
       opCount++;

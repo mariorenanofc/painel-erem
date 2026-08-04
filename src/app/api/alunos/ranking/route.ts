@@ -23,7 +23,7 @@ export async function GET(request: Request) {
     console.log(`[Firestore Query] Ranking: ${filtroTempo}`);
 
     // Carregar Alunos ativos
-    const alunosSnap = await dbAdmin.collection("alunos").where("statusTrilha", "==", "ativo").get();
+    const alunosSnap = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
     const alunosRankMap: Record<string, any> = {};
 
     alunosSnap.forEach((doc: any) => {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache } from "@/src/lib/cache";
+import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches } from "@/src/lib/cache";
 import { Transaction, FieldValue } from "firebase-admin/firestore";
 
 const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
@@ -41,6 +41,7 @@ export async function POST(request: Request) {
           gabaritoLiberado: ativ.gabaritoLiberado === true || String(ativ.gabaritoLiberado).toLowerCase() === "true"
         }, { merge: true });
         invalidateRankingCache();
+        clearAllPortalCaches();
       }
     }
 
@@ -49,6 +50,7 @@ export async function POST(request: Request) {
       if (id) {
         await dbAdmin.collection("atividades").doc(id).delete();
         invalidateRankingCache();
+        clearAllPortalCaches();
       }
     }
 
@@ -192,6 +194,7 @@ export async function POST(request: Request) {
         if (doc.exists) {
           const current = doc.data()?.gabaritoLiberado === true;
           await ref.update({ gabaritoLiberado: !current });
+          clearAllPortalCaches();
         }
       }
     }
@@ -206,6 +209,7 @@ export async function POST(request: Request) {
           }, { merge: true });
         });
         await Promise.all(promises);
+        clearAllPortalCaches();
       }
     }
 

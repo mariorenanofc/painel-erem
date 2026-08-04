@@ -166,7 +166,7 @@ export async function GET(request: Request) {
       configMap[doc.id] = doc.data().valor;
     });
 
-    const turmaDoAluno: string = aluno.turma || aluno.turmaTrilha || "";
+    const turmaDoAluno: string = aluno.turmaTrilha || aluno.turma || "";
     if (turmaDoAluno.includes("1º") || turmaDoAluno.includes("1")) {
       dadosRetorno.whatsapp.link = configMap["WHATSAPP_1ANO"] || "";
     } else if (turmaDoAluno.includes("2º") || turmaDoAluno.includes("2")) {

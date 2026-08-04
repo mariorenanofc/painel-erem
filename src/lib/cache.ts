@@ -60,3 +60,9 @@ export function invalidateRankingCache() {
     delete rankingCache[k];
   });
 }
+
+export function clearAllPortalCaches() {
+  Object.keys(portalCache).forEach(k => {
+    delete portalCache[k];
+  });
+}

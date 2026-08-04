@@ -168,10 +168,10 @@ export default function RegulamentoModal({ isOpen, onClose }: RegulamentoModalPr
                   Você pode abrir a <strong>Loja</strong> no portal e usar o saldo da sua carteira para adquirir bilhetes de rifa para os sorteios promovidos no projeto.
                 </li>
                 <li>
-                  Comprar bilhetes debita o valor em moedas (XP) da sua carteira, mas **não diminui** seu nível nem seu XP acumulado no histórico geral ou semanal!
+                  Comprar bilhetes debita o valor em moedas (XP) da sua carteira, mas <span>não diminui</span> seu nível nem seu XP acumulado no histórico geral!
                 </li>
                 <li>
-                  Fique atento aos sorteios ao vivo anunciados pelo tutor para verificar se seus números comprados foram sorteados!
+                  Fique atento ao sorteio no final do ano anunciado pelo tutor para verificar se seus números comprados foram sorteados!
                 </li>
               </ul>
             </section>

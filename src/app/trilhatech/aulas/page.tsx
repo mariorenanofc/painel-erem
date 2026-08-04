@@ -347,7 +347,16 @@ export default function GestaoAulasPage() {
     setIdEditando(ativ.id ? String(ativ.id) : null);
     setTitulo(String(ativ.titulo || ""));
     setDescricao(String(ativ.descricao || ""));
-    setDataLimite(String(ativ.dataLimite || ""));
+    let dt = String(ativ.dataLimite || "");
+    if (dt.includes("/")) {
+      const parts = dt.split("/");
+      if (parts.length === 3) {
+        dt = `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
+      }
+    } else if (dt.includes("T")) {
+      dt = dt.split("T")[0];
+    }
+    setDataLimite(dt);
     setXp(String(ativ.xp || "100"));
     setTurmaAlvo(String(ativ.turmaAlvo || "Todas"));
     setTipo(String(ativ.tipo || "Projeto"));

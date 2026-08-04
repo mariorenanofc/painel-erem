@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     if (action === "salvar_atividade") {
       const ativ = body;
-      const id = String(ativ.id || ativ.idAtividade || "").trim();
+      const id = String(ativ.id || ativ.idAtividade || ativ.idAtividadeEdit || "").trim();
       if (id) {
         await dbAdmin.collection("atividades").doc(id).set({
           id,

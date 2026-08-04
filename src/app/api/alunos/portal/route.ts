@@ -335,7 +335,16 @@ export async function GET(request: Request) {
       if (turmaAlvo.toLowerCase() === "todas" || turmaAlvo === turmaDoAluno) {
         const idAtiv = doc.id;
         const entregaAluno = entregasMap[idAtiv];
-        const dataLimiteStr = ativ.dataLimite || "";
+
+        const rawDataLimite = ativ.dataLimite || "";
+        let dataLimiteStr = rawDataLimite;
+        if (rawDataLimite.includes("T")) {
+          const parts = rawDataLimite.split("T")[0].split("-");
+          if (parts.length === 3) dataLimiteStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        } else if (rawDataLimite.includes("-")) {
+          const parts = rawDataLimite.split("-");
+          if (parts.length === 3 && parts[0].length === 4) dataLimiteStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
 
         let statusPrazo = "No Prazo";
         if (!entregaAluno && dataLimiteStr) {

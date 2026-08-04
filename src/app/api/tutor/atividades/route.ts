@@ -82,7 +82,15 @@ export async function GET(request: Request) {
       if (filtroTurma !== "Todas" && turmaAtiv !== "Todas" && turmaAtiv !== filtroTurma) return;
       if (filtroTipo !== "Todos" && tipoAtiv !== filtroTipo) return;
 
-      const dataLimiteStr = d.dataLimite || "";
+      const rawDataLimite = d.dataLimite || "";
+      let dataLimiteStr = rawDataLimite;
+      if (rawDataLimite.includes("T")) {
+        const parts = rawDataLimite.split("T")[0].split("-");
+        if (parts.length === 3) dataLimiteStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      } else if (rawDataLimite.includes("-")) {
+        const parts = rawDataLimite.split("-");
+        if (parts.length === 3 && parts[0].length === 4) dataLimiteStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
       const nomeModulo = String(d.modulo || "Geral").trim();
       const stats = statsMap[idAtiv] || { pendentes: 0, aguardandoValidacao: 0, validadasAVA: 0 };
 

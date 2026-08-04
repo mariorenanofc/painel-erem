@@ -39,7 +39,7 @@ async function fetchApi(payload: any) {
       fetch("/api/tutor/sync-local", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ ...payload, idAtividade: result.idAtividade })
       }).catch(err => console.error("Falha no sync local do tutor:", err));
     }
 

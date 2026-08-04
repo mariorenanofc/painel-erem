@@ -18,7 +18,17 @@ export async function GET(request: Request) {
       .where("statusTrilha", "in", ["ativo", "Ativo"])
       .get();
 
-    const alunosMap: Record<string, any> = {};
+    interface DiarioAluno {
+      matricula: string;
+      nome: string;
+      frequencia: Record<string, {
+        status: string;
+        justificativa: string;
+        xp: number;
+      }>;
+    }
+
+    const alunosMap: Record<string, DiarioAluno> = {};
     alunosSnap.forEach((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
       const t = data.turma || data.turmaTrilha || "";
@@ -100,8 +110,9 @@ export async function GET(request: Request) {
       alunos: Object.values(alunosMap)
     });
 
-  } catch (error: any) {
-    console.error("[API Error] Erro ao buscar diário de classe:", error.message);
-    return NextResponse.json({ status: "erro", mensagem: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("[API Error] Erro ao buscar diário de classe:", err.message);
+    return NextResponse.json({ status: "erro", mensagem: err.message }, { status: 500 });
   }
 }

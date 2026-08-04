@@ -244,14 +244,48 @@ export async function GET() {
     opCount = 0;
     const freqPromises = [];
 
-    for (let i = 1; i < freqValues.length; i++) {
-      const dataStr = String(freqValues[i][0]).trim();
-      const matricula = String(freqValues[i][1]).trim();
-      const turma = String(freqValues[i][2]).trim();
-      const status = String(freqValues[i][3] || "Presente").trim();
-      const justificativa = String(freqValues[i][4] || "").trim();
+    // Limpar documentos legados/scrambled
+    console.log("Limpando registros de frequência legados...");
+    const oldFreqSnap = await dbAdmin.collection("frequencia").get();
+    let oldFreqBatch = dbAdmin.batch();
+    let oldFreqCount = 0;
+    for (const doc of oldFreqSnap.docs) {
+      if (doc.id.startsWith("CHK-") || doc.id.startsWith("FALTA-")) {
+        oldFreqBatch.delete(doc.ref);
+        oldFreqCount++;
+        if (oldFreqCount === 400) {
+          await oldFreqBatch.commit();
+          oldFreqBatch = dbAdmin.batch();
+          oldFreqCount = 0;
+        }
+      }
+    }
+    if (oldFreqCount > 0) {
+      await oldFreqBatch.commit();
+    }
 
-      if (!dataStr || !matricula) continue;
+    for (let i = 1; i < freqValues.length; i++) {
+      const id = String(freqValues[i][0]).trim();
+      const matricula = String(freqValues[i][1]).trim();
+      const nome = String(freqValues[i][2]).trim();
+      const dataStrRaw = String(freqValues[i][3]).trim();
+      const hora = String(freqValues[i][4]).trim();
+      const xpGanho = Number(freqValues[i][5]) || 10;
+      const justificativa = String(freqValues[i][6] || "").trim();
+      const turma = String(freqValues[i][7] || "").trim();
+
+      if (!id || !matricula) continue;
+
+      const status = id.startsWith("FALTA-") ? "Justificada" : "Presente";
+
+      let dataStr = dataStrRaw;
+      if (dataStrRaw.includes("T")) {
+        const parts = dataStrRaw.split("T")[0].split("-");
+        if (parts.length === 3) dataStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      } else if (dataStrRaw.includes("-") && dataStrRaw.split("-")[0].length === 4) {
+        const parts = dataStrRaw.split("-");
+        dataStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
+      }
 
       let docTimestamp = Date.now();
       let p: string[] = [];
@@ -267,9 +301,12 @@ export async function GET() {
         id: docId,
         data: dataStr,
         matricula,
-        turma,
+        nome,
+        hora,
         status,
+        xpGanho,
         justificativa,
+        turma,
         timestamp: docTimestamp
       });
 

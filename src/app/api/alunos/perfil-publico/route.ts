@@ -87,18 +87,32 @@ export async function GET(request: Request) {
 
     // 4. Calcular Streak do Aluno Alvo
     if (perfil.turma) {
-      const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "==", matriculaAlvo).get();
       const diasComAulaSet = new Set<string>();
-      const checkinsMap: Record<string, boolean> = {};
-
-      freqSnap.forEach((doc: QueryDocumentSnapshot) => {
+      const turmaDoAluno = perfil.turma;
+      const turmaFreqSnap = await dbAdmin.collection("frequencia").where("turma", "==", turmaDoAluno).get();
+      turmaFreqSnap.forEach((doc: QueryDocumentSnapshot) => {
         const f = doc.data();
-        if (String(f.id || doc.id).startsWith("BDAY")) return;
+        const idFreq = String(f.id || doc.id).trim();
+        if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
         const dataFormatada = f.data || "";
         if (dataFormatada) diasComAulaSet.add(dataFormatada);
+      });
+
+      const checkinsMap: Record<string, boolean> = {};
+
+      const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "==", matriculaAlvo).get();
+      freqSnap.forEach((doc: QueryDocumentSnapshot) => {
+        const f = doc.data();
+        const idFreq = String(f.id || doc.id).trim();
+        if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
+        const dataFormatada = f.data || "";
+        if (!dataFormatada) return;
+
+        diasComAulaSet.add(dataFormatada);
 
         const st = String(f.status || "").toLowerCase().trim();
-        if (st === "presente" || st === "p") {
+        const isPresence = !idFreq.startsWith("FALTA-") && (st === "presente" || st === "p");
+        if (isPresence) {
           checkinsMap[dataFormatada] = true;
         }
       });

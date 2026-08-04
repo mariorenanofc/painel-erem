@@ -116,11 +116,14 @@ export async function GET() {
     }
 
     const trilhaMap: Record<string, TrilhaData> = {};
+    const matriculaParaTurma: Record<string, string> = {};
     for (let i = 1; i < trilhaValues.length; i++) {
       const mat = String(trilhaValues[i][0]).trim();
       if (mat) {
+        const tName = String(trilhaValues[i][1] || "").trim();
+        matriculaParaTurma[mat] = tName;
         trilhaMap[mat] = {
-          turmaTrilha: String(trilhaValues[i][1] || ""),
+          turmaTrilha: tName,
           statusTrilha: String(trilhaValues[i][2] || ""),
           dataInscricao: String(trilhaValues[i][3] || ""),
           xp: Number(trilhaValues[i][4]) || 0,
@@ -272,7 +275,7 @@ export async function GET() {
       const hora = String(freqValues[i][4]).trim();
       const xpGanho = Number(freqValues[i][5]) || 10;
       const justificativa = String(freqValues[i][6] || "").trim();
-      const turma = String(freqValues[i][7] || "").trim();
+      const turma = matriculaParaTurma[matricula] || String(freqValues[i][7] || "").trim();
 
       if (!id || !matricula) continue;
 

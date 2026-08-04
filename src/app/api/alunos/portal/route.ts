@@ -287,19 +287,34 @@ export async function GET(request: Request) {
     dadosRetorno.extratoPix = dadosRetorno.extratoPix.slice(0, 20);
 
     // 8. Frequência / Streak / Presença
-    const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "==", matricula).get();
     const diasComAulaSet = new Set<string>();
+    if (turmaDoAluno) {
+      const turmaFreqSnap = await dbAdmin.collection("frequencia").where("turma", "==", turmaDoAluno).get();
+      turmaFreqSnap.forEach((doc: QueryDocumentSnapshot) => {
+        const f = doc.data();
+        const idFreq = String(f.id || doc.id).trim();
+        if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
+        const dataFormatada = f.data || "";
+        if (dataFormatada) diasComAulaSet.add(dataFormatada);
+      });
+    }
+
     const checkinsMap: Record<string, boolean> = {};
     let presencasAluno = 0;
 
+    const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "==", matricula).get();
     freqSnap.forEach((doc: QueryDocumentSnapshot) => {
       const f = doc.data();
-      if (String(f.id || doc.id).startsWith("BDAY")) return;
+      const idFreq = String(f.id || doc.id).trim();
+      if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
       const dataFormatada = f.data || "";
-      if (dataFormatada) diasComAulaSet.add(dataFormatada);
+      if (!dataFormatada) return;
+
+      diasComAulaSet.add(dataFormatada);
 
       const st = String(f.status || "").toLowerCase().trim();
-      if (st === "presente" || st === "p") {
+      const isPresence = !idFreq.startsWith("FALTA-") && (st === "presente" || st === "p");
+      if (isPresence) {
         presencasAluno++;
         dadosRetorno.stats.totalCheckins++;
         checkinsMap[dataFormatada] = true;
@@ -308,7 +323,7 @@ export async function GET(request: Request) {
 
     dadosRetorno.taxaPresenca = diasComAulaSet.size === 0 ? 100 : Math.round((presencasAluno / diasComAulaSet.size) * 100);
 
-    // Streak / Ofensiva
+    // Streak / Ofensiva baseada nas aulas aplicadas na turma dele
     const diasOrdenados = Array.from(diasComAulaSet).sort((a, b) => {
       const pA = a.split("/");
       const pB = b.split("/");

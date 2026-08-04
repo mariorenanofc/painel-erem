@@ -101,7 +101,21 @@ export async function GET() {
     const baseValues = data.basededados || [];
     const trilhaValues = data.trilhatech || [];
 
-    const trilhaMap: any = {};
+    interface TrilhaData {
+      turmaTrilha: string;
+      statusTrilha: string;
+      dataInscricao: string;
+      xp: number;
+      nivel: string;
+      whatsappConfirmado: boolean;
+      pinPix: string;
+      avatarId: string;
+      likes: number;
+      bloqueioPix: boolean;
+      xpGasto: number;
+    }
+
+    const trilhaMap: Record<string, TrilhaData> = {};
     for (let i = 1; i < trilhaValues.length; i++) {
       const mat = String(trilhaValues[i][0]).trim();
       if (mat) {
@@ -367,8 +381,9 @@ export async function GET() {
     invalidateRankingCache();
     invalidateConfigCache();
     return NextResponse.json({ status: "sucesso", mensagem: "Migração completa para o Firestore!" });
-  } catch (error: any) {
-    console.error("Erro durante a migração:", error);
-    return NextResponse.json({ error: "Falha na migração: " + error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("Erro durante a migração:", err);
+    return NextResponse.json({ error: "Falha na migração: " + err.message }, { status: 500 });
   }
 }

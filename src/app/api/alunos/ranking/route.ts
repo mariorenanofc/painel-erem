@@ -1,12 +1,26 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { getCachedRanking, setCachedRanking } from "@/src/lib/cache";
+import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
   : undefined;
 const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
 const CONTA_MESTRE = "1234567";
+
+interface RankedAluno {
+  matricula: string;
+  nome: string;
+  turma: string;
+  nivel: string;
+  avatar: string;
+  xpCalculado: number;
+  ultimoEnvio: number;
+  xpAtrasadoAcumulado?: number;
+  xp?: number;
+  posicao?: number;
+}
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -29,9 +43,9 @@ export async function GET(request: Request) {
 
     // Carregar Alunos ativos
     const alunosSnap = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
-    const alunosRankMap: Record<string, any> = {};
+    const alunosRankMap: Record<string, RankedAluno> = {};
 
-    alunosSnap.forEach((doc: any) => {
+    alunosSnap.forEach((doc: QueryDocumentSnapshot) => {
       const mat = doc.id;
       if (mat === CONTA_MESTRE) return;
       const data = doc.data();
@@ -68,9 +82,10 @@ export async function GET(request: Request) {
     if (filtroTempo !== "geral") {
       // 1. Carregar atividades para verificar prazos e detectar atrasos
       const atividadesSnap = await dbAdmin.collection("atividades").get();
-      const atividadesMap: Record<string, any> = {};
-      atividadesSnap.forEach((doc: any) => {
-        atividadesMap[doc.id] = doc.data();
+      const atividadesMap: Record<string, { dataLimite?: string }> = {};
+      atividadesSnap.forEach((doc: QueryDocumentSnapshot) => {
+        const d = doc.data();
+        atividadesMap[doc.id] = { dataLimite: d.dataLimite };
       });
 
       const entregasSnap = await dbAdmin.collection("entregas")
@@ -78,7 +93,7 @@ export async function GET(request: Request) {
         .where("timestamp", ">=", timeInicio)
         .get();
 
-      entregasSnap.forEach((doc: any) => {
+      entregasSnap.forEach((doc: QueryDocumentSnapshot) => {
         const val = doc.data();
         const mat = val.matricula;
         const xp = val.xpGanho || 0;
@@ -123,7 +138,7 @@ export async function GET(request: Request) {
         .where("timestamp", ">=", timeInicio)
         .get();
 
-      freqSnap.forEach((doc: any) => {
+      freqSnap.forEach((doc: QueryDocumentSnapshot) => {
         const f = doc.data();
         const mat = f.matricula;
         const xp = f.xpGanho || 10;
@@ -141,7 +156,7 @@ export async function GET(request: Request) {
     // Aplicar o limite de XP de atraso (Cap) se não for o ranking geral
     if (filtroTempo !== "geral") {
       const limiteAtrasoCap = filtroTempo === "semanal" ? 15 : 60;
-      ranking = ranking.map((aluno: any) => {
+      ranking = ranking.map((aluno: RankedAluno) => {
         const xpAtrasado = aluno.xpAtrasadoAcumulado || 0;
         const xpAtrasadoCapped = Math.min(xpAtrasado, limiteAtrasoCap);
         aluno.xpCalculado += xpAtrasadoCapped;
@@ -149,14 +164,14 @@ export async function GET(request: Request) {
       });
     }
 
-    ranking.sort((a: any, b: any) => {
+    ranking.sort((a: RankedAluno, b: RankedAluno) => {
       if (b.xpCalculado !== a.xpCalculado) {
         return b.xpCalculado - a.xpCalculado;
       }
       return a.ultimoEnvio - b.ultimoEnvio;
     });
 
-    ranking = ranking.map((aluno: any, index: number) => ({
+    ranking = ranking.map((aluno: RankedAluno, index: number) => ({
       ...aluno,
       xp: aluno.xpCalculado,
       posicao: index + 1

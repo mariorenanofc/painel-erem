@@ -38,6 +38,10 @@ interface FormularioMissaoModalProps {
   setGabarito: (val: string) => void;
   gabaritoLiberado: boolean;
   setGabaritoLiberado: (val: boolean) => void;
+  resolucaoTyping: string;
+  setResolucaoTyping: (val: string) => void;
+  limiteTempoTyping: number;
+  setLimiteTempoTyping: (val: number) => void;
   modulosCadastrados: string[];
   turmasDisponiveis: string[];
   salvando: boolean;
@@ -79,6 +83,10 @@ export default function FormularioMissaoModal({
   setGabarito,
   gabaritoLiberado,
   setGabaritoLiberado,
+  resolucaoTyping,
+  setResolucaoTyping,
+  limiteTempoTyping,
+  setLimiteTempoTyping,
   modulosCadastrados,
   turmasDisponiveis,
   salvando,
@@ -416,6 +424,42 @@ export default function FormularioMissaoModal({
                     placeholder="https://classroom.google.com/..."
                     className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl p-3.5 focus:border-blue-500 outline-none transition-all text-sm shadow-sm"
                   />
+                </div>
+              </div>
+
+              {/* Bento Row 7: Treino de Digitação (Opcional) */}
+              <div className="bg-indigo-500/5 dark:bg-indigo-950/20 border border-indigo-500/25 dark:border-indigo-900/30 p-5 rounded-3xl space-y-4 shadow-sm">
+                <h3 className="font-display font-black text-indigo-800 dark:text-indigo-400 text-xs uppercase tracking-wider flex items-center gap-1.5">
+                  <span>⌨️</span> Treino de Digitação (Opcional)
+                </h3>
+                <p className="text-xs text-slate-500 dark:text-slate-400">
+                  Preencher a resolução abaixo transformará esta atividade em um teste de digitação monitorado para o aluno.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="md:col-span-2 space-y-1">
+                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                      Resolução Esperada (Código a ser digitado)
+                    </label>
+                    <textarea
+                      rows={4}
+                      value={resolucaoTyping}
+                      onChange={(e) => setResolucaoTyping(e.target.value)}
+                      placeholder="Ex: const total = preco * quantidade;"
+                      className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl p-4 font-mono text-xs focus:border-blue-500 outline-none transition-all shadow-sm leading-relaxed"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                      Limite de Tempo (Minutos)
+                    </label>
+                    <input
+                      type="number"
+                      value={limiteTempoTyping === 0 ? "" : limiteTempoTyping}
+                      onChange={(e) => setLimiteTempoTyping(Number(e.target.value) || 0)}
+                      placeholder="Ex: 15 (0 ou vazio para sem limite)"
+                      className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl p-3.5 focus:border-blue-500 outline-none transition-all text-sm shadow-sm"
+                    />
+                  </div>
                 </div>
               </div>
 

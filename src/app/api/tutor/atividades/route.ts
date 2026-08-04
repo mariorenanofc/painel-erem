@@ -22,6 +22,8 @@ interface TutorAtividade {
   modulo: string;
   gabarito: string;
   gabaritoLiberado: boolean;
+  resolucaoTyping?: string;
+  limiteTempoTyping?: number;
   pendentes: number;
   aguardandoValidacao: number;
   validadasAVA: number;
@@ -31,7 +33,9 @@ interface TutorAtividade {
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
   : undefined;
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
+const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
+  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
+  : undefined;
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -113,6 +117,8 @@ export async function GET(request: Request) {
         modulo: nomeModulo,
         gabarito: String(d.gabarito || ""),
         gabaritoLiberado: d.gabaritoLiberado === true,
+        resolucaoTyping: String(d.resolucaoTyping || ""),
+        limiteTempoTyping: Number(d.limiteTempoTyping) || 0,
         pendentes: stats.pendentes,
         aguardandoValidacao: stats.aguardandoValidacao,
         validadasAVA: stats.validadasAVA,

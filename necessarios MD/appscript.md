@@ -512,6 +512,8 @@ function doPost(e) {
             const statusPublicacao = String(dadosApp.statusPublicacao || "Publicada").trim(); 
             const imagemUrl = String(dadosApp.imagemUrl || "").trim();
             const modulo = String(dadosApp.modulo || "Geral").trim();
+            const resolucaoTyping = String(dadosApp.resolucaoTyping || "").trim();
+            const limiteTempoTyping = Number(dadosApp.limiteTempoTyping) || 0;
 
             const lock = LockService.getScriptLock();
             try {
@@ -531,7 +533,7 @@ function doPost(e) {
                   }
                 }
                 if (linhaEdit > 0) {
-                  abaAtividades.getRange(linhaEdit, 2, 1, 17).setValues([[
+                  abaAtividades.getRange(linhaEdit, 2, 1, 19).setValues([[
                     titulo, 
                     descricao, 
                     dataLimite, 
@@ -548,7 +550,9 @@ function doPost(e) {
                     imagemUrl, 
                     modulo, 
                     String(dadosApp.gabarito || ""), 
-                    dadosApp.gabaritoLiberado ? true : false
+                    dadosApp.gabaritoLiberado ? true : false,
+                    resolucaoTyping,
+                    limiteTempoTyping
                   ]]);
                   invalidarCacheGeral();
                   return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Missão atualizada!" })).setMimeType(ContentService.MimeType.JSON);
@@ -578,7 +582,7 @@ function doPost(e) {
                 const idGerado = "ATIV-" + numeroIdStr;
 
                 // Grava a nova linha
-                abaAtividades.appendRow([idGerado, titulo, descricao, dataLimite, xp, turmaAlvo, tipo, opcaoA, opcaoB, opcaoC, opcaoD, respostaCorreta, linkClassroom, statusPublicacao, imagemUrl, modulo, String(dadosApp.gabarito || ""), dadosApp.gabaritoLiberado ? true : false]);
+                abaAtividades.appendRow([idGerado, titulo, descricao, dataLimite, xp, turmaAlvo, tipo, opcaoA, opcaoB, opcaoC, opcaoD, respostaCorreta, linkClassroom, statusPublicacao, imagemUrl, modulo, String(dadosApp.gabarito || ""), dadosApp.gabaritoLiberado ? true : false, resolucaoTyping, limiteTempoTyping]);
                 invalidarCacheGeral();
                 return ContentService.createTextOutput(JSON.stringify({ status: "sucesso", mensagem: "Missão criada! ID: " + idGerado })).setMimeType(ContentService.MimeType.JSON);
               }
@@ -678,6 +682,8 @@ function doPost(e) {
               modulo: nomeModulo,
               gabarito: String(dadosAtiv[i][16] || ""),
               gabaritoLiberado: dadosAtiv[i][17] === true || String(dadosAtiv[i][17]).toLowerCase() === "true",
+              resolucaoTyping: String(dadosAtiv[i][18] || "").trim(),
+              limiteTempoTyping: Number(dadosAtiv[i][19]) || 0,
               pendentes: pendentesMap[idAtiv] || 0,
               aguardandoValidacao: aguardandoValidacaoMap[idAtiv] || 0,
               validadasAVA: validadasAVAMap[idAtiv] || 0,
@@ -701,6 +707,7 @@ function doPost(e) {
         const matricula = String(dadosApp.matricula).trim();
         const idAtividade = String(dadosApp.idAtividade).trim();
         const resposta = String(dadosApp.resposta).trim();
+        const feedback = String(dadosApp.feedback || "").trim();
         const timestampAtual = new Date().getTime();
 
         // 1. LEITURA 100% VIA CACHE (Sem estourar a cota da API do Sheets)
@@ -857,9 +864,9 @@ function doPost(e) {
             if (!abaEntregas || !abaTrilha) throw new Error("Planilhas não acessíveis.");
 
             if (linhaExistente > 0) {
-                abaEntregas.getRange(linhaExistente, 4, 1, 4).setValues([[resposta, statusFinal, xpGanhoFinal, timestampAtual]]);
+                abaEntregas.getRange(linhaExistente, 4, 1, 5).setValues([[resposta, statusFinal, xpGanhoFinal, timestampAtual, feedback]]);
             } else {
-                abaEntregas.appendRow([idAtividade + "-" + matricula, matricula, idAtividade, resposta, statusFinal, xpGanhoFinal, timestampAtual, ""]);
+                abaEntregas.appendRow([idAtividade + "-" + matricula, matricula, idAtividade, resposta, statusFinal, xpGanhoFinal, timestampAtual, feedback]);
             }
 
             if (xpGanhoFinal > 0 && linhaTrilhaAluno > -1) {
@@ -3861,10 +3868,22 @@ function doPost(e) {
                                                   let descontoTotal = descontoAtraso + descontoGabarito;
                                                   xpGanhoFinal = xpAtiv - descontoTotal;
 
-                                                  let piso = Math.ceil(xpAtiv * 0.1);
-                                                  if (xpGanhoFinal < piso) xpGanhoFinal = piso;
+                                                  // Se for atividade de digitação, recuperar o XP calculado anteriormente
+                                                  let feedbackExistente = "";
+                                                  if (entregaExistente) {
+                                                      feedbackExistente = String(abaEntregas.getRange(entregaExistente.linha, 8).getValue() || "");
+                                                  }
+                                                  
+                                                  let matchDig = feedbackExistente.match(/\[XP_DIGITACAO:\s*(\d+)\]/);
+                                                  if (matchDig) {
+                                                      // Mantém a pontuação calculada baseada nos erros ortográficos do aluno
+                                                      xpGanhoFinal = parseInt(matchDig[1], 10);
+                                                  } else {
+                                                      let piso = Math.ceil(xpAtiv * 0.1);
+                                                      if (xpGanhoFinal < piso) xpGanhoFinal = piso;
+                                                  }
 
-                                                  if (descontoTotal > 0) {
+                                                  if (descontoTotal > 0 && !matchDig) {
                                                       let msgs = [];
                                                       if (descontoAtraso > 0) msgs.push(`-${descontoAtraso}XP por Atraso`);
                                                       if (descontoGabarito > 0) msgs.push(`-30% por Gabarito Liberado`);

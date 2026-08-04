@@ -114,15 +114,12 @@ export async function POST(request: Request) {
     const isCorreto = ativ.tipo === "Material" ? true : (resposta.toUpperCase() === String(ativ.respostaCorreta || "").toUpperCase());
 
     const isTyping = ativ.resolucaoTyping && String(ativ.resolucaoTyping).trim() !== "";
+    let feedbackFinal = "";
 
     if (isTyping) {
-      statusFinal = "Avaliado";
-      if (xpFinalPermitido > 0) {
-        xpGanhoFinal = xpGanhoBody !== undefined ? xpGanhoBody : xpFinalPermitido;
-      } else {
-        xpGanhoFinal = 0;
-        msgDesconto = " (0 XP: O módulo desta atividade já foi encerrado!)";
-      }
+      statusFinal = "Aguardando Validação";
+      xpGanhoFinal = 0;
+      feedbackFinal = xpGanhoBody !== undefined ? `[XP_DIGITACAO: ${xpGanhoBody}]` : "";
     } else {
       const linkClassroom = String(ativ.linkClassroom || "").trim();
       if (linkClassroom && linkClassroom.includes("classroom.google.com")) {
@@ -184,7 +181,7 @@ export async function POST(request: Request) {
         status: statusFinal,
         xpGanho: xpGanhoFinal,
         timestamp: timestampAtual,
-        feedback: ""
+        feedback: feedbackFinal
       });
 
       // Atualizar contadores estatísticos de agregação
@@ -200,7 +197,7 @@ export async function POST(request: Request) {
       };
 
       const oldCat = getStatusCategory(statusAnterior, entregaDoc.exists ? (entregaDoc.data()?.feedback || "") : "");
-      const newCat = getStatusCategory(statusFinal, "");
+      const newCat = getStatusCategory(statusFinal, feedbackFinal);
 
       if (oldCat !== newCat) {
         const statsRef = dbAdmin.collection("estatisticas_atividades").doc(idAtividade);
@@ -220,13 +217,15 @@ export async function POST(request: Request) {
       transaction.update(alunoRef, updatePayload);
     });
 
-    const msgRetorno = (ativ.tipo === "Quiz" && xpGanhoFinal > 0)
-      ? "Resposta correta! XP adicionado." + msgDesconto
-      : (ativ.tipo === "Quiz" && xpGanhoFinal === 0 && isCorreto)
-        ? "Você acertou o Quiz, mas não ganhou XP." + msgDesconto
-        : (ativ.tipo === "Quiz" && xpGanhoFinal === 0 && !isCorreto)
-          ? "Resposta errada. Mas o Tutor pode rever depois!"
-          : "Missão enviada com sucesso!";
+    const msgRetorno = isTyping
+      ? `Código completado! Agora você deve entregar a atividade correspondente lá no Google Classroom para validarmos seus ${xpGanhoBody || ativ.xp || 200} XP calculados! 🚀`
+      : (ativ.tipo === "Quiz" && xpGanhoFinal > 0)
+        ? "Resposta correta! XP adicionado." + msgDesconto
+        : (ativ.tipo === "Quiz" && xpGanhoFinal === 0 && isCorreto)
+          ? "Você acertou o Quiz, mas não ganhou XP." + msgDesconto
+          : (ativ.tipo === "Quiz" && xpGanhoFinal === 0 && !isCorreto)
+            ? "Resposta errada. Mas o Tutor pode rever depois!"
+            : "Missão enviada com sucesso!";
 
     invalidatePortalCache(matricula);
     invalidateRankingCache();
@@ -236,7 +235,14 @@ export async function POST(request: Request) {
       fetch(GOOGLE_API_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "enviar_atividade", matricula, idAtividade, resposta, xpGanho: xpGanhoFinal }),
+        body: JSON.stringify({ 
+          action: "enviar_atividade", 
+          matricula, 
+          idAtividade, 
+          resposta, 
+          xpGanho: xpGanhoFinal,
+          feedback: feedbackFinal
+        }),
       }).catch((e) => console.error("[Background Sync Error] Enviar atividade:", e.message));
     }
 

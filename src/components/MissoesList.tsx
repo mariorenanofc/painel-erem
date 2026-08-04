@@ -214,7 +214,10 @@ export default function MissoesList({
         <div className="space-y-5">
           {Object.entries(arvoreDeMissoes).map(([nomeModulo, aulas]) => {
             const isModuloAberto =
-              filtroPendentes || modulosAbertos[nomeModulo] || false;
+              filtroPendentes ||
+              busca.trim() !== "" ||
+              modulosAbertos[nomeModulo] ||
+              false;
             const qtdMissoesModulo = Object.values(aulas).reduce(
               (acc, miss) => acc + miss.length,
               0,
@@ -271,7 +274,10 @@ export default function MissoesList({
                         .map(([nomeAula, missoes]) => {
                           const aulaChave = `${nomeModulo}-${nomeAula}`;
                           const isAulaAberta =
-                            filtroPendentes || aulasAbertas[aulaChave] || false;
+                            filtroPendentes ||
+                            busca.trim() !== "" ||
+                            aulasAbertas[aulaChave] ||
+                            false;
 
                           return (
                             <div
@@ -326,6 +332,8 @@ export default function MissoesList({
                                       } else if (qtdPendentes > 0) {
                                         themeBorder = "border-red-300/80 dark:border-red-850 bg-red-50/10 dark:bg-red-950/10";
                                         glowStyle = "shadow-[0_0_15px_rgba(239,68,68,0.06)] hover:border-red-450";
+                                      } else if (!!ativ.resolucaoTyping) {
+                                        glowStyle = "hover:border-indigo-400 hover:shadow-[0_0_20px_rgba(99,102,241,0.08)]";
                                       } else if (ativ.tipo === "Quiz") {
                                         glowStyle = "hover:border-amber-400 hover:shadow-[0_0_20px_rgba(245,158,11,0.08)]";
                                       } else if (ativ.tipo === "Material") {
@@ -343,14 +351,17 @@ export default function MissoesList({
                                           <div className="flex-1 min-w-0 pr-4">
                                             <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                                               <span
-                                                className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg border transition-colors ${ativ.tipo === "Quiz"
-                                                    ? "bg-amber-100/80 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200/50 dark:border-amber-800/30"
-                                                    : ativ.tipo === "Material"
-                                                      ? "bg-emerald-100/80 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/30"
-                                                      : "bg-blue-100/80 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-800/30"
-                                                  }`}
+                                                className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg border transition-colors ${
+                                                  !!ativ.resolucaoTyping
+                                                    ? "bg-indigo-100/80 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 border-indigo-200/50 dark:border-indigo-800/30"
+                                                    : ativ.tipo === "Quiz"
+                                                      ? "bg-amber-100/80 dark:bg-amber-900/20 text-amber-600 dark:text-amber-400 border-amber-200/50 dark:border-amber-800/30"
+                                                      : ativ.tipo === "Material"
+                                                        ? "bg-emerald-100/80 dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-800/30"
+                                                        : "bg-blue-100/80 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-800/30"
+                                                }`}
                                               >
-                                                {ativ.tipo}
+                                                {!!ativ.resolucaoTyping ? "Digitação" : ativ.tipo}
                                               </span>
                                               {isRascunho && (
                                                 <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-lg bg-slate-700 dark:bg-slate-600 text-white shadow-sm">

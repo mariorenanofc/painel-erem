@@ -1,9 +1,26 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
+import { QueryDocumentSnapshot, Transaction } from "firebase-admin/firestore";
 
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
+const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
+  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
+  : undefined;
+const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
+  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
+  : undefined;
+
+interface Transacao {
+  id: string;
+  matricula: string;
+  nomeAluno: string;
+  idAtividade: string;
+  resposta: string;
+  status: string;
+  xpGanho: number;
+  timestamp: number;
+  feedback: string;
+}
 
 // Helper para substituir matrículas por nomes na resposta da transação
 function formatResposta(resposta: string, alunosMap: Record<string, string>) {
@@ -25,13 +42,13 @@ export async function GET(request: Request) {
   const categoria = String(searchParams.get("categoria") || "").trim();
   const status = String(searchParams.get("status") || "").trim();
 
-  let alunosMap: Record<string, string> = {};
-  let transacoes: any[] = [];
+  const alunosMap: Record<string, string> = {};
+  const transacoes: Transacao[] = [];
 
   try {
     // 1. Carregar mapa de estudantes para tradução de matrícula -> nome
     const alunosSnap = await dbAdmin.collection("alunos").get();
-    alunosSnap.forEach((doc: any) => {
+    alunosSnap.forEach((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
       if (data.matricula) {
         alunosMap[String(data.matricula).trim()] = String(data.nome || "").trim();
@@ -45,7 +62,7 @@ export async function GET(request: Request) {
       .limit(350) // Limite de varredura rápida em memória
       .get();
 
-    entregasSnap.forEach((doc: any) => {
+    entregasSnap.forEach((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
       const matricula = String(data.matricula || "").trim();
       transacoes.push({
@@ -61,8 +78,9 @@ export async function GET(request: Request) {
       });
     });
 
-  } catch (firestoreError: any) {
-    console.warn("[Failover] Erro ao buscar transações no Firestore. Usando Planilha...", firestoreError.message);
+  } catch (firestoreError: unknown) {
+    const fireErr = firestoreError as Error;
+    console.warn("[Failover] Erro ao buscar transações no Firestore. Usando Planilha...", fireErr.message);
     
     if (!GOOGLE_API_URL || !TUTOR_TOKEN) {
       return NextResponse.json({ error: "Serviço indisponível e sem credenciais de planilha." }, { status: 500 });
@@ -106,8 +124,9 @@ export async function GET(request: Request) {
       // Ordenar por timestamp desc
       transacoes.sort((a, b) => b.timestamp - a.timestamp);
 
-    } catch (sheetsError: any) {
-      return NextResponse.json({ error: "Erro ao ler transações de ambas as bases: " + sheetsError.message }, { status: 500 });
+    } catch (sheetsError: unknown) {
+      const sheetsErrObj = sheetsError as Error;
+      return NextResponse.json({ error: "Erro ao ler transações de ambas as bases: " + sheetsErrObj.message }, { status: 500 });
     }
   }
 
@@ -221,7 +240,7 @@ export async function PUT(request: Request) {
     const antigoXpGanho = Number(antigaEntrega.xpGanho) || 0;
     const diffXp = novoXpGanho - antigoXpGanho;
 
-    await dbAdmin.runTransaction(async (transaction: any) => {
+    await dbAdmin.runTransaction(async (transaction: Transaction) => {
       // 1. Atualizar Entrega
       transaction.update(entregaRef, {
         status: novoStatus,
@@ -252,8 +271,9 @@ export async function PUT(request: Request) {
 
     return NextResponse.json({ status: "sucesso", mensagem: "Transação atualizada com sucesso!" });
 
-  } catch (firestoreError: any) {
-    console.warn("[Failover] Erro ao editar transação no Firestore. Enviando para Planilha...", firestoreError.message);
+  } catch (firestoreError: unknown) {
+    const fireErr = firestoreError as Error;
+    console.warn("[Failover] Erro ao editar transação no Firestore. Enviando para Planilha...", fireErr.message);
 
     if (!GOOGLE_API_URL || !TUTOR_TOKEN) {
       return NextResponse.json({ error: "Serviço indisponível e sem credenciais de planilha." }, { status: 500 });
@@ -276,8 +296,9 @@ export async function PUT(request: Request) {
       });
       const sheetsData = await response.json();
       return NextResponse.json(sheetsData);
-    } catch (sheetsError: any) {
-      return NextResponse.json({ error: "Erro ao atualizar na planilha: " + sheetsError.message }, { status: 500 });
+    } catch (sheetsError: unknown) {
+      const sheetsErrObj = sheetsError as Error;
+      return NextResponse.json({ error: "Erro ao atualizar na planilha: " + sheetsErrObj.message }, { status: 500 });
     }
   }
 }
@@ -309,7 +330,7 @@ export async function DELETE(request: Request) {
     const antigoXpGanho = Number(antigaEntrega.xpGanho) || 0;
     const antigaResposta = String(antigaEntrega.resposta || "");
 
-    await dbAdmin.runTransaction(async (transaction: any) => {
+    await dbAdmin.runTransaction(async (transaction: Transaction) => {
       // 1. Atualizar para status EXCLUIDA, zeras XP e renomear resposta
       transaction.update(entregaRef, {
         status: "EXCLUIDA",
@@ -339,8 +360,9 @@ export async function DELETE(request: Request) {
 
     return NextResponse.json({ status: "sucesso", mensagem: "Transação estornada e excluída com sucesso!" });
 
-  } catch (firestoreError: any) {
-    console.warn("[Failover] Erro ao excluir transação no Firestore. Sincronizando com Planilha...", firestoreError.message);
+  } catch (firestoreError: unknown) {
+    const fireErr = firestoreError as Error;
+    console.warn("[Failover] Erro ao excluir transação no Firestore. Sincronizando com Planilha...", fireErr.message);
 
     if (!GOOGLE_API_URL || !TUTOR_TOKEN) {
       return NextResponse.json({ error: "Serviço indisponível e sem credenciais de planilha." }, { status: 500 });
@@ -363,8 +385,9 @@ export async function DELETE(request: Request) {
       });
       const sheetsData = await response.json();
       return NextResponse.json(sheetsData);
-    } catch (sheetsError: any) {
-      return NextResponse.json({ error: "Erro ao excluir na planilha: " + sheetsError.message }, { status: 500 });
+    } catch (sheetsError: unknown) {
+      const sheetsErrObj = sheetsError as Error;
+      return NextResponse.json({ error: "Erro ao excluir na planilha: " + sheetsErrObj.message }, { status: 500 });
     }
   }
 }

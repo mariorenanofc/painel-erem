@@ -178,13 +178,19 @@ export default function ResponderMissaoModal({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-md flex items-center justify-center z-50 p-2 md:p-4 animate-in fade-in duration-200 transition-colors">
+      <div className={`fixed inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-md flex items-center justify-center z-50 animate-in fade-in duration-200 transition-colors ${
+        isTypingActivity && isPendenteOuDevolvida ? "p-0" : "p-2 md:p-4"
+      }`}>
         <motion.div
-          initial={{ scale: 0.95, opacity: 0, y: 10 }}
+          initial={isTypingActivity && isPendenteOuDevolvida ? { opacity: 0 } : { scale: 0.95, opacity: 0, y: 10 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.95, opacity: 0, y: 10 }}
+          exit={isTypingActivity && isPendenteOuDevolvida ? { opacity: 0 } : { scale: 0.95, opacity: 0, y: 10 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className={`glass-panel-heavy w-full ${isTypingActivity && isPendenteOuDevolvida ? "max-w-3xl" : "max-w-2xl"} rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-[0_12px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] border border-slate-200 dark:border-white/5 transition-colors duration-300`}
+          className={`glass-panel-heavy w-full ${
+            isTypingActivity && isPendenteOuDevolvida 
+              ? "w-screen h-screen max-w-full max-h-screen rounded-none border-none" 
+              : "max-w-2xl rounded-3xl max-h-[90vh] border border-slate-200 dark:border-white/5"
+          } overflow-hidden flex flex-col shadow-[0_12px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] transition-colors duration-300`}
         >
           {isTypingActivity && isPendenteOuDevolvida ? (
             <>

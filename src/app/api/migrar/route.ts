@@ -2,8 +2,12 @@ import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { clearAllPortalCaches, invalidateRankingCache, invalidateConfigCache } from "@/src/lib/cache";
 
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
+const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
+  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
+  : undefined;
+const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
+  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
+  : undefined;
 
 export async function GET() {
   if (!GOOGLE_API_URL || !TUTOR_TOKEN) {
@@ -12,11 +16,21 @@ export async function GET() {
 
   try {
     console.log("Iniciando busca de dados na Planilha...");
-    const response = await fetch(GOOGLE_API_URL, {
+    let response = await fetch(GOOGLE_API_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({ action: "exportar_dados_migracao", token: TUTOR_TOKEN }),
+      redirect: "manual",
     });
+
+    if (response.status === 302 || response.status === 301) {
+      const redirectUrl = response.headers.get("location");
+      if (redirectUrl) {
+        response = await fetch(redirectUrl, {
+          method: "GET",
+        });
+      }
+    }
 
     const data = await response.json();
     if (data.status !== "sucesso") {
@@ -52,8 +66,42 @@ export async function GET() {
     }
     await userBatch.commit();
 
-    // C. ATIVIDADES (Processamento Paralelo)
+    // C. ATIVIDADES (Processamento Paralelo + Limpeza de Removidos)
     const ativValues = data.atividades || [];
+    const sheetAtivIds = new Set<string>();
+
+    for (let i = 1; i < ativValues.length; i++) {
+      const id = String(ativValues[i][0]).trim();
+      if (id && id !== "ID") {
+        sheetAtivIds.add(id);
+      }
+    }
+
+    // Buscar IDs existentes no Firestore para identificar as deletadas
+    const dbAtivSnap = await dbAdmin.collection("atividades").get();
+    const dbAtivIds = dbAtivSnap.docs.map(doc => doc.id);
+
+    // Deletar as que não estão mais na planilha
+    let deleteBatch = dbAdmin.batch();
+    let deleteCount = 0;
+    const deletePromises = [];
+    for (const dbId of dbAtivIds) {
+      if (!sheetAtivIds.has(dbId)) {
+        deleteBatch.delete(dbAdmin.collection("atividades").doc(dbId));
+        deleteCount++;
+        if (deleteCount === 400) {
+          deletePromises.push(deleteBatch.commit());
+          deleteBatch = dbAdmin.batch();
+          deleteCount = 0;
+        }
+      }
+    }
+    if (deleteCount > 0) {
+      deletePromises.push(deleteBatch.commit());
+    }
+    await Promise.all(deletePromises);
+
+    // Gravar/Atualizar as atividades vindas da planilha
     let ativBatch = dbAdmin.batch();
     let ativCount = 0;
     const ativPromises = [];

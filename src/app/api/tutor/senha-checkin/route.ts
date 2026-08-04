@@ -1,11 +1,5 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
-
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
-  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
-  : undefined;
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
 
 export async function GET() {
   try {

@@ -1,7 +1,9 @@
 import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
+import { QueryDocumentSnapshot, Transaction } from "firebase-admin/firestore";
+const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
+  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
+  : undefined;
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 
 const CONTA_MESTRE = "1234567";
@@ -118,7 +120,7 @@ export async function POST(request: Request) {
     }
 
     // Calcular XP doado hoje e na semana
-    entregasOrigemSnap.forEach((doc: any) => {
+    entregasOrigemSnap.forEach((doc: QueryDocumentSnapshot) => {
       const id = doc.id;
       const v = doc.data();
       const xp = Number(v.xpGanho) || 0;
@@ -137,7 +139,7 @@ export async function POST(request: Request) {
 
     // Calcular XP recebido hoje pelo destinatário
     let xpRecebidoHojeDestino = 0;
-    entregasDestinoSnap.forEach((doc: any) => {
+    entregasDestinoSnap.forEach((doc: QueryDocumentSnapshot) => {
       const id = doc.id;
       const v = doc.data();
       const xp = Number(v.xpGanho) || 0;
@@ -161,11 +163,10 @@ export async function POST(request: Request) {
     const idEnvio = `PIX-${hojeStr}-${tstamp}-ENVIOU`;
     const idRecebeu = `PIX-${hojeStr}-${tstamp}-RECEBEU`;
 
-    await dbAdmin.runTransaction(async (transaction: any) => {
+    await dbAdmin.runTransaction(async (transaction: Transaction) => {
       const freshSender = (await transaction.get(senderRef)).data()!;
       const freshReceiver = (await transaction.get(receiverRef)).data()!;
 
-      const freshXpOrigem = Number(freshSender.xp) || 0;
       const freshXpGastoOrigem = Number(freshSender.xpGasto) || 0;
       const freshXpDestino = Number(freshReceiver.xp) || 0;
 
@@ -229,8 +230,9 @@ export async function POST(request: Request) {
     invalidateRankingCache();
     return NextResponse.json({ status: "sucesso", mensagem: `Pix realizado com sucesso! Enviados ${quantidade} XP.` });
 
-  } catch (error: any) {
-    console.warn("[Failover] Erro na transferência de XP do Firestore:", error.message);
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.warn("[Failover] Erro na transferência de XP do Firestore:", err.message);
     if (GOOGLE_API_URL) {
       try {
         const response = await fetch(GOOGLE_API_URL, {
@@ -239,8 +241,10 @@ export async function POST(request: Request) {
           body: JSON.stringify({ action: "transferir_xp", matriculaOrigem, senha: senhaDigitada, matriculaDestino, quantidade, motivo }),
         });
         return NextResponse.json(await response.json());
-      } catch (sheetsErr) {}
+      } catch {
+        // Ignora erro do Sheets no failover
+      }
     }
-    return NextResponse.json({ status: "erro", mensagem: "Erro ao processar transferência: " + error.message }, { status: 500 });
+    return NextResponse.json({ status: "erro", mensagem: "Erro ao processar transferência: " + err.message }, { status: 500 });
   }
 }

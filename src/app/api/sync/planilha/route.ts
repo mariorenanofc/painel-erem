@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
+const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
+  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
+  : undefined;
+const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
+  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
+  : undefined;
 
 export async function GET() {
   if (!GOOGLE_API_URL || !TUTOR_TOKEN) {

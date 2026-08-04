@@ -12,6 +12,89 @@ interface CodingPracticeProps {
   enviando: boolean;
 }
 
+// 🔥 FUNÇÃO DE HIGHLIGHT SINTÁTICO PARA IDE PREMIUM
+function getSyntaxHighlightClass(char: string, absIdx: number, code: string): string {
+  // 1. Comments
+  let isComment = false;
+  for (let i = absIdx; i >= 0; i--) {
+    if (code[i] === "\n") break;
+    if (i > 0 && code[i-1] === "/" && code[i] === "/") {
+      isComment = true;
+      break;
+    }
+  }
+  if (isComment) return "text-slate-500/80 font-normal";
+
+  // 2. Strings
+  let isString = false;
+  let quoteChar = "";
+  for (let i = 0; i < absIdx; i++) {
+    if ((code[i] === '"' || code[i] === "'" || code[i] === "`") && (i === 0 || code[i-1] !== "\\")) {
+      if (quoteChar === "") {
+        quoteChar = code[i];
+      } else if (quoteChar === code[i]) {
+        quoteChar = "";
+      }
+    }
+  }
+  if (quoteChar !== "") isString = true;
+  if (isString) return "text-amber-300 font-medium";
+
+  // 3. Numbers
+  if (/[0-9]/.test(char)) {
+    return "text-cyan-400 font-mono";
+  }
+
+  // 4. Operators and Brackets
+  if (/[+\-*/%&|=!<>?:~^{}[\]()]/.test(char)) {
+    return "text-pink-400 font-semibold";
+  }
+
+  // 5. Keywords
+  let word = "";
+  let wordStart = absIdx;
+  while (wordStart > 0 && /[a-zA-Z0-9_$]/.test(code[wordStart - 1])) {
+    wordStart--;
+  }
+  let wordEnd = absIdx;
+  while (wordEnd < code.length && /[a-zA-Z0-9_$]/.test(code[wordEnd])) {
+    wordEnd++;
+  }
+  word = code.slice(wordStart, wordEnd);
+
+  const keywords = [
+    "const", "let", "var", "function", "return", "if", "else", "for", "while", 
+    "class", "import", "export", "true", "false", "null", "undefined", "new", 
+    "this", "default", "from", "async", "await", "try", "catch", "finally"
+  ];
+  if (keywords.includes(word)) {
+    return "text-blue-400 font-bold";
+  }
+
+  // 6. Functions (words followed by a parenthesis)
+  let nextIdx = wordEnd;
+  while (nextIdx < code.length && /\s/.test(code[nextIdx])) {
+    nextIdx++;
+  }
+  if (code[nextIdx] === "(") {
+    return "text-yellow-300 font-semibold";
+  }
+
+  // 7. HTML/CSS tags
+  let isHtmlTag = false;
+  let angleCount = 0;
+  for (let i = 0; i < absIdx; i++) {
+    if (code[i] === "<") angleCount++;
+    else if (code[i] === ">") angleCount--;
+  }
+  if (angleCount > 0) isHtmlTag = true;
+  if (isHtmlTag) {
+    return "text-teal-400";
+  }
+
+  return "text-slate-400";
+}
+
 export default function CodingPractice({
   missaoAberta,
   onClose,
@@ -77,10 +160,33 @@ export default function CodingPractice({
 
   // Obter tecla esperada atual
   const expectedChar = targetCode[currentIndex] || "";
+  
+  // Checar se o espaço atual é indentação
+  let isExpectedSpaceIndentation = false;
+  if (expectedChar === " ") {
+    let isIndentation = true;
+    for (let i = currentIndex - 1; i >= 0; i--) {
+      if (targetCode[i] === "\n") break;
+      if (targetCode[i] !== " ") {
+        isIndentation = false;
+        break;
+      }
+    }
+    let spaceCount = 0;
+    while (currentIndex + spaceCount < targetCode.length && targetCode[currentIndex + spaceCount] === " ") {
+      spaceCount++;
+    }
+    if (isIndentation || spaceCount >= 2) {
+      isExpectedSpaceIndentation = true;
+    }
+  }
+
   let expectedKeyName = expectedChar;
   if (expectedChar === "\n") expectedKeyName = "Enter";
   else if (expectedChar === "\t") expectedKeyName = "Tab";
-  else if (expectedChar === " ") expectedKeyName = "Espaço";
+  else if (expectedChar === " ") {
+    expectedKeyName = isExpectedSpaceIndentation ? "Tab" : "Espaço";
+  }
 
   // Processa entrada de tecla
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -94,9 +200,63 @@ export default function CodingPractice({
     // Desabilitar comportamento padrão do TAB para não mudar o foco do elemento
     if (key === "Tab") {
       e.preventDefault();
+      
+      // Caso 1: Próximo caractere é literalmente um TAB
+      if (expectedChar === "\t") {
+        const nextIndex = currentIndex + 1;
+        setCurrentIndex(nextIndex);
+        if (nextIndex >= targetCode.length) {
+          setCompleted(true);
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+          });
+        }
+        return;
+      }
+      
+      // Caso 2: Próximo caractere é espaço, e é indentação
+      if (expectedChar === " ") {
+        let isIndentation = true;
+        for (let i = currentIndex - 1; i >= 0; i--) {
+          if (targetCode[i] === "\n") break;
+          if (targetCode[i] !== " ") {
+            isIndentation = false;
+            break;
+          }
+        }
+        
+        let spaceCount = 0;
+        while (currentIndex + spaceCount < targetCode.length && targetCode[currentIndex + spaceCount] === " ") {
+          spaceCount++;
+        }
+        
+        if (isIndentation || spaceCount >= 2) {
+          // Consome todo o bloco de espaços da indentação
+          const nextIndex = currentIndex + spaceCount;
+          setCurrentIndex(nextIndex);
+          if (nextIndex >= targetCode.length) {
+            setCompleted(true);
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 },
+            });
+          }
+          return;
+        }
+      }
+      
+      // Se pressionou TAB mas não era esperado (ou não era indentação), erro
+      if (lastErrorIndexRef.current !== currentIndex) {
+        setErrorsCount((prev) => prev + 1);
+        lastErrorIndexRef.current = currentIndex;
+      }
+      return;
     }
 
-    // Ignorar teclas de controle (como Ctrl, Shift, Alt, setas direcionais, etc.) que não correspondem a caracteres a serem digitados
+    // Ignorar teclas de controle (como Ctrl, Shift, Alt, setas direcionais, etc.)
     if (key.length > 1 && key !== "Enter" && key !== "Tab") {
       return;
     }
@@ -170,26 +330,52 @@ export default function CodingPractice({
     return `${String(mins).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
   };
 
+  // CONSTRUÇÃO E MAPEAMENTO DA ESTRUTURA DE LINHAS (ESTILO IDE)
+  let absoluteCharIndex = 0;
+  const targetCodeLines = targetCode.split("\n").map((lineText, lineIdx) => {
+    const lineChars: Array<{ char: string; absIdx: number }> = [];
+    
+    for (let i = 0; i < lineText.length; i++) {
+      lineChars.push({
+        char: lineText[i],
+        absIdx: absoluteCharIndex++
+      });
+    }
+    
+    const isLastLine = lineIdx === targetCode.split("\n").length - 1;
+    if (!isLastLine) {
+      lineChars.push({
+        char: "\n",
+        absIdx: absoluteCharIndex++
+      });
+    }
+    
+    return {
+      lineIdx: lineIdx + 1,
+      chars: lineChars
+    };
+  });
+
   return (
-    <div className="flex flex-col flex-1 max-h-[85vh]" ref={containerRef}>
+    <div className="flex flex-col flex-1 h-full min-h-0 bg-slate-950" ref={containerRef}>
       {/* ═══ BARRA DE STATUS SUPERIOR ═══ */}
-      <div className="flex flex-wrap items-center justify-between gap-4 p-4 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors shrink-0">
+      <div className="flex flex-wrap items-center justify-between gap-4 p-4 border-b border-slate-900 bg-slate-900 shrink-0">
         <div className="flex gap-4">
-          <div className="bg-indigo-50 dark:bg-indigo-950/20 text-indigo-700 dark:text-indigo-400 px-3 py-1.5 rounded-xl border border-indigo-200/50 dark:border-indigo-800/40 text-xs font-black uppercase tracking-wider">
+          <div className="bg-indigo-500/10 text-indigo-400 px-3 py-1.5 rounded-xl border border-indigo-500/20 text-xs font-black uppercase tracking-wider">
             Recompensa: <span className="text-sm text-pink-500">{currentXP} XP</span>
           </div>
-          <div className="bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700/60 text-xs font-black uppercase tracking-wider">
+          <div className="bg-slate-800 text-slate-400 px-3 py-1.5 rounded-xl border border-slate-700/60 text-xs font-black uppercase tracking-wider">
             Erros: <span className="text-red-500 font-mono font-bold">{errorsCount}</span>
           </div>
         </div>
 
         <div className="flex items-center gap-3">
           {secondsRemaining > 0 ? (
-            <div className="bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-3 py-1.5 rounded-xl text-xs font-black font-mono">
+            <div className="bg-slate-800 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-black font-mono">
               ⏱️ Tempo Restante: {formatTime(secondsRemaining)}
             </div>
           ) : (
-            <div className="bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 px-3 py-1.5 rounded-xl text-xs font-black font-mono animate-pulse border border-red-200 dark:border-red-900/30">
+            <div className="bg-red-950/20 text-red-400 px-3 py-1.5 rounded-xl text-xs font-black font-mono animate-pulse border border-red-900/30">
               🚨 Tempo Limite Excedido (+{formatTime(extraSecondsUsed)})
             </div>
           )}
@@ -198,7 +384,7 @@ export default function CodingPractice({
 
       {/* ═══ ALERTA DE TECLADO ABNT2 E CONFIGURAÇÕES ═══ */}
       {!completed && (
-        <div className="bg-amber-500/10 border-b border-amber-500/20 px-5 py-3 text-amber-800 dark:text-amber-300 text-xs font-medium flex items-center justify-between shrink-0">
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-5 py-3 text-amber-300 text-xs font-medium flex items-center justify-between shrink-0">
           <p className="leading-relaxed flex items-center gap-2">
             <span>⚠️</span> 
             <strong>Atenção ao teclado:</strong> Use o layout <strong>Português (ABNT2)</strong> para evitar erros involuntários em teclas como <code>ç</code>, <code>;</code>, <code>{"{"}</code> e <code>{"}"}</code>.
@@ -206,10 +392,10 @@ export default function CodingPractice({
         </div>
       )}
 
-      {/* ═══ ÁREA DE DIGITAÇÃO DE CÓDIGO ═══ */}
+      {/* ═══ ÁREA DE DIGITAÇÃO DE CÓDIGO (ESTILO IDE DE DESENVOLVIMENTO) ═══ */}
       <div 
         onClick={resetFoco}
-        className="flex-1 p-6 overflow-y-auto bg-slate-900 text-slate-100 font-mono text-sm leading-relaxed relative select-none cursor-text custom-scrollbar min-h-[250px]"
+        className="flex-1 p-6 overflow-auto bg-slate-950 text-slate-100 font-mono text-sm leading-relaxed relative select-none cursor-text custom-scrollbar min-h-[250px]"
       >
         <textarea
           ref={inputRef}
@@ -229,8 +415,8 @@ export default function CodingPractice({
 
         {/* Efeito visual de foco perdido */}
         {!inputFoco && !completed && (
-          <div className="absolute inset-0 bg-slate-900/90 backdrop-blur-sm flex items-center justify-center z-10 animate-in fade-in duration-200">
-            <div className="text-center p-6 bg-slate-800 border border-slate-700 rounded-2xl max-w-xs shadow-xl">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-10 animate-in fade-in duration-200">
+            <div className="text-center p-6 bg-slate-900 border border-slate-800 rounded-2xl max-w-xs shadow-xl">
               <span className="text-3xl block mb-2">⌨️</span>
               <h4 className="font-black uppercase tracking-wider text-xs text-slate-200 mb-1">Foco Perdido</h4>
               <p className="text-[11px] text-slate-400 leading-snug mb-3">Clique aqui na caixa de texto do código para reativar o seu teclado.</p>
@@ -244,27 +430,46 @@ export default function CodingPractice({
           </div>
         )}
 
-        {/* O Código Proposto */}
-        <div className="whitespace-pre-wrap select-none leading-relaxed break-all">
-          {targetCode.split("").map((char, index) => {
-            let className = "text-slate-500 opacity-40 transition-colors duration-100"; // Não digitado ainda
-            let charLabel = char;
-
-            if (char === "\n") charLabel = "↵\n"; // Visual enter guide
-            if (char === "\t") charLabel = "⇥   "; // Visual tab guide
-
-            if (index < currentIndex) {
-              className = "text-emerald-400 font-bold opacity-100"; // Digitado correto
-            } else if (index === currentIndex) {
-              className = inputFoco 
-                ? "bg-indigo-500/30 text-indigo-200 border-b-2 border-indigo-400 animate-pulse font-black opacity-100" // Posição atual
-                : "text-indigo-400 underline font-black opacity-80";
-            }
-
+        {/* Linhas de Código propostas com Gutter e Syntax Highlighting */}
+        <div className="flex flex-col font-mono text-sm leading-normal select-none">
+          {targetCodeLines.map((line) => {
             return (
-              <span key={index} className={className}>
-                {charLabel}
-              </span>
+              <div key={line.lineIdx} className="flex hover:bg-slate-900/30 px-1 border-l-2 border-transparent hover:border-indigo-500/20 transition-all">
+                {/* Gutter Genuíno (Números de Linha) */}
+                <div className="w-10 select-none text-right pr-4 text-slate-700 font-mono text-xs border-r border-slate-900 shrink-0">
+                  {line.lineIdx}
+                </div>
+                {/* Conteúdo com indentação e Destaque Visual */}
+                <div className="pl-4 whitespace-pre break-all flex-1 tracking-wide">
+                  {line.chars.map(({ char, absIdx }) => {
+                    let className = "";
+                    let charLabel = char;
+
+                    if (char === "\n") charLabel = "↵\n"; // Guia visual do Enter
+                    if (char === "\t") charLabel = "⇥   "; // Guia visual do Tab
+
+                    const isTyped = absIdx < currentIndex;
+                    const isCurrent = absIdx === currentIndex;
+
+                    if (isTyped) {
+                      className = "text-emerald-400 font-bold opacity-100 drop-shadow-[0_0_1px_rgba(52,211,153,0.3)]";
+                    } else if (isCurrent) {
+                      className = inputFoco 
+                        ? "bg-indigo-500/30 text-indigo-100 border-b-2 border-indigo-400 animate-pulse font-black opacity-100"
+                        : "text-indigo-400 underline font-black opacity-90";
+                    } else {
+                      // Aplicar Realce Sintático IDE
+                      className = getSyntaxHighlightClass(char, absIdx, targetCode);
+                    }
+
+                    return (
+                      <span key={absIdx} className={className}>
+                        {charLabel}
+                      </span>
+                    );
+                  })}
+                </div>
+              </div>
             );
           })}
         </div>
@@ -274,10 +479,16 @@ export default function CodingPractice({
       {!completed && (() => {
         const getHighlightKey = (char: string): string => {
           if (!char) return "";
+          
+          if (char === " ") {
+            // Se for espaço na indentação, destacar a tecla TAB
+            if (isExpectedSpaceIndentation) return "TAB";
+            return "SPACE";
+          }
+          
           const c = char.toUpperCase();
           if (c === "\n") return "ENTER";
           if (c === "\t") return "TAB";
-          if (c === " ") return "SPACE";
           if (c === "{" || c === "[") return "[";
           if (c === "}" || c === "]") return "]";
           if (c === "(" || c === "9") return "9";
@@ -301,6 +512,38 @@ export default function CodingPractice({
         ];
 
         const handleVirtualKeyClick = (keyLabel: string) => {
+          // Lógica especial de clique virtual no TAB quando espaço de indentação é esperado
+          if (keyLabel === "TAB" && expectedChar === " ") {
+            let isIndentation = true;
+            for (let i = currentIndex - 1; i >= 0; i--) {
+              if (targetCode[i] === "\n") break;
+              if (targetCode[i] !== " ") {
+                isIndentation = false;
+                break;
+              }
+            }
+            
+            let spaceCount = 0;
+            while (currentIndex + spaceCount < targetCode.length && targetCode[currentIndex + spaceCount] === " ") {
+              spaceCount++;
+            }
+            
+            if (isIndentation || spaceCount >= 2) {
+              const nextIndex = currentIndex + spaceCount;
+              setCurrentIndex(nextIndex);
+              if (nextIndex >= targetCode.length) {
+                setCompleted(true);
+                confetti({
+                  particleCount: 100,
+                  spread: 70,
+                  origin: { y: 0.6 },
+                });
+              }
+              resetFoco();
+              return;
+            }
+          }
+
           let char = keyLabel.toLowerCase();
           if (keyLabel === "ENTER") char = "\n";
           else if (keyLabel === "TAB") char = "\t";
@@ -334,7 +577,7 @@ export default function CodingPractice({
         };
 
         return (
-          <div className="bg-slate-950 p-4 border-t border-slate-850 shrink-0 select-none">
+          <div className="bg-slate-950 p-4 border-t border-slate-900 shrink-0 select-none">
             <div className="flex flex-col gap-2.5 max-w-xl mx-auto">
               {/* Visual Help Notification */}
               <div className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 mb-1">
@@ -366,8 +609,8 @@ export default function CodingPractice({
                           onClick={() => handleVirtualKeyClick(keyLabel)}
                           className={`rounded-lg border text-center transition-all duration-100 flex items-center justify-center cursor-pointer select-none ${widthClass} ${
                             isHighlighted
-                              ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-emerald-400 scale-105 shadow-md shadow-emerald-500/30 animate-pulse font-black"
-                              : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
+                              ? "bg-gradient-to-r from-indigo-500 to-pink-500 text-white border-indigo-400 scale-105 shadow-md shadow-indigo-500/30 animate-pulse font-black"
+                              : "bg-slate-900 text-slate-500 border-slate-850 hover:text-white"
                           }`}
                         >
                           {keyLabel === "SPACE" ? "ESPAÇO" : keyLabel}
@@ -389,7 +632,7 @@ export default function CodingPractice({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-5 z-20"
+            className="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-5 z-25"
           >
             <motion.div
               initial={{ scale: 0.95, y: 15 }}
@@ -401,11 +644,27 @@ export default function CodingPractice({
               <p className="text-xs text-slate-400 mb-5 leading-relaxed">Você digitou o Mini Projeto com precisão cirúrgica de sintaxe e indentação!</p>
 
               {/* Box de Pontuação */}
-              <div className="bg-slate-800/80 border border-slate-700/60 p-4 rounded-2xl mb-6 flex flex-col gap-1.5">
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Seu Desempenho</span>
-                <span className="text-3xl font-black text-pink-500">{currentXP} XP</span>
-                <span className="text-[11px] text-slate-400 font-medium">({errorsCount} erros cometidos | {extraMinutes} min excedidos)</span>
-              </div>
+              {(() => {
+                const totalSecondsAllowed = timeLimitMinutes * 60;
+                const timeTakenSeconds = secondsRemaining > 0 
+                  ? totalSecondsAllowed - secondsRemaining 
+                  : totalSecondsAllowed + extraSecondsUsed;
+                return (
+                  <div className="bg-slate-800/80 border border-slate-700/60 p-4 rounded-2xl mb-6 flex flex-col gap-1.5">
+                    <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Seu Desempenho</span>
+                    <span className="text-3xl font-black text-pink-500">{currentXP} XP</span>
+                    <span className="text-[11px] text-slate-400 font-medium">
+                      Tempo Gasto: <strong className="text-white font-mono">{formatTime(timeTakenSeconds)}</strong> | 
+                      Erros: <strong className="text-white font-mono">{errorsCount}</strong>
+                    </span>
+                    {extraSecondsUsed > 0 && (
+                      <span className="text-[10px] text-red-400 font-medium font-mono">
+                        (Tempo limite excedido em +{formatTime(extraSecondsUsed)})
+                      </span>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Botões de Ação */}
               <div className="flex flex-col gap-3">
@@ -413,7 +672,7 @@ export default function CodingPractice({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleCopy}
-                  className="cursor-pointer w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-3 rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
+                  className="cursor-pointer w-full bg-slate-800 hover:bg-slate-700 text-slate-205 font-bold py-3 rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
                 >
                   📋 Copiar Código Resolvido
                 </motion.button>

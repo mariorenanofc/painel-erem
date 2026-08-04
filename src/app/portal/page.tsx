@@ -979,7 +979,7 @@ export default function PortalDashboard() {
                   <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-amber-500/10 transition-all"></div>
                   <div>
                     <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 px-2 py-0.5 bg-amber-500/10 rounded-md border border-amber-500/20">
-                      {ativ.tipo}
+                      {!!ativ.resolucaoTyping ? "Digitação" : ativ.tipo}
                     </span>
                     <h4 className="font-display font-bold text-sm text-slate-805 dark:text-white mt-2 leading-tight">
                       {ativ.titulo}
@@ -1344,12 +1344,12 @@ export default function PortalDashboard() {
                                           className={`bg-slate-950/60 rounded-2xl border shadow-sm flex flex-col overflow-hidden relative transition-all hover:shadow-xl hover:-translate-y-1 ${isConcluida ? "border-emerald-500/20" : isAguardandoValidacao ? "border-amber-500/30 shadow-amber-500/5" : isDevolvida ? "border-red-500/30" : "border-white/5 hover:border-brand-primary/30"}`}
                                         >
                                           <div
-                                            className={`h-2 w-full ${isConcluida ? "bg-emerald-500" : isAguardandoValidacao ? "bg-amber-500" : isDevolvida ? "bg-red-500" : ativ.tipo === "Quiz" ? "bg-amber-400" : ativ.tipo === "Material" ? "bg-emerald-400" : "bg-brand-primary"}`}
+                                            className={`h-2 w-full ${isConcluida ? "bg-emerald-500" : isAguardandoValidacao ? "bg-amber-500" : isDevolvida ? "bg-red-500" : !!ativ.resolucaoTyping ? "bg-indigo-500" : ativ.tipo === "Quiz" ? "bg-amber-400" : ativ.tipo === "Material" ? "bg-emerald-400" : "bg-brand-primary"}`}
                                           ></div>
                                           <div className="p-5 flex-1 flex flex-col">
                                             <div className="flex justify-between items-start mb-4">
-                                              <span className="bg-slate-900 text-slate-400 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border border-white/5 shadow-sm">
-                                                {ativ.tipo}
+                                              <span className={`text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider border border-white/5 shadow-sm ${!!ativ.resolucaoTyping ? "bg-indigo-950/80 text-indigo-400" : "bg-slate-900 text-slate-400"}`}>
+                                                {!!ativ.resolucaoTyping ? "Digitação" : ativ.tipo}
                                               </span>
                                               <span className="text-[10px] bg-slate-900/50 text-slate-500 font-bold px-2 py-1 rounded border border-white/5">
                                                 ID: {ativ.id.replace("ATIV-", "")}
@@ -1461,14 +1461,16 @@ export default function PortalDashboard() {
                                                     ? "border-amber-500 text-amber-400 shadow-amber-500/10 animate-pulse"
                                                     : isDevolvida
                                                       ? "border-red-500 text-red-400 shadow-red-500/10 animate-pulse"
-                                                      : ativ.tipo === "Quiz"
-                                                        ? "border-amber-400 text-amber-400 shadow-amber-400/10"
-                                                        : ativ.tipo === "Material"
-                                                          ? "border-emerald-450 text-emerald-400 shadow-emerald-450/10"
-                                                          : "border-brand-primary text-brand-primary shadow-brand-primary/10"
+                                                      : !!ativ.resolucaoTyping
+                                                        ? "border-indigo-400 text-indigo-400 shadow-indigo-400/10"
+                                                        : ativ.tipo === "Quiz"
+                                                          ? "border-amber-400 text-amber-400 shadow-amber-400/10"
+                                                          : ativ.tipo === "Material"
+                                                            ? "border-emerald-450 text-emerald-400 shadow-emerald-450/10"
+                                                            : "border-brand-primary text-brand-primary shadow-brand-primary/10"
                                               }`}
                                             >
-                                              {isConcluida ? "✓" : isAguardandoValidacao ? "⏳" : isDevolvida ? "!" : ativ.tipo === "Quiz" ? "🎯" : ativ.tipo === "Material" ? "📚" : "🚀"}
+                                              {isConcluida ? "✓" : isAguardandoValidacao ? "⏳" : isDevolvida ? "!" : !!ativ.resolucaoTyping ? "⌨️" : ativ.tipo === "Quiz" ? "🎯" : ativ.tipo === "Material" ? "📚" : "🚀"}
                                             </div>
 
                                             {/* Card da atividade */}
@@ -1480,25 +1482,29 @@ export default function PortalDashboard() {
                                                     ? "border-amber-500/30"
                                                     : isDevolvida
                                                       ? "border-red-500/30"
-                                                      : ativ.tipo === "Quiz"
-                                                        ? "border-amber-500/10 hover:border-amber-500/30"
-                                                        : ativ.tipo === "Material"
-                                                          ? "border-emerald-500/10 hover:border-emerald-500/30"
-                                                          : "border-brand-primary/10 hover:border-brand-primary/30"
+                                                      : !!ativ.resolucaoTyping
+                                                        ? "border-indigo-500/10 hover:border-indigo-500/30"
+                                                        : ativ.tipo === "Quiz"
+                                                          ? "border-amber-500/10 hover:border-amber-500/30"
+                                                          : ativ.tipo === "Material"
+                                                            ? "border-emerald-500/10 hover:border-emerald-500/30"
+                                                            : "border-brand-primary/10 hover:border-brand-primary/30"
                                               }`}
                                             >
                                               <div className="p-5">
                                                 <div className="flex justify-between items-start mb-3">
                                                   <span
                                                     className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-md border tracking-wider shadow-sm ${
-                                                      ativ.tipo === "Quiz"
-                                                        ? "bg-amber-500/10 text-amber-450 border-amber-500/20"
-                                                        : ativ.tipo === "Material"
-                                                          ? "bg-emerald-500/10 text-emerald-450 border-emerald-500/20"
-                                                          : "bg-blue-500/10 text-blue-450 border-blue-500/20"
+                                                      !!ativ.resolucaoTyping
+                                                        ? "bg-indigo-500/10 text-indigo-405 border-indigo-500/20"
+                                                        : ativ.tipo === "Quiz"
+                                                          ? "bg-amber-500/10 text-amber-450 border-amber-500/20"
+                                                          : ativ.tipo === "Material"
+                                                            ? "bg-emerald-500/10 text-emerald-450 border-emerald-500/20"
+                                                            : "bg-blue-500/10 text-blue-450 border-blue-500/20"
                                                     }`}
                                                   >
-                                                    {ativ.tipo}
+                                                    {!!ativ.resolucaoTyping ? "Digitação" : ativ.tipo}
                                                   </span>
                                                   <span className="text-[9px] bg-slate-900/50 text-slate-500 font-bold px-2 py-0.5 rounded border border-white/5 font-mono">
                                                     ID: {ativ.id.replace("ATIV-", "")}

@@ -6,7 +6,9 @@ import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
   : undefined;
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
+const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
+  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
+  : undefined;
 
 export async function GET() {
   try {

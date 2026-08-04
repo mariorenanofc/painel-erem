@@ -85,6 +85,8 @@ export default function GestaoAulasPage() {
   const [modulo, setModulo] = useState("Geral");
   const [gabarito, setGabarito] = useState("");
   const [gabaritoLiberado, setGabaritoLiberado] = useState(false);
+  const [resolucaoTyping, setResolucaoTyping] = useState("");
+  const [limiteTempoTyping, setLimiteTempoTyping] = useState(0);
   const [salvando, setSalvando] = useState(false);
 
   // Estados de Entregas e Ranking
@@ -340,6 +342,8 @@ export default function GestaoAulasPage() {
     setModulo("Geral");
     setGabarito("");
     setGabaritoLiberado(false);
+    setResolucaoTyping("");
+    setLimiteTempoTyping(0);
     setModalNovaMissaoAberto(false);
   };
 
@@ -371,6 +375,8 @@ export default function GestaoAulasPage() {
     setModulo(String(ativ.modulo || "Geral"));
     setGabarito(String(ativ.gabarito || ""));
     setGabaritoLiberado((ativ as any).gabaritoLiberado || false);
+    setResolucaoTyping(String(ativ.resolucaoTyping || ""));
+    setLimiteTempoTyping(Number(ativ.limiteTempoTyping) || 0);
     setModalNovaMissaoAberto(true);
   };
 
@@ -497,6 +503,8 @@ export default function GestaoAulasPage() {
         modulo,
         gabarito,
         gabaritoLiberado,
+        resolucaoTyping,
+        limiteTempoTyping,
       });
       toast("Atividade salva com sucesso!", "success");
       limparFormulario();
@@ -849,6 +857,10 @@ export default function GestaoAulasPage() {
           setGabarito={setGabarito}
           gabaritoLiberado={gabaritoLiberado}
           setGabaritoLiberado={setGabaritoLiberado}
+          resolucaoTyping={resolucaoTyping}
+          setResolucaoTyping={setResolucaoTyping}
+          limiteTempoTyping={limiteTempoTyping}
+          setLimiteTempoTyping={setLimiteTempoTyping}
           modulosCadastrados={modulosCadastrados}
           turmasDisponiveis={turmasDisponiveis}
           salvando={salvando}

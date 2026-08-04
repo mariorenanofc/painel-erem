@@ -1,15 +1,16 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
+const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
+  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
+  : "";
 
-// 🔥 A SUA IDEIA GENIAL APLICADA AQUI:
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
+const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
+  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
+  : "";
 
 /**
  * Função central de comunicação com o Google Apps Script.
  * Centraliza os cabeçalhos, o método POST e o tratamento de erros.
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-async function fetchApi(payload: any) {
+async function fetchApi(payload: Record<string, unknown>) {
   if (!GOOGLE_API_URL) {
     console.error("URL da API do Google não configurada no .env");
     return { status: "erro", mensagem: "URL da API não configurada." };
@@ -35,18 +36,29 @@ async function fetchApi(payload: any) {
       "injetar_xp_manual", "atualizar_senha_checkin", "toggle_modo_reposicao",
       "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote"
     ];
-    if (result.status === "sucesso" && ACTIONS_TO_SYNC.includes(payload.action)) {
-      fetch("/api/tutor/sync-local", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...payload, idAtividade: result.idAtividade })
-      }).catch(err => console.error("Falha no sync local do tutor:", err));
+    if (result.status === "sucesso" && ACTIONS_TO_SYNC.includes(String(payload.action))) {
+      let idAtiv = (result.idAtividade || payload.idAtividadeEdit || payload.id) as string | undefined;
+      if (!idAtiv && result.mensagem) {
+        const match = String(result.mensagem).match(/ATIV-\d+/);
+        if (match) idAtiv = match[0];
+      }
+
+      try {
+        await fetch("/api/tutor/sync-local", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ ...payload, id: idAtiv })
+        });
+      } catch (err) {
+        console.error("Falha no sync local do tutor:", err);
+      }
     }
 
     return result;
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const err = error as Error;
     clearTimeout(timeoutId);
-    if (error.name === "AbortError") {
+    if (err.name === "AbortError") {
       return {
         status: "erro",
         mensagem:
@@ -235,7 +247,7 @@ export const apiTutor = {
     fetchApi({ action: "toggle_gabarito", idAtividade, token: TUTOR_TOKEN }),
 
   // --- GESTÃO DE GABARITOS EM LOTE ---
-  salvarGabaritosLote: (atualizacoes: any[]) =>
+  salvarGabaritosLote: (atualizacoes: Record<string, unknown>[]) =>
     fetchApi({
       action: "salvar_gabaritos_lote",
       atualizacoes,
@@ -252,7 +264,7 @@ export const apiTutor = {
     return res.json();
   },
 
-  salvarAtividade: (dados: any) =>
+  salvarAtividade: (dados: Record<string, unknown>) =>
     fetchApi({ action: "salvar_atividade", ...dados, token: TUTOR_TOKEN }),
 
   excluirAtividade: (idAtividade: string) =>
@@ -351,7 +363,7 @@ export const apiTutor = {
   },
 
   // 🔥 NOVA ROTA DE CONFIGURAÇÕES INTEGRADAS
-  salvarConfiguracoes: (configs: Record<string, any>) =>
+  salvarConfiguracoes: (configs: Record<string, unknown>) =>
     fetchApi({ action: "salvar_configuracoes", configs, token: TUTOR_TOKEN }),
 
   // Economia e Rifa

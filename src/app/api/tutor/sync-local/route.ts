@@ -3,7 +3,9 @@ import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches } from "@/src/lib/cache";
 import { Transaction, FieldValue } from "firebase-admin/firestore";
 
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN;
+const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
+  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
+  : undefined;
 
 export async function POST(request: Request) {
   try {
@@ -35,10 +37,12 @@ export async function POST(request: Request) {
           respostaCorreta: String(ativ.respostaCorreta || ""),
           linkClassroom: String(ativ.linkClassroom || ""),
           statusPublicacao: String(ativ.statusPublicacao || "Publicada").trim(),
-          imageUrl: String(ativ.imageUrl || ""),
+          imageUrl: String(ativ.imageUrl || ativ.imagemUrl || ""),
           modulo: String(ativ.modulo || "Geral").trim(),
           gabarito: String(ativ.gabarito || ""),
-          gabaritoLiberado: ativ.gabaritoLiberado === true || String(ativ.gabaritoLiberado).toLowerCase() === "true"
+          gabaritoLiberado: ativ.gabaritoLiberado === true || String(ativ.gabaritoLiberado).toLowerCase() === "true",
+          ...(ativ.resolucaoTyping !== undefined ? { resolucaoTyping: String(ativ.resolucaoTyping || "") } : {}),
+          ...(ativ.limiteTempoTyping !== undefined ? { limiteTempoTyping: Number(ativ.limiteTempoTyping) || 0 } : {})
         }, { merge: true });
         invalidateRankingCache();
         clearAllPortalCaches();
@@ -104,7 +108,7 @@ export async function POST(request: Request) {
 
           if (idAtividade && oldCat !== newCat) {
             const statsRef = dbAdmin.collection("estatisticas_atividades").doc(idAtividade);
-            const statsUpdates: Record<string, any> = {};
+            const statsUpdates: Record<string, FieldValue> = {};
             if (oldCat) statsUpdates[oldCat] = FieldValue.increment(-1);
             if (newCat) statsUpdates[newCat] = FieldValue.increment(1);
             transaction.set(statsRef, statsUpdates, { merge: true });

@@ -73,8 +73,14 @@ export async function GET(request: Request) {
 
         const mat = f.matricula;
         if (alunosMap[mat]) {
+          const rawSt = String(f.status || "").toLowerCase().trim();
+          let statusMapeado = "presente";
+          if (rawSt === "presente" || rawSt === "p") statusMapeado = "presente";
+          else if (rawSt === "falta" || rawSt === "f") statusMapeado = "falta";
+          else if (rawSt === "justificada" || rawSt === "j") statusMapeado = "justificada";
+
           alunosMap[mat].frequencia[dataFormatada] = {
-            status: f.status || "Presente",
+            status: statusMapeado,
             justificativa: f.justificativa || "",
             xp: f.xpGanho !== undefined ? f.xpGanho : 10
           };

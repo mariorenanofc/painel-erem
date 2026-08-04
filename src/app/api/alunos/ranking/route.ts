@@ -89,7 +89,7 @@ export async function GET(request: Request) {
 
       // Também filtrar presenças/frequência no período
       const freqSnap = await dbAdmin.collection("frequencia")
-        .where("status", "==", "Presente")
+        .where("status", "in", ["Presente", "P", "p", "presente"])
         .where("timestamp", ">=", timeInicio)
         .get();
 

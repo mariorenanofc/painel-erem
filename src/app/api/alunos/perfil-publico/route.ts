@@ -97,7 +97,8 @@ export async function GET(request: Request) {
         const dataFormatada = f.data || "";
         if (dataFormatada) diasComAulaSet.add(dataFormatada);
 
-        if (f.status === "Presente") {
+        const st = String(f.status || "").toLowerCase().trim();
+        if (st === "presente" || st === "p") {
           checkinsMap[dataFormatada] = true;
         }
       });

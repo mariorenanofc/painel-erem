@@ -80,9 +80,12 @@ export async function GET(request: Request) {
 
         if (alunosMap[mat]) {
           diasDeAulaSet.add(dataFormatada);
-          alunosMap[mat].presencasTotais++;
+          const st = String(f.status || "").toLowerCase().trim();
+          if (st === "presente" || st === "p") {
+            alunosMap[mat].presencasTotais++;
+          }
 
-          if (dataFormatada === dataHojeStr && f.status === "Presente") {
+          if (dataFormatada === dataHojeStr && (st === "presente" || st === "p")) {
             alunosMap[mat].presenteHoje = true;
             alunosMap[mat].horaHoje = String(f.hora || f.timestamp ? new Date(f.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "Marcar");
           }

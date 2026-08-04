@@ -78,7 +78,8 @@ export async function POST(request: Request) {
       if (String(f.id || doc.id).startsWith("BDAY")) return;
       const dataFormatada = f.data || "";
       if (dataFormatada) diasComAulaSet.add(dataFormatada);
-      if (f.status === "Presente") presencasAluno++;
+      const st = String(f.status || "").toLowerCase().trim();
+      if (st === "presente" || st === "p") presencasAluno++;
     });
 
     const totalAulas = diasComAulaSet.size;

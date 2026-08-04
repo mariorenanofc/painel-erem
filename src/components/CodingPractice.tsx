@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -272,63 +271,116 @@ export default function CodingPractice({
       </div>
 
       {/* ═══ TECLADO VIRTUAL E TECLAS DE ATALHO DE APOIO (Mobile/Acessibilidade) ═══ */}
-      {!completed && (
-        <div className="bg-slate-950 p-4 border-t border-slate-800 shrink-0 select-none">
-          <div className="flex flex-col gap-3 max-w-lg mx-auto">
-            {/* Visual Help Notification */}
-            <div className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-1.5">
-              <span>Aperte a tecla:</span>
-              <motion.span 
-                animate={{ scale: [1, 1.1, 1] }}
-                transition={{ duration: 1.5, repeat: Infinity }}
-                className="bg-indigo-500/20 border border-indigo-500/40 text-indigo-400 px-2 py-0.5 rounded font-mono font-black"
-              >
-                {expectedKeyName}
-              </motion.span>
-            </div>
+      {!completed && (() => {
+        const getHighlightKey = (char: string): string => {
+          if (!char) return "";
+          const c = char.toUpperCase();
+          if (c === "\n") return "ENTER";
+          if (c === "\t") return "TAB";
+          if (c === " ") return "SPACE";
+          if (c === "{" || c === "[") return "[";
+          if (c === "}" || c === "]") return "]";
+          if (c === "(" || c === "9") return "9";
+          if (c === ")" || c === "0") return "0";
+          if (c === "<" || c === ",") return ",";
+          if (c === ">" || c === ".") return ".";
+          if (c === ":" || c === ";") return ";";
+          if (c === '"' || c === "'") return "'";
+          if (c === "_" || c === "-") return "-";
+          if (c === "+" || c === "=") return "=";
+          return c;
+        };
 
-            {/* Atalhos Rápidos com Clique (Salvador para Mobile) */}
-            <div className="flex justify-center gap-2 flex-wrap">
-              <button
-                type="button"
-                onClick={() => handleVirtualKeyPress("\t")}
-                className={`px-4 py-2.5 rounded-xl border text-xs font-black uppercase tracking-wider transition-all duration-200 cursor-pointer ${
-                  expectedChar === "\t"
-                    ? "bg-indigo-600 text-white border-indigo-400 animate-pulse scale-105 shadow-md shadow-indigo-600/20"
-                    : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
-                }`}
-              >
-                ⇥ TAB
-              </button>
-              <button
-                type="button"
-                onClick={() => handleVirtualKeyPress("\n")}
-                className={`px-4 py-2.5 rounded-xl border text-xs font-black uppercase tracking-wider transition-all duration-200 cursor-pointer ${
-                  expectedChar === "\n"
-                    ? "bg-indigo-600 text-white border-indigo-400 animate-pulse scale-105 shadow-md shadow-indigo-600/20"
-                    : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
-                }`}
-              >
-                ↵ ENTER
-              </button>
-              {["{", "}", "(", ")", ";", '"', "'", "=", "<", ">"].map((char) => (
-                <button
-                  key={char}
-                  type="button"
-                  onClick={() => handleVirtualKeyPress(char)}
-                  className={`w-10 h-10 rounded-xl border text-sm font-black font-mono transition-all duration-200 cursor-pointer flex items-center justify-center ${
-                    expectedChar === char
-                      ? "bg-indigo-600 text-white border-indigo-400 animate-pulse scale-105 shadow-md shadow-indigo-600/20"
-                      : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
-                  }`}
+        const highlightKey = getHighlightKey(expectedChar);
+
+        const keyboardRows = [
+          ["1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "="],
+          ["TAB", "Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P", "[", "]", "\\"],
+          ["A", "S", "D", "F", "G", "H", "J", "K", "L", ";", "'", "ENTER"],
+          ["Z", "X", "C", "V", "B", "N", "M", ",", ".", "/", "SPACE"]
+        ];
+
+        const handleVirtualKeyClick = (keyLabel: string) => {
+          let char = keyLabel.toLowerCase();
+          if (keyLabel === "ENTER") char = "\n";
+          else if (keyLabel === "TAB") char = "\t";
+          else if (keyLabel === "SPACE") char = " ";
+          
+          if (expectedChar.toUpperCase() === keyLabel) {
+            char = expectedChar;
+          } else if (keyLabel === "[" && (expectedChar === "{" || expectedChar === "[")) {
+            char = expectedChar;
+          } else if (keyLabel === "]" && (expectedChar === "}" || expectedChar === "]")) {
+            char = expectedChar;
+          } else if (keyLabel === "9" && (expectedChar === "(" || expectedChar === "9")) {
+            char = expectedChar;
+          } else if (keyLabel === "0" && (expectedChar === ")" || expectedChar === "0")) {
+            char = expectedChar;
+          } else if (keyLabel === "," && (expectedChar === "<" || expectedChar === ",")) {
+            char = expectedChar;
+          } else if (keyLabel === "." && (expectedChar === ">" || expectedChar === ".")) {
+            char = expectedChar;
+          } else if (keyLabel === ";" && (expectedChar === ":" || expectedChar === ";")) {
+            char = expectedChar;
+          } else if (keyLabel === "'" && (expectedChar === '"' || expectedChar === "'")) {
+            char = expectedChar;
+          } else if (keyLabel === "-" && (expectedChar === "_" || expectedChar === "-")) {
+            char = expectedChar;
+          } else if (keyLabel === "=" && (expectedChar === "+" || expectedChar === "=")) {
+            char = expectedChar;
+          }
+          
+          handleVirtualKeyPress(char);
+        };
+
+        return (
+          <div className="bg-slate-950 p-4 border-t border-slate-850 shrink-0 select-none">
+            <div className="flex flex-col gap-2.5 max-w-xl mx-auto">
+              {/* Visual Help Notification */}
+              <div className="text-center text-[10px] text-slate-400 font-bold uppercase tracking-widest flex items-center justify-center gap-1.5 mb-1">
+                <span>Próxima tecla:</span>
+                <motion.span 
+                  animate={{ scale: [1, 1.15, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="bg-indigo-500/20 border border-indigo-500/40 text-indigo-400 px-2 py-0.5 rounded font-mono font-black"
                 >
-                  {char}
-                </button>
-              ))}
+                  {expectedKeyName}
+                </motion.span>
+              </div>
+
+              {/* Layout Teclado Virtual Estilizado */}
+              <div className="flex flex-col gap-1.5 font-mono text-[10px] md:text-xs font-bold text-center">
+                {keyboardRows.map((row, rIdx) => (
+                  <div key={rIdx} className="flex justify-center gap-1">
+                    {row.map((keyLabel) => {
+                      const isHighlighted = highlightKey === keyLabel;
+                      let widthClass = "w-8 h-8 md:w-9 md:h-9";
+                      if (keyLabel === "TAB") widthClass = "w-12 h-8 md:w-14 md:h-9 text-[9px]";
+                      if (keyLabel === "ENTER") widthClass = "w-14 h-8 md:w-16 md:h-9 text-[9px]";
+                      if (keyLabel === "SPACE") widthClass = "flex-1 h-8 md:h-9 text-[9px]";
+
+                      return (
+                        <button
+                          key={keyLabel}
+                          type="button"
+                          onClick={() => handleVirtualKeyClick(keyLabel)}
+                          className={`rounded-lg border text-center transition-all duration-100 flex items-center justify-center cursor-pointer select-none ${widthClass} ${
+                            isHighlighted
+                              ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-emerald-400 scale-105 shadow-md shadow-emerald-500/30 animate-pulse font-black"
+                              : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
+                          }`}
+                        >
+                          {keyLabel === "SPACE" ? "ESPAÇO" : keyLabel}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* ═══ TELA DE VITÓRIA (CONCLUÍDO COM SUCESSO) ═══ */}
       <AnimatePresence>

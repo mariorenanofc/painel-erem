@@ -31,6 +31,7 @@ import NovidadesModal from "@/src/components/NovidadesModal";
 import ResponderMissaoModal from "@/src/components/ResponderMissaoModal";
 import LojaRifaModal from "@/src/components/LojaRifaModal";
 import MeusBilhetesModal from "@/src/components/MeusBilhetesModal";
+import RegulamentoModal from "@/src/components/RegulamentoModal";
 import { apiAluno, apiGeral } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
 import ThreeInteractiveBg from "@/src/components/ThreeInteractiveBg";
@@ -99,6 +100,7 @@ export default function PortalDashboard() {
   const [lojaAberta, setLojaAberta] = useState(false);
   const [saldoCarteira, setSaldoCarteira] = useState(0); // 🔥 Novo estado
   const [modalBilhetesAberto, setModalBilhetesAberto] = useState(false);
+  const [modalRegulamentoAberto, setModalRegulamentoAberto] = useState(false);
 
   const [abaAtividade, setAbaAtividade] = useState<
     "Pendentes" | "Atrasadas" | "Concluidas"
@@ -716,6 +718,11 @@ export default function PortalDashboard() {
         />
       )}
 
+      <RegulamentoModal
+        isOpen={modalRegulamentoAberto}
+        onClose={() => setModalRegulamentoAberto(false)}
+      />
+
       <div className="relative z-30">
         <PortalHeader
           matricula={aluno.matricula}
@@ -849,7 +856,7 @@ export default function PortalDashboard() {
                 </motion.button>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -857,6 +864,15 @@ export default function PortalDashboard() {
                   className="cursor-pointer flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-950/40 dark:bg-slate-950/45 hover:bg-slate-200 dark:hover:bg-slate-900/45 text-slate-800 dark:text-slate-300 font-bold py-3.5 rounded-xl border border-slate-200 dark:border-white/5"
                 >
                   <span>🎟️</span> Meus Bilhetes
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setModalRegulamentoAberto(true)}
+                  className="cursor-pointer flex items-center justify-center gap-2 bg-slate-100 dark:bg-slate-950/40 dark:bg-slate-950/45 hover:bg-slate-200 dark:hover:bg-slate-900/45 text-slate-800 dark:text-slate-300 font-bold py-3.5 rounded-xl border border-slate-200 dark:border-white/5"
+                >
+                  <span>📜</span> Regulamento
                 </motion.button>
 
                 <motion.button

@@ -22,6 +22,43 @@ interface RankedAluno {
   posicao?: number;
 }
 
+const normalizeToDateStr = (dateStr: string): string => {
+  if (!dateStr) return "";
+  let d = "", m = "", y = "";
+  if (dateStr.includes("T")) {
+    const parts = dateStr.split("T")[0].split("-");
+    if (parts.length === 3) {
+      d = parts[2];
+      m = parts[1];
+      y = parts[0];
+    }
+  } else if (dateStr.includes("-")) {
+    const parts = dateStr.split("-");
+    if (parts.length === 3) {
+      if (parts[0].length === 4) {
+        d = parts[2];
+        m = parts[1];
+        y = parts[0];
+      } else {
+        d = parts[0];
+        m = parts[1];
+        y = parts[2];
+      }
+    }
+  } else if (dateStr.includes("/")) {
+    const parts = dateStr.split("/");
+    if (parts.length === 3) {
+      d = parts[0];
+      m = parts[1];
+      y = parts[2];
+    }
+  }
+  if (d && m && y) {
+    return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
+  }
+  return "";
+};
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const filtroTempo = String(searchParams.get("filtroTempo") || "geral").trim();
@@ -88,6 +125,25 @@ export async function GET(request: Request) {
         atividadesMap[doc.id] = { dataLimite: d.dataLimite };
       });
 
+      // 2. Mapear todas as faltas justificadas
+      const freqAllSnap = await dbAdmin.collection("frequencia").get();
+      const justificativasMap: Record<string, Set<string>> = {};
+      freqAllSnap.forEach((doc: QueryDocumentSnapshot) => {
+        const f = doc.data();
+        const status = String(f.status || "").toLowerCase().trim();
+        const idFreq = String(f.id || doc.id).trim();
+        if (status === "justificada" || status === "j" || idFreq.startsWith("FALTA-")) {
+          const mat = f.matricula;
+          const dataFormatada = normalizeToDateStr(f.data || "");
+          if (mat && dataFormatada) {
+            if (!justificativasMap[mat]) {
+              justificativasMap[mat] = new Set<string>();
+            }
+            justificativasMap[mat].add(dataFormatada);
+          }
+        }
+      });
+
       const entregasSnap = await dbAdmin.collection("entregas")
         .where("status", "==", "Avaliado")
         .where("timestamp", ">=", timeInicio)
@@ -119,7 +175,16 @@ export async function GET(request: Request) {
               }
             }
 
-            if (ehAtrasado) {
+            // Se for atrasado, verificar se existe justificativa de falta para aquela data limite
+            let temFaltaJustificada = false;
+            if (ehAtrasado && ativ && ativ.dataLimite) {
+              const dataLimiteStrNormalized = normalizeToDateStr(ativ.dataLimite);
+              if (dataLimiteStrNormalized && justificativasMap[mat]?.has(dataLimiteStrNormalized)) {
+                temFaltaJustificada = true;
+              }
+            }
+
+            if (ehAtrasado && !temFaltaJustificada) {
               alunosRankMap[mat].xpAtrasadoAcumulado = (alunosRankMap[mat].xpAtrasadoAcumulado || 0) + xp;
             } else {
               alunosRankMap[mat].xpCalculado += xp;
@@ -155,7 +220,7 @@ export async function GET(request: Request) {
 
     // Aplicar o limite de XP de atraso (Cap) se não for o ranking geral
     if (filtroTempo !== "geral") {
-      const limiteAtrasoCap = filtroTempo === "semanal" ? 15 : 60;
+      const limiteAtrasoCap = filtroTempo === "semanal" ? 50 : 150;
       ranking = ranking.map((aluno: RankedAluno) => {
         const xpAtrasado = aluno.xpAtrasadoAcumulado || 0;
         const xpAtrasadoCapped = Math.min(xpAtrasado, limiteAtrasoCap);

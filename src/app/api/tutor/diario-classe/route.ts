@@ -31,8 +31,20 @@ export async function GET(request: Request) {
     const alunosMap: Record<string, DiarioAluno> = {};
     alunosSnap.forEach((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
-      const t = data.turma || data.turmaTrilha || "";
-      if (t.toLowerCase() === turma.toLowerCase()) {
+      const tTrilha = String(data.turmaTrilha || "").trim();
+      const tEscola = String(data.turma || "").trim();
+
+      const matchesTrilha = tTrilha.toLowerCase() === turma.toLowerCase();
+      let matchesEscola = false;
+      if (turma.includes("1º") || turma.includes("1")) {
+        matchesEscola = tEscola.includes("1º") || tEscola.includes("1");
+      } else if (turma.includes("2º") || turma.includes("2")) {
+        matchesEscola = tEscola.includes("2º") || tEscola.includes("2");
+      } else if (turma.includes("3º") || turma.includes("3")) {
+        matchesEscola = tEscola.includes("3º") || tEscola.includes("3");
+      }
+
+      if (matchesTrilha || matchesEscola) {
         alunosMap[doc.id] = {
           matricula: doc.id,
           nome: data.nome || `Aluno ${doc.id}`,
@@ -45,10 +57,8 @@ export async function GET(request: Request) {
       return NextResponse.json({ status: "sucesso", diasComAula: [], alunos: [] });
     }
 
-    // 2. Buscar todas as presenças da turma
-    const freqSnap = await dbAdmin.collection("frequencia")
-      .where("turma", "==", turma)
-      .get();
+    // 2. Buscar todas as presenças da turma (buscando tudo e filtrando em memória pelos alunos da turma)
+    const freqSnap = await dbAdmin.collection("frequencia").get();
 
     const diasComAulaSet = new Set<string>();
     const mesNum = Number(mes);

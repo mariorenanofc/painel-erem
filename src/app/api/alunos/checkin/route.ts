@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ status: "erro", mensagem: "Aluno não encontrado." });
     }
     const aluno = alunoDoc.data()!;
-    const turmaDoAluno = aluno.turma || aluno.turmaTrilha || "";
+    const turmaDoAluno = aluno.turmaTrilha || aluno.turma || "";
 
     // 3. Regra de dias de aula por turma (se modo reposição desligado)
     if (modoReposicao !== "LIGADO") {

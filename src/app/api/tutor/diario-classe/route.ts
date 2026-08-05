@@ -116,6 +116,20 @@ export async function GET(request: Request) {
       return Number(partsA[0]) - Number(partsB[0]);
     });
 
+    // Preencher as faltas para alunos que não têm registro no dia com aula
+    const alunosArray = Object.values(alunosMap);
+    alunosArray.forEach((aluno) => {
+      diasComAula.forEach((diaStr) => {
+        if (!aluno.frequencia[diaStr]) {
+          aluno.frequencia[diaStr] = {
+            status: "falta",
+            justificativa: "",
+            xp: 0
+          };
+        }
+      });
+    });
+
     return NextResponse.json({
       status: "sucesso",
       diasComAula,

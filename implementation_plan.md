@@ -26,17 +26,17 @@ Nenhuma questão em aberto encontrada. O escopo é estrito às otimizações de 
 Criação de um utilitário centralizado para calcular o nível do aluno, progresso do próximo nível e saldo da carteira, garantindo reutilização de código entre a rota do portal e as rotas de ações de forma tipada e segura.
 
 #### [MODIFY] [cache.ts](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/lib/cache.ts)
-- Adicionar cache em memória e getters/setters/invalidadores para `modulos` e `atividades` publicadas.
-- Integrar a invalidação de todos os caches estáticos na função `clearAllPortalCaches()`.
+- Adicionar cache em memória global e getters/setters/invalidadores para `atividades` publicadas e `diasComAula` por turma.
+- Integrar a invalidação de todos os caches estáticos e globais na função `clearAllPortalCaches()`.
 
 ---
 
 ### Componente: Rotas da API de Alunos (Backend)
 
-#### [PARCIALMENTE CONCLUÍDO] [MODIFY] [route.ts (Portal)](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/alunos/portal/route.ts)
+#### [CONCLUÍDO] [MODIFY] [route.ts (Portal)](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/alunos/portal/route.ts)
 - [x] Alterar cabeçalho de cache HTTP (`Cache-Control`) para `"no-store, max-age=0, must-revalidate"`.
-- [ ] Adaptar para ler `configuracoes`, `modulos` e `atividades` publicadas dos caches globais em memória.
-- [ ] Utilizar o novo utilitário de gamificação para cálculo de nível.
+- [x] Adaptar para ler `configuracoes`, `modulos`, `atividades` publicadas e `diasComAula` por turma dos caches globais em memória.
+- [x] Utilizar o novo utilitário de gamificação para cálculo de nível.
 
 #### [CONCLUÍDO] [MODIFY] [route.ts (Ranking)](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/alunos/ranking/route.ts)
 - [x] Alterar cabeçalho de cache HTTP (`Cache-Control`) para `"no-store, max-age=0, must-revalidate"`.
@@ -65,6 +65,9 @@ Criação de uma rota leve para retornar o status de uma atividade específica e
 
 #### [CONCLUÍDO] [MODIFY] [route.ts (Transações)](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/tutor/transacoes/route.ts)
 - [x] Adicionar cabeçalho de cache HTTP (`Cache-Control`) como `"no-store, max-age=0, must-revalidate"` para evitar cache heurístico do navegador nas transações.
+
+#### [CONCLUÍDO] [MODIFY] [route.ts (Migrar)](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/migrar/route.ts)
+- [x] Comparar os registros da planilha (entregas, alunos, frequências, rifas, curtidas, módulos) com os existentes no Firestore antes de gravar, realizando escritas apenas para dados novos ou modificados.
 
 ---
 

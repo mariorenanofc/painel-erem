@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
-import { getCachedPortal, setCachedPortal } from "@/src/lib/cache";
+import { getCachedPortal, setCachedPortal, getCachedConfigs, setCachedConfigs, getCachedModulos, setCachedModulos, getCachedAtividades, setCachedAtividades, getCachedClassDates, setCachedClassDates } from "@/src/lib/cache";
 import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
+import { calcularGamificacao } from "@/src/lib/gamificacao";
 
 interface AtividadePortal {
   id: string;
@@ -26,6 +27,28 @@ interface AtividadePortal {
   modulo: string;
   gabarito: string;
   statusModulo: string;
+  resolucaoTyping?: string;
+  limiteTempoTyping?: number;
+}
+
+interface AtividadeDoc {
+  id: string;
+  titulo?: string;
+  descricao?: string;
+  dataLimite?: string;
+  xp?: number;
+  tipo?: string;
+  opcaoA?: string;
+  opcaoB?: string;
+  opcaoC?: string;
+  opcaoD?: string;
+  statusPublicacao?: string;
+  turmaAlvo?: string;
+  gabaritoLiberado?: boolean;
+  linkClassroom?: string;
+  imageUrl?: string;
+  modulo?: string;
+  gabarito?: string;
   resolucaoTyping?: string;
   limiteTempoTyping?: number;
 }
@@ -60,20 +83,6 @@ const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
   : undefined;
 
-const niveisGamificacao = [
-  { nome: "Hello World", min: 0, max: 499 },
-  { nome: "Bug Hunter", min: 500, max: 1499 },
-  { nome: "Coder Ninja", min: 1500, max: 2999 },
-  { nome: "Tech Hacker", min: 3000, max: 4999 },
-  { nome: "Dev Supremo", min: 5000, max: 7499 },
-  { nome: "Lenda Binária", min: 7500, max: 9999 },
-  { nome: "Mestre do Código", min: 10000, max: 13999 },
-  { nome: "Arquiteto de Sistemas", min: 14000, max: 18999 },
-  { nome: "Hacker Quântico", min: 19000, max: 24999 },
-  { nome: "Oráculo Digital", min: 25000, max: 34999 },
-  { nome: "Titã da Nuvem", min: 35000, max: 49999 },
-  { nome: "Deus da Lógica", min: 50000, max: 999999 }
-];
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -105,18 +114,24 @@ export async function GET(request: Request) {
     }
     const aluno = alunoDoc.data()!;
 
-    // 3. Carregar Controle de Módulos
-    const modulosSnap = await dbAdmin.collection("modulos").get();
-    const statusModulosMap: Record<string, string> = {};
-    modulosSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const data = doc.data();
-      const nomeMod = String(data.nome || doc.id.split("|")[0]).trim();
-      const statusMod = String(data.status || "Aberto").trim();
-      const turmaMod = String(data.turma || doc.id.split("|")[1] || "Todas").trim();
-      if (nomeMod) {
-        statusModulosMap[`${nomeMod}|${turmaMod}`] = statusMod;
-      }
-    });
+    // 3. Carregar Controle de Módulos (com cache global de 12 horas)
+    let statusModulosMap = getCachedModulos() as Record<string, string> | null;
+    if (!statusModulosMap) {
+      console.log(`[Firestore Query] Portal: Carregando modulos (sem cache)`);
+      const modulosSnap = await dbAdmin.collection("modulos").get();
+      const tempMap: Record<string, string> = {};
+      modulosSnap.forEach((doc: QueryDocumentSnapshot) => {
+        const data = doc.data();
+        const nomeMod = String(data.nome || doc.id.split("|")[0]).trim();
+        const statusMod = String(data.status || "Aberto").trim();
+        const turmaMod = String(data.turma || doc.id.split("|")[1] || "Todas").trim();
+        if (nomeMod) {
+          tempMap[`${nomeMod}|${turmaMod}`] = statusMod;
+        }
+      });
+      statusModulosMap = tempMap;
+      setCachedModulos(statusModulosMap);
+    }
 
     const dadosRetorno: PortalData = {
       status: "sucesso",
@@ -136,40 +151,28 @@ export async function GET(request: Request) {
       stats: { xpDoado: 0, xpRecebido: 0, totalCheckins: 0 }
     };
 
-    // Calcular nível
-    const xpTotalAtual = aluno.xp || 0;
+    // Calcular nível e saldo usando o utilitário compartilhado
+    const xpTotal = aluno.xp || 0;
     const xpGasto = aluno.xpGasto || 0;
-    let nivelCalculado = niveisGamificacao[0];
-    let proximoNivel = niveisGamificacao[1];
-    for (let n = 0; n < niveisGamificacao.length; n++) {
-      if (xpTotalAtual >= niveisGamificacao[n].min && xpTotalAtual <= niveisGamificacao[n].max) {
-        nivelCalculado = niveisGamificacao[n];
-        proximoNivel = niveisGamificacao[n + 1] || niveisGamificacao[n];
-        break;
-      }
-    }
-    const xpBaseNivel = nivelCalculado.min;
-    const xpParaProximo = proximoNivel.min;
-    const progressoAtual = xpTotalAtual - xpBaseNivel;
-    const totalDoNivel = xpParaProximo - xpBaseNivel;
-
-    dadosRetorno.xpTotal = xpTotalAtual;
+    const gStatus = calcularGamificacao(xpTotal, xpGasto);
+    dadosRetorno.xpTotal = xpTotal;
     dadosRetorno.xpGasto = xpGasto;
-    dadosRetorno.saldoCarteira = xpTotalAtual - xpGasto;
-    dadosRetorno.nivel = nivelCalculado.nome;
-    dadosRetorno.progressoNivel = {
-      porcentagem: totalDoNivel === 0 ? 100 : Math.floor((progressoAtual / totalDoNivel) * 100),
-      faltam: xpParaProximo - xpTotalAtual > 0 ? xpParaProximo - xpTotalAtual : 0,
-      nomeProximo: proximoNivel.nome,
-      isMaximo: totalDoNivel === 0
-    };
+    dadosRetorno.saldoCarteira = gStatus.saldoCarteira;
+    dadosRetorno.nivel = gStatus.nivel;
+    dadosRetorno.progressoNivel = gStatus.progressoNivel;
 
-    // 4. WhatsApp link da turma
-    const configSnap = await dbAdmin.collection("configuracoes").get();
-    const configMap: Record<string, string> = {};
-    configSnap.forEach((doc: QueryDocumentSnapshot) => {
-      configMap[doc.id] = doc.data().valor;
-    });
+    // 4. WhatsApp link da turma (com cache de 10 minutos)
+    let configMap = getCachedConfigs() as Record<string, string> | null;
+    if (!configMap) {
+      console.log(`[Firestore Query] Portal: Carregando configuracoes (sem cache)`);
+      const configSnap = await dbAdmin.collection("configuracoes").get();
+      const tempMap: Record<string, string> = {};
+      configSnap.forEach((doc: QueryDocumentSnapshot) => {
+        tempMap[doc.id] = doc.data().valor;
+      });
+      configMap = tempMap;
+      setCachedConfigs(configMap);
+    }
 
     const turmaDoAluno: string = aluno.turmaTrilha || aluno.turma || "";
     if (turmaDoAluno.includes("1º") || turmaDoAluno.includes("1")) {
@@ -286,20 +289,28 @@ export async function GET(request: Request) {
     dadosRetorno.extratoPix.sort((a: { tempo: number }, b: { tempo: number }) => b.tempo - a.tempo);
     dadosRetorno.extratoPix = dadosRetorno.extratoPix.slice(0, 20);
 
-    // 8. Frequência / Streak / Presença
+    // 8. Frequência / Streak / Presença (com cache global de 12 horas para datas com aula)
     const diasComAulaSet = new Set<string>();
     if (turmaDoAluno) {
-      const turmaFreqSnap = await dbAdmin.collection("frequencia").where("turma", "==", turmaDoAluno).get();
-      turmaFreqSnap.forEach((doc: QueryDocumentSnapshot) => {
-        const f = doc.data();
-        const idFreq = String(f.id || doc.id).trim();
-        if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
-        let dataFormatada = f.data || "";
-        if (dataFormatada.includes("/") && dataFormatada.length > 10) {
-          dataFormatada = dataFormatada.slice(0, 10);
-        }
-        if (dataFormatada) diasComAulaSet.add(dataFormatada);
-      });
+      let cachedDates = getCachedClassDates(turmaDoAluno) as string[] | null;
+      if (!cachedDates) {
+        console.log(`[Firestore Query] Portal: Carregando dias com aula da turma ${turmaDoAluno} (sem cache)`);
+        const tempDatesSet = new Set<string>();
+        const turmaFreqSnap = await dbAdmin.collection("frequencia").where("turma", "==", turmaDoAluno).get();
+        turmaFreqSnap.forEach((doc: QueryDocumentSnapshot) => {
+          const f = doc.data();
+          const idFreq = String(f.id || doc.id).trim();
+          if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
+          let dataFormatada = f.data || "";
+          if (dataFormatada.includes("/") && dataFormatada.length > 10) {
+            dataFormatada = dataFormatada.slice(0, 10);
+          }
+          if (dataFormatada) tempDatesSet.add(dataFormatada);
+        });
+        cachedDates = Array.from(tempDatesSet);
+        setCachedClassDates(turmaDoAluno, cachedDates);
+      }
+      cachedDates.forEach(d => diasComAulaSet.add(d));
     }
 
     const checkinsMap: Record<string, boolean> = {};
@@ -346,17 +357,48 @@ export async function GET(request: Request) {
     }
     dadosRetorno.ofensivaDias = streak;
 
-    // 9. Atividades
-    const atividadesSnap = await dbAdmin.collection("atividades").where("statusPublicacao", "==", "Publicada").get();
+    // 9. Atividades (com cache global de 12 horas)
+    let atividadesList = getCachedAtividades() as AtividadeDoc[] | null;
+    if (!atividadesList) {
+      console.log(`[Firestore Query] Portal: Carregando atividades publicadas (sem cache)`);
+      const atividadesSnap = await dbAdmin.collection("atividades").where("statusPublicacao", "==", "Publicada").get();
+      const tempAtivList: AtividadeDoc[] = [];
+      atividadesSnap.forEach((doc: QueryDocumentSnapshot) => {
+        const data = doc.data();
+        tempAtivList.push({
+          id: doc.id,
+          titulo: data.titulo,
+          descricao: data.descricao,
+          dataLimite: data.dataLimite,
+          xp: data.xp,
+          tipo: data.tipo,
+          opcaoA: data.opcaoA,
+          opcaoB: data.opcaoB,
+          opcaoC: data.opcaoC,
+          opcaoD: data.opcaoD,
+          statusPublicacao: data.statusPublicacao,
+          turmaAlvo: data.turmaAlvo,
+          gabaritoLiberado: data.gabaritoLiberado,
+          linkClassroom: data.linkClassroom,
+          imageUrl: data.imageUrl,
+          modulo: data.modulo,
+          gabarito: data.gabarito,
+          resolucaoTyping: data.resolucaoTyping,
+          limiteTempoTyping: data.limiteTempoTyping
+        });
+      });
+      atividadesList = tempAtivList;
+      setCachedAtividades(atividadesList);
+    }
+
     const hojeTime = new Date();
     hojeTime.setHours(0, 0, 0, 0);
 
-    atividadesSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const ativ = doc.data();
+    atividadesList.forEach((ativ) => {
       const turmaAlvo = ativ.turmaAlvo || "Todas";
 
       if (turmaAlvo.toLowerCase() === "todas" || turmaAlvo === turmaDoAluno) {
-        const idAtiv = doc.id;
+        const idAtiv = ativ.id;
         const entregaAluno = entregasMap[idAtiv];
 
         const rawDataLimite = ativ.dataLimite || "";

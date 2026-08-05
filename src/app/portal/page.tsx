@@ -356,7 +356,32 @@ export default function PortalDashboard() {
         }
 
         setMissaoAberta(null);
-        carregarPortal(true);
+        
+        if (data.atividadeAtualizada) {
+          setAtividades((prev) =>
+            prev.map((ativ) =>
+              ativ.id === data.atividadeAtualizada.id
+                ? {
+                    ...ativ,
+                    status: data.atividadeAtualizada.status,
+                    respostaEnviada: data.atividadeAtualizada.respostaEnviada,
+                    xpGanho: data.atividadeAtualizada.xpGanho,
+                    dataEnvio: data.atividadeAtualizada.dataEnvio,
+                    feedback: data.atividadeAtualizada.feedback
+                  }
+                : ativ
+            )
+          );
+        }
+
+        if (data.perfilAtualizado) {
+          setXpTotalSistema(data.perfilAtualizado.xpTotal);
+          setNivelSistema(data.perfilAtualizado.nivel);
+          setSaldoCarteira(data.perfilAtualizado.saldoCarteira);
+          if (data.perfilAtualizado.progressoNivel) {
+            setProgressoNivel(data.perfilAtualizado.progressoNivel);
+          }
+        }
       } else {
         toast(data.mensagem, "warning", "Atenção!");
       }
@@ -392,7 +417,15 @@ export default function PortalDashboard() {
         setCheckinRealizado(true);
         setModalSenhaAberto(false);
         setSenhaDigitada("");
-        carregarPortal(true);
+        
+        if (data.perfilAtualizado) {
+          setXpTotalSistema(data.perfilAtualizado.xpTotal);
+          setNivelSistema(data.perfilAtualizado.nivel);
+          setSaldoCarteira(data.perfilAtualizado.saldoCarteira);
+          if (data.perfilAtualizado.progressoNivel) {
+            setProgressoNivel(data.perfilAtualizado.progressoNivel);
+          }
+        }
       } else {
         toast(data.mensagem, "warning", "Não foi possível");
         if (data.mensagem.includes("já garantiu")) {
@@ -690,13 +723,37 @@ export default function PortalDashboard() {
         />
       )}
 
-      {missaoAberta && (
+      {missaoAberta && aluno && (
         <ResponderMissaoModal
           missaoAberta={missaoAberta}
           onClose={() => setMissaoAberta(null)}
           onEnviar={enviarMissao}
           enviando={enviando}
           respostaInicial={missaoAberta.respostaEnviada || ""}
+          matricula={aluno.matricula}
+          onStatusAtualizado={(atividadeAtualizada, perfilAtualizado) => {
+            setAtividades((prev) =>
+              prev.map((ativ) =>
+                ativ.id === atividadeAtualizada.id
+                  ? {
+                      ...ativ,
+                      status: atividadeAtualizada.status,
+                      respostaEnviada: atividadeAtualizada.respostaEnviada,
+                      xpGanho: atividadeAtualizada.xpGanho,
+                      dataEnvio: atividadeAtualizada.dataEnvio,
+                      statusPrazo: atividadeAtualizada.statusPrazo,
+                      feedback: atividadeAtualizada.feedback
+                    }
+                  : ativ
+              )
+            );
+            setXpTotalSistema(perfilAtualizado.xpTotal);
+            setNivelSistema(perfilAtualizado.nivel);
+            setSaldoCarteira(perfilAtualizado.saldoCarteira);
+            if (perfilAtualizado.progressoNivel) {
+              setProgressoNivel(perfilAtualizado.progressoNivel);
+            }
+          }}
         />
       )}
 
@@ -706,7 +763,14 @@ export default function PortalDashboard() {
           onClose={() => setLojaAberta(false)}
           matricula={aluno.matricula}
           saldoCarteira={saldoCarteira}
-          onCompraSucesso={() => carregarPortal(true)} // 🔥 CHAMA A SUA FUNÇÃO LOCAL
+          onCompraSucesso={(perfilAtualizado) => {
+            setXpTotalSistema(perfilAtualizado.xpTotal);
+            setNivelSistema(perfilAtualizado.nivel);
+            setSaldoCarteira(perfilAtualizado.saldoCarteira);
+            if (perfilAtualizado.progressoNivel) {
+              setProgressoNivel(perfilAtualizado.progressoNivel);
+            }
+          }}
         />
       )}
 

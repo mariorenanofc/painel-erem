@@ -1,10 +1,12 @@
 import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
+import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { Transaction, FieldValue } from "firebase-admin/firestore";
+import { calcularGamificacao, GamificacaoStatus } from "@/src/lib/gamificacao";
+
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
   : undefined;
-import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { Transaction, FieldValue } from "firebase-admin/firestore";
 
 export async function POST(request: Request) {
   let matricula = "";
@@ -167,10 +169,18 @@ export async function POST(request: Request) {
     // 6. Transação atômica no Firestore
     const statusAnterior = entregaDoc.exists ? (entregaDoc.data()?.status || null) : null;
 
+    let finalXp = 0;
+    let finalGamificacao: GamificacaoStatus = {
+      nivel: "Hello World",
+      saldoCarteira: 0,
+      progressoNivel: { porcentagem: 0, faltam: 500, nomeProximo: "Bug Hunter", isMaximo: false }
+    };
+
     await dbAdmin.runTransaction(async (transaction: Transaction) => {
       const freshAlunoDoc = await transaction.get(alunoRef);
       const freshAluno = freshAlunoDoc.data()!;
       const currentXp = Number(freshAluno.xp) || 0;
+      const xpGasto = Number(freshAluno.xpGasto) || 0;
 
       // Gravar ou Atualizar entrega
       transaction.set(entregaRef, {
@@ -201,20 +211,28 @@ export async function POST(request: Request) {
 
       if (oldCat !== newCat) {
         const statsRef = dbAdmin.collection("estatisticas_atividades").doc(idAtividade);
-        const statsUpdates: Record<string, any> = {};
+        const statsUpdates: Record<string, FieldValue> = {};
         if (oldCat) statsUpdates[oldCat] = FieldValue.increment(-1);
         if (newCat) statsUpdates[newCat] = FieldValue.increment(1);
         transaction.set(statsRef, statsUpdates, { merge: true });
       }
 
-      // Atualizar XP se ganhou pontos e registrar lastUpdated
-      const updatePayload: any = {
+      // Calcular novo XP
+      finalXp = currentXp;
+      if (xpGanhoFinal > 0) {
+        finalXp = currentXp - xpAnterior + xpGanhoFinal;
+      }
+
+      const updatePayload: Record<string, unknown> = {
         lastUpdated: timestampAtual
       };
       if (xpGanhoFinal > 0) {
-        updatePayload.xp = currentXp - xpAnterior + xpGanhoFinal;
+        updatePayload.xp = finalXp;
       }
       transaction.update(alunoRef, updatePayload);
+
+      // Calcular nível e saldo atualizado do gamificação
+      finalGamificacao = calcularGamificacao(finalXp, xpGasto);
     });
 
     const msgRetorno = isTyping
@@ -243,13 +261,34 @@ export async function POST(request: Request) {
           xpGanho: xpGanhoFinal,
           feedback: feedbackFinal
         }),
-      }).catch((e) => console.error("[Background Sync Error] Enviar atividade:", e.message));
+      }).catch((error: unknown) => {
+        const err = error as Error;
+        console.error("[Background Sync Error] Enviar atividade:", err.message);
+      });
     }
 
-    return NextResponse.json({ status: "sucesso", mensagem: msgRetorno });
+    return NextResponse.json({ 
+      status: "sucesso", 
+      mensagem: msgRetorno,
+      perfilAtualizado: {
+        xpTotal: finalXp,
+        nivel: finalGamificacao.nivel,
+        saldoCarteira: finalGamificacao.saldoCarteira,
+        progressoNivel: finalGamificacao.progressoNivel
+      },
+      atividadeAtualizada: {
+        id: idAtividade,
+        status: statusFinal,
+        respostaEnviada: resposta,
+        xpGanho: xpGanhoFinal,
+        dataEnvio: timestampAtual,
+        feedback: feedbackFinal
+      }
+    });
 
-  } catch (error: any) {
-    console.error("[API Error] Erro no envio de missão:", error.message);
-    return NextResponse.json({ status: "erro", mensagem: "Erro ao processar envio: " + error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error("[API Error] Erro no envio de missão:", err.message);
+    return NextResponse.json({ status: "erro", mensagem: "Erro ao processar envio: " + err.message }, { status: 500 });
   }
 }

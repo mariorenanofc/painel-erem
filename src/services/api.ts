@@ -222,6 +222,11 @@ export const apiAluno = {
       action: "buscar_bilhetes_aluno",
       matricula,
     }),
+
+  buscarAtividadeStatus: async (matricula: string, idAtividade: string) => {
+    const res = await fetch(`/api/alunos/atividade-status?matricula=${matricula}&idAtividade=${idAtividade}`);
+    return res.json();
+  },
 };
 
 // ==========================================

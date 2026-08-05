@@ -6,6 +6,9 @@ import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Atividade } from "@/src/types";
 import CodingPractice from "./CodingPractice";
+import { useToast } from "@/src/contexts/ToastContext";
+import { apiAluno } from "@/src/services/api";
+import { PerfilAtualizado } from "./LojaRifaModal";
 
 interface ResponderMissaoModalProps {
   missaoAberta: Atividade;
@@ -13,6 +16,8 @@ interface ResponderMissaoModalProps {
   onEnviar: (respostaFinal: string, xpCalculado?: number) => Promise<void>;
   enviando: boolean;
   respostaInicial: string;
+  matricula: string;
+  onStatusAtualizado: (atividade: Atividade, perfil: PerfilAtualizado) => void;
 }
 
 /* ─── Micro-componente: Loader temático de Missão ─── */
@@ -56,11 +61,15 @@ export default function ResponderMissaoModal({
   onEnviar,
   enviando,
   respostaInicial,
+  matricula,
+  onStatusAtualizado,
 }: ResponderMissaoModalProps) {
+  const { toast } = useToast();
   const [resposta, setResposta] = useState(respostaInicial);
   const [timerClassroom, setTimerClassroom] = useState(0);
   const [classroomAberto, setClassroomAberto] = useState(false);
   const [checkboxHonestidade, setCheckboxHonestidade] = useState(false);
+  const [atualizandoStatus, setAtualizandoStatus] = useState(false);
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
@@ -538,6 +547,33 @@ export default function ResponderMissaoModal({
 
               {/* ─── BARRA DE AÇÕES ─── */}
               <div className="mt-8 flex justify-end gap-3 border-t border-slate-200/60 dark:border-slate-700/40 pt-5 transition-colors pb-2">
+                {statusAtual !== "pendente" && (
+                  <motion.button
+                    type="button"
+                    whileHover={!atualizandoStatus ? { scale: 1.02 } : {}}
+                    whileTap={!atualizandoStatus ? { scale: 0.98 } : {}}
+                    disabled={atualizandoStatus}
+                    onClick={async () => {
+                      setAtualizandoStatus(true);
+                      try {
+                        const data = await apiAluno.buscarAtividadeStatus(matricula, missaoAberta.id);
+                        if (data.status === "sucesso") {
+                          onStatusAtualizado(data.atividade, data.perfilAtualizado);
+                          toast("Status atualizado com sucesso!", "success", "Sincronizado!");
+                        } else {
+                          toast(data.mensagem || "Erro ao atualizar status.", "warning", "Ops!");
+                        }
+                      } catch {
+                        toast("Erro ao conectar com o servidor.", "error", "Falha de Conexão");
+                      } finally {
+                        setAtualizandoStatus(false);
+                      }
+                    }}
+                    className="cursor-pointer px-6 py-3 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/25 border border-indigo-500/20 text-indigo-600 dark:text-indigo-400 font-bold text-sm shadow-md transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {atualizandoStatus ? "Verificando..." : "Atualizar Status"}
+                  </motion.button>
+                )}
                 <motion.button
                   type="button"
                   whileHover={{ scale: 1.02 }}

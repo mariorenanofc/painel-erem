@@ -1,10 +1,12 @@
 import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
+import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { QueryDocumentSnapshot, Transaction } from "firebase-admin/firestore";
+import { calcularGamificacao, GamificacaoStatus } from "@/src/lib/gamificacao";
+
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
   : undefined;
-import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { QueryDocumentSnapshot, Transaction } from "firebase-admin/firestore";
 
 export async function POST(request: Request) {
   let matricula = "";
@@ -96,10 +98,20 @@ export async function POST(request: Request) {
     }
 
     // 6. Gravar Check-in e atualizar XP usando Transação atômica (Protege contra concorrência)
+    let finalXp = 0;
+    let finalGamificacao: GamificacaoStatus = {
+      nivel: "Hello World",
+      saldoCarteira: 0,
+      progressoNivel: { porcentagem: 0, faltam: 500, nomeProximo: "Bug Hunter", isMaximo: false }
+    };
+
     await dbAdmin.runTransaction(async (transaction: Transaction) => {
       const freshAlunoDoc = await transaction.get(alunoRef);
       const freshAluno = freshAlunoDoc.data()!;
       const currentXp = Number(freshAluno.xp) || 0;
+      const xpGasto = Number(freshAluno.xpGasto) || 0;
+
+      finalXp = currentXp + xpGanho;
 
       // Gravar registro na coleção frequencia
       transaction.set(checkinRef, {
@@ -116,9 +128,12 @@ export async function POST(request: Request) {
 
       // Atualizar XP do Aluno
       transaction.update(alunoRef, {
-        xp: currentXp + xpGanho,
+        xp: finalXp,
         lastUpdated: spDate.getTime()
       });
+
+      // Calcular gamificação com o novo XP
+      finalGamificacao = calcularGamificacao(finalXp, xpGasto);
     });
 
     // Sincronizar com Google Sheets em segundo plano (assíncrono, sem travar o usuário)
@@ -127,12 +142,25 @@ export async function POST(request: Request) {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
         body: JSON.stringify({ action: "fazer_checkin", matricula, senha: senhaInformada }),
-      }).catch((e) => console.error("[Background Sync Error] Check-in:", e.message));
+      }).catch((error: unknown) => {
+        const err = error as Error;
+        console.error("[Background Sync Error] Check-in:", err.message);
+      });
     }
+
+    // Invalidar caches locais do portal deste aluno e ranking
+    invalidatePortalCache(matricula);
+    invalidateRankingCache();
 
     return NextResponse.json({
       status: "sucesso",
-      mensagem: `Check-in realizado! +${xpGanho} XP garantidos.${msgFogo}`
+      mensagem: `Check-in realizado! +${xpGanho} XP garantidos.${msgFogo}`,
+      perfilAtualizado: {
+        xpTotal: finalXp,
+        nivel: finalGamificacao.nivel,
+        saldoCarteira: finalGamificacao.saldoCarteira,
+        progressoNivel: finalGamificacao.progressoNivel
+      }
     });
 
   } catch (error: unknown) {

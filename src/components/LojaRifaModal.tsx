@@ -6,12 +6,24 @@ import { motion, AnimatePresence } from "framer-motion";
 import { apiAluno } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
 
+export interface PerfilAtualizado {
+  xpTotal: number;
+  nivel: string;
+  saldoCarteira: number;
+  progressoNivel?: {
+    porcentagem: number;
+    faltam: number;
+    nomeProximo: string;
+    isMaximo: boolean;
+  };
+}
+
 interface LojaRifaModalProps {
   isOpen: boolean;
   onClose: () => void;
   matricula: string;
   saldoCarteira: number;
-  onCompraSucesso: () => void;
+  onCompraSucesso: (perfil: PerfilAtualizado) => void;
 }
 
 export default function LojaRifaModal({
@@ -41,9 +53,9 @@ export default function LojaRifaModal({
     setComprando(true);
     try {
       const data = await apiAluno.comprarRifa(matricula, pacoteSelecionado);
-      if (data.status === "sucesso") {
+      if (data.status === "sucesso" && data.perfilAtualizado) {
         toast(data.mensagem, "success", "Compra Aprovada! 🎉");
-        onCompraSucesso(); // Atualiza o saldo do aluno na tela
+        onCompraSucesso(data.perfilAtualizado); // Atualiza o saldo do aluno na tela
         onClose();
       } else {
         toast(data.mensagem, "error", "Transação Recusada");

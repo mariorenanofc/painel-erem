@@ -1,7 +1,10 @@
 import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { Transaction } from "firebase-admin/firestore";
+import { calcularGamificacao, GamificacaoStatus } from "@/src/lib/gamificacao";
+
+const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
 
 export async function POST(request: Request) {
   let matricula = "";
@@ -63,13 +66,22 @@ export async function POST(request: Request) {
     const timestamp = Date.now();
     const dataStr = new Date().toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }).split(",")[0];
 
-    await dbAdmin.runTransaction(async (transaction: any) => {
-      const freshAluno = (await transaction.get(alunoRef)).data()!;
+    let finalGamificacao: GamificacaoStatus = {
+      nivel: "Hello World",
+      saldoCarteira: 0,
+      progressoNivel: { porcentagem: 0, faltam: 500, nomeProximo: "Bug Hunter", isMaximo: false }
+    };
+
+    await dbAdmin.runTransaction(async (transaction: Transaction) => {
+      const freshAlunoDoc = await transaction.get(alunoRef);
+      const freshAluno = freshAlunoDoc.data()!;
+      const freshXpTotal = Number(freshAluno.xp) || 0;
       const freshXpGasto = Number(freshAluno.xpGasto) || 0;
+      const novoXpGasto = freshXpGasto + custo;
 
       // Atualiza XP gasto do aluno
       transaction.update(alunoRef, {
-        xpGasto: freshXpGasto + custo
+        xpGasto: novoXpGasto
       });
 
       // Grava extrato na coleção entregas
@@ -100,14 +112,28 @@ export async function POST(request: Request) {
           timestamp
         });
       }
+
+      // Calcular nível e saldo atualizado do gamificação
+      finalGamificacao = calcularGamificacao(freshXpTotal, novoXpGasto);
     });
 
     invalidatePortalCache(matricula);
     invalidateRankingCache();
-    return NextResponse.json({ status: "sucesso", mensagem: `Contrato Aceito! ${qtdBilhetes} Bilhetes gerados com sucesso.` });
 
-  } catch (error: any) {
-    console.warn("[Failover] Erro na compra de rifa do Firestore:", error.message);
+    return NextResponse.json({ 
+      status: "sucesso", 
+      mensagem: `Contrato Aceito! ${qtdBilhetes} Bilhetes gerados com sucesso.`,
+      perfilAtualizado: {
+        xpTotal: xpTotal,
+        nivel: finalGamificacao.nivel,
+        saldoCarteira: finalGamificacao.saldoCarteira,
+        progressoNivel: finalGamificacao.progressoNivel
+      }
+    });
+
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.warn("[Failover] Erro na compra de rifa do Firestore:", err.message);
     if (GOOGLE_API_URL) {
       try {
         const response = await fetch(GOOGLE_API_URL, {
@@ -116,8 +142,10 @@ export async function POST(request: Request) {
           body: JSON.stringify({ action: "comprar_rifa", matricula, pacote }),
         });
         return NextResponse.json(await response.json());
-      } catch (sheetsErr) {}
+      } catch (sheetsErr: unknown) {
+        // Ignora erro secundário do Sheets
+      }
     }
-    return NextResponse.json({ status: "erro", mensagem: "Erro ao processar compra: " + error.message }, { status: 500 });
+    return NextResponse.json({ status: "erro", mensagem: "Erro ao processar compra: " + err.message }, { status: 500 });
   }
 }

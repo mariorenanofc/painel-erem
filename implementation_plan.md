@@ -73,12 +73,12 @@ Criação de uma rota leve para retornar o status de uma atividade específica e
 
 ### Componente: Tela do Portal do Aluno (Frontend)
 
-#### [MODIFY] [page.tsx](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/portal/page.tsx)
-- Modificar funções `enviarMissao`, `confirmarCheckin` e `onCompraSucesso` (no modal da rifa) para que usem os dados retornados pelas APIs, atualizando o estado do React em memória (`atividades`, `xpTotalSistema`, `nivelSistema`, `saldoCarteira`, `progressoNivel`), eliminando a chamada pesada `carregarPortal(true)`.
-- Adicionar uma função de atualização de atividade específica (`atualizarStatusAtividade`) que consulta a nova rota `/api/alunos/atividade-status` ao abrir o modal de detalhes ou sob demanda.
+#### [CONCLUÍDO] [MODIFY] [page.tsx](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/portal/page.tsx)
+- [x] Modificar funções `enviarMissao`, `confirmarCheckin` e `onCompraSucesso` (no modal da rifa) para que usem os dados retornados pelas APIs, atualizando o estado do React em memória (`atividades`, `xpTotalSistema`, `nivelSistema`, `saldoCarteira`, `progressoNivel`), eliminando a chamada pesada `carregarPortal(true)`.
+- [x] Adicionar uma função de atualização de atividade específica (`atualizarStatusAtividade`) que consulta a nova rota `/api/alunos/atividade-status` ao abrir o modal de detalhes ou sob demanda.
 
-#### [MODIFY] [ResponderMissaoModal.tsx](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/ResponderMissaoModal.tsx)
-- Adicionar um botão de "Atualizar Status" ou mecanismo de sincronização individual para que o estudante possa forçar a checagem individual daquela atividade no Classroom.
+#### [CONCLUÍDO] [MODIFY] [ResponderMissaoModal.tsx](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/ResponderMissaoModal.tsx)
+- [x] Adicionar um botão de "Atualizar Status" ou mecanismo de sincronização individual para que o estudante possa forçar a checagem individual daquela atividade no Classroom.
 
 ## Plano de Verificação
 

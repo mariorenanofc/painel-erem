@@ -33,13 +33,16 @@ Criação de um utilitário centralizado para calcular o nível do aluno, progre
 
 ### Componente: Rotas da API de Alunos (Backend)
 
-#### [MODIFY] [route.ts (Portal)](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/alunos/portal/route.ts)
-- Alterar cabeçalho de cache HTTP (`Cache-Control`) para `"no-store, max-age=0, must-revalidate"`.
-- Adaptar para ler `configuracoes`, `modulos` e `atividades` publicadas dos caches globais em memória.
-- Utilizar o novo utilitário de gamificação para cálculo de nível.
+#### [PARCIALMENTE CONCLUÍDO] [MODIFY] [route.ts (Portal)](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/alunos/portal/route.ts)
+- [x] Alterar cabeçalho de cache HTTP (`Cache-Control`) para `"no-store, max-age=0, must-revalidate"`.
+- [ ] Adaptar para ler `configuracoes`, `modulos` e `atividades` publicadas dos caches globais em memória.
+- [ ] Utilizar o novo utilitário de gamificação para cálculo de nível.
 
-#### [MODIFY] [route.ts (Ranking)](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/alunos/ranking/route.ts)
-- Alterar cabeçalho de cache HTTP (`Cache-Control`) para `"no-store, max-age=0, must-revalidate"`.
+#### [CONCLUÍDO] [MODIFY] [route.ts (Ranking)](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/alunos/ranking/route.ts)
+- [x] Alterar cabeçalho de cache HTTP (`Cache-Control`) para `"no-store, max-age=0, must-revalidate"`.
+
+#### [CONCLUÍDO] [MODIFY] [route.ts (Perfil)](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/alunos/perfil/route.ts)
+- [x] Adicionar cabeçalho de cache HTTP (`Cache-Control`) como `"no-store, max-age=0, must-revalidate"` para evitar cache heurístico no perfil.
 
 #### [MODIFY] [route.ts (Enviar Missão)](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/alunos/enviar-missao/route.ts)
 - Alterar o retorno de sucesso para incluir os dados de perfil atualizados (`xpTotal`, `nivel`, `saldoCarteira`, `progressoNivel`) e o objeto da atividade atualizado (`atividadeAtualizada`), permitindo atualização in-memory pelo frontend.
@@ -60,8 +63,8 @@ Criação de uma rota leve para retornar o status de uma atividade específica e
 
 ### Componente: Rotas da API do Tutor (Backend)
 
-#### [MODIFY] [route.ts (Transações)](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/tutor/transacoes/route.ts)
-- Adicionar cabeçalho de cache HTTP (`Cache-Control`) como `"no-store, max-age=0, must-revalidate"` para evitar cache heurístico do navegador nas transações.
+#### [CONCLUÍDO] [MODIFY] [route.ts (Transações)](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/tutor/transacoes/route.ts)
+- [x] Adicionar cabeçalho de cache HTTP (`Cache-Control`) como `"no-store, max-age=0, must-revalidate"` para evitar cache heurístico do navegador nas transações.
 
 ---
 

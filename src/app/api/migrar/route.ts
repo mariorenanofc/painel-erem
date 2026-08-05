@@ -338,6 +338,10 @@ export async function GET() {
         dataStr = `${parts[2]}/${parts[1]}/${parts[0]}`;
       }
 
+      if (dataStr.includes("/") && dataStr.length > 10) {
+        dataStr = dataStr.slice(0, 10);
+      }
+
       let docTimestamp = Date.now();
       let p: string[] = [];
       if (dataStr.includes("/")) p = dataStr.split("/");

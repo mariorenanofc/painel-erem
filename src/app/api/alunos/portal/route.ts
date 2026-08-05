@@ -294,7 +294,10 @@ export async function GET(request: Request) {
         const f = doc.data();
         const idFreq = String(f.id || doc.id).trim();
         if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
-        const dataFormatada = f.data || "";
+        let dataFormatada = f.data || "";
+        if (dataFormatada.includes("/") && dataFormatada.length > 10) {
+          dataFormatada = dataFormatada.slice(0, 10);
+        }
         if (dataFormatada) diasComAulaSet.add(dataFormatada);
       });
     }
@@ -307,7 +310,10 @@ export async function GET(request: Request) {
       const f = doc.data();
       const idFreq = String(f.id || doc.id).trim();
       if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
-      const dataFormatada = f.data || "";
+      let dataFormatada = f.data || "";
+      if (dataFormatada.includes("/") && dataFormatada.length > 10) {
+        dataFormatada = dataFormatada.slice(0, 10);
+      }
       if (!dataFormatada) return;
 
       diasComAulaSet.add(dataFormatada);

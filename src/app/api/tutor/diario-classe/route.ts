@@ -67,19 +67,22 @@ export async function GET(request: Request) {
 
     freqSnap.forEach((doc: QueryDocumentSnapshot) => {
       const f = doc.data();
-      const dataStr = String(f.data || "").trim(); // "DD/MM/YYYY" ou "DD-MM-YYYY"
+      let dataClean = String(f.data || "").trim(); // "DD/MM/YYYY" ou "DD-MM-YYYY"
+      if (dataClean.includes("/") && dataClean.length > 10) {
+        dataClean = dataClean.slice(0, 10);
+      }
       
       // Extrair dia, mes e ano do formato da string
       let d = 0, m = 0, y = 0;
-      if (dataStr.includes("/")) {
-        const parts = dataStr.split("/");
+      if (dataClean.includes("/")) {
+        const parts = dataClean.split("/");
         if (parts.length === 3) {
           d = Number(parts[0]);
           m = Number(parts[1]);
           y = Number(parts[2]);
         }
-      } else if (dataStr.includes("-")) {
-        const parts = dataStr.split("-");
+      } else if (dataClean.includes("-")) {
+        const parts = dataClean.split("-");
         if (parts.length === 3) {
           d = Number(parts[0]);
           m = Number(parts[1]);

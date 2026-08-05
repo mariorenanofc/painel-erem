@@ -86,13 +86,13 @@ function getSyntaxHighlightClass(char: string, absIdx: number, code: string, the
   if (/[0-9]/.test(char)) {
     if (theme === "hacker") return "text-green-300 font-mono";
     if (theme === "cyberpunk") return "text-cyan-300 font-mono";
-    return "text-cyan-450 font-mono";
+    return "text-cyan-455 font-mono";
   }
 
   // 4. Operators and Brackets
   if (/[+\-*/%&|=!<>?:~^{}[\]()]/.test(char)) {
     if (theme === "hacker") return "text-green-400 font-bold";
-    if (theme === "cyberpunk") return "text-fuchsia-450 font-bold";
+    if (theme === "cyberpunk") return "text-fuchsia-455 font-bold";
     return "text-pink-400 font-semibold";
   }
 
@@ -140,7 +140,7 @@ function getSyntaxHighlightClass(char: string, absIdx: number, code: string, the
   }
   if (angleCount > 0) isHtmlTag = true;
   if (isHtmlTag) {
-    if (theme === "hacker") return "text-emerald-350";
+    if (theme === "hacker") return "text-emerald-355";
     if (theme === "cyberpunk") return "text-teal-300";
     return "text-teal-400";
   }
@@ -181,6 +181,26 @@ const dualKeyMap: Record<string, { shift: string; base: string }> = {
   ",": { base: ",", shift: "<" },
   ".": { base: ".", shift: ">" },
   "/": { base: "/", shift: "?" },
+};
+
+// Decomposições de acentos mortos (dead keys) para letras combinadas em português
+const deadKeyAccentDecompositions: Record<string, Record<string, string>> = {
+  "`": {
+    "à": "a", "è": "e", "ì": "i", "ò": "o", "ù": "u",
+    "À": "A", "È": "E", "Ì": "I", "Ò": "O", "Ù": "U"
+  },
+  "~": {
+    "ã": "a", "õ": "o", "ñ": "n",
+    "Ã": "A", "Õ": "O", "Ñ": "N"
+  },
+  "^": {
+    "â": "a", "ê": "e", "î": "i", "ô": "o", "û": "u",
+    "Â": "A", "Ê": "E", "Î": "I", "Ô": "O", "Û": "U"
+  },
+  "´": {
+    "á": "a", "é": "e", "í": "i", "ó": "o", "ú": "u",
+    "Á": "A", "É": "E", "Í": "I", "Ó": "O", "Ú": "U"
+  }
 };
 
 // 🔥 WEB AUDIO API SYNTHESIZER FOR CLICK-CLACK MECHANICAL KEYBOARD SOUNDS
@@ -254,6 +274,17 @@ export default function CodingPractice({
   const [secondsRemaining, setSecondsRemaining] = useState(timeLimitMinutes * 60);
   const [extraSecondsUsed, setExtraSecondsUsed] = useState(0);
   const [inputFoco, setInputFoco] = useState(true);
+
+  // Monitor de Altura da Janela para Layouts Responsivos Integrados
+  const [windowHeight, setWindowHeight] = useState(800);
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setWindowHeight(window.innerHeight);
+      const handleResize = () => setWindowHeight(window.innerHeight);
+      window.addEventListener("resize", handleResize);
+      return () => window.removeEventListener("resize", handleResize);
+    }
+  }, []);
 
   const formatTime = (secs: number): string => {
     const mins = Math.floor(secs / 60);
@@ -439,11 +470,38 @@ export default function CodingPractice({
     if (completed || pausado) return;
 
     const typed = val;
+    let isMatch = typed === expectedChar;
+    let advanceCount = 1;
 
-    if (typed === expectedChar) {
+    // Lógica inteligente para tratar dead keys (acentos e crases) e evitar bloqueios
+    if (!isMatch) {
+      // Caso 1: Aluno digitou crase dupla devido a cliques repetidos no acento (ex: "`" duplo ao digitar crase)
+      if (typed === expectedChar + expectedChar) {
+        isMatch = true;
+        advanceCount = 1;
+      }
+      // Caso 2: Aluno combinou o acento morto diretamente com a próxima letra da palavra (ex: crase + O = Ò)
+      else if (deadKeyAccentDecompositions[expectedChar]) {
+        const decompMap = deadKeyAccentDecompositions[expectedChar];
+        if (decompMap[typed]) {
+          const baseLetter = decompMap[typed];
+          const nextExpectedChar = targetCode[currentIndex + 1] || "";
+          
+          if (nextExpectedChar === baseLetter) {
+            isMatch = true;
+            advanceCount = 2; // Avança o acento e a letra combinada em uma jogada só!
+          } else {
+            isMatch = true;
+            advanceCount = 1; // Avança apenas o acento
+          }
+        }
+      }
+    }
+
+    if (isMatch) {
       // ACERTO
       playSynthesizedSound("correct", muted);
-      const nextIndex = currentIndex + 1;
+      const nextIndex = currentIndex + advanceCount;
       setCurrentIndex(nextIndex);
       if (nextIndex >= targetCode.length) {
         setCompleted(true);
@@ -614,7 +672,7 @@ export default function CodingPractice({
       bg: "bg-[#0b0f19]", // Cosmic Dark Blue
       textUntyped: "text-slate-400/45 font-normal dark:text-slate-400/40", // Destaque aumentado (Mais legível)
       gutterBorder: "border-slate-850",
-      gutterText: "text-slate-600",
+      gutterText: "text-slate-650",
       statusBar: "bg-[#0d1424] border-slate-800/80 shadow-md",
       keyboardBg: "bg-[#0a0d16] border-slate-900/60 shadow-[0_0_20px_rgba(99,102,241,0.06)]",
       keyboardKeyBg: "bg-slate-900/85 border-slate-800 hover:text-white text-slate-400 hover:bg-slate-800 transition-all",
@@ -632,7 +690,7 @@ export default function CodingPractice({
       keyboardKeyBg: "bg-black border-green-950/40 hover:text-green-400 text-green-600 hover:bg-green-950/10 transition-all",
       cursorClass: "bg-green-500/30 text-green-300 border-b-2 border-green-500 shadow-[0_0_8px_#22c55e]",
       highlightClass: "bg-gradient-to-r from-green-500 to-emerald-600 text-black border-green-400 scale-105 shadow-[0_0_15px_rgba(34,197,94,0.6)] font-black",
-      mainBorderGlow: "border-green-950/50 shadow-[0_0_35px_rgba(34,197,94,0.05)]"
+      mainBorderGlow: "border-green-955 shadow-[0_0_35px_rgba(34,197,94,0.05)]"
     },
     cyberpunk: {
       bg: "bg-[#0c0515]", // Neon Synthwave Purple
@@ -650,28 +708,61 @@ export default function CodingPractice({
 
   const activeStyle = themeClasses[theme];
 
+  // CONFIGURAÇÕES DE ALTURA DE VIEWPORT PARA CORRIGIR CORTE DO TECLADO EM TELA COM ZOOM / LAPTOPS
+  const compactMode = windowHeight < 720;
+  const microMode = windowHeight < 640;
+
+  const statusBarPadding = microMode ? "p-2 gap-2" : compactMode ? "p-2.5 gap-2" : "p-4 gap-4";
+  const alertPadding = compactMode ? "px-4 py-1 text-[11px]" : "px-5 py-3";
+  const codeAreaPadding = microMode ? "p-3 min-h-[120px]" : compactMode ? "p-4 min-h-[150px]" : "p-6 min-h-[250px]";
+  const codeAreaMargin = microMode ? "mx-2 my-1.5" : compactMode ? "mx-3 my-2" : "mx-4 my-3.5";
+
+  // Dimensões responsivas dos botões do teclado virtual
+  let keySizeClass = "w-8 h-8 md:w-9 md:h-9";
+  let tabWidthClass = "w-12 h-8 md:w-14 md:h-9 text-[9px]";
+  let enterWidthClass = "w-14 h-8 md:w-16 md:h-9 text-[9px]";
+  let spaceHeightClass = "flex-1 h-8 md:h-9 text-[9px]";
+  let keyboardPadding = "p-4";
+
+  if (microMode) {
+    keySizeClass = "w-6 h-6 md:w-6.5 md:h-6.5 text-[8px]";
+    tabWidthClass = "w-9 h-6 md:w-10 md:h-6.5 text-[8px]";
+    enterWidthClass = "w-10 h-6 md:w-11 md:h-6.5 text-[8px]";
+    spaceHeightClass = "flex-1 h-6 md:h-6.5 text-[8px]";
+    keyboardPadding = "p-2";
+  } else if (compactMode) {
+    keySizeClass = "w-7 h-7 md:w-7.5 md:h-7.5 text-[8.5px]";
+    tabWidthClass = "w-10 h-7 md:w-12 md:h-7.5 text-[8.5px]";
+    enterWidthClass = "w-12 h-7 md:w-13 md:h-7.5 text-[8.5px]";
+    spaceHeightClass = "flex-1 h-7 md:h-7.5 text-[8.5px]";
+    keyboardPadding = "p-3";
+  }
+
   // CARD DE BOAS-VINDAS / RECOMEÇAR
   if (!iniciado) {
     const totalLines = targetCode.split("\n").length;
+    const welcomePadding = compactMode ? "p-5 max-w-sm" : "p-8 max-w-md";
+    const welcomeMargin = compactMode ? "mb-4" : "mb-8";
+    
     return (
       <div className="flex flex-col flex-1 h-full min-h-0 bg-slate-950 items-center justify-center p-6 select-none">
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-slate-900 border border-slate-800/80 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl relative overflow-hidden"
+          className={`bg-slate-900 border border-slate-800/80 ${welcomePadding} rounded-3xl w-full text-center shadow-2xl relative overflow-hidden`}
         >
           {/* Luz Trilhatech Neon no Topo */}
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
           
-          <div className="text-5xl mb-4 animate-bounce">⚡</div>
-          <h2 className="font-display font-black text-2xl text-slate-100 uppercase tracking-wide mb-2">
+          <div className={`${compactMode ? "text-3xl mb-2" : "text-5xl mb-4"} animate-bounce`}>⚡</div>
+          <h2 className={`font-display font-black ${compactMode ? "text-lg" : "text-2xl"} text-slate-100 uppercase tracking-wide mb-2`}>
             {missaoAberta.titulo}
           </h2>
           <p className="text-xs text-slate-400 leading-relaxed mb-6">
             {missaoAberta.descricao || "Pratique digitação rápida de código e ganhe XP de recompensa!"}
           </p>
 
-          <div className="bg-slate-950/70 border border-slate-850 p-4.5 rounded-2xl mb-8 flex flex-col gap-2.5 text-left text-xs font-semibold text-slate-300">
+          <div className={`bg-slate-950/70 border border-slate-850 p-4.5 rounded-2xl ${welcomeMargin} flex flex-col gap-2.5 text-left text-xs font-semibold text-slate-300`}>
             <div className="flex justify-between items-center">
               <span>Total de Linhas:</span>
               <span className="font-bold font-mono text-indigo-400">{totalLines}</span>
@@ -722,7 +813,7 @@ export default function CodingPractice({
                     setExtraSecondsUsed(0);
                     setIniciado(true);
                   }}
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-slate-350 font-bold text-xs uppercase tracking-widest py-3 rounded-xl transition-all cursor-pointer border-none"
+                  className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase tracking-widest py-3 rounded-xl transition-all cursor-pointer border-none"
                 >
                   Recomeçar do zero
                 </button>
@@ -751,9 +842,9 @@ export default function CodingPractice({
     <div className={`flex flex-col flex-1 h-full min-h-0 ${activeStyle.bg} transition-colors duration-300 relative`} ref={containerRef}>
       
       {/* ═══ BARRA DE STATUS SUPERIOR PREMIUM (GRADIENTS TRILHATECH) ═══ */}
-      <div className={`flex flex-wrap items-center justify-between gap-4 p-4 border-b ${activeStyle.statusBar} transition-colors duration-300 shrink-0 select-none`}>
+      <div className={`flex flex-wrap items-center justify-between ${statusBarPadding} border-b ${activeStyle.statusBar} transition-colors duration-300 shrink-0 select-none`}>
         <div className="flex flex-wrap gap-2.5">
-          <div className="bg-gradient-to-r from-indigo-505/10 to-purple-505/10 border border-indigo-500/30 text-indigo-300 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-[0_0_8px_rgba(99,102,241,0.15)] flex items-center">
+          <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 border border-indigo-500/30 text-indigo-300 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-[0_0_8px_rgba(99,102,241,0.15)] flex items-center">
             Recompensa: <span className="text-sm text-pink-400 font-black ml-1.5">{currentXP} XP</span>
           </div>
           <div className="bg-gradient-to-r from-red-500/10 to-rose-500/10 border border-red-500/30 text-red-400 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-[0_0_8px_rgba(239,68,68,0.15)] flex items-center">
@@ -809,7 +900,7 @@ export default function CodingPractice({
 
       {/* ═══ ALERTA DE TECLADO ABNT2 E CONFIGURAÇÕES ═══ */}
       {!completed && (
-        <div className="bg-amber-500/10 border-b border-amber-500/20 px-5 py-3 text-amber-300 text-xs font-medium flex items-center justify-between shrink-0 select-none">
+        <div className={`${alertPadding} bg-amber-500/10 border-b border-amber-500/20 text-amber-300 font-medium flex items-center justify-between shrink-0 select-none`}>
           <p className="leading-relaxed flex items-center gap-2">
             <span>⚠️</span> 
             <strong>Atenção ao teclado:</strong> Use o layout <strong>Português (ABNT2)</strong> para evitar erros involuntários em teclas como <code>ç</code>, <code>;</code>, <code>{"{"}</code> e <code>{"}"}</code>.
@@ -820,7 +911,7 @@ export default function CodingPractice({
       {/* ═══ ÁREA DE DIGITAÇÃO DE CÓDIGO (NESTED BOX PREMIUM ESTILO TRILHATECH) ═══ */}
       <div 
         onClick={resetFoco}
-        className={`flex-1 p-6 overflow-auto text-slate-100 font-mono text-sm leading-relaxed relative select-none cursor-text custom-scrollbar min-h-[250px] border mx-4 my-3.5 rounded-2xl transition-all duration-300 ${activeStyle.mainBorderGlow}`}
+        className={`flex-1 ${codeAreaPadding} overflow-auto text-slate-100 font-mono text-sm leading-relaxed relative select-none cursor-text custom-scrollbar border ${codeAreaMargin} rounded-2xl transition-all duration-300 ${activeStyle.mainBorderGlow}`}
       >
         {/* TEXTAREA OCULTA COM POSITION FIXED (EVITA SCROLL JUMPING DO BROWSER) */}
         <textarea
@@ -841,7 +932,7 @@ export default function CodingPractice({
 
         {/* Efeito visual de foco perdido */}
         {!inputFoco && !completed && !pausado && (
-          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-10 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-slate-955/90 backdrop-blur-sm flex items-center justify-center z-10 animate-in fade-in duration-200">
             <div className="text-center p-6 bg-slate-900 border border-slate-800 rounded-2xl max-w-xs shadow-xl">
               <span className="text-3xl block mb-2">⌨️</span>
               <h4 className="font-black uppercase tracking-wider text-xs text-slate-200 mb-1">Foco Perdido</h4>
@@ -884,15 +975,12 @@ export default function CodingPractice({
                     const isCurrent = absIdx === currentIndex;
 
                     if (isTyped) {
-                      // O código digitado acende em cores sintáticas específicas do tema
                       className = getSyntaxHighlightClass(char, absIdx, targetCode, theme);
                     } else if (isCurrent) {
-                      // Indicador piscante do cursor atual
                       className = inputFoco 
                         ? `${activeStyle.cursorClass} animate-pulse font-black opacity-100`
                         : "text-indigo-400 underline font-black opacity-90";
                     } else {
-                      // Código não digitado fica visível porém sem cores (Destaque regulado por tema)
                       className = activeStyle.textUntyped;
                     }
 
@@ -913,7 +1001,7 @@ export default function CodingPractice({
         </motion.div>
       </div>
 
-      {/* ═══ TECLADO VIRTUAL GLASSMORPHIC ═══ */}
+      {/* ═══ TECLADO VIRTUAL GLASSMORPHIC RESPONSIVO ═══ */}
       {!completed && !tecladoMinimizado && (() => {
         const getHighlightKey = (char: string): string => {
           if (!char) return "";
@@ -1024,7 +1112,7 @@ export default function CodingPractice({
         const isUppercaseExpected = isLetterExpected && expectedChar === expectedChar.toUpperCase();
 
         return (
-          <div className={`p-4 border-t ${activeStyle.keyboardBg} transition-colors duration-300 shrink-0 select-none`}>
+          <div className={`${keyboardPadding} border-t ${activeStyle.keyboardBg} transition-colors duration-300 shrink-0 select-none`}>
             <div className="flex flex-col gap-2.5 max-w-xl mx-auto">
               
               {/* Notificação visual do próximo caractere */}
@@ -1047,14 +1135,14 @@ export default function CodingPractice({
 
                 <button
                   onClick={() => setTecladoMinimizado(true)}
-                  className="text-[9px] font-bold text-slate-500 hover:text-white bg-slate-900/60 hover:bg-slate-850 border border-slate-800/80 px-2.5 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer transition-colors font-sans border-none"
+                  className="text-[9px] font-bold text-slate-500 hover:text-white bg-slate-900/60 hover:bg-slate-850 border border-slate-800/80 px-2 py-0.5 rounded-lg flex items-center gap-1 cursor-pointer transition-colors font-sans border-none"
                 >
                   Ocultar Teclado ⬇️
                 </button>
               </div>
 
               {/* Layout Teclado Virtual Estilizado */}
-              <div className="flex flex-col gap-1.5 font-mono text-[10px] md:text-xs font-bold text-center">
+              <div className="flex flex-col gap-1.5 font-mono font-bold text-center">
                 {keyboardRows.map((row, rIdx) => (
                   <div key={rIdx} className="flex justify-center gap-1">
                     {row.map((keyLabel) => {
@@ -1062,37 +1150,46 @@ export default function CodingPractice({
                       const isShiftKey = keyLabel === "SHIFT";
                       const isHighlighted = (highlightKey === keyLabel) || (isShiftKey && isExpectedShifted);
                       
-                      let widthClass = "w-8 h-8 md:w-9 md:h-9";
-                      if (keyLabel === "TAB") widthClass = "w-12 h-8 md:w-14 md:h-9 text-[9px]";
-                      if (keyLabel === "ENTER") widthClass = "w-14 h-8 md:w-16 md:h-9 text-[9px]";
-                      if (isShiftKey) widthClass = "w-14 h-8 md:w-16 md:h-9 text-[9px]";
-                      if (keyLabel === "SPACE") widthClass = "flex-1 h-8 md:h-9 text-[9px]";
+                      let widthClass = keySizeClass;
+                      if (keyLabel === "TAB") widthClass = tabWidthClass;
+                      if (keyLabel === "ENTER") widthClass = enterWidthClass;
+                      if (isShiftKey) widthClass = enterWidthClass;
+                      if (keyLabel === "SPACE") widthClass = spaceHeightClass;
 
                       let content: React.ReactNode;
                       
                       if (dual) {
-                        // Renderização Dinâmica com Destaque de Atalho de Acordo com a Ação (Atende o Ponto 2)
                         const isShiftedActive = expectedChar === dual.shift;
                         const isBaseActive = expectedChar === dual.base;
+                        const isAnyActive = isShiftedActive || isBaseActive;
                         
-                        content = (
-                          <div className="flex flex-col items-center justify-between h-full py-0.5 leading-none w-full select-none">
-                            <span className={`text-[8.5px] md:text-[9px] transition-all ${
-                              isShiftedActive && isHighlighted 
-                                ? "text-white scale-110 drop-shadow-[0_0_6px_rgba(255,255,255,1)] font-extrabold" 
-                                : "text-slate-500/70 font-normal"
-                            }`}>
-                              {dual.shift}
+                        // Se a tela estiver muito pequena (microMode), renderiza apenas 1 caractere dinamicamente para não encavalar
+                        if (microMode) {
+                          content = (
+                            <span className={isAnyActive && isHighlighted ? "text-white font-black scale-110 drop-shadow-[0_0_6px_rgba(255,255,255,1)]" : "text-slate-400 font-bold"}>
+                              {isShiftedActive ? dual.shift : dual.base}
                             </span>
-                            <span className={`text-[10px] md:text-[10.5px] transition-all ${
-                              isBaseActive && isHighlighted 
-                                ? "text-white scale-110 drop-shadow-[0_0_6px_rgba(255,255,255,1)] font-extrabold" 
-                                : "text-slate-400 font-bold"
-                            }`}>
-                              {dual.base}
-                            </span>
-                          </div>
-                        );
+                          );
+                        } else {
+                          content = (
+                            <div className="flex flex-col items-center justify-between h-full py-0.5 leading-none w-full select-none">
+                              <span className={`text-[8.5px] md:text-[9px] transition-all ${
+                                isShiftedActive && isHighlighted 
+                                  ? "text-white scale-110 drop-shadow-[0_0_6px_rgba(255,255,255,1)] font-extrabold" 
+                                  : "text-slate-500/70 font-normal"
+                              }`}>
+                                {dual.shift}
+                              </span>
+                              <span className={`text-[10px] md:text-[10.5px] transition-all ${
+                                isBaseActive && isHighlighted 
+                                  ? "text-white scale-110 drop-shadow-[0_0_6px_rgba(255,255,255,1)] font-extrabold" 
+                                  : "text-slate-400 font-bold"
+                              }`}>
+                                {dual.base}
+                              </span>
+                            </div>
+                          );
+                        }
                       } else {
                         const isLetter = keyLabel.length === 1 && /[A-Z]/.test(keyLabel);
                         const displayLabel = isLetter 
@@ -1166,7 +1263,7 @@ export default function CodingPractice({
               </div>
               <div className="flex justify-between items-center font-sans">
                 <span>Velocidade de Digitação:</span>
-                <span className="font-bold font-mono text-cyan-455">{wpm} WPM</span>
+                <span className="font-bold font-mono text-cyan-450">{wpm} WPM</span>
               </div>
               <div className="flex justify-between items-center font-sans">
                 <span>Tempo restante:</span>
@@ -1191,7 +1288,7 @@ export default function CodingPractice({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-5 z-25 select-none font-sans"
+            className="absolute inset-0 bg-slate-955/95 backdrop-blur-md flex items-center justify-center p-5 z-25 select-none font-sans"
           >
             <motion.div
               initial={{ scale: 0.95, y: 15 }}
@@ -1202,7 +1299,7 @@ export default function CodingPractice({
               <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
               <span className="text-5xl block mb-3 animate-bounce">🏆</span>
-              <h3 className="font-display font-black text-xl md:text-2xl uppercase tracking-wider text-emerald-450 mb-2">Desafio Concluído!</h3>
+              <h3 className="font-display font-black text-xl md:text-2xl uppercase tracking-wider text-emerald-455 mb-2">Desafio Concluído!</h3>
               <p className="text-xs text-slate-400 mb-5 leading-relaxed font-sans">Você digitou o Mini Projeto com precisão de sintaxe e indentação!</p>
 
               {/* Box de Pontuação */}
@@ -1237,7 +1334,7 @@ export default function CodingPractice({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleCopy}
-                  className="cursor-pointer w-full bg-slate-800 hover:bg-slate-750 text-slate-200 font-bold py-3 rounded-xl border border-slate-700/50 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
+                  className="cursor-pointer w-full bg-slate-800 hover:bg-slate-750 text-slate-205 font-bold py-3 rounded-xl border border-slate-700/50 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
                 >
                   📋 Copiar Código Resolvido
                 </motion.button>

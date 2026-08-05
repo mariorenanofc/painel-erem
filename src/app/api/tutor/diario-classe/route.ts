@@ -89,11 +89,11 @@ export async function GET(request: Request) {
 
       // Se coincidir com o mês e ano buscado
       if (m === mesNum && y === anoNum && d > 0) {
-        const dataFormatada = `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
-        diasComAulaSet.add(dataFormatada);
-
         const mat = f.matricula;
         if (alunosMap[mat]) {
+          const dataFormatada = `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
+          diasComAulaSet.add(dataFormatada);
+
           const rawSt = String(f.status || "").toLowerCase().trim();
           let statusMapeado = "presente";
           if (rawSt === "presente" || rawSt === "p") statusMapeado = "presente";

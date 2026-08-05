@@ -22,7 +22,6 @@ interface TargetCodeLine {
   chars: LineChar[];
 }
 
-
 export interface CachedAtividade {
   id: string;
   titulo: string;
@@ -58,8 +57,8 @@ function getSyntaxHighlightClass(char: string, absIdx: number, code: string, the
   }
   
   if (isComment) {
-    if (theme === "hacker") return "text-green-800 font-normal opacity-80";
-    if (theme === "cyberpunk") return "text-pink-900/60 font-normal opacity-70";
+    if (theme === "hacker") return "text-green-500/85 font-normal italic";
+    if (theme === "cyberpunk") return "text-purple-400/75 font-normal italic";
     return "text-slate-500/80 font-normal";
   }
 
@@ -79,7 +78,7 @@ function getSyntaxHighlightClass(char: string, absIdx: number, code: string, the
 
   if (isString) {
     if (theme === "hacker") return "text-emerald-400 font-bold";
-    if (theme === "cyberpunk") return "text-yellow-300 font-bold";
+    if (theme === "cyberpunk") return "text-yellow-350 font-bold";
     return "text-amber-350 font-medium";
   }
 
@@ -87,13 +86,13 @@ function getSyntaxHighlightClass(char: string, absIdx: number, code: string, the
   if (/[0-9]/.test(char)) {
     if (theme === "hacker") return "text-green-300 font-mono";
     if (theme === "cyberpunk") return "text-cyan-300 font-mono";
-    return "text-cyan-400 font-mono";
+    return "text-cyan-450 font-mono";
   }
 
   // 4. Operators and Brackets
   if (/[+\-*/%&|=!<>?:~^{}[\]()]/.test(char)) {
     if (theme === "hacker") return "text-green-400 font-bold";
-    if (theme === "cyberpunk") return "text-fuchsia-400 font-bold";
+    if (theme === "cyberpunk") return "text-fuchsia-450 font-bold";
     return "text-pink-400 font-semibold";
   }
 
@@ -117,7 +116,7 @@ function getSyntaxHighlightClass(char: string, absIdx: number, code: string, the
 
   if (keywords.includes(word)) {
     if (theme === "hacker") return "text-emerald-500 font-extrabold";
-    if (theme === "cyberpunk") return "text-pink-450 font-extrabold";
+    if (theme === "cyberpunk") return "text-pink-500 font-extrabold";
     return "text-blue-400 font-bold";
   }
 
@@ -158,6 +157,31 @@ function requiresShift(char: string): boolean {
   const shiftChars = ['"', '!', '@', '#', '$', '%', '¨', '&', '*', '(', ')', '_', '+', '`', '{', '}', '|', ':', '<', '>', '?'];
   return shiftChars.includes(char);
 }
+
+// Mapeador de teclas físicas ABNT2 com dupla função
+const dualKeyMap: Record<string, { shift: string; base: string }> = {
+  "1": { base: "1", shift: "!" },
+  "2": { base: "2", shift: "@" },
+  "3": { base: "3", shift: "#" },
+  "4": { base: "4", shift: "$" },
+  "5": { base: "5", shift: "%" },
+  "6": { base: "6", shift: "¨" },
+  "7": { base: "7", shift: "&" },
+  "8": { base: "8", shift: "*" },
+  "9": { base: "9", shift: "(" },
+  "0": { base: "0", shift: ")" },
+  "-": { base: "-", shift: "_" },
+  "=": { base: "=", shift: "+" },
+  "´": { base: "´", shift: "`" },
+  "[": { base: "[", shift: "{" },
+  "]": { base: "]", shift: "}" },
+  "\\": { base: "\\", shift: "|" },
+  ";": { base: ";", shift: ":" },
+  "'": { base: "'", shift: "\"" },
+  ",": { base: ",", shift: "<" },
+  ".": { base: ".", shift: ">" },
+  "/": { base: "/", shift: "?" },
+};
 
 // 🔥 WEB AUDIO API SYNTHESIZER FOR CLICK-CLACK MECHANICAL KEYBOARD SOUNDS
 function playSynthesizedSound(type: "correct" | "error", muted: boolean) {
@@ -213,6 +237,7 @@ export default function CodingPractice({
   const targetCode = missaoAberta.resolucaoTyping || "";
   const timeLimitMinutes = Number(missaoAberta.limiteTempoTyping) || 15;
   const maxXP = Number(missaoAberta.xp) || 200;
+  const totalSecondsAllowed = timeLimitMinutes * 60;
 
   // Estados do Treino
   const [iniciado, setIniciado] = useState(false);
@@ -261,7 +286,6 @@ export default function CodingPractice({
       chars: lineChars
     };
   });
-
 
   // Refs de controle de tela e cursor
   const lastErrorIndexRef = useRef<number>(-1);
@@ -356,7 +380,6 @@ export default function CodingPractice({
     ? 100 
     : Math.max(0, Math.round(((currentIndex - errorsCount) / currentIndex) * 100));
 
-  const totalSecondsAllowed = timeLimitMinutes * 60;
   const elapsedSeconds = totalSecondsAllowed - secondsRemaining + extraSecondsUsed;
   const elapsedMinutes = elapsedSeconds / 60;
   const wpm = elapsedMinutes > 0.05 ? Math.round((currentIndex / 5) / elapsedMinutes) : 0;
@@ -585,40 +608,43 @@ export default function CodingPractice({
     await onEnviar(targetCode, currentXP);
   };
 
-  // CONFIGURAÇÕES VISUAIS COM BASE NOS TEMAS DA "IDE VIRTUAL"
+  // CONFIGURAÇÕES VISUAIS PREMIUM COM BASE NOS TEMAS E IDENTIDADE TRILHATECH
   const themeClasses = {
     vscode: {
-      bg: "bg-slate-950",
-      textUntyped: "text-slate-650 font-normal dark:text-slate-600/70 opacity-60",
-      gutterBorder: "border-slate-900",
-      gutterText: "text-slate-700",
-      statusBar: "bg-slate-900 border-slate-900",
-      keyboardBg: "bg-slate-950 border-slate-900",
-      keyboardKeyBg: "bg-slate-900 border-slate-850 hover:text-white text-slate-500",
-      expectedBorder: "border-indigo-400",
-      cursorClass: "bg-indigo-550/45 text-white border-b-2 border-indigo-400",
+      bg: "bg-[#0b0f19]", // Cosmic Dark Blue
+      textUntyped: "text-slate-400/45 font-normal dark:text-slate-400/40", // Destaque aumentado (Mais legível)
+      gutterBorder: "border-slate-850",
+      gutterText: "text-slate-600",
+      statusBar: "bg-[#0d1424] border-slate-800/80 shadow-md",
+      keyboardBg: "bg-[#0a0d16] border-slate-900/60 shadow-[0_0_20px_rgba(99,102,241,0.06)]",
+      keyboardKeyBg: "bg-slate-900/85 border-slate-800 hover:text-white text-slate-400 hover:bg-slate-800 transition-all",
+      cursorClass: "bg-indigo-550/45 text-white border-b-2 border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.3)]",
+      highlightClass: "bg-gradient-to-r from-indigo-500 to-pink-500 text-white border-indigo-400 scale-105 shadow-md shadow-indigo-500/30 animate-pulse font-black",
+      mainBorderGlow: "border-slate-850 shadow-[0_0_30px_rgba(99,102,241,0.04)]"
     },
     hacker: {
-      bg: "bg-black",
-      textUntyped: "text-green-950/70 font-mono opacity-50",
-      gutterBorder: "border-green-950/40",
-      gutterText: "text-green-900",
-      statusBar: "bg-black border-green-950/30",
-      keyboardBg: "bg-black border-green-950/30",
-      keyboardKeyBg: "bg-black border-green-950/40 hover:text-green-400 text-green-700",
-      expectedBorder: "border-green-500",
+      bg: "bg-[#010401]", // Matrix Dark Black
+      textUntyped: "text-green-500/35 font-mono", // Destaque aumentado (Verde hacker legível)
+      gutterBorder: "border-green-950/60",
+      gutterText: "text-green-800",
+      statusBar: "bg-black border-green-950/40 shadow-[0_0_15px_rgba(34,197,94,0.05)]",
+      keyboardBg: "bg-[#020502] border-green-950/40 shadow-[0_0_25px_rgba(34,197,94,0.08)]",
+      keyboardKeyBg: "bg-black border-green-950/40 hover:text-green-400 text-green-600 hover:bg-green-950/10 transition-all",
       cursorClass: "bg-green-500/30 text-green-300 border-b-2 border-green-500 shadow-[0_0_8px_#22c55e]",
+      highlightClass: "bg-gradient-to-r from-green-500 to-emerald-600 text-black border-green-400 scale-105 shadow-[0_0_15px_rgba(34,197,94,0.6)] font-black",
+      mainBorderGlow: "border-green-950/50 shadow-[0_0_35px_rgba(34,197,94,0.05)]"
     },
     cyberpunk: {
-      bg: "bg-zinc-950",
-      textUntyped: "text-purple-900/60 font-mono opacity-50",
-      gutterBorder: "border-fuchsia-950/40",
-      gutterText: "text-fuchsia-700",
-      statusBar: "bg-zinc-950 border-fuchsia-950/30",
-      keyboardBg: "bg-zinc-950 border-fuchsia-950/30",
-      keyboardKeyBg: "bg-zinc-900 border-fuchsia-950/20 hover:text-fuchsia-400 text-fuchsia-750",
-      expectedBorder: "border-fuchsia-500",
+      bg: "bg-[#0c0515]", // Neon Synthwave Purple
+      textUntyped: "text-fuchsia-400/35 font-mono", // Destaque aumentado (Lilás legível)
+      gutterBorder: "border-fuchsia-950/50",
+      gutterText: "text-purple-900",
+      statusBar: "bg-black border-fuchsia-950/30 shadow-[0_0_15px_rgba(217,70,239,0.05)]",
+      keyboardBg: "bg-[#0f0719] border-fuchsia-950/35 shadow-[0_0_25px_rgba(217,70,239,0.08)]",
+      keyboardKeyBg: "bg-zinc-950 border-fuchsia-950/20 hover:text-fuchsia-400 text-fuchsia-500 hover:bg-fuchsia-950/10 transition-all",
       cursorClass: "bg-fuchsia-500/30 text-fuchsia-300 border-b-2 border-fuchsia-500 shadow-[0_0_8px_#d946ef]",
+      highlightClass: "bg-gradient-to-r from-fuchsia-500 to-cyan-500 text-white border-fuchsia-400 scale-105 shadow-[0_0_15px_rgba(217,70,239,0.6)] font-black",
+      mainBorderGlow: "border-fuchsia-950/50 shadow-[0_0_35px_rgba(217,70,239,0.05)]"
     }
   };
 
@@ -632,8 +658,11 @@ export default function CodingPractice({
         <motion.div 
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl"
+          className="bg-slate-900 border border-slate-800/80 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl relative overflow-hidden"
         >
+          {/* Luz Trilhatech Neon no Topo */}
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+          
           <div className="text-5xl mb-4 animate-bounce">⚡</div>
           <h2 className="font-display font-black text-2xl text-slate-100 uppercase tracking-wide mb-2">
             {missaoAberta.titulo}
@@ -642,7 +671,7 @@ export default function CodingPractice({
             {missaoAberta.descricao || "Pratique digitação rápida de código e ganhe XP de recompensa!"}
           </p>
 
-          <div className="bg-slate-955 border border-slate-800 p-4.5 rounded-2xl mb-8 flex flex-col gap-2.5 text-left text-xs font-semibold text-slate-350">
+          <div className="bg-slate-950/70 border border-slate-850 p-4.5 rounded-2xl mb-8 flex flex-col gap-2.5 text-left text-xs font-semibold text-slate-300">
             <div className="flex justify-between items-center">
               <span>Total de Linhas:</span>
               <span className="font-bold font-mono text-indigo-400">{totalLines}</span>
@@ -693,7 +722,7 @@ export default function CodingPractice({
                     setExtraSecondsUsed(0);
                     setIniciado(true);
                   }}
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase tracking-widest py-3 rounded-xl transition-all cursor-pointer border-none"
+                  className="w-full bg-slate-800 hover:bg-slate-700 text-slate-350 font-bold text-xs uppercase tracking-widest py-3 rounded-xl transition-all cursor-pointer border-none"
                 >
                   Recomeçar do zero
                 </button>
@@ -701,14 +730,14 @@ export default function CodingPractice({
             ) : (
               <button
                 onClick={() => setIniciado(true)}
-                className="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-xs uppercase tracking-widest py-3.5 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer border-none"
+                className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-black text-xs uppercase tracking-widest py-3.5 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer border-none"
               >
                 Começar Desafio
               </button>
             )}
             <button
               onClick={onClose}
-              className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold text-xs uppercase tracking-widest py-3 rounded-xl transition-all cursor-pointer border-none"
+              className="w-full bg-slate-805 hover:bg-slate-750 text-slate-400 font-bold text-xs uppercase tracking-widest py-3 rounded-xl transition-all cursor-pointer border-none"
             >
               Voltar
             </button>
@@ -721,22 +750,20 @@ export default function CodingPractice({
   return (
     <div className={`flex flex-col flex-1 h-full min-h-0 ${activeStyle.bg} transition-colors duration-300 relative`} ref={containerRef}>
       
-      {/* ═══ BARRA DE STATUS SUPERIOR ═══ */}
+      {/* ═══ BARRA DE STATUS SUPERIOR PREMIUM (GRADIENTS TRILHATECH) ═══ */}
       <div className={`flex flex-wrap items-center justify-between gap-4 p-4 border-b ${activeStyle.statusBar} transition-colors duration-300 shrink-0 select-none`}>
         <div className="flex flex-wrap gap-2.5">
-          <div className="bg-indigo-500/10 text-indigo-400 px-3 py-1.5 rounded-xl border border-indigo-500/20 text-xs font-black uppercase tracking-wider">
-            Recompensa: <span className="text-sm text-pink-500">{currentXP} XP</span>
+          <div className="bg-gradient-to-r from-indigo-505/10 to-purple-505/10 border border-indigo-500/30 text-indigo-300 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-[0_0_8px_rgba(99,102,241,0.15)] flex items-center">
+            Recompensa: <span className="text-sm text-pink-400 font-black ml-1.5">{currentXP} XP</span>
           </div>
-          <div className="bg-slate-800/60 text-slate-400 px-3 py-1.5 rounded-xl border border-slate-700/60 text-xs font-black uppercase tracking-wider">
-            Erros: <span className="text-red-500 font-mono font-bold">{errorsCount}</span>
+          <div className="bg-gradient-to-r from-red-500/10 to-rose-500/10 border border-red-500/30 text-red-400 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-[0_0_8px_rgba(239,68,68,0.15)] flex items-center">
+            Erros: <span className="font-mono font-black ml-1.5">{errorsCount}</span>
           </div>
-
-          {/* GAUGES ADICIONAIS: ACURÁCIA & WPM */}
-          <div className="bg-slate-800/60 text-slate-400 px-3 py-1.5 rounded-xl border border-slate-700/60 text-xs font-black uppercase tracking-wider">
-            Acurácia: <span className="text-emerald-400 font-mono font-bold">{accuracy}%</span>
+          <div className="bg-gradient-to-r from-emerald-500/10 to-teal-500/10 border border-emerald-500/30 text-emerald-350 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-[0_0_8px_rgba(16,185,129,0.15)] flex items-center">
+            Acurácia: <span className="font-mono font-black ml-1.5">{accuracy}%</span>
           </div>
-          <div className="bg-slate-800/60 text-slate-400 px-3 py-1.5 rounded-xl border border-slate-700/60 text-xs font-black uppercase tracking-wider">
-            Velocidade: <span className="text-cyan-400 font-mono font-bold">{wpm} WPM</span>
+          <div className="bg-gradient-to-r from-cyan-500/10 to-blue-500/10 border border-cyan-500/30 text-cyan-300 px-3.5 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-[0_0_8px_rgba(6,182,212,0.15)] flex items-center">
+            Velocidade: <span className="font-mono font-black ml-1.5">{wpm} WPM</span>
           </div>
         </div>
 
@@ -762,7 +789,7 @@ export default function CodingPractice({
           </select>
 
           {secondsRemaining > 0 ? (
-            <div className="bg-slate-800/90 text-slate-300 px-3 py-1.5 rounded-xl text-xs font-black font-mono">
+            <div className="bg-slate-800/90 text-slate-200 px-3 py-1.5 rounded-xl text-xs font-black font-mono border border-slate-700/40">
               ⏱️ {formatTime(secondsRemaining)}
             </div>
           ) : (
@@ -790,10 +817,10 @@ export default function CodingPractice({
         </div>
       )}
 
-      {/* ═══ ÁREA DE DIGITAÇÃO DE CÓDIGO (ESTILO IDE DE DESENVOLVIMENTO) ═══ */}
+      {/* ═══ ÁREA DE DIGITAÇÃO DE CÓDIGO (NESTED BOX PREMIUM ESTILO TRILHATECH) ═══ */}
       <div 
         onClick={resetFoco}
-        className="flex-1 p-6 overflow-auto text-slate-105 font-mono text-sm leading-relaxed relative select-none cursor-text custom-scrollbar min-h-[250px]"
+        className={`flex-1 p-6 overflow-auto text-slate-100 font-mono text-sm leading-relaxed relative select-none cursor-text custom-scrollbar min-h-[250px] border mx-4 my-3.5 rounded-2xl transition-all duration-300 ${activeStyle.mainBorderGlow}`}
       >
         {/* TEXTAREA OCULTA COM POSITION FIXED (EVITA SCROLL JUMPING DO BROWSER) */}
         <textarea
@@ -865,7 +892,7 @@ export default function CodingPractice({
                         ? `${activeStyle.cursorClass} animate-pulse font-black opacity-100`
                         : "text-indigo-400 underline font-black opacity-90";
                     } else {
-                      // Código não digitado fica cinza-escorregadio (Estilo desativado customizado por tema)
+                      // Código não digitado fica visível porém sem cores (Destaque regulado por tema)
                       className = activeStyle.textUntyped;
                     }
 
@@ -886,7 +913,7 @@ export default function CodingPractice({
         </motion.div>
       </div>
 
-      {/* ═══ TECLADO VIRTUAL E TECLAS DE ATALHO DE APOIO ═══ */}
+      {/* ═══ TECLADO VIRTUAL GLASSMORPHIC ═══ */}
       {!completed && !tecladoMinimizado && (() => {
         const getHighlightKey = (char: string): string => {
           if (!char) return "";
@@ -924,7 +951,7 @@ export default function CodingPractice({
         ];
 
         const handleVirtualKeyClick = (keyLabel: string) => {
-          if (keyLabel === "SHIFT") return; // Apenas visual
+          if (keyLabel === "SHIFT") return;
           
           // Lógica especial de clique virtual no TAB quando espaço de indentação é esperado
           if (keyLabel === "TAB" && expectedChar === " ") {
@@ -1007,12 +1034,12 @@ export default function CodingPractice({
                   <motion.span 
                     animate={{ scale: [1, 1.12, 1] }}
                     transition={{ duration: 1.5, repeat: Infinity }}
-                    className="bg-indigo-500/20 border border-indigo-500/40 text-indigo-400 px-2 py-0.5 rounded font-mono font-black"
+                    className="bg-indigo-500/20 border border-indigo-500/40 text-indigo-405 px-2 py-0.5 rounded font-mono font-black shadow-[0_0_8px_rgba(99,102,241,0.2)]"
                   >
                     {expectedKeyName}
                   </motion.span>
                   {isUppercaseExpected && (
-                    <span className="text-[9px] text-amber-400 font-black animate-pulse uppercase font-sans">
+                    <span className="text-[9px] text-pink-400 font-black animate-pulse uppercase font-sans">
                       (SHIFT ATIVO)
                     </span>
                   )}
@@ -1020,7 +1047,7 @@ export default function CodingPractice({
 
                 <button
                   onClick={() => setTecladoMinimizado(true)}
-                  className="text-[9px] font-bold text-slate-500 hover:text-white bg-slate-900/60 hover:bg-slate-850 border border-slate-800/80 px-2.5 py-1 rounded-lg flex items-center gap-1 cursor-pointer transition-colors font-sans border-none"
+                  className="text-[9px] font-bold text-slate-500 hover:text-white bg-slate-900/60 hover:bg-slate-850 border border-slate-800/80 px-2.5 py-1.5 rounded-lg flex items-center gap-1 cursor-pointer transition-colors font-sans border-none"
                 >
                   Ocultar Teclado ⬇️
                 </button>
@@ -1031,6 +1058,7 @@ export default function CodingPractice({
                 {keyboardRows.map((row, rIdx) => (
                   <div key={rIdx} className="flex justify-center gap-1">
                     {row.map((keyLabel) => {
+                      const dual = dualKeyMap[keyLabel];
                       const isShiftKey = keyLabel === "SHIFT";
                       const isHighlighted = (highlightKey === keyLabel) || (isShiftKey && isExpectedShifted);
                       
@@ -1040,24 +1068,51 @@ export default function CodingPractice({
                       if (isShiftKey) widthClass = "w-14 h-8 md:w-16 md:h-9 text-[9px]";
                       if (keyLabel === "SPACE") widthClass = "flex-1 h-8 md:h-9 text-[9px]";
 
-                      // Transforma em minúsculas caso o caractere seja minúsculo
-                      const isLetter = keyLabel.length === 1 && /[A-Z]/.test(keyLabel);
-                      const displayLabel = isLetter 
-                        ? (isUppercaseExpected ? keyLabel : keyLabel.toLowerCase()) 
-                        : (keyLabel === "SPACE" ? "ESPAÇO" : keyLabel);
+                      let content: React.ReactNode;
+                      
+                      if (dual) {
+                        // Renderização Dinâmica com Destaque de Atalho de Acordo com a Ação (Atende o Ponto 2)
+                        const isShiftedActive = expectedChar === dual.shift;
+                        const isBaseActive = expectedChar === dual.base;
+                        
+                        content = (
+                          <div className="flex flex-col items-center justify-between h-full py-0.5 leading-none w-full select-none">
+                            <span className={`text-[8.5px] md:text-[9px] transition-all ${
+                              isShiftedActive && isHighlighted 
+                                ? "text-white scale-110 drop-shadow-[0_0_6px_rgba(255,255,255,1)] font-extrabold" 
+                                : "text-slate-500/70 font-normal"
+                            }`}>
+                              {dual.shift}
+                            </span>
+                            <span className={`text-[10px] md:text-[10.5px] transition-all ${
+                              isBaseActive && isHighlighted 
+                                ? "text-white scale-110 drop-shadow-[0_0_6px_rgba(255,255,255,1)] font-extrabold" 
+                                : "text-slate-400 font-bold"
+                            }`}>
+                              {dual.base}
+                            </span>
+                          </div>
+                        );
+                      } else {
+                        const isLetter = keyLabel.length === 1 && /[A-Z]/.test(keyLabel);
+                        const displayLabel = isLetter 
+                          ? (isUppercaseExpected ? keyLabel : keyLabel.toLowerCase()) 
+                          : (keyLabel === "SPACE" ? "ESPAÇO" : keyLabel);
+                        content = <span>{displayLabel}</span>;
+                      }
 
                       return (
                         <button
                           key={keyLabel}
                           type="button"
                           onClick={() => handleVirtualKeyClick(keyLabel)}
-                          className={`rounded-lg border text-center transition-all duration-100 flex items-center justify-center cursor-pointer select-none ${widthClass} ${
+                          className={`rounded-xl border text-center transition-all duration-150 flex items-center justify-center cursor-pointer select-none ${widthClass} ${
                             isHighlighted
-                              ? "bg-gradient-to-r from-indigo-500 to-pink-500 text-white border-indigo-400 scale-105 shadow-md shadow-indigo-500/30 animate-pulse font-black"
-                              : `${activeStyle.keyboardKeyBg}`
+                              ? `${activeStyle.highlightClass}`
+                              : `${activeStyle.keyboardKeyBg} shadow-sm shadow-black/35`
                           }`}
                         >
-                          {displayLabel}
+                          {content}
                         </button>
                       );
                     })}
@@ -1077,17 +1132,20 @@ export default function CodingPractice({
               setTecladoMinimizado(false);
               resetFoco();
             }}
-            className="bg-indigo-600 hover:bg-indigo-550 text-white font-black text-[10px] uppercase tracking-widest px-5 py-2.5 rounded-xl transition-all cursor-pointer border-none active:scale-95 shadow-md font-sans"
+            className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-black text-[10px] uppercase tracking-widest px-6 py-2.5 rounded-xl transition-all cursor-pointer border-none active:scale-95 shadow-lg shadow-purple-500/20 font-sans"
           >
             ⌨️ Mostrar Teclado Virtual
           </button>
         </div>
       )}
 
-      {/* ═══ TELA DE PAUSA ═══ */}
+      {/* ═══ TELA DE PAUSA PREMIUM (GRADIENTS TRILHATECH) ═══ */}
       {pausado && (
         <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-5 z-20 animate-in fade-in duration-200 select-none">
-          <div className="text-center p-8 bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full shadow-2xl font-sans">
+          <div className="text-center p-8 bg-slate-900 border border-slate-800/80 rounded-3xl max-w-sm w-full shadow-2xl relative overflow-hidden font-sans">
+            {/* Linha Neon Superior */}
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+            
             <span className="text-4xl block mb-3 animate-pulse">⏸️</span>
             <h3 className="font-display font-black text-lg uppercase tracking-wider text-slate-100 mb-4">Treino Pausado</h3>
             
@@ -1108,7 +1166,7 @@ export default function CodingPractice({
               </div>
               <div className="flex justify-between items-center font-sans">
                 <span>Velocidade de Digitação:</span>
-                <span className="font-bold font-mono text-cyan-400">{wpm} WPM</span>
+                <span className="font-bold font-mono text-cyan-455">{wpm} WPM</span>
               </div>
               <div className="flex justify-between items-center font-sans">
                 <span>Tempo restante:</span>
@@ -1118,7 +1176,7 @@ export default function CodingPractice({
 
             <button 
               onClick={() => { setPausado(false); resetFoco(); }}
-              className="w-full bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-black text-xs uppercase tracking-widest py-3.5 rounded-xl transition-all shadow-md active:scale-95 cursor-pointer border-none"
+              className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-black text-xs uppercase tracking-widest py-3.5 rounded-xl transition-all shadow-lg hover:brightness-110 active:scale-95 cursor-pointer border-none"
             >
               Retomar Desafio
             </button>
@@ -1138,15 +1196,17 @@ export default function CodingPractice({
             <motion.div
               initial={{ scale: 0.95, y: 15 }}
               animate={{ scale: 1, y: 0 }}
-              className="glass-panel-heavy w-full max-w-md p-6 text-center text-white border border-white/10 rounded-3xl shadow-2xl bg-slate-900"
+              className="glass-panel-heavy w-full max-w-md p-6 text-center text-white border border-slate-800 rounded-3xl shadow-2xl bg-slate-900 relative overflow-hidden"
             >
+              {/* Linha Neon Superior */}
+              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+
               <span className="text-5xl block mb-3 animate-bounce">🏆</span>
-              <h3 className="font-display font-black text-xl md:text-2xl uppercase tracking-wider text-emerald-400 mb-2">Desafio Concluído!</h3>
-              <p className="text-xs text-slate-400 mb-5 leading-relaxed font-sans">Você digitou o Mini Projeto com precisão cirúrgica de sintaxe e indentação!</p>
+              <h3 className="font-display font-black text-xl md:text-2xl uppercase tracking-wider text-emerald-450 mb-2">Desafio Concluído!</h3>
+              <p className="text-xs text-slate-400 mb-5 leading-relaxed font-sans">Você digitou o Mini Projeto com precisão de sintaxe e indentação!</p>
 
               {/* Box de Pontuação */}
               {(() => {
-                const totalSecondsAllowed = timeLimitMinutes * 60;
                 const timeTakenSeconds = secondsRemaining > 0 
                   ? totalSecondsAllowed - secondsRemaining 
                   : totalSecondsAllowed + extraSecondsUsed;
@@ -1177,7 +1237,7 @@ export default function CodingPractice({
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={handleCopy}
-                  className="cursor-pointer w-full bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold py-3 rounded-xl border border-slate-700 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
+                  className="cursor-pointer w-full bg-slate-800 hover:bg-slate-750 text-slate-200 font-bold py-3 rounded-xl border border-slate-700/50 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
                 >
                   📋 Copiar Código Resolvido
                 </motion.button>
@@ -1187,7 +1247,7 @@ export default function CodingPractice({
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => window.open(missaoAberta.linkClassroom, "_blank")}
-                    className="cursor-pointer w-full bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-black py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider border-none"
+                    className="cursor-pointer w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-black py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider border-none"
                   >
                     🚀 Abrir Editor da Aula ({missaoAberta.linkClassroom.includes("codepen") ? "CodePen" : "Plataforma"})
                   </motion.button>
@@ -1199,7 +1259,7 @@ export default function CodingPractice({
                   <button
                     onClick={onClose}
                     disabled={enviando}
-                    className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer border-none"
+                    className="flex-1 bg-slate-800 hover:bg-slate-750 text-slate-400 font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer border-none"
                   >
                     Fechar
                   </button>

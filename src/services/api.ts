@@ -34,7 +34,8 @@ async function fetchApi(payload: Record<string, unknown>) {
     const ACTIONS_TO_SYNC = [
       "salvar_atividade", "excluir_atividade", "avaliar_entrega", 
       "injetar_xp_manual", "atualizar_senha_checkin", "toggle_modo_reposicao",
-      "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote"
+      "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote",
+      "justificar_falta"
     ];
     if (result.status === "sucesso" && ACTIONS_TO_SYNC.includes(String(payload.action))) {
       let idAtiv = (result.idAtividade || payload.idAtividadeEdit || payload.id) as string | undefined;

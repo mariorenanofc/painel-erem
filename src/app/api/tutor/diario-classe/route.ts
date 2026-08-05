@@ -25,6 +25,7 @@ export async function GET(request: Request) {
         status: string;
         justificativa: string;
         xp: number;
+        idFalta?: string;
       }>;
     }
 
@@ -102,7 +103,8 @@ export async function GET(request: Request) {
           alunosMap[mat].frequencia[dataFormatada] = {
             status: statusMapeado,
             justificativa: f.justificativa || "",
-            xp: f.xpGanho !== undefined ? f.xpGanho : 10
+            xp: f.xpGanho !== undefined ? f.xpGanho : 10,
+            idFalta: f.id || doc.id
           };
         }
       }

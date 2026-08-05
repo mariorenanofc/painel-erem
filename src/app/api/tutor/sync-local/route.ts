@@ -217,6 +217,51 @@ export async function POST(request: Request) {
       }
     }
 
+    else if (action === "justificar_falta") {
+      const { matricula, data, justificativa, idFalta } = body;
+      const mat = String(matricula).trim();
+      const dataIso = String(data).trim();
+      const reason = String(justificativa || "").trim();
+
+      if (mat && dataIso) {
+        const partes = dataIso.split("-");
+        if (partes.length === 3) {
+          const dia = partes[2];
+          const mes = partes[1];
+          const ano = partes[0];
+          const dataBR = `${dia}/${mes}/${ano}`;
+          const docId = `${dia}-${mes}-${ano}_${mat}`;
+
+          const finalIdFalta = idFalta ? String(idFalta).trim() : `FALTA-${Date.now()}`;
+
+          const alunoRef = dbAdmin.collection("alunos").doc(mat);
+          const alunoDoc = await alunoRef.get();
+          const freshAluno = alunoDoc.exists ? alunoDoc.data() : null;
+          const nomeAluno = freshAluno ? String(freshAluno.nome || "Aluno") : "Aluno";
+          const turmaDoAluno = freshAluno ? String(freshAluno.turmaTrilha || freshAluno.turma || "Todas").trim() : "Todas";
+
+          const docTimestamp = new Date(Number(ano), Number(mes) - 1, Number(dia), 12, 0, 0).getTime();
+
+          const freqRef = dbAdmin.collection("frequencia").doc(docId);
+          await freqRef.set({
+            id: finalIdFalta,
+            matricula: mat,
+            nome: nomeAluno,
+            data: dataBR,
+            hora: "00:00:00",
+            status: "Justificada",
+            xpGanho: 0,
+            justificativa: reason,
+            turma: turmaDoAluno,
+            timestamp: docTimestamp
+          }, { merge: true });
+
+          invalidatePortalCache(mat);
+          invalidateRankingCache();
+        }
+      }
+    }
+
     return NextResponse.json({ status: "sucesso" });
   } catch (error: unknown) {
     const err = error as Error;

@@ -202,6 +202,10 @@ export async function GET(request: Request) {
     total,
     page,
     limit
+  }, {
+    headers: {
+      "Cache-Control": "no-store, max-age=0, must-revalidate"
+    }
   });
 }
 

@@ -90,7 +90,7 @@ export async function GET(request: Request) {
     console.log(`[Cache Hit] Portal do aluno ${matricula}`);
     return NextResponse.json(cachedData, {
       headers: {
-        "Cache-Control": "s-maxage=60, stale-while-revalidate=300"
+        "Cache-Control": "no-store, max-age=0, must-revalidate"
       }
     });
   }
@@ -408,7 +408,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(dadosRetorno, {
       headers: {
-        "Cache-Control": nocache ? "no-store, max-age=0, must-revalidate" : "s-maxage=60, stale-while-revalidate=300"
+        "Cache-Control": "no-store, max-age=0, must-revalidate"
       }
     });
   } catch (error: unknown) {

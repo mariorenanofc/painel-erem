@@ -40,7 +40,11 @@ export async function GET(request: Request) {
       telefoneResponsavel: val.telefoneResponsavel || ""
     };
 
-    return NextResponse.json({ status: "sucesso", perfil });
+    return NextResponse.json({ status: "sucesso", perfil }, {
+      headers: {
+        "Cache-Control": "no-store, max-age=0, must-revalidate"
+      }
+    });
   } catch (error: unknown) {
     const err = error as Error;
     // 🛡️ REGRAS DE FAILOVER PARA GOOGLE SHEETS
@@ -54,7 +58,11 @@ export async function GET(request: Request) {
           body: JSON.stringify({ action: "buscar_perfil_aluno", matricula }),
         });
         const data = await response.json();
-        return NextResponse.json(data);
+        return NextResponse.json(data, {
+          headers: {
+            "Cache-Control": "no-store, max-age=0, must-revalidate"
+          }
+        });
       } catch (sheetsErr: unknown) {
         const sErr = sheetsErr as Error;
         return NextResponse.json({ error: "Erro crítico em ambos os bancos: " + sErr.message }, { status: 500 });

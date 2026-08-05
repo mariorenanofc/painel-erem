@@ -243,7 +243,8 @@ function playSynthesizedSound(type: "correct" | "error", muted: boolean) {
       osc.start(ctx.currentTime);
       osc.stop(ctx.currentTime + 0.13);
     }
-  } catch (err) {
+  } catch (error: unknown) {
+    const err = error as Error;
     console.error("Synthesizer sound blocked or unsupported", err);
   }
 }
@@ -331,14 +332,15 @@ export default function CodingPractice({
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed.iniciado && parsed.currentIndex > 0) {
+        if (parsed.iniciado && parsed.codeLength === targetCode.length && parsed.currentIndex > 0) {
           setHasSavedProgress(true);
         }
-      } catch (e) {
+      } catch (error: unknown) {
+        const e = error as Error;
         console.error(e);
       }
     }
-  }, [missaoAberta.id]);
+  }, [missaoAberta.id, targetCode.length]);
 
   // Efeito para salvar progresso dinamicamente
   useEffect(() => {
@@ -349,10 +351,11 @@ export default function CodingPractice({
       errorsCount,
       secondsRemaining,
       extraSecondsUsed,
-      iniciado: true
+      iniciado: true,
+      codeLength: targetCode.length
     };
     localStorage.setItem(saveKey, JSON.stringify(state));
-  }, [currentIndex, errorsCount, secondsRemaining, extraSecondsUsed, iniciado, completed, pausado, missaoAberta.id]);
+  }, [currentIndex, errorsCount, secondsRemaining, extraSecondsUsed, iniciado, completed, pausado, missaoAberta.id, targetCode.length]);
 
   // Efeito para limpar localStorage na conclusão
   useEffect(() => {
@@ -787,12 +790,16 @@ export default function CodingPractice({
                     if (saved) {
                       try {
                         const parsed = JSON.parse(saved);
-                        if (parsed.currentIndex !== undefined) setCurrentIndex(parsed.currentIndex);
-                        if (parsed.errorsCount !== undefined) setErrorsCount(parsed.errorsCount);
-                        if (parsed.secondsRemaining !== undefined) setSecondsRemaining(parsed.secondsRemaining);
-                        if (parsed.extraSecondsUsed !== undefined) setExtraSecondsUsed(parsed.extraSecondsUsed);
+                        if (parsed.currentIndex !== undefined && parsed.codeLength === targetCode.length) {
+                          setCurrentIndex(parsed.currentIndex);
+                          if (parsed.errorsCount !== undefined) setErrorsCount(parsed.errorsCount);
+                          if (parsed.secondsRemaining !== undefined) setSecondsRemaining(parsed.secondsRemaining);
+                          if (parsed.extraSecondsUsed !== undefined) setExtraSecondsUsed(parsed.extraSecondsUsed);
+                        }
                         setIniciado(true);
-                      } catch (e) {
+                      } catch (error: unknown) {
+                        const e = error as Error;
+                        console.error(e);
                         setIniciado(true);
                       }
                     } else {

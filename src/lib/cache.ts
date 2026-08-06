@@ -7,6 +7,8 @@ let configCache: { data: unknown; timestamp: number } | null = null;
 let globalAtividadesCache: { data: unknown; timestamp: number } | null = null;
 const globalClassDatesCache: Record<string, { data: unknown; timestamp: number }> = {};
 let globalModulosCache: { data: unknown; timestamp: number } | null = null;
+export const tutorAtividadesCache: Record<string, { data: unknown; timestamp: number }> = {};
+let aniversariantesCache: { dateKey: string; data: unknown; timestamp: number } | null = null;
 
 export function getCachedPortal(matricula: string): unknown | null {
   const cached = portalCache[matricula.trim()];
@@ -95,12 +97,53 @@ export function setCachedModulos(data: unknown) {
   };
 }
 
+export function getCachedTutorAtividades(filtroTurma: string, filtroTipo: string): unknown | null {
+  const cached = tutorAtividadesCache[`${filtroTurma}|${filtroTipo}`];
+  if (cached && Date.now() - cached.timestamp < 300000) { // 5 minutos
+    return cached.data;
+  }
+  return null;
+}
+
+export function setCachedTutorAtividades(filtroTurma: string, filtroTipo: string, data: unknown) {
+  tutorAtividadesCache[`${filtroTurma}|${filtroTipo}`] = {
+    data,
+    timestamp: Date.now()
+  };
+}
+
+export function invalidateTutorAtividadesCache() {
+  Object.keys(tutorAtividadesCache).forEach(k => {
+    delete tutorAtividadesCache[k];
+  });
+}
+
 export function invalidateConfigCache() {
   configCache = null;
 }
 
+export function getCachedAniversariantes(dateKey: string): unknown | null {
+  if (aniversariantesCache && aniversariantesCache.dateKey === dateKey && Date.now() - aniversariantesCache.timestamp < 43200000) { // 12 horas
+    return aniversariantesCache.data;
+  }
+  return null;
+}
+
+export function setCachedAniversariantes(dateKey: string, data: unknown) {
+  aniversariantesCache = {
+    dateKey,
+    data,
+    timestamp: Date.now()
+  };
+}
+
+export function invalidateAniversariantesCache() {
+  aniversariantesCache = null;
+}
+
 export function invalidatePortalCache(matricula: string) {
   delete portalCache[matricula.trim()];
+  invalidateTutorAtividadesCache();
 }
 
 export function invalidateRankingCache() {
@@ -117,6 +160,8 @@ export function clearAllPortalCaches() {
   // Limpa caches globais compartilhados
   globalAtividadesCache = null;
   globalModulosCache = null;
+  invalidateTutorAtividadesCache();
+  invalidateAniversariantesCache();
   Object.keys(globalClassDatesCache).forEach(k => {
     delete globalClassDatesCache[k];
   });

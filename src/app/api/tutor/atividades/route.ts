@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
+import { getCachedTutorAtividades, setCachedTutorAtividades } from "@/src/lib/cache";
 
 interface TutorAtividade {
   id: string;
@@ -42,6 +43,17 @@ export async function GET(request: Request) {
   const filtroTurma = searchParams.get("filtroTurma") || "Todas";
   const filtroTipo = searchParams.get("filtroTipo") || "Todos";
   const nocache = searchParams.get("nocache") === "true";
+
+  if (!nocache) {
+    const cached = getCachedTutorAtividades(filtroTurma, filtroTipo);
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          "Cache-Control": "no-store, max-age=0, must-revalidate"
+        }
+      });
+    }
+  }
 
   try {
     // 1. Buscar Atividades
@@ -126,11 +138,17 @@ export async function GET(request: Request) {
       });
     });
 
-    return NextResponse.json({
+    const result = {
       status: "sucesso",
       atividades,
       modulosMatriz: listaModulos
-    }, {
+    };
+
+    if (!nocache) {
+      setCachedTutorAtividades(filtroTurma, filtroTipo, result);
+    }
+
+    return NextResponse.json(result, {
       headers: {
         "Cache-Control": "no-store, max-age=0, must-revalidate"
       }

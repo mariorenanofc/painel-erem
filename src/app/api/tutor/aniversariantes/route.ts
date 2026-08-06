@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
+import { getCachedAniversariantes, setCachedAniversariantes } from "@/src/lib/cache";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
@@ -19,6 +20,12 @@ export async function GET() {
     const parts = formatter.formatToParts(hoje);
     const diaBuscado = parts.find(p => p.type === "day")?.value || String(hoje.getDate()).padStart(2, "0");
     const mesBuscado = parts.find(p => p.type === "month")?.value || String(hoje.getMonth() + 1).padStart(2, "0");
+
+    const dateKey = `${diaBuscado}/${mesBuscado}`;
+    const cached = getCachedAniversariantes(dateKey);
+    if (cached) {
+      return NextResponse.json(cached);
+    }
 
     const activeSnap = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
     const list: { nome: string; turma: string }[] = [];
@@ -46,7 +53,10 @@ export async function GET() {
       }
     });
 
-    return NextResponse.json({ status: "sucesso", aniversariantes: list });
+    const result = { status: "sucesso", aniversariantes: list };
+    setCachedAniversariantes(dateKey, result);
+
+    return NextResponse.json(result);
   } catch (error: unknown) {
     const err = error as Error;
     console.error(`[API Error] Erro ao buscar aniversariantes no Firestore: ${err.message}`);

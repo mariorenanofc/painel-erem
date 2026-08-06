@@ -476,26 +476,36 @@ export default function CodingPractice({
     if (completed || pausado) return;
 
     const typed = val;
-    let isMatch = typed === expectedChar;
-    let advanceCount = 1;
+    let isMatch = false;
+    let advanceCount = 0;
 
-    // Lógica inteligente para tratar dead keys (acentos e crases) e evitar bloqueios
-    if (!isMatch) {
-      // Caso 1: Aluno digitou crase dupla devido a cliques repetidos no acento (ex: "`" duplo ao digitar crase)
-      if (typed === expectedChar + expectedChar) {
+    // 1. Tenta correspondência exata para múltiplos caracteres (ex: crase + tecla não-combinável -> `c)
+    let matchCount = 0;
+    while (
+      matchCount < typed.length &&
+      currentIndex + matchCount < targetCode.length &&
+      typed[matchCount] === targetCode[currentIndex + matchCount]
+    ) {
+      matchCount++;
+    }
+
+    if (matchCount > 0) {
+      isMatch = true;
+      advanceCount = matchCount;
+    } 
+    // 2. Lógica inteligente para tratar dead keys combinadas (ex: crase + a -> à)
+    else if (typed.length === 1) {
+      if (typed === expectedChar) {
         isMatch = true;
         advanceCount = 1;
-      }
-      // Caso 2: Aluno combinou o acento morto diretamente com a próxima letra da palavra (ex: crase + O = Ò)
-      else if (deadKeyAccentDecompositions[expectedChar]) {
+      } else if (deadKeyAccentDecompositions[expectedChar]) {
         const decompMap = deadKeyAccentDecompositions[expectedChar];
         if (decompMap[typed]) {
           const baseLetter = decompMap[typed];
           const nextExpectedChar = targetCode[currentIndex + 1] || "";
-          
           if (nextExpectedChar === baseLetter) {
             isMatch = true;
-            advanceCount = 2; // Avança o acento e a letra combinada em uma jogada só!
+            advanceCount = 2; // Avança o acento e a letra combinada
           } else {
             isMatch = true;
             advanceCount = 1; // Avança apenas o acento
@@ -927,7 +937,6 @@ export default function CodingPractice({
         {/* TEXTAREA OCULTA COM POSITION FIXED (EVITA SCROLL JUMPING DO BROWSER) */}
         <textarea
           ref={inputRef}
-          value=""
           onChange={handleInput}
           onKeyDown={handleKeyDown}
           onBlur={() => setInputFoco(false)}

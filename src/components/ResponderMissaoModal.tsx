@@ -374,9 +374,34 @@ export default function ResponderMissaoModal({
                   </motion.div>
                 )}
 
-              {/* ─── CARD: Classroom Obrigatório ─── */}
-              {missaoAberta.linkClassroom &&
-                (statusAtual === "pendente" || statusAtual === "devolvida") && (
+              {/* ─── CARD: Template Base CodePen (Opcional) ─── */}
+              {missaoAberta.opcaoA && (statusAtual === "pendente" || statusAtual === "devolvida") && (
+                <motion.div
+                  initial={{ opacity: 0, y: -8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-indigo-50/80 dark:bg-indigo-900/15 border border-indigo-300/60 dark:border-indigo-700/40 p-5 rounded-2xl mb-4 shadow-sm backdrop-blur-sm transition-colors"
+                >
+                  <h3 className="text-indigo-800 dark:text-indigo-400 font-black text-sm flex items-center gap-2 mb-2">
+                    <span className="text-base">⚡</span> Template Base para Desenvolvimento!
+                  </h3>
+                  <p className="text-indigo-750 dark:text-indigo-300 text-xs font-medium mb-3 leading-relaxed">
+                    Clique no botão abaixo para abrir o projeto inicial (CodePen/IDE) onde você irá programar esta atividade.
+                  </p>
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.01 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => window.open(missaoAberta.opcaoA, "_blank")}
+                    className="cursor-pointer bg-gradient-to-r from-indigo-505 via-indigo-500 to-purple-600 text-white font-black py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider border-none w-full"
+                  >
+                    ABRIR TEMPLATE BASE (IDE) 🔗
+                  </motion.button>
+                </motion.div>
+              )}
+
+               {/* ─── CARD: Classroom Obrigatório ─── */}
+               {missaoAberta.linkClassroom &&
+                 (statusAtual === "pendente" || statusAtual === "devolvida") && (
                   <motion.div
                     initial={{ opacity: 0, y: -8 }}
                     animate={{ opacity: 1, y: 0 }}

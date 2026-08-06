@@ -461,6 +461,20 @@ export default function FormularioMissaoModal({
                     />
                   </div>
                 </div>
+                {resolucaoTyping && String(resolucaoTyping).trim() !== "" && tipo !== "Quiz" && (
+                  <div className="space-y-1 pt-2">
+                    <label className="block text-[10px] font-black text-indigo-500 dark:text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+                      <span>⚡</span> Link do Template Base (CodePen / Replit / IDE)
+                    </label>
+                    <input
+                      type="url"
+                      value={opcaoA}
+                      onChange={(e) => setOpcaoA(e.target.value)}
+                      placeholder="https://codepen.io/... (Link do projeto base onde o aluno vai colar e salvar seu código)"
+                      className="w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl p-3.5 focus:border-indigo-500 outline-none transition-all text-xs shadow-sm font-mono"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* Bento Row 6: Três campos de configurações */}

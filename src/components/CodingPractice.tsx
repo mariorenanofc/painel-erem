@@ -275,6 +275,9 @@ export default function CodingPractice({
   const [secondsRemaining, setSecondsRemaining] = useState(timeLimitMinutes * 60);
   const [extraSecondsUsed, setExtraSecondsUsed] = useState(0);
   const [inputFoco, setInputFoco] = useState(true);
+  const [codigoCopiado, setCodigoCopiado] = useState(false);
+  const [editorAberto, setEditorAberto] = useState(false);
+  const [classroomAberto, setClassroomAberto] = useState(false);
 
   // Monitor de Altura da Janela para Layouts Responsivos Integrados
   const [windowHeight, setWindowHeight] = useState(800);
@@ -659,6 +662,7 @@ export default function CodingPractice({
   // Copiar código concluído
   const handleCopy = () => {
     navigator.clipboard.writeText(targetCode);
+    setCodigoCopiado(true);
     alert("Código copiado com sucesso! Prontinho para colar na sua plataforma.");
   };
 
@@ -1335,46 +1339,112 @@ export default function CodingPractice({
                 );
               })()}
 
-              {/* Botões de Ação */}
-              <div className="flex flex-col gap-3 font-sans">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={handleCopy}
-                  className="cursor-pointer w-full bg-slate-800 hover:bg-slate-750 text-slate-205 font-bold py-3 rounded-xl border border-slate-700/50 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
-                >
-                  📋 Copiar Código Resolvido
-                </motion.button>
+              {/* Box de Instruções Progressivas de Entrega */}
+              <div className="bg-slate-800/80 border border-slate-700/60 p-5 rounded-2xl mb-6 text-left space-y-4">
+                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider block text-center mb-1">
+                  📋 Guia de Entrega Obrigatório
+                </span>
 
-                {missaoAberta.linkClassroom && (
+                {/* Passo 1: Copiar Código */}
+                <div className="flex items-center gap-3">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${codigoCopiado ? "bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`}>
+                    {codigoCopiado ? "✔" : "1"}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-black text-white">Copiar código resolvido</p>
+                    <p className="text-[10px] text-slate-400 font-medium">Copie sua digitação para a área de transferência.</p>
+                  </div>
                   <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => window.open(missaoAberta.linkClassroom, "_blank")}
-                    className="cursor-pointer w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-black py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider border-none"
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={handleCopy}
+                    className={`cursor-pointer px-3.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border-none ${codigoCopiado ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" : "bg-gradient-to-r from-blue-500 to-indigo-500 text-white"}`}
                   >
-                    🚀 Abrir Editor da Aula ({missaoAberta.linkClassroom.includes("codepen") ? "CodePen" : "Plataforma"})
+                    {codigoCopiado ? "Copiado!" : "Copiar"}
                   </motion.button>
+                </div>
+
+                {/* Passo 2: Colar no CodePen/IDE (se houver) */}
+                {missaoAberta.opcaoA && (
+                  <div className={`flex items-center gap-3 transition-opacity duration-300 ${codigoCopiado ? "opacity-100" : "opacity-40"}`}>
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${editorAberto ? "bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`}>
+                      {editorAberto ? "✔" : "2"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-black text-white">Praticar no CodePen / IDE</p>
+                      <p className="text-[10px] text-slate-400 font-medium">Cole o código no template base para ver funcionar.</p>
+                    </div>
+                    <motion.button
+                      whileHover={codigoCopiado ? { scale: 1.05 } : {}}
+                      whileTap={codigoCopiado ? { scale: 0.95 } : {}}
+                      disabled={!codigoCopiado}
+                      onClick={() => {
+                        window.open(missaoAberta.opcaoA, "_blank");
+                        setEditorAberto(true);
+                      }}
+                      className={`cursor-pointer px-3.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border-none ${editorAberto ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" : "bg-gradient-to-r from-indigo-500 to-purple-500 text-white disabled:bg-slate-800 disabled:text-slate-500"}`}
+                    >
+                      {editorAberto ? "Aberto!" : "Abrir"}
+                    </motion.button>
+                  </div>
                 )}
 
-                <div className="h-px bg-slate-800 my-2" />
+                {/* Passo 3: Entregar no Google Classroom (se houver) */}
+                {missaoAberta.linkClassroom && (
+                  <div className={`flex items-center gap-3 transition-opacity duration-300 ${
+                    codigoCopiado && (!missaoAberta.opcaoA || editorAberto) ? "opacity-100" : "opacity-40"
+                  }`}>
+                    <div className={`w-6 h-6 rounded-full flex items-center justify-center font-black text-xs shrink-0 ${classroomAberto ? "bg-emerald-500 text-white" : "bg-slate-700 text-slate-400"}`}>
+                      {classroomAberto ? "✔" : missaoAberta.opcaoA ? "3" : "2"}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-black text-white">Anexar e enviar no Classroom</p>
+                      <p className="text-[10px] text-slate-400 font-medium">Entre na tarefa e anexe o link do seu projeto.</p>
+                    </div>
+                    <motion.button
+                      whileHover={codigoCopiado && (!missaoAberta.opcaoA || editorAberto) ? { scale: 1.05 } : {}}
+                      whileTap={codigoCopiado && (!missaoAberta.opcaoA || editorAberto) ? { scale: 0.95 } : {}}
+                      disabled={!codigoCopiado || (!!missaoAberta.opcaoA && !editorAberto)}
+                      onClick={() => {
+                        window.open(missaoAberta.linkClassroom, "_blank");
+                        setClassroomAberto(true);
+                      }}
+                      className={`cursor-pointer px-3.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all border-none ${classroomAberto ? "bg-emerald-500/15 text-emerald-400 border border-emerald-500/20" : "bg-gradient-to-r from-pink-500 to-rose-500 text-white disabled:bg-slate-800 disabled:text-slate-500"}`}
+                    >
+                      {classroomAberto ? "Aberto!" : "Entregar"}
+                    </motion.button>
+                  </div>
+                )}
+              </div>
 
-                <div className="flex gap-2">
-                  <button
-                    onClick={onClose}
-                    disabled={enviando}
-                    className="flex-1 bg-slate-800 hover:bg-slate-750 text-slate-400 font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer border-none"
-                  >
-                    Fechar
-                  </button>
-                  <button
-                    onClick={handleFinalizar}
-                    disabled={enviando}
-                    className="flex-2 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-black py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg shadow-emerald-500/10 cursor-pointer border-none"
-                  >
-                    {enviando ? "Processando..." : "Resgatar XP Recompensa"}
-                  </button>
-                </div>
+              {/* Botões de Ação Finais */}
+              <div className="flex gap-3 font-sans">
+                <button
+                  onClick={onClose}
+                  disabled={enviando}
+                  className="flex-1 bg-slate-800 hover:bg-slate-750 text-slate-400 font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer border-none"
+                >
+                  Fechar
+                </button>
+                {(() => {
+                  const passosConcluidos = codigoCopiado && 
+                    (!missaoAberta.opcaoA || editorAberto) && 
+                    (!missaoAberta.linkClassroom || classroomAberto);
+
+                  return (
+                    <button
+                      onClick={handleFinalizar}
+                      disabled={enviando || !passosConcluidos}
+                      className={`flex-2 font-black py-3 rounded-xl text-xs uppercase tracking-wider transition-all shadow-lg border-none ${
+                        passosConcluidos 
+                          ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white shadow-emerald-500/20 cursor-pointer" 
+                          : "bg-slate-800 text-slate-500 cursor-not-allowed opacity-55 shadow-none"
+                      }`}
+                    >
+                      {enviando ? "Processando..." : "Resgatar XP Recompensa"}
+                    </button>
+                  );
+                })()}
               </div>
             </motion.div>
           </motion.div>

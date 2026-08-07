@@ -148,13 +148,13 @@ export default function JogosLayout({
     handlePlaySound("click");
   };
 
-  // Marca d'água diagonal repetida sutil (com nome e matrícula) para inibir prints de colas
+  // Marca d'água diagonal repetida nítida (com nome e matrícula) para impedir prints de colas
   const renderWatermark = () => {
     const watermarkText = `${aluno.nome.split(" ")[0]} - ${aluno.matricula}`;
     return (
-      <div className="absolute inset-0 grid grid-cols-3 grid-rows-6 gap-4 overflow-hidden pointer-events-none select-none opacity-[0.025] z-[9999]">
-        {Array.from({ length: 18 }).map((_, i) => (
-          <div key={i} className="flex items-center justify-center text-[10px] sm:text-xs font-mono text-white transform -rotate-30 whitespace-nowrap">
+      <div className="absolute inset-0 grid grid-cols-4 grid-rows-8 gap-x-2 gap-y-8 overflow-hidden pointer-events-none select-none opacity-[0.09] z-[9999]">
+        {Array.from({ length: 32 }).map((_, i) => (
+          <div key={i} className="flex items-center justify-center text-xs sm:text-sm font-mono font-black text-white transform -rotate-30 whitespace-nowrap">
             {watermarkText}
           </div>
         ))}
@@ -163,7 +163,7 @@ export default function JogosLayout({
   };
 
   return (
-    <div className="relative w-full min-h-[500px] flex flex-col bg-slate-950/70 border border-slate-800/80 rounded-2xl p-4 sm:p-6 backdrop-blur-xl overflow-hidden shadow-2xl">
+    <div className="relative w-full min-h-[500px] flex flex-col bg-slate-950/95 border border-slate-800/80 rounded-2xl p-4 sm:p-6 backdrop-blur-2xl overflow-hidden shadow-2xl">
       {renderWatermark()}
       
       {/* Cabeçalho do Contêiner */}

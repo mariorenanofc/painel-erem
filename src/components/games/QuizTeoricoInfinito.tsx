@@ -107,7 +107,7 @@ export default function QuizTeoricoInfinito({
       {/* Caixa da Pergunta */}
       <div className="flex-1 flex flex-col bg-slate-900 border border-slate-800 rounded-2xl mb-6 shadow-inner p-6 justify-center text-center min-h-[140px]">
         <h2 className="text-lg sm:text-xl font-bold text-white leading-relaxed">
-          {currentQ.question}
+          {currentQ.question.replace(/\s*\(Var \d+\)/, '')}
         </h2>
       </div>
 

@@ -21,7 +21,6 @@ function generateBugQuestion(): BugQuestion {
   const nums = [5, 10, 15, 20, 30, 40, 50];
 
   const v1 = varNames[Math.floor(Math.random() * varNames.length)];
-  const v2 = varNames[(varNames.indexOf(v1) + 1) % varNames.length];
   const s1 = strVals[Math.floor(Math.random() * strVals.length)];
   const n1 = nums[Math.floor(Math.random() * nums.length)];
   const n2 = nums[(nums.indexOf(n1) + 1) % nums.length];
@@ -138,7 +137,7 @@ export default function JSBugHunter({
     setFeedbackMsg("");
     setSelectedLine(null);
     setIsPlaying(true);
-    startTimeRef.current = Date.now();
+    startTimeRef.current = new Date().getTime();
   };
 
   const handleLineClick = (lineIdx: number) => {
@@ -167,7 +166,7 @@ export default function JSBugHunter({
         setCurrentIndex((prev) => prev + 1);
       } else {
         // Concluiu todas as 5
-        const duration = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000));
+        const duration = Math.max(1, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
         const finalScore = score + (isCorrect ? 1000 : 0);
         onGameOver(finalScore, duration);
       }

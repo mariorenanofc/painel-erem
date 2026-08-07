@@ -79,8 +79,11 @@ export default function JogosLayout({
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [soundEnabled, setSoundEnabled] = useState(true);
-  
-  const tempoInicioRef = useRef<number>(Date.now());
+  const tempoInicioRef = useRef<number>(0);
+
+  useEffect(() => {
+    tempoInicioRef.current = Date.now();
+  }, []);
 
   // 1. Bloquear copiar, colar, cortar e menu de contexto (Botão direito)
   useEffect(() => {
@@ -147,13 +150,14 @@ export default function JogosLayout({
     handlePlaySound("click");
   };
 
-  // Marca d'água diagonal repetida visível sem transparência (z-0 para ficar atrás do conteúdo interativo)
+  // Marca d'água visível, porém ajustada para não quebrar a leitura
+  // (Navegadores não permitem detectar prints nativos como Win+Shift+S ou prints de celular)
   const renderWatermark = () => {
     const watermarkText = `${aluno.nome.split(" ")[0]} - ${aluno.matricula}`;
     return (
-      <div className="absolute inset-0 grid grid-cols-4 grid-rows-8 gap-x-2 gap-y-12 overflow-hidden pointer-events-none select-none z-0">
-        {Array.from({ length: 32 }).map((_, i) => (
-          <div key={i} className="flex items-center justify-center text-lg sm:text-2xl font-mono font-black text-white transform -rotate-30 whitespace-nowrap">
+      <div className="absolute inset-0 grid grid-cols-3 grid-rows-6 gap-x-2 gap-y-16 overflow-hidden pointer-events-none select-none z-0 opacity-15">
+        {Array.from({ length: 18 }).map((_, i) => (
+          <div key={i} className="flex items-center justify-center text-3xl sm:text-4xl font-mono font-black text-white transform -rotate-30 whitespace-nowrap">
             {watermarkText}
           </div>
         ))}
@@ -162,7 +166,7 @@ export default function JogosLayout({
   };
 
   return (
-    <div className="relative w-full min-h-[500px] flex flex-col bg-slate-950/95 border border-slate-800/80 rounded-2xl p-4 sm:p-6 backdrop-blur-2xl overflow-hidden shadow-2xl">
+    <div className="relative w-full min-h-[500px] flex flex-col bg-slate-950/95 border border-slate-800/80 rounded-2xl p-4 sm:p-6 overflow-hidden shadow-2xl">
       {renderWatermark()}
       
       {/* Cabeçalho do Contêiner */}

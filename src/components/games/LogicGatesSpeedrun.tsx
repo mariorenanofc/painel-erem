@@ -83,7 +83,7 @@ export default function LogicGatesSpeedrun({
     setTimeRemaining(40);
     setIsPlaying(true);
     
-    startTimeRef.current = Date.now();
+    startTimeRef.current = new Date().getTime();
 
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
@@ -99,7 +99,7 @@ export default function LogicGatesSpeedrun({
 
   const handleTimeUp = () => {
     if (timerRef.current) clearInterval(timerRef.current);
-    const duration = Math.min(40, Math.round((Date.now() - startTimeRef.current) / 1000));
+    const duration = Math.min(40, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
     onGameOver(score, duration);
   };
 
@@ -119,7 +119,7 @@ export default function LogicGatesSpeedrun({
     } else {
       // Concluiu as 10 perguntas
       if (timerRef.current) clearInterval(timerRef.current);
-      const duration = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000));
+      const duration = Math.max(1, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
       const finalScore = score + (isCorrect ? 1000 : 0);
       onGameOver(finalScore, duration);
     }

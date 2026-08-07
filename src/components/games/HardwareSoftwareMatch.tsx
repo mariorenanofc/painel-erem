@@ -95,7 +95,7 @@ export default function HardwareSoftwareMatch({
     setCurrentIndex(0);
     setScore(0);
     setIsPlaying(true);
-    startTimeRef.current = Date.now();
+    startTimeRef.current = new Date().getTime();
   };
 
   const handleCategorySelect = (category: typeof ITEMS[0]["category"]) => {
@@ -113,7 +113,7 @@ export default function HardwareSoftwareMatch({
       setCurrentIndex((prev) => prev + 1);
     } else {
       // Concluiu os 10 itens
-      const duration = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000));
+      const duration = Math.max(1, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
       const finalScore = score + (isCorrect ? 1000 : 0);
       onGameOver(finalScore, duration);
     }

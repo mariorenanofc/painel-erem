@@ -60,7 +60,7 @@ export default function HTMLStructurer({
     setIsPlaying(true);
     
     setupQuestion(questions[0]);
-    startTimeRef.current = Date.now();
+    startTimeRef.current = new Date().getTime();
   };
 
   const setupQuestion = (q: StructQuestion) => {
@@ -114,7 +114,7 @@ export default function HTMLStructurer({
         setCurrentIndex(nextIdx);
         setupQuestion(shuffledQuestions[nextIdx]);
       } else {
-        const duration = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000));
+        const duration = Math.max(1, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
         const finalScore = score + (isCorrect ? 1500 : 0);
         onGameOver(finalScore, duration);
       }

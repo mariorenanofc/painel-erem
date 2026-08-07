@@ -17,6 +17,7 @@ import OutputPredictor from "./games/OutputPredictor";
 import HTMLStructurer from "./games/HTMLStructurer";
 import FlexAlignMaster from "./games/FlexAlignMaster";
 import ArrayOperations from "./games/ArrayOperations";
+import QuizTeoricoInfinito from "./games/QuizTeoricoInfinito";
 
 interface JogosModalProps {
   isOpen: boolean;
@@ -118,6 +119,14 @@ const GAMES: GameDefinition[] = [
     emoji: "📦",
     color: "from-violet-600 to-purple-650 border-violet-500/20",
     component: ArrayOperations
+  },
+  {
+    id: "QuizTeoricoInfinito",
+    title: "Quiz Teórico Infinito",
+    description: "Mais de 1.000 questões de Hardware, Software, Algoritmos, JS, Python, HTML e CSS.",
+    emoji: "🧠",
+    color: "from-fuchsia-600 to-purple-600 border-fuchsia-500/20",
+    component: QuizTeoricoInfinito
   }
 ];
 

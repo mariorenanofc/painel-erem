@@ -52,7 +52,7 @@ export default function CodingSpeedrun({
     setErrorsCount(0);
     setIsPlaying(true);
     
-    startTimeRef.current = Date.now();
+    startTimeRef.current = new Date().getTime();
     
     if (timerRef.current) clearInterval(timerRef.current);
     
@@ -73,7 +73,7 @@ export default function CodingSpeedrun({
 
   const handleTimeUp = () => {
     if (timerRef.current) clearInterval(timerRef.current);
-    const duration = Math.min(60, Math.round((Date.now() - startTimeRef.current) / 1000));
+    const duration = Math.min(60, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
     
     // Calcular pontuação final
     const accuracy = totalKeysTyped > 0 ? Math.max(0, (totalKeysTyped - errorsCount) / totalKeysTyped) : 0;
@@ -111,7 +111,7 @@ export default function CodingSpeedrun({
       } else {
         // Concluiu todos os 5 snippets
         if (timerRef.current) clearInterval(timerRef.current);
-        const duration = Math.max(1, Math.round((Date.now() - startTimeRef.current) / 1000));
+        const duration = Math.max(1, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
         
         const accuracy = totalKeysTyped > 0 ? Math.max(0, (totalKeysTyped - errorsCount) / totalKeysTyped) : 1;
         const finalScore = Math.round(totalKeysTyped * 15 * accuracy) + 1000; // bônus de conclusão

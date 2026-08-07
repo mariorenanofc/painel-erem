@@ -10,7 +10,7 @@ import { Volume2, VolumeX, X, Trophy, RefreshCw, Zap, Shield } from "lucide-reac
 export function playChiptuneSound(type: "click" | "success" | "error") {
   if (typeof window === "undefined") return;
   try {
-    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    const AudioCtx = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
     if (!AudioCtx) return;
     
     const ctx = new AudioCtx();
@@ -44,8 +44,10 @@ export function playChiptuneSound(type: "click" | "success" | "error") {
       osc.start();
       osc.stop(ctx.currentTime + 0.35);
     }
-  } catch (e) {
+  } catch (error: unknown) {
     // Evita crashes por bloqueio de autoplay do navegador
+    const err = error as Error;
+    console.debug("[playChiptuneSound error]", err.message);
   }
 }
 
@@ -74,7 +76,6 @@ export default function JogosLayout({
   const [gameState, setGameState] = useState<"playing" | "gameover">("playing");
   const [score, setScore] = useState(0);
   const [xpGanho, setXpGanho] = useState(0);
-  const [duration, setDuration] = useState(0);
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [soundEnabled, setSoundEnabled] = useState(true);
@@ -106,7 +107,6 @@ export default function JogosLayout({
 
   const handleGameOver = async (finalScore: number, durationSeconds: number) => {
     setScore(finalScore);
-    setDuration(durationSeconds);
     setGameState("gameover");
     handlePlaySound("success");
     
@@ -143,7 +143,6 @@ export default function JogosLayout({
     setGameState("playing");
     setScore(0);
     setXpGanho(0);
-    setDuration(0);
     setSaveMessage("");
     handlePlaySound("click");
   };

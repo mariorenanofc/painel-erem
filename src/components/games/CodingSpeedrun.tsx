@@ -13,18 +13,13 @@ const SNIPPETS = [
   { code: 'print("Ola, Estudante")', lang: "Python" },
   { code: "if nota >= 6:", lang: "Python" },
   { code: 'lista.append("item")', lang: "Python" },
-  { code: 'dicionario.get("chave")', lang: "Python" },
-  { code: "for i in range(10):", lang: "Python" },
-  { code: '<h1>Erem Painel</h1>', lang: "HTML" },
-  { code: '<a href="link">Clique aqui</a>', lang: "HTML" },
-  { code: '<img src="foto.png" alt="imagem" />', lang: "HTML" },
-  { code: '<input type="text" required />', lang: "HTML" },
-  { code: "<ul><li>Item</li></ul>", lang: "HTML" },
-  { code: "let total = 100;", lang: "JavaScript" },
-  { code: 'const el = document.getElementById("alvo");', lang: "JavaScript" },
-  { code: 'el.addEventListener("click", rodar);', lang: "JavaScript" },
-  { code: "const func = () => console.log(5);", lang: "JavaScript" },
-  { code: "if (status === 'sucesso') { }", lang: "JavaScript" }
+  { code: "for i in range(5):", lang: "Python" },
+  { code: "const total = 10;", lang: "JavaScript" },
+  { code: 'document.getElementById("btn")', lang: "JavaScript" },
+  { code: "let ativo = true;", lang: "JavaScript" },
+  { code: "def somar(a, b):", lang: "Python" },
+  { code: "class Aluno:", lang: "Python" },
+  { code: "const [x, setX] = useState(0);", lang: "JavaScript" }
 ];
 
 export default function CodingSpeedrun({
@@ -40,7 +35,7 @@ export default function CodingSpeedrun({
   const [errorsCount, setErrorsCount] = useState(0);
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   // Iniciar jogo e selecionar 5 códigos aleatórios

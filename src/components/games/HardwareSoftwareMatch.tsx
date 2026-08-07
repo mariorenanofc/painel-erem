@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Play, Sparkles, Cpu, HardDrive, Layout, Monitor } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Sparkles, Cpu, HardDrive, Layout, Monitor } from "lucide-react";
 
 interface HardwareSoftwareMatchProps {
   onGameOver: (score: number, durationSeconds: number) => void;
@@ -45,7 +45,7 @@ export default function HardwareSoftwareMatch({
   const [shuffledItems, setShuffledItems] = useState<Item[]>([]);
   const [score, setScore] = useState(0);
   
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
 
   const handleStart = () => {
     playSound("click");

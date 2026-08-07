@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Play, Sparkles, MoveRight, HelpCircle } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Sparkles, MoveRight, HelpCircle } from "lucide-react";
 
 interface AlgorithmStepBuilderProps {
   onGameOver: (score: number, durationSeconds: number) => void;
@@ -66,7 +66,7 @@ export default function AlgorithmStepBuilder({
   const [feedback, setFeedback] = useState("");
   const [validated, setValidated] = useState(false);
   
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
 
   const handleStart = () => {
     playSound("click");

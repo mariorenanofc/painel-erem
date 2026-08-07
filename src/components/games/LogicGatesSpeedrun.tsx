@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Play, Sparkles, HelpCircle } from "lucide-react";
+import { Sparkles, HelpCircle } from "lucide-react";
 
 interface LogicGatesSpeedrunProps {
   onGameOver: (score: number, durationSeconds: number) => void;
@@ -43,7 +43,7 @@ export default function LogicGatesSpeedrun({
   const [timeRemaining, setTimeRemaining] = useState(40); // 40 segundos totais
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
 
   const handleStart = () => {
     playSound("click");

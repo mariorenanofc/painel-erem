@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiAluno } from "@/src/services/api";
-import { X, Trophy, Zap, Gamepad2, BrainCircuit } from "lucide-react";
+import { X, Zap, Gamepad2, BrainCircuit } from "lucide-react";
 import JogosLayout from "./games/JogosLayout";
 
 // Importar os 10 mini-jogos
@@ -129,11 +129,9 @@ export default function JogosModal({
 }: JogosModalProps) {
   const [activeGame, setActiveGame] = useState<GameDefinition | null>(null);
   const [xpGanhoHoje, setXpGanhoHoje] = useState(0);
-  const [loadingStats, setLoadingStats] = useState(false);
 
-  const carregarProgressoXp = async () => {
+  const carregarProgressoXp = useCallback(async () => {
     if (!aluno) return;
-    setLoadingStats(true);
     try {
       const res = await apiAluno.buscarJogosStatus(aluno.matricula);
       if (res.status === "sucesso") {
@@ -141,17 +139,15 @@ export default function JogosModal({
       }
     } catch {
       console.warn("Falha ao obter status de limite de XP de jogos.");
-    } finally {
-      setLoadingStats(false);
     }
-  };
+  }, [aluno]);
 
   useEffect(() => {
     if (isOpen) {
       carregarProgressoXp();
       setActiveGame(null);
     }
-  }, [isOpen]);
+  }, [isOpen, carregarProgressoXp]);
 
   const handleGameFinished = () => {
     carregarProgressoXp();
@@ -193,7 +189,8 @@ export default function JogosModal({
                   setActiveGame(null);
                   handleGameFinished();
                 }}
-                children={(gameProps) => {
+              >
+                {(gameProps) => {
                   const GameComponent = activeGame.component;
                   return (
                     <GameComponent
@@ -205,7 +202,7 @@ export default function JogosModal({
                     />
                   );
                 }}
-              />
+              </JogosLayout>
             </div>
           ) : (
             <>

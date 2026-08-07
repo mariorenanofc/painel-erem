@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Play, Sparkles, Bug } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Sparkles, Bug } from "lucide-react";
 
 interface JSBugHunterProps {
   onGameOver: (score: number, durationSeconds: number) => void;
@@ -92,7 +92,7 @@ export default function JSBugHunter({
   const [feedbackMsg, setFeedbackMsg] = useState("");
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
   
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
 
   const handleStart = () => {
     playSound("click");

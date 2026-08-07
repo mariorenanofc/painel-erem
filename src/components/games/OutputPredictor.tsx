@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Play, Sparkles, Terminal } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Sparkles, Terminal } from "lucide-react";
 
 interface OutputPredictorProps {
   onGameOver: (score: number, durationSeconds: number) => void;
@@ -71,7 +71,7 @@ export default function OutputPredictor({
   const [currentOptions, setCurrentOptions] = useState<string[]>([]);
   const [score, setScore] = useState(0);
   
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
 
   const handleStart = () => {
     playSound("click");

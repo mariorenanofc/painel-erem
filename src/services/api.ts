@@ -1,6 +1,3 @@
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
-  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
-  : "";
 
 const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
   ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()

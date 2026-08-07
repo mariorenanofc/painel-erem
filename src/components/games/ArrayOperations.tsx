@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Play, Sparkles, HelpCircle } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Sparkles, HelpCircle } from "lucide-react";
 
 interface ArrayOperationsProps {
   onGameOver: (score: number, durationSeconds: number) => void;
@@ -79,7 +79,7 @@ export default function ArrayOperations({
   const [currentOptions, setCurrentOptions] = useState<string[]>([]);
   const [score, setScore] = useState(0);
   
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
 
   const handleStart = () => {
     playSound("click");

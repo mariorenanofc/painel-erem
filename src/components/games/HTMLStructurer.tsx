@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
-import { Play, Sparkles, Layout, HelpCircle } from "lucide-react";
+import React, { useState, useRef } from "react";
+import { Sparkles, Layout } from "lucide-react";
 
 interface HTMLStructurerProps {
   onGameOver: (score: number, durationSeconds: number) => void;
@@ -46,7 +46,7 @@ export default function HTMLStructurer({
   const [validated, setValidated] = useState(false);
   const [feedback, setFeedback] = useState("");
   
-  const startTimeRef = useRef<number>(Date.now());
+  const startTimeRef = useRef<number>(0);
 
   const handleStart = () => {
     playSound("click");

@@ -29,9 +29,11 @@ import PerfilModal from "@/src/components/PerfilModal";
 import NovaConquistaModal from "@/src/components/NovaConquistaModal";
 import NovidadesModal from "@/src/components/NovidadesModal";
 import ResponderMissaoModal from "@/src/components/ResponderMissaoModal";
+import { PerfilAtualizado } from "@/src/components/LojaRifaModal";
 import LojaRifaModal from "@/src/components/LojaRifaModal";
 import MeusBilhetesModal from "@/src/components/MeusBilhetesModal";
 import RegulamentoModal from "@/src/components/RegulamentoModal";
+import JogosModal from "@/src/components/JogosModal";
 import { apiAluno, apiGeral } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
 import ThreeInteractiveBg from "@/src/components/ThreeInteractiveBg";
@@ -135,6 +137,7 @@ export default function PortalDashboard() {
   const [modalPixAberto, setModalPixAberto] = useState(false);
   const [alvoPix, setAlvoPix] = useState<string | null>(null);
   const [rankingAberto, setRankingAberto] = useState(false);
+  const [jogosAberto, setJogosAberto] = useState(false);
 
   const VERSAO_ATUALIZACAO = "1.9.0";
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
@@ -731,7 +734,7 @@ export default function PortalDashboard() {
           enviando={enviando}
           respostaInicial={missaoAberta.respostaEnviada || ""}
           matricula={aluno.matricula}
-          onStatusAtualizado={(atividadeAtualizada, perfilAtualizado) => {
+          onStatusAtualizado={(atividadeAtualizada: Atividade, perfilAtualizado: PerfilAtualizado) => {
             setAtividades((prev) =>
               prev.map((ativ) =>
                 ativ.id === atividadeAtualizada.id
@@ -779,6 +782,15 @@ export default function PortalDashboard() {
           isOpen={modalBilhetesAberto}
           onClose={() => setModalBilhetesAberto(false)}
           matricula={aluno.matricula}
+        />
+      )}
+
+      {aluno && (
+        <JogosModal
+          isOpen={jogosAberto}
+          onClose={() => setJogosAberto(false)}
+          aluno={aluno}
+          onXpUpdate={() => carregarPortal(true)}
         />
       )}
 
@@ -868,7 +880,7 @@ export default function PortalDashboard() {
 
             {/* Container Principal dos Botões */}
             <div className="mt-8 space-y-4">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
                 <motion.a
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
@@ -917,6 +929,16 @@ export default function PortalDashboard() {
                 >
                   <span className="text-lg">🗝️</span>{" "}
                   <span className="text-xs uppercase tracking-wider">Gabaritos</span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setJogosAberto(true)}
+                  className="cursor-pointer flex items-center justify-center gap-2 bg-gradient-to-r from-purple-600 to-pink-500 hover:brightness-110 text-white font-bold py-3.5 px-4 rounded-xl shadow-md border border-purple-500/20"
+                >
+                  <span className="text-lg">🎮</span>{" "}
+                  <span className="text-xs uppercase tracking-wider">Jogos</span>
                 </motion.button>
               </div>
 

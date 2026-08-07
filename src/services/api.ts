@@ -196,6 +196,25 @@ export const apiAluno = {
     const res = await fetch(`/api/alunos/atividade-status?matricula=${matricula}&idAtividade=${idAtividade}`);
     return res.json();
   },
+
+  salvarPontuacaoJogo: async (
+    matricula: string,
+    tipoJogo: string,
+    score: number,
+    duracaoPartida: number,
+    tempoInicio: number
+  ) => {
+    const res = await fetch("/api/alunos/jogos/salvar-pontuacao", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matricula, tipoJogo, score, duracaoPartida, tempoInicio })
+    });
+    return res.json();
+  },
+  buscarJogosStatus: async (matricula: string) => {
+    const res = await fetch(`/api/alunos/jogos/status?matricula=${matricula}`);
+    return res.json();
+  },
 };
 
 // ==========================================

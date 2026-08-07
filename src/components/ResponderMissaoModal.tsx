@@ -375,7 +375,7 @@ export default function ResponderMissaoModal({
                 )}
 
               {/* ─── CARD: Template Base CodePen (Opcional) ─── */}
-              {missaoAberta.opcaoA && (statusAtual === "pendente" || statusAtual === "devolvida") && (
+              {missaoAberta.opcaoA && missaoAberta.tipo !== "Quiz" && (statusAtual === "pendente" || statusAtual === "devolvida") && (
                 <motion.div
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}

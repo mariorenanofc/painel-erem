@@ -11,51 +11,20 @@ const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
  * Centraliza os cabeçalhos, o método POST e o tratamento de erros.
  */
 async function fetchApi(payload: Record<string, unknown>) {
-  if (!GOOGLE_API_URL) {
-    console.error("URL da API do Google não configurada no .env");
-    return { status: "erro", mensagem: "URL da API não configurada." };
-  }
-
-  // Criamos um controlador de tempo limite (25 segundos)
+  // Criamos um controlador de tempo limite (35 segundos para suportar fila de espera)
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 20000);
+  const timeoutId = setTimeout(() => controller.abort(), 35000);
 
   try {
-    const response = await fetch(GOOGLE_API_URL, {
+    const response = await fetch("/api/action-proxy", {
       method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
       signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
-    const result = await response.json();
-
-    const ACTIONS_TO_SYNC = [
-      "salvar_atividade", "excluir_atividade", "avaliar_entrega", 
-      "injetar_xp_manual", "atualizar_senha_checkin", "toggle_modo_reposicao",
-      "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote",
-      "justificar_falta"
-    ];
-    if (result.status === "sucesso" && ACTIONS_TO_SYNC.includes(String(payload.action))) {
-      let idAtiv = (result.idAtividade || payload.idAtividadeEdit || payload.id) as string | undefined;
-      if (!idAtiv && result.mensagem) {
-        const match = String(result.mensagem).match(/ATIV-\d+/);
-        if (match) idAtiv = match[0];
-      }
-
-      try {
-        await fetch("/api/tutor/sync-local", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ ...payload, id: idAtiv })
-        });
-      } catch (err) {
-        console.error("Falha no sync local do tutor:", err);
-      }
-    }
-
-    return result;
+    return await response.json();
   } catch (error: unknown) {
     const err = error as Error;
     clearTimeout(timeoutId);
@@ -63,10 +32,10 @@ async function fetchApi(payload: Record<string, unknown>) {
       return {
         status: "erro",
         mensagem:
-          "O servidor demorou a responder. Sua missão pode ter sido salva; verifique a trilha.",
+          "O servidor demorou a responder devido à fila de processamento. Verifique se a ação refletiu após alguns segundos.",
       };
     }
-    return { status: "erro", mensagem: "Falha na conexão." };
+    return { status: "erro", mensagem: "Falha na conexão com o servidor." };
   }
 }
 

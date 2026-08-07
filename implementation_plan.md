@@ -25,9 +25,10 @@ Nenhuma questão em aberto encontrada. O escopo é estrito às otimizações de 
 #### [NEW] [gamificacao.ts](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/lib/gamificacao.ts)
 Criação de um utilitário centralizado para calcular o nível do aluno, progresso do próximo nível e saldo da carteira, garantindo reutilização de código entre a rota do portal e as rotas de ações de forma tipada e segura.
 
-#### [MODIFY] [cache.ts](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/lib/cache.ts)
-- Adicionar cache em memória global e getters/setters/invalidadores para `atividades` publicadas e `diasComAula` por turma.
-- Integrar a invalidação de todos os caches estáticos e globais na função `clearAllPortalCaches()`.
+#### [CONCLUÍDO] [MODIFY] [cache.ts](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/lib/cache.ts)
+- [x] Adicionar cache em memória global e getters/setters/invalidadores para `atividades` publicadas e `diasComAula` por turma.
+- [x] Integrar a invalidação de todos os caches estáticos e globais na função `clearAllPortalCaches()`.
+- [x] Aumentar a expiração dos caches principais (`portalCache`, `rankingCache`, `configCache` e `tutorAtividadesCache`) de 5/10 minutos para **12 horas** (`43200000` ms) para maximizar o reuso em memória (0 leituras Firestore) nas sessões repetidas dos alunos, aproveitando que todas as rotas de gravação e sincronização já possuem invalidação ativa (deletando do cache no momento exato da alteração).
 
 ---
 

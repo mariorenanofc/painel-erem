@@ -12,7 +12,7 @@ let aniversariantesCache: { dateKey: string; data: unknown; timestamp: number } 
 
 export function getCachedPortal(matricula: string): unknown | null {
   const cached = portalCache[matricula.trim()];
-  if (cached && Date.now() - cached.timestamp < 300000) { // 5 minutos
+  if (cached && Date.now() - cached.timestamp < 43200000) { // 12 horas (invalidação ativa nos endpoints de escrita)
     return cached.data;
   }
   return null;
@@ -27,7 +27,7 @@ export function setCachedPortal(matricula: string, data: unknown) {
 
 export function getCachedRanking(filtro: string): unknown | null {
   const cached = rankingCache[filtro.trim()];
-  if (cached && Date.now() - cached.timestamp < 600000) { // 10 minutos
+  if (cached && Date.now() - cached.timestamp < 43200000) { // 12 horas (invalidação ativa nos endpoints de escrita)
     return cached.data;
   }
   return null;
@@ -41,7 +41,7 @@ export function setCachedRanking(filtro: string, data: unknown) {
 }
 
 export function getCachedConfigs(): unknown | null {
-  if (configCache && Date.now() - configCache.timestamp < 600000) { // 10 minutos
+  if (configCache && Date.now() - configCache.timestamp < 43200000) { // 12 horas (invalidação ativa nos endpoints de escrita)
     return configCache.data;
   }
   return null;
@@ -99,7 +99,7 @@ export function setCachedModulos(data: unknown) {
 
 export function getCachedTutorAtividades(filtroTurma: string, filtroTipo: string): unknown | null {
   const cached = tutorAtividadesCache[`${filtroTurma}|${filtroTipo}`];
-  if (cached && Date.now() - cached.timestamp < 300000) { // 5 minutos
+  if (cached && Date.now() - cached.timestamp < 43200000) { // 12 horas (invalidação ativa nos endpoints de escrita)
     return cached.data;
   }
   return null;

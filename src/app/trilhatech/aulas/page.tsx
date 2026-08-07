@@ -222,8 +222,9 @@ export default function GestaoAulasPage() {
   ) => {
     setSalvando(true);
     try {
+      let importCount = 0;
       for (const ativ of atividadesMapeadas) {
-        await apiTutor.salvarAtividade({
+        const res = await apiTutor.salvarAtividade({
           idAtividadeEdit: null,
           titulo: ativ.titulo,
           descricao:
@@ -244,11 +245,21 @@ export default function GestaoAulasPage() {
           gabarito: "",
           gabaritoLiberado: false,
         });
+        if (res.status === "sucesso") {
+          importCount++;
+        }
       }
-      toast(
-        `Importação de ${atividadesMapeadas.length} rascunhos concluída com sucesso!`,
-        "success",
-      );
+      if (importCount === atividadesMapeadas.length) {
+        toast(
+          `Importação de ${importCount} rascunhos concluída com sucesso!`,
+          "success",
+        );
+      } else {
+        toast(
+          `Importação concluída parcialmente: ${importCount} de ${atividadesMapeadas.length} importados com sucesso.`,
+          "warning",
+        );
+      }
       setModalImportadorAberto(false);
       mutate();
     } catch (e) {
@@ -383,9 +394,13 @@ export default function GestaoAulasPage() {
   const excluirAtividade = async (id: string) => {
     if (!confirm(`Tem certeza que deseja excluir a missão ${id}?`)) return;
     try {
-      await apiTutor.excluirAtividade(id);
-      toast("Missão excluída!", "success");
-      mutate();
+      const res = await apiTutor.excluirAtividade(id);
+      if (res.status === "sucesso") {
+        toast("Missão excluída!", "success");
+        mutate();
+      } else {
+        toast(res.mensagem || "Erro ao excluir atividade.", "error");
+      }
     } catch {
       toast("Erro ao excluir.", "error");
     }
@@ -484,7 +499,7 @@ export default function GestaoAulasPage() {
       return toast("Preencha os campos obrigatórios!", "warning");
     setSalvando(true);
     try {
-      await apiTutor.salvarAtividade({
+      const res = await apiTutor.salvarAtividade({
         idAtividadeEdit: idEditando,
         titulo,
         descricao,
@@ -506,9 +521,13 @@ export default function GestaoAulasPage() {
         resolucaoTyping,
         limiteTempoTyping,
       });
-      toast("Atividade salva com sucesso!", "success");
-      limparFormulario();
-      mutate();
+      if (res.status === "sucesso") {
+        toast("Atividade salva com sucesso!", "success");
+        limparFormulario();
+        mutate();
+      } else {
+        toast(res.mensagem || "Erro ao salvar atividade.", "error");
+      }
     } catch {
       toast("Erro ao salvar.", "error");
     } finally {

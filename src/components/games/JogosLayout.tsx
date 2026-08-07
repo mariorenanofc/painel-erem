@@ -148,13 +148,13 @@ export default function JogosLayout({
     handlePlaySound("click");
   };
 
-  // Marca d'água diagonal repetida nítida (com nome e matrícula) para impedir prints de colas
+  // Marca d'água diagonal repetida visível sem transparência (z-0 para ficar atrás do conteúdo interativo)
   const renderWatermark = () => {
     const watermarkText = `${aluno.nome.split(" ")[0]} - ${aluno.matricula}`;
     return (
-      <div className="absolute inset-0 grid grid-cols-4 grid-rows-8 gap-x-2 gap-y-8 overflow-hidden pointer-events-none select-none opacity-[0.09] z-[9999]">
+      <div className="absolute inset-0 grid grid-cols-4 grid-rows-8 gap-x-2 gap-y-12 overflow-hidden pointer-events-none select-none z-0">
         {Array.from({ length: 32 }).map((_, i) => (
-          <div key={i} className="flex items-center justify-center text-xs sm:text-sm font-mono font-black text-white transform -rotate-30 whitespace-nowrap">
+          <div key={i} className="flex items-center justify-center text-lg sm:text-2xl font-mono font-black text-white transform -rotate-30 whitespace-nowrap">
             {watermarkText}
           </div>
         ))}

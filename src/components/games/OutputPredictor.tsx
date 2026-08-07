@@ -16,50 +16,93 @@ interface Question {
   options: string[];
 }
 
-const QUESTIONS: Question[] = [
-  {
-    code: "x = 5\ny = '10'\nprint(x + int(y))",
-    lang: "Python",
-    correctAnswer: "15",
-    options: ["15", "510", "Error", "5"]
-  },
-  {
-    code: "let a = '5';\nlet b = 5;\nconsole.log(a + b);",
-    lang: "JavaScript",
-    correctAnswer: "55",
-    options: ["55", "10", "undefined", "Error"]
-  },
-  {
-    code: "texto = 'EREM'\nprint(len(texto))",
-    lang: "Python",
-    correctAnswer: "4",
-    options: ["4", "5", "0", "None"]
-  },
-  {
-    code: "let total = 10;\ntotal += 5;\nconsole.log(total);",
-    lang: "JavaScript",
-    correctAnswer: "15",
-    options: ["15", "10", "5", "105"]
-  },
-  {
-    code: "lista = [10, 20]\nlista.append(30)\nprint(len(lista))",
-    lang: "Python",
-    correctAnswer: "3",
-    options: ["3", "2", "30", "1"]
-  },
-  {
-    code: "let x = 10;\nlet y = 3;\nconsole.log(x % y);",
-    lang: "JavaScript",
-    correctAnswer: "1",
-    options: ["1", "3", "0", "3.33"]
-  },
-  {
-    code: "texto = 'Python'\nprint(texto.lower())",
-    lang: "Python",
-    correctAnswer: "python",
-    options: ["python", "PYTHON", "Python", "py"]
+function generateOutputQuestion(): Question {
+  const templateType = Math.floor(Math.random() * 6);
+  const varNames = [["x", "y"], ["a", "b"], ["num1", "num2"], ["total", "valor"]][Math.floor(Math.random() * 4)];
+  const wordsPool = ["EREM", "Python", "Portal", "Escola", "Trilha", "Codigo", "Tech"];
+
+  let code = "";
+  let lang: "Python" | "JavaScript" = "Python";
+  let correctAnswer = "";
+  let options: string[] = [];
+
+  if (templateType === 0) {
+    lang = "Python";
+    const num1 = Math.floor(Math.random() * 15) + 1;
+    const num2 = Math.floor(Math.random() * 15) + 1;
+    const isStringConcatenation = Math.random() > 0.5;
+
+    if (isStringConcatenation) {
+      code = `${varNames[0]} = '${num1}'\n${varNames[1]} = '${num2}'\nprint(${varNames[0]} + ${varNames[1]})`;
+      correctAnswer = `${num1}${num2}`;
+      options = [correctAnswer, String(num1 + num2), "Error", `${num1} + ${num2}`];
+    } else {
+      code = `${varNames[0]} = ${num1}\n${varNames[1]} = '${num2}'\nprint(${varNames[0]} + int(${varNames[1]}))`;
+      correctAnswer = String(num1 + num2);
+      options = [correctAnswer, `${num1}${num2}`, "Error", String(num1)];
+    }
+  } else if (templateType === 1) {
+    lang = "JavaScript";
+    const num1 = Math.floor(Math.random() * 15) + 1;
+    const num2 = Math.floor(Math.random() * 15) + 1;
+    const isString = Math.random() > 0.5;
+
+    if (isString) {
+      code = `let ${varNames[0]} = '${num1}';\nlet ${varNames[1]} = ${num2};\nconsole.log(${varNames[0]} + ${varNames[1]});`;
+      correctAnswer = `${num1}${num2}`;
+      options = [correctAnswer, String(num1 + num2), "Error", "undefined"];
+    } else {
+      code = `let ${varNames[0]} = ${num1};\nlet ${varNames[1]} = ${num2};\nconsole.log(${varNames[0]} + ${varNames[1]});`;
+      correctAnswer = String(num1 + num2);
+      options = [correctAnswer, `${num1}${num2}`, "Error", "NaN"];
+    }
+  } else if (templateType === 2) {
+    lang = "Python";
+    const word = wordsPool[Math.floor(Math.random() * wordsPool.length)];
+    code = `texto = '${word}'\nprint(len(texto))`;
+    correctAnswer = String(word.length);
+    options = [correctAnswer, String(word.length + 1), "0", "None"];
+  } else if (templateType === 3) {
+    lang = "JavaScript";
+    const num1 = Math.floor(Math.random() * 20) + 5;
+    const num2 = Math.floor(Math.random() * 10) + 1;
+    code = `let total = ${num1};\ntotal += ${num2};\nconsole.log(total);`;
+    correctAnswer = String(num1 + num2);
+    options = [correctAnswer, String(num1), String(num2), `${num1}${num2}`];
+  } else if (templateType === 4) {
+    lang = "JavaScript";
+    const num1 = [10, 15, 20, 25, 30][Math.floor(Math.random() * 5)];
+    const num2 = [3, 4, 6, 7][Math.floor(Math.random() * 4)];
+    code = `let x = ${num1};\nlet y = ${num2};\nconsole.log(x % y);`;
+    correctAnswer = String(num1 % num2);
+    options = [correctAnswer, String(Math.floor(num1 / num2)), "0", String((num1 / num2).toFixed(2))];
+  } else {
+    lang = "Python";
+    const word = wordsPool[Math.floor(Math.random() * wordsPool.length)];
+    const isUpper = Math.random() > 0.5;
+    if (isUpper) {
+      code = `texto = '${word}'\nprint(texto.upper())`;
+      correctAnswer = word.toUpperCase();
+      options = [correctAnswer, word.toLowerCase(), word, "Error"];
+    } else {
+      code = `texto = '${word}'\nprint(texto.lower())`;
+      correctAnswer = word.toLowerCase();
+      options = [correctAnswer, word.toUpperCase(), word, "Error"];
+    }
   }
-];
+
+  const uniqueOptions = Array.from(new Set(options));
+  while (uniqueOptions.length < 4) {
+    uniqueOptions.push(String(Math.floor(Math.random() * 100)));
+  }
+
+  return {
+    code,
+    lang,
+    correctAnswer,
+    options: uniqueOptions
+  };
+}
 
 export default function OutputPredictor({
   onGameOver,
@@ -75,8 +118,11 @@ export default function OutputPredictor({
 
   const handleStart = () => {
     playSound("click");
-    // Embaralhar e selecionar 5
-    const questions = [...QUESTIONS].sort(() => 0.5 - Math.random()).slice(0, 5);
+    // Gerar 5 questões procedurais
+    const questions: Question[] = [];
+    for (let i = 0; i < 5; i++) {
+      questions.push(generateOutputQuestion());
+    }
     setShuffledQuestions(questions);
     setCurrentIndex(0);
     setScore(0);

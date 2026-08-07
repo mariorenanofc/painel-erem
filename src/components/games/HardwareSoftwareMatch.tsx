@@ -15,25 +15,65 @@ interface Item {
 }
 
 const ITEMS: Item[] = [
+  // Entrada
   { name: "Teclado", category: "entrada" },
   { name: "Mouse", category: "entrada" },
   { name: "Microfone", category: "entrada" },
   { name: "Scanner", category: "entrada" },
+  { name: "Webcam", category: "entrada" },
+  { name: "Joystick", category: "entrada" },
+  { name: "Leitor de Código de Barras", category: "entrada" },
+  { name: "Leitor Biométrico", category: "entrada" },
+  { name: "Mesa Digitalizadora", category: "entrada" },
+  { name: "Touchpad", category: "entrada" },
+
+  // Saída
   { name: "Monitor", category: "saida" },
   { name: "Impressora", category: "saida" },
   { name: "Caixa de Som", category: "saida" },
+  { name: "Fone de Ouvido", category: "saida" },
+  { name: "Projetor de Vídeo", category: "saida" },
+  { name: "Óculos VR", category: "saida" },
+  { name: "Impressora 3D", category: "saida" },
+  { name: "Plotter", category: "saida" },
+  { name: "Buzzer", category: "saida" },
+  { name: "Headset", category: "saida" },
+
+  // Componente Interno
   { name: "Processador (CPU)", category: "componente" },
   { name: "Memória RAM", category: "componente" },
   { name: "Placa de Vídeo (GPU)", category: "componente" },
   { name: "Placa-Mãe", category: "componente" },
-  { name: "Disco Rígido (HD/SSD)", category: "componente" },
+  { name: "SSD NVMe", category: "componente" },
+  { name: "Disco Rígido (HD)", category: "componente" },
+  { name: "Fonte de Alimentação", category: "componente" },
+  { name: "Cooler do Processador", category: "componente" },
+  { name: "Placa de Rede", category: "componente" },
+  { name: "Dissipador de Calor", category: "componente" },
+
+  // Software de Sistema
   { name: "Windows 11", category: "software_sistema" },
   { name: "Android", category: "software_sistema" },
   { name: "Linux Ubuntu", category: "software_sistema" },
+  { name: "macOS", category: "software_sistema" },
+  { name: "iOS", category: "software_sistema" },
+  { name: "Windows Server", category: "software_sistema" },
+  { name: "MS-DOS", category: "software_sistema" },
+  { name: "Unix", category: "software_sistema" },
+  { name: "FreeBSD", category: "software_sistema" },
+  { name: "BIOS/UEFI", category: "software_sistema" },
+
+  // Software Aplicativo
   { name: "WhatsApp", category: "software_app" },
   { name: "Google Chrome", category: "software_app" },
   { name: "Visual Studio Code", category: "software_app" },
-  { name: "Microsoft Word", category: "software_app" }
+  { name: "Microsoft Word", category: "software_app" },
+  { name: "Microsoft Excel", category: "software_app" },
+  { name: "Microsoft PowerPoint", category: "software_app" },
+  { name: "Adobe Photoshop", category: "software_app" },
+  { name: "Roblox", category: "software_app" },
+  { name: "Discord", category: "software_app" },
+  { name: "Spotify", category: "software_app" }
 ];
 
 export default function HardwareSoftwareMatch({

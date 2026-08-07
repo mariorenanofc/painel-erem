@@ -17,57 +17,95 @@ interface Question {
   options: string[];
 }
 
-const QUESTIONS: Question[] = [
-  {
-    initial: "['Maca', 'Uva']",
-    operation: "lista.append('Laranja')",
-    lang: "Python",
-    correctAnswer: "['Maca', 'Uva', 'Laranja']",
-    options: ["['Maca', 'Uva', 'Laranja']", "['Laranja', 'Maca', 'Uva']", "['Maca', 'Laranja']", "['Uva', 'Laranja']"]
-  },
-  {
-    initial: "['Lapis', 'Caneta']",
-    operation: "lista.push('Borracha')",
-    lang: "JavaScript",
-    correctAnswer: "['Lapis', 'Caneta', 'Borracha']",
-    options: ["['Lapis', 'Caneta', 'Borracha']", "['Borracha', 'Lapis', 'Caneta']", "['Caneta', 'Borracha']", "['Lapis', 'Borracha']"]
-  },
-  {
-    initial: "['HTML', 'CSS', 'JS']",
-    operation: "lista.pop()",
-    lang: "JavaScript",
-    correctAnswer: "['HTML', 'CSS']",
-    options: ["['HTML', 'CSS']", "['CSS', 'JS']", "['HTML', 'JS']", "['JS']"]
-  },
-  {
-    initial: "['Pedro', 'Ana', 'Luiz']",
-    operation: "lista.remove('Ana')",
-    lang: "Python",
-    correctAnswer: "['Pedro', 'Luiz']",
-    options: ["['Pedro', 'Luiz']", "['Ana', 'Luiz']", "['Pedro', 'Ana']", "[]"]
-  },
-  {
-    initial: "['Uva', 'Banana']",
-    operation: "lista.insert(1, 'Maca')",
-    lang: "Python",
-    correctAnswer: "['Uva', 'Maca', 'Banana']",
-    options: ["['Uva', 'Maca', 'Banana']", "['Maca', 'Uva', 'Banana']", "['Uva', 'Banana', 'Maca']", "['Maca']"]
-  },
-  {
-    initial: "['Java', 'Python']",
-    operation: "lista.unshift('C++')",
-    lang: "JavaScript",
-    correctAnswer: "['C++', 'Java', 'Python']",
-    options: ["['C++', 'Java', 'Python']", "['Java', 'Python', 'C++']", "['C++', 'Python']", "['Java', 'C++']"]
-  },
-  {
-    initial: "[10, 20, 30]",
-    operation: "lista.shift()",
-    lang: "JavaScript",
-    correctAnswer: "[20, 30]",
-    options: ["[20, 30]", "[10, 20]", "[10, 30]", "[30]"]
+function generateArrayQuestion(): Question {
+  const lang = Math.random() > 0.5 ? "Python" : "JavaScript";
+  const itemsPool = [
+    ["Maca", "Uva"],
+    ["Lapis", "Caneta"],
+    ["HTML", "CSS"],
+    ["Pedro", "Ana"],
+    ["Python", "Java"],
+    ["Mouse", "Teclado"]
+  ];
+  const itemToAddPool = ["Laranja", "Borracha", "JS", "Luiz", "C++", "Monitor"];
+
+  const initialArr = [...itemsPool[Math.floor(Math.random() * itemsPool.length)]];
+  const initialStr = "[" + initialArr.map(x => `'${x}'`).join(", ") + "]";
+
+  let operation = "";
+  let correctAnswerArr = [...initialArr];
+
+  if (lang === "JavaScript") {
+    const opType = ["push", "pop", "shift", "unshift"][Math.floor(Math.random() * 4)];
+    const targetItem = itemToAddPool[Math.floor(Math.random() * itemToAddPool.length)];
+
+    if (opType === "push") {
+      operation = `lista.push('${targetItem}')`;
+      correctAnswerArr.push(targetItem);
+    } else if (opType === "pop") {
+      operation = `lista.pop()`;
+      correctAnswerArr.pop();
+    } else if (opType === "shift") {
+      operation = `lista.shift()`;
+      correctAnswerArr.shift();
+    } else if (opType === "unshift") {
+      operation = `lista.unshift('${targetItem}')`;
+      correctAnswerArr.unshift(targetItem);
+    }
+  } else {
+    // Python
+    const opType = ["append", "pop", "remove", "insert"][Math.floor(Math.random() * 4)];
+    const targetItem = itemToAddPool[Math.floor(Math.random() * itemToAddPool.length)];
+
+    if (opType === "append") {
+      operation = `lista.append('${targetItem}')`;
+      correctAnswerArr.push(targetItem);
+    } else if (opType === "pop") {
+      operation = `lista.pop()`;
+      correctAnswerArr.pop();
+    } else if (opType === "remove") {
+      const itemToRemove = initialArr[0];
+      operation = `lista.remove('${itemToRemove}')`;
+      correctAnswerArr = correctAnswerArr.filter(x => x !== itemToRemove);
+    } else if (opType === "insert") {
+      operation = `lista.insert(1, '${targetItem}')`;
+      correctAnswerArr.splice(1, 0, targetItem);
+    }
   }
-];
+
+  const correctAnswer = "[" + correctAnswerArr.map(x => `'${x}'`).join(", ") + "]";
+
+  const optionsSet = new Set<string>();
+  optionsSet.add(correctAnswer);
+
+  const formatArr = (arr: string[]) => "[" + arr.map(x => `'${x}'`).join(", ") + "]";
+
+  if (correctAnswerArr.length > 0) {
+    const shuffled = [...correctAnswerArr].reverse();
+    optionsSet.add(formatArr(shuffled));
+  }
+  optionsSet.add(initialStr);
+  optionsSet.add("[]");
+  const oppositeArr = [...initialArr];
+  if (oppositeArr.length > 0) {
+    oppositeArr.splice(0, 0, "Item");
+    optionsSet.add(formatArr(oppositeArr));
+  }
+
+  while (optionsSet.size < 4) {
+    optionsSet.add(formatArr([initialArr[0] || "Item", "Erro"]));
+  }
+
+  const options = Array.from(optionsSet);
+
+  return {
+    initial: initialStr,
+    operation,
+    lang,
+    correctAnswer,
+    options
+  };
+}
 
 export default function ArrayOperations({
   onGameOver,
@@ -83,8 +121,11 @@ export default function ArrayOperations({
 
   const handleStart = () => {
     playSound("click");
-    // Embaralhar e selecionar 5
-    const questions = [...QUESTIONS].sort(() => 0.5 - Math.random()).slice(0, 5);
+    // Gerar 5 questões procedurais
+    const questions: Question[] = [];
+    for (let i = 0; i < 5; i++) {
+      questions.push(generateArrayQuestion());
+    }
     setShuffledQuestions(questions);
     setCurrentIndex(0);
     setScore(0);

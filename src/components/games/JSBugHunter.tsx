@@ -15,71 +15,102 @@ interface BugQuestion {
   explanation: string;
 }
 
-const QUESTIONS: BugQuestion[] = [
-  {
-    lines: [
-      "let nome = 'Pedro';",
-      "if (nome == 'Pedro')", // bug: falta abrir chaves { ou parêntese incorreto? Não, falta chaves {
-      "  console.log('Ola');"
-    ],
-    errorLineIndex: 1,
-    explanation: "Falta abrir as chaves '{' na condição if em JavaScript."
-  },
-  {
-    lines: [
-      "x = 10",
-      "if x == 10", // bug: falta os dois pontos ':'
-      "  print('Igual')"
-    ],
-    errorLineIndex: 1,
-    explanation: "Em Python, toda estrutura if deve terminar com dois pontos ':'."
-  },
-  {
-    lines: [
-      "funcion somar(a, b) {", // bug: 'funcion' em vez de 'function'
-      "  return a + b;",
-      "}"
-    ],
-    errorLineIndex: 0,
-    explanation: "A palavra-chave correta em JavaScript é 'function', não 'funcion'."
-  },
-  {
-    lines: [
-      "let frutas = ['Uva', 'Maca'];",
-      "frutas.apend('Laranja');", // bug: 'apend' em vez de 'push' (ou append em python)
-      "console.log(frutas);"
-    ],
-    errorLineIndex: 1,
-    explanation: "Em JavaScript, o método de adicionar elementos no array é 'push()', e não 'apend()'."
-  },
-  {
-    lines: [
-      "def saudar(nome)", // bug: falta ':'
-      "  print('Oi ' + nome)",
-      "saudar('Carlos')"
-    ],
-    errorLineIndex: 0,
-    explanation: "Falta definir os dois pontos ':' ao criar a função 'def saudar(nome):' em Python."
-  },
-  {
-    lines: [
-      "let ativo = true;",
-      "if (ativo = false) {", // bug: usando atribuição '=' em vez de comparação '===' ou '=='
-      "  console.log('Inativo');",
-      "}"
-    ],
-    errorLineIndex: 1,
-    explanation: "A atribuição '=' altera o valor. Para comparar, deve-se usar '==' ou '==='."
-  },
-  {
-    lines: [
-      "texto = \"Ola Mundo'", // bug: aspas misturadas \" e '
-      "print(texto)"
-    ],
-    errorLineIndex: 0,
-    explanation: "As aspas devem coincidir no início e fim da String: use \"...\" ou '...'."
+function generateBugQuestion(): BugQuestion {
+  const varNames = ["nome", "idade", "x", "y", "ativo", "frutas", "lista", "total", "contador", "usuario"];
+  const strVals = ["Pedro", "Maria", "Ana", "Carlos", "Laranja", "Banana", "Uva", "Maca"];
+  const nums = [5, 10, 15, 20, 30, 40, 50];
+
+  const v1 = varNames[Math.floor(Math.random() * varNames.length)];
+  const v2 = varNames[(varNames.indexOf(v1) + 1) % varNames.length];
+  const s1 = strVals[Math.floor(Math.random() * strVals.length)];
+  const n1 = nums[Math.floor(Math.random() * nums.length)];
+  const n2 = nums[(nums.indexOf(n1) + 1) % nums.length];
+
+  const templateType = Math.floor(Math.random() * 8);
+
+  if (templateType === 0) {
+    return {
+      lines: [
+        `let ${v1} = '${s1}';`,
+        `if (${v1} == '${s1}')`,
+        `  console.log('Sucesso');`
+      ],
+      errorLineIndex: 1,
+      explanation: "Falta abrir as chaves '{' na condição if em JavaScript."
+    };
+  } else if (templateType === 1) {
+    return {
+      lines: [
+        `${v1} = ${n1}`,
+        `if ${v1} == ${n1}`,
+        `  print('Igual')`
+      ],
+      errorLineIndex: 1,
+      explanation: "Em Python, toda estrutura if deve terminar com dois pontos ':'."
+    };
+  } else if (templateType === 2) {
+    const isFunc = Math.random() > 0.5;
+    return {
+      lines: [
+        isFunc ? `funcion somar(a, b) {` : `funcao calcular(a) {`,
+        `  return a + 10;`,
+        `}`
+      ],
+      errorLineIndex: 0,
+      explanation: "A palavra-chave correta em JavaScript é 'function', não 'funcion' ou 'funcao'."
+    };
+  } else if (templateType === 3) {
+    return {
+      lines: [
+        `let ${v1} = ['Uva', 'Maca'];`,
+        `${v1}.apend('${s1}');`,
+        `console.log(${v1});`
+      ],
+      errorLineIndex: 1,
+      explanation: "Em JavaScript, o método de adicionar elementos no array é 'push()', e não 'apend()'."
+    };
+  } else if (templateType === 4) {
+    return {
+      lines: [
+        `def saudar(${v1})`,
+        `  print('Oi ' + ${v1})`,
+        `saudar('${s1}')`
+      ],
+      errorLineIndex: 0,
+      explanation: "Falta definir os dois pontos ':' ao criar a função 'def saudar(nome):' em Python."
+    };
+  } else if (templateType === 5) {
+    return {
+      lines: [
+        `let ${v1} = true;`,
+        `if (${v1} = false) {`,
+        `  console.log('Inativo');`,
+        `}`
+      ],
+      errorLineIndex: 1,
+      explanation: "A atribuição '=' altera o valor. Para comparar, deve-se usar '==' ou '==='."
+    };
+  } else if (templateType === 6) {
+    return {
+      lines: [
+        `${v1} = "${s1}'`,
+        `print(${v1})`
+      ],
+      errorLineIndex: 0,
+      explanation: "As aspas devem coincidir no início e fim da String: use \"...\" ou '...'."
+    };
+  } else {
+    return {
+      lines: [
+        `const ${v1} = ${n1};`,
+        `${v1} = ${n2};`,
+        `console.log(${v1});`
+      ],
+      errorLineIndex: 1,
+      explanation: "Variáveis do tipo 'const' em JavaScript não podem ter seu valor reatribuído."
+    };
   }
-];
+}
 
 export default function JSBugHunter({
   onGameOver,
@@ -96,8 +127,11 @@ export default function JSBugHunter({
 
   const handleStart = () => {
     playSound("click");
-    // Embaralhar e pegar 5 perguntas
-    const questions = [...QUESTIONS].sort(() => 0.5 - Math.random()).slice(0, 5);
+    // Gerar 5 questões procedurais únicas
+    const questions: BugQuestion[] = [];
+    for (let i = 0; i < 5; i++) {
+      questions.push(generateBugQuestion());
+    }
     setShuffledQuestions(questions);
     setCurrentIndex(0);
     setScore(0);

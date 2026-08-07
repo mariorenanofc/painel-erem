@@ -16,50 +16,48 @@ interface Question {
   options: string[];
 }
 
-const QUESTIONS: Question[] = [
-  {
-    html: '<div id="container">\n  <p className="texto">Alvo</p>\n</div>',
-    targetDesc: 'O parágrafo com a classe "texto"',
-    correct: ".texto",
-    options: [".texto", "#texto", "texto", "divtexto"]
-  },
-  {
-    html: '<div id="menu">\n  <a href="#">Link</a>\n</div>',
-    targetDesc: 'O link dentro da div com ID "menu"',
-    correct: "#menu a",
-    options: ["#menu a", ".menu a", "a #menu", "menu > a"]
-  },
-  {
-    html: '<ul>\n  <li>Item 1</li>\n  <li id="alvo">Item 2</li>\n</ul>',
-    targetDesc: 'O segundo item da lista com o ID "alvo"',
-    correct: "#alvo",
-    options: ["#alvo", ".alvo", "li .alvo", "ul li.alvo"]
-  },
-  {
-    html: '<div className="cartao">\n  <h1>Titulo</h1>\n</div>',
-    targetDesc: 'O título h1 dentro da div com a classe "cartao"',
-    correct: ".cartao h1",
-    options: [".cartao h1", "#cartao h1", "h1.cartao", "cartao > h1"]
-  },
-  {
-    html: '<div>\n  <span>Texto comum</span>\n  <span className="destaque">Alvo</span>\n</div>',
-    targetDesc: 'O elemento span que possui a classe "destaque"',
-    correct: "span.destaque",
-    options: ["span.destaque", "span .destaque", "span#destaque", "#destaque span"]
-  },
-  {
-    html: '<main>\n  <section id="topo">\n    <p>Alvo</p>\n  </section>\n</main>',
-    targetDesc: 'O parágrafo dentro da section com ID "topo"',
-    correct: "#topo p",
-    options: ["#topo p", ".topo p", "section p", "main topo p"]
-  },
-  {
-    html: '<footer className="rodape">\n  <p>Alvo</p>\n</footer>',
-    targetDesc: 'O parágrafo dentro do footer com a classe "rodape"',
-    correct: ".rodape p",
-    options: [".rodape p", "#rodape p", "footer p.rodape", "rodape > p"]
+function generateCSSQuestion(): Question {
+  const templateType = Math.floor(Math.random() * 5);
+  const classes = ["destaque", "alerta", "cartao", "texto", "info", "legenda", "ativo", "principal"];
+  const ids = ["container", "menu", "alvo", "principal", "cadastro", "galeria", "topo", "rodape"];
+
+  const randClass = classes[Math.floor(Math.random() * classes.length)];
+  const randId = ids[Math.floor(Math.random() * ids.length)];
+
+  let html = "";
+  let targetDesc = "";
+  let correct = "";
+  let options: string[] = [];
+
+  if (templateType === 0) {
+    html = `<div id="${randId}">\n  <p className="${randClass}">Alvo</p>\n</div>`;
+    targetDesc = `O parágrafo com a classe "${randClass}"`;
+    correct = `.${randClass}`;
+    options = [correct, `#${randClass}`, randClass, `div${randClass}`];
+  } else if (templateType === 1) {
+    html = `<div id="${randId}">\n  <a href="#">Link</a>\n</div>`;
+    targetDesc = `O link dentro da div com ID "${randId}"`;
+    correct = `#${randId} a`;
+    options = [correct, `.${randId} a`, `a #${randId}`, `${randId} > a`];
+  } else if (templateType === 2) {
+    html = `<ul>\n  <li>Item 1</li>\n  <li id="${randId}">Item 2</li>\n</ul>`;
+    targetDesc = `O segundo item da lista com o ID "${randId}"`;
+    correct = `#${randId}`;
+    options = [correct, `.${randId}`, `li .${randId}`, `ul li.${randId}`];
+  } else if (templateType === 3) {
+    html = `<div className="${randClass}">\n  <h1>Titulo</h1>\n</div>`;
+    targetDesc = `O título h1 dentro da div com a classe "${randClass}"`;
+    correct = `.${randClass} h1`;
+    options = [correct, `#${randClass} h1`, `h1.${randClass}`, `${randClass} > h1`];
+  } else {
+    html = `<main>\n  <section id="${randId}">\n    <p>Alvo</p>\n  </section>\n</main>`;
+    targetDesc = `O parágrafo dentro da section com ID "${randId}"`;
+    correct = `#${randId} p`;
+    options = [correct, `.${randId} p`, `section p`, `main ${randId} p`];
   }
-];
+
+  return { html, targetDesc, correct, options };
+}
 
 export default function CSSSelectorHunter({
   onGameOver,
@@ -75,8 +73,11 @@ export default function CSSSelectorHunter({
 
   const handleStart = () => {
     playSound("click");
-    // Embaralhar perguntas e selecionar 5
-    const qList = [...QUESTIONS].sort(() => 0.5 - Math.random()).slice(0, 5);
+    // Gerar 5 questões procedurais
+    const qList: Question[] = [];
+    for (let i = 0; i < 5; i++) {
+      qList.push(generateCSSQuestion());
+    }
     setShuffledQuestions(qList);
     setCurrentQuestionIndex(0);
     setScore(0);

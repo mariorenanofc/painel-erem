@@ -17,13 +17,14 @@ export async function GET(request: Request) {
 
     const entregasSnap = await dbAdmin.collection("entregas")
       .where("matricula", "==", matricula)
-      .where("idAtividade", "==", "JOGOS-EDUCATIVOS")
-      .where("timestamp", ">=", startOfDayTimestamp)
       .get();
 
     let xpGanhoHoje = 0;
     entregasSnap.forEach(doc => {
-      xpGanhoHoje += Number(doc.data().xpGanho) || 0;
+      const data = doc.data();
+      if (data.idAtividade === "JOGOS-EDUCATIVOS" && Number(data.timestamp || 0) >= startOfDayTimestamp) {
+        xpGanhoHoje += Number(data.xpGanho) || 0;
+      }
     });
 
     return NextResponse.json({

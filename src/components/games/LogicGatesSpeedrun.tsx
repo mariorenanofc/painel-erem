@@ -15,22 +15,47 @@ interface Question {
   correctAnswer: boolean;
 }
 
-const QUESTIONS: Question[] = [
-  { statement: "5 > 3 and 2 < 1", lang: "Python", correctAnswer: false },
-  { statement: "5 > 3 || 2 < 1", lang: "JavaScript", correctAnswer: true },
-  { statement: "not (10 == 10)", lang: "Python", correctAnswer: false },
-  { statement: "!(4 === 4)", lang: "JavaScript", correctAnswer: false },
-  { statement: "8 >= 8 and 4 != 2", lang: "Python", correctAnswer: true },
-  { statement: "8 >= 8 && 4 !== 2", lang: "JavaScript", correctAnswer: true },
-  { statement: "True or False", lang: "Python", correctAnswer: true },
-  { statement: "true && false", lang: "JavaScript", correctAnswer: false },
-  { statement: "not False", lang: "Python", correctAnswer: true },
-  { statement: "!false", lang: "JavaScript", correctAnswer: true },
-  { statement: "3 <= 2 or 5 > 1", lang: "Python", correctAnswer: true },
-  { statement: "3 <= 2 || 5 > 1", lang: "JavaScript", correctAnswer: true },
-  { statement: "10 != 5 and 3 == 3", lang: "Python", correctAnswer: true },
-  { statement: "10 !== 5 && 3 === 3", lang: "JavaScript", correctAnswer: true }
-];
+function generateLogicQuestion(): Question {
+  const lang = Math.random() > 0.5 ? "Python" : "JavaScript";
+  const op1 = ["==", "!=", ">", "<", ">=", "<="][Math.floor(Math.random() * 6)];
+  const val1 = Math.floor(Math.random() * 12) + 1;
+  const val2 = Math.floor(Math.random() * 12) + 1;
+  
+  const op2 = ["==", "!=", ">", "<", ">=", "<="][Math.floor(Math.random() * 6)];
+  const val3 = Math.floor(Math.random() * 12) + 1;
+  const val4 = Math.floor(Math.random() * 12) + 1;
+  
+  const logical = lang === "Python" 
+    ? (Math.random() > 0.5 ? "and" : "or")
+    : (Math.random() > 0.5 ? "&&" : "||");
+
+  let part1 = false;
+  if (op1 === "==") part1 = val1 === val2;
+  else if (op1 === "!=") part1 = val1 !== val2;
+  else if (op1 === ">") part1 = val1 > val2;
+  else if (op1 === "<") part1 = val1 < val2;
+  else if (op1 === ">=") part1 = val1 >= val2;
+  else if (op1 === "<=") part1 = val1 <= val2;
+
+  let part2 = false;
+  if (op2 === "==") part2 = val3 === val4;
+  else if (op2 === "!=") part2 = val3 !== val4;
+  else if (op2 === ">") part2 = val3 > val4;
+  else if (op2 === "<") part2 = val3 < val4;
+  else if (op2 === ">=") part2 = val3 >= val4;
+  else if (op2 === "<=") part2 = val3 <= val4;
+
+  let correctAnswer = false;
+  if (logical === "and" || logical === "&&") {
+    correctAnswer = part1 && part2;
+  } else {
+    correctAnswer = part1 || part2;
+  }
+
+  const statement = `${val1} ${op1} ${val2} ${logical} ${val3} ${op2} ${val4}`;
+
+  return { statement, lang, correctAnswer };
+}
 
 export default function LogicGatesSpeedrun({
   onGameOver,
@@ -47,8 +72,11 @@ export default function LogicGatesSpeedrun({
 
   const handleStart = () => {
     playSound("click");
-    // Selecionar 10 aleatórias
-    const questions = [...QUESTIONS].sort(() => 0.5 - Math.random()).slice(0, 10);
+    // Gerar 10 questões procedurais únicas
+    const questions: Question[] = [];
+    for (let i = 0; i < 10; i++) {
+      questions.push(generateLogicQuestion());
+    }
     setShuffledQuestions(questions);
     setCurrentIndex(0);
     setScore(0);

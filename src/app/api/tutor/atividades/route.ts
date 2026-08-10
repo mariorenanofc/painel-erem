@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
-import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
 import { getCachedTutorAtividades, setCachedTutorAtividades } from "@/src/lib/cache";
+import { cookies } from "next/headers";
 
 interface TutorAtividade {
   id: string;
@@ -31,14 +31,13 @@ interface TutorAtividade {
   statusModulo: string;
 }
 
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
-  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
-  : undefined;
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
-  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
-  : undefined;
-
 export async function GET(request: Request) {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("tutor_session");
+  if (!sessionCookie || sessionCookie.value !== "active") {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  }
+
   const { searchParams } = new URL(request.url);
   const filtroTurma = searchParams.get("filtroTurma") || "Todas";
   const filtroTipo = searchParams.get("filtroTipo") || "Todos";

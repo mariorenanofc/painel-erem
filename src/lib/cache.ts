@@ -159,10 +159,65 @@ export function clearAllPortalCaches() {
   });
   // Limpa caches globais compartilhados
   globalAtividadesCache = null;
-  globalModulosCache = null;
-  invalidateTutorAtividadesCache();
-  invalidateAniversariantesCache();
   Object.keys(globalClassDatesCache).forEach(k => {
     delete globalClassDatesCache[k];
   });
+  globalModulosCache = null;
+  invalidateTutorAtividadesCache();
+  invalidateRankingCache();
+  invalidateConfigCache();
+  invalidateAniversariantesCache();
+}
+
+// -----------------------------------------------------------------------------
+// FIRESTORE SINGLETON CACHE
+// Esse cache centraliza as consultas pesadas de atividades num único documento,
+// resolvendo o problema de 100+ leituras por recarregamento em ambiente Serverless.
+// -----------------------------------------------------------------------------
+import type { Firestore } from "firebase-admin/firestore";
+
+export async function refreshFirestoreCacheAtividades(dbAdmin: Firestore) {
+  try {
+    const atividadesSnap = await dbAdmin.collection("atividades").where("statusPublicacao", "==", "Publicada").get();
+    const atividadesList: Record<string, unknown>[] = [];
+    atividadesSnap.forEach((doc) => {
+      const data = doc.data();
+      atividadesList.push({
+        id: doc.id,
+        titulo: data.titulo,
+        descricao: data.descricao,
+        dataLimite: data.dataLimite,
+        xp: data.xp,
+        tipo: data.tipo,
+        opcaoA: data.opcaoA,
+        opcaoB: data.opcaoB,
+        opcaoC: data.opcaoC,
+        opcaoD: data.opcaoD,
+        statusPublicacao: data.statusPublicacao,
+        turmaAlvo: data.turmaAlvo,
+        gabaritoLiberado: data.gabaritoLiberado,
+        linkClassroom: data.linkClassroom,
+        imageUrl: data.imageUrl,
+        modulo: data.modulo,
+        gabarito: data.gabarito,
+        resolucaoTyping: data.resolucaoTyping,
+        limiteTempoTyping: data.limiteTempoTyping
+      });
+    });
+
+    const modulosSnap = await dbAdmin.collection("modulos").get();
+    const modulosList: Record<string, unknown>[] = [];
+    modulosSnap.forEach((doc) => {
+      modulosList.push({ id: doc.id, ...doc.data() });
+    });
+
+    await dbAdmin.collection("cache").doc("atividades_publicadas").set({
+      atividades: atividadesList,
+      modulos: modulosList,
+      updatedAt: new Date().toISOString()
+    });
+    console.log("[Firestore Cache] Cache singleton atualizado (Redução drástica de leituras ativada).");
+  } catch (err) {
+    console.error("[Firestore Cache] Erro ao atualizar cache de atividades:", err);
+  }
 }

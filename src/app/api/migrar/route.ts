@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { clearAllPortalCaches, invalidateRankingCache, invalidateConfigCache } from "@/src/lib/cache";
+import { clearAllPortalCaches, invalidateRankingCache, invalidateConfigCache, refreshFirestoreCacheAtividades } from "@/src/lib/cache";
+import { cookies } from "next/headers";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
   : undefined;
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
-  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
+const TUTOR_TOKEN_SECRET = process.env.TUTOR_TOKEN_SECRET
+  ? process.env.TUTOR_TOKEN_SECRET.replace(/^["']|["']$/g, "").trim()
   : undefined;
 
 interface TrilhaData {
@@ -24,7 +25,13 @@ interface TrilhaData {
 }
 
 export async function GET() {
-  if (!GOOGLE_API_URL || !TUTOR_TOKEN) {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("tutor_session");
+  if (!sessionCookie || sessionCookie.value !== "active") {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  }
+
+  if (!GOOGLE_API_URL || !TUTOR_TOKEN_SECRET) {
     return NextResponse.json({ error: "Configurações de API ausentes no .env" }, { status: 500 });
   }
 
@@ -33,7 +40,7 @@ export async function GET() {
     let response = await fetch(GOOGLE_API_URL, {
       method: "POST",
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: "exportar_dados_migracao", token: TUTOR_TOKEN }),
+      body: JSON.stringify({ action: "exportar_dados_migracao", token: TUTOR_TOKEN_SECRET }),
       redirect: "manual",
     });
 
@@ -725,6 +732,7 @@ export async function GET() {
     clearAllPortalCaches();
     invalidateRankingCache();
     invalidateConfigCache();
+    await refreshFirestoreCacheAtividades(dbAdmin);
     return NextResponse.json({ status: "sucesso", mensagem: "Migração completa para o Firestore!" });
   } catch (error: unknown) {
     const err = error as Error;

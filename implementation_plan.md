@@ -1,3 +1,33 @@
+# Plano de Correção Crítica (Firestore, Badges, Jogos e Quiz)
+
+Identificamos a origem exata dos problemas críticos relatados em sala de aula. Abaixo estão as análises e o plano de ação para resolver cada um de forma definitiva.
+
+> [!IMPORTANT]
+> **Necessário Avaliação:** Por favor, revise as soluções propostas abaixo. Elas envolvem mudanças arquiteturais no Firebase para derrubar o custo de leitura e correções no backend. Se aprovar, iniciarei a execução imediatamente.
+
+## 1. Explosão de Leituras no Firestore (258 mil leituras)
+- **Causa:** O painel usa um cache *em memória* no backend (Next.js/Vercel). Em ambientes Serverless, a memória não é compartilhada. Se 10 alunos apertam F5 ao mesmo tempo, são criadas 10 instâncias limpas do servidor. Cada instância faz uma busca completa na coleção `atividades` (lendo 100+ documentos). 10 alunos x 10 reloads = 10.000+ leituras. Quando o professor salva uma atividade, o cache daquela instância é limpo, mas os alunos continuam dando F5 e gerando milhares de consultas.
+- **Solução:** Criar um **Cache Singleton no Firestore** (`cache/atividades_publicadas`). Quando o professor salvar/excluir uma atividade, o servidor atualizará *este único documento* com um JSON consolidado de todas as atividades. Assim, quando os 10 alunos derem F5, o sistema fará **apenas 1 leitura por aluno** (o documento de cache) em vez de 100+. Redução de 99% no consumo!
+
+## 2. Falhas de Sincronização Local (Badges, Aniversário e Whatsapp)
+- **Causa Analisada (`appscript.md` vs `action-proxy`):** Ao comparar o backend do Apps Script com a nossa API `action-proxy/route.ts`, identificamos que a lista de `ACTIONS_TO_SYNC` (ações que o Next.js repassa para o Apps Script e depois salva no Firestore) **está incompleta**. 
+Ações disparadas pelos alunos como `resgatar_badge`, `resgatar_aniversario` e `confirmar_whatsapp` são enviadas apenas para o Sheets. Como o Firestore local nunca é avisado desse resgate em tempo real, o frontend continua achando que o aluno tem direito ao prêmio. Ao recarregar a página, o popup ressurge, gerando o **Loop Infinito** relatado.
+- **Solução:** Expandir a lista de sincronização obrigatória no `action-proxy/route.ts` incluindo:
+  - `resgatar_badge` (Cria documento na coleção `entregas` e soma XP)
+  - `resgatar_aniversario` (Cria documento na coleção `entregas` e soma XP)
+  - `confirmar_whatsapp` (Atualiza perfil na coleção `alunos`)
+  - *Bônus (Para a Gestão):* Adicionar `cadastrar_aluno`, `salvar_aluno`, `inscrever_trilhatech` e `mudar_status_trilhatech` para que as edições do Tutor reflitam instantaneamente no Firestore sem precisar forçar uma migração manual (`sincronizar_ava`).
+
+## 3. Coleta Múltipla de Recompensas nos Jogos
+- **Causa:** Falta de bloqueio de concorrência. Se o aluno clicar várias vezes no final do jogo ou a internet oscilar, o frontend pode disparar o resgate de XP múltiplas vezes antes do backend responder e bloquear o teto diário.
+- **Solução:** Adicionar um estado de "loading" impenetrável no `JogosLayout.tsx` (desativando o botão enquanto processa) e uma trava de idempotência para evitar envios duplicados.
+
+## 4. Repetição de Perguntas no Quiz Infinito
+- **Causa:** O banco de 3.000 questões tem apenas 30 perguntas base (repetidas 100 vezes cada com o sufixo Var X que ocultamos). Como a seleção aleatória puxa 10 itens puros, a probabilidade estatística de cair a mesma pergunta base é gigantesca.
+- **Solução:** Modificar a lógica de sorteio no `QuizTeoricoInfinito.tsx` usando um `Set` ou filtro para garantir que as 10 perguntas sorteadas tenham o texto-base 100% exclusivo, impedindo qualquer repetição na mesma rodada.
+
+---
+
 # Plano de Implementação: Otimização de Leituras no Firebase e Correção de Atrasos (EREM Painel)
 
 Este plano descreve as melhorias arquiteturais e de codificação para sanar o alto consumo de leituras no Firebase e resolver o problema de atrasos de atualização (onde atividades e pontos demoram cerca de 5 minutos para refletir no portal dos alunos e do tutor).

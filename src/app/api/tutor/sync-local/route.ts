@@ -1,18 +1,18 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches } from "@/src/lib/cache";
+import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades } from "@/src/lib/cache";
 import { Transaction, FieldValue } from "firebase-admin/firestore";
+import { cookies } from "next/headers";
 
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
-  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
-  : undefined;
 
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { action, token } = body;
+    const { action } = body;
 
-    if (token !== TUTOR_TOKEN) {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get("tutor_session");
+    if (!sessionCookie || sessionCookie.value !== "active") {
       return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
     }
 
@@ -46,6 +46,7 @@ export async function POST(request: Request) {
         }, { merge: true });
         invalidateRankingCache();
         clearAllPortalCaches();
+        await refreshFirestoreCacheAtividades(dbAdmin);
       }
     }
 
@@ -55,6 +56,7 @@ export async function POST(request: Request) {
         await dbAdmin.collection("atividades").doc(id).delete();
         invalidateRankingCache();
         clearAllPortalCaches();
+        await refreshFirestoreCacheAtividades(dbAdmin);
       }
     }
 
@@ -206,14 +208,17 @@ export async function POST(request: Request) {
     else if (action === "salvar_gabaritos_lote") {
       const { atualizacoes } = body;
       if (Array.isArray(atualizacoes)) {
-        const promises = atualizacoes.map((item: { id: string; gabarito?: string; gabaritoLiberado?: boolean }) => {
-          return dbAdmin.collection("atividades").doc(item.id).set({
+        const batch = dbAdmin.batch();
+        atualizacoes.forEach((item: { id: string; gabarito?: string; gabaritoLiberado?: boolean }) => {
+          const ref = dbAdmin.collection("atividades").doc(item.id);
+          batch.set(ref, {
             gabarito: String(item.gabarito || ""),
             gabaritoLiberado: item.gabaritoLiberado === true
           }, { merge: true });
         });
-        await Promise.all(promises);
+        await batch.commit();
         clearAllPortalCaches();
+        await refreshFirestoreCacheAtividades(dbAdmin);
       }
     }
 

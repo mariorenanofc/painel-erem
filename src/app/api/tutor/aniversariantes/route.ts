@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { getCachedAniversariantes, setCachedAniversariantes } from "@/src/lib/cache";
-
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
-  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
-  : undefined;
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
-  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
-  : undefined;
+import { cookies } from "next/headers";
 
 export async function GET() {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("tutor_session");
+  if (!sessionCookie || sessionCookie.value !== "active") {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  }
   try {
     const hoje = new Date();
     // Usa fuso horário oficial de Brasília

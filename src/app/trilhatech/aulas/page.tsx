@@ -429,6 +429,7 @@ export default function GestaoAulasPage() {
     if (activeTab === "transacoes") {
       carregarTransacoes();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, paginaTransacoes, buscaTransacoes, filtroCategoriaTransacoes, filtroStatusTransacoes, limiteTransacoes]);
 
   const abrirModalEditarTransacao = (t: any) => {
@@ -1011,8 +1012,10 @@ export default function GestaoAulasPage() {
           carregando={isLoading}
           nomeUsuario={nomeUsuario}
           onLogout={() => {
-            localStorage.removeItem("usuarioLogado");
-            window.location.href = "/";
+            fetch("/api/action-proxy", { method: "POST", body: JSON.stringify({ action: "logout" }) }).then(() => {
+              localStorage.removeItem("usuarioLogado");
+              window.location.href = "/";
+            });
           }}
         />
 

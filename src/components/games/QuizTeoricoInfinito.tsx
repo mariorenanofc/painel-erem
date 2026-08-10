@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/purity */
 "use client";
 
 import React, { useState, useRef } from "react";
@@ -33,11 +32,26 @@ export default function QuizTeoricoInfinito({
   const handleStart = () => {
     playSound("click");
     
-    // Sortear 10 perguntas aleatórias do banco
+    // Sortear 10 perguntas aleatórias do banco garantindo textos base únicos
     const allQ = perguntasBanco.questions;
-    const shuffled = [...allQ].sort(() => 0.5 - Math.random()).slice(0, 10);
+    const shuffled = [...allQ].sort(() => 0.5 - Math.random());
     
-    setShuffledQuestions(shuffled as Question[]);
+    const uniqueQuestions: Question[] = [];
+    const seenTexts = new Set<string>();
+
+    for (const q of shuffled) {
+      // Remover a string "(Var X)" para identificar a pergunta base real
+      const baseText = q.question.replace(/\s*\(Var \d+\)/i, "").trim().toLowerCase();
+      if (!seenTexts.has(baseText)) {
+        seenTexts.add(baseText);
+        // Ocultar a variação no texto final exibido para o aluno
+        const cleanQuestion = { ...q, question: q.question.replace(/\s*\(Var \d+\)/i, "") };
+        uniqueQuestions.push(cleanQuestion as Question);
+      }
+      if (uniqueQuestions.length === 10) break;
+    }
+    
+    setShuffledQuestions(uniqueQuestions);
     setCurrentIndex(0);
     setScore(0);
     setIsPlaying(true);

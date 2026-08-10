@@ -1,15 +1,22 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { cookies } from "next/headers";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
   : undefined;
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
-  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
+const TUTOR_TOKEN_SECRET = process.env.TUTOR_TOKEN_SECRET
+  ? process.env.TUTOR_TOKEN_SECRET.replace(/^["']|["']$/g, "").trim()
   : undefined;
 
 export async function GET() {
-  if (!GOOGLE_API_URL || !TUTOR_TOKEN) {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("tutor_session");
+  if (!sessionCookie || sessionCookie.value !== "active") {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  }
+
+  if (!GOOGLE_API_URL || !TUTOR_TOKEN_SECRET) {
     return NextResponse.json({ error: "Configurações de API ausentes no .env" }, { status: 500 });
   }
 
@@ -25,36 +32,36 @@ export async function GET() {
     
     // Alunos
     const alunosSnap = await dbAdmin.collection("alunos").where("lastUpdated", ">", lastSync).get();
-    const alunos: any[] = [];
-    alunosSnap.forEach((doc: any) => {
+    const alunos: Record<string, unknown>[] = [];
+    alunosSnap.forEach((doc) => {
       alunos.push(doc.data());
     });
 
     // Entregas
     const entregasSnap = await dbAdmin.collection("entregas").where("timestamp", ">", lastSync).get();
-    const entregas: any[] = [];
-    entregasSnap.forEach((doc: any) => {
+    const entregas: Record<string, unknown>[] = [];
+    entregasSnap.forEach((doc) => {
       entregas.push(doc.data());
     });
 
     // Frequência
     const freqSnap = await dbAdmin.collection("frequencia").where("timestamp", ">", lastSync).get();
-    const frequencia: any[] = [];
-    freqSnap.forEach((doc: any) => {
+    const frequencia: Record<string, unknown>[] = [];
+    freqSnap.forEach((doc) => {
       frequencia.push(doc.data());
     });
 
     // Rifa
     const rifaSnap = await dbAdmin.collection("rifa_bilhetes").where("timestamp", ">", lastSync).get();
-    const rifa_bilhetes: any[] = [];
-    rifaSnap.forEach((doc: any) => {
+    const rifa_bilhetes: Record<string, unknown>[] = [];
+    rifaSnap.forEach((doc) => {
       rifa_bilhetes.push(doc.data());
     });
 
     // Curtidas
     const curtidasSnap = await dbAdmin.collection("curtidas").where("timestamp", ">", lastSync).get();
-    const curtidas: any[] = [];
-    curtidasSnap.forEach((doc: any) => {
+    const curtidas: Record<string, unknown>[] = [];
+    curtidasSnap.forEach((doc) => {
       curtidas.push(doc.data());
     });
 
@@ -69,7 +76,7 @@ export async function GET() {
       headers: { "Content-Type": "text/plain;charset=utf-8" },
       body: JSON.stringify({
         action: "sincronizar_dados_portal",
-        token: TUTOR_TOKEN,
+        token: TUTOR_TOKEN_SECRET,
         alunos,
         entregas,
         frequencia,
@@ -98,7 +105,8 @@ export async function GET() {
       }
     });
 
-  } catch (error: any) {
-    return NextResponse.json({ error: "Falha ao executar sincronização: " + error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const err = error as Error;
+    return NextResponse.json({ error: "Falha ao executar sincronização: " + err.message }, { status: 500 });
   }
 }

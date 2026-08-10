@@ -1,7 +1,5 @@
 
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
-  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
-  : "";
+
 
 /**
  * Função central de comunicação com o Google Apps Script.
@@ -42,6 +40,8 @@ async function fetchApi(payload: Record<string, unknown>) {
 export const apiGeral = {
   loginGestao: (usuario: string, senha: string) =>
     fetchApi({ action: "login", usuario, senha }),
+
+  logoutGestao: () => fetchApi({ action: "logout" }),
 
   loginAluno: (matricula: string, dataNasc: string) =>
     fetchApi({ action: "login_aluno", matricula, dataNasc }),
@@ -220,7 +220,7 @@ export const apiAluno = {
 export const apiTutor = {
   // --- SINCRONIZAÇÃO CLASSROOM ---
   sincronizarAVA: () =>
-    fetchApi({ action: "sincronizar_ava", token: TUTOR_TOKEN }),
+    fetchApi({ action: "sincronizar_ava" }),
 
   // --- RANKING E ANALYTICS ---
   buscarRanking: async (filtroTempo: "geral" | "semanal" | "mensal", nocache?: boolean) => {
@@ -229,20 +229,19 @@ export const apiTutor = {
   },
 
   buscarAnalyticsGeral: () =>
-    fetchApi({ action: "buscar_analytics_geral", token: TUTOR_TOKEN }),
+    fetchApi({ action: "buscar_analytics_geral" }),
 
   buscarFicha360: (matricula: string) =>
-    fetchApi({ action: "buscar_ficha_360", matricula, token: TUTOR_TOKEN }),
+    fetchApi({ action: "buscar_ficha_360", matricula }),
 
   toggleGabaritoRápido: (idAtividade: string) =>
-    fetchApi({ action: "toggle_gabarito", idAtividade, token: TUTOR_TOKEN }),
+    fetchApi({ action: "toggle_gabarito", idAtividade }),
 
   // --- GESTÃO DE GABARITOS EM LOTE ---
   salvarGabaritosLote: (atualizacoes: Record<string, unknown>[]) =>
     fetchApi({
       action: "salvar_gabaritos_lote",
-      atualizacoes,
-      token: TUTOR_TOKEN,
+      atualizacoes
     }),
 
   // --- MISSÕES ---
@@ -256,16 +255,15 @@ export const apiTutor = {
   },
 
   salvarAtividade: (dados: Record<string, unknown>) =>
-    fetchApi({ action: "salvar_atividade", ...dados, token: TUTOR_TOKEN }),
+    fetchApi({ action: "salvar_atividade", ...dados }),
 
   excluirAtividade: (idAtividade: string) =>
-    fetchApi({ action: "excluir_atividade", idAtividade, token: TUTOR_TOKEN }),
+    fetchApi({ action: "excluir_atividade", idAtividade }),
 
   buscarEntregas: (idAtividade: string) =>
     fetchApi({
       action: "buscar_entregas_atividade",
-      idAtividade,
-      token: TUTOR_TOKEN,
+      idAtividade
     }),
 
   avaliarEntrega: (
@@ -281,8 +279,7 @@ export const apiTutor = {
       matricula,
       xpGanho,
       novoStatus,
-      feedback,
-      token: TUTOR_TOKEN,
+      feedback
     }),
 
   // --- FREQUÊNCIA ---
@@ -307,29 +304,26 @@ export const apiTutor = {
       matricula,
       data: dataIso,
       justificativa,
-      idFalta,
-      token: TUTOR_TOKEN,
+      idFalta
     }),
 
   // --- GOD MODE ---
   listarAlunosGodMode: () =>
-    fetchApi({ action: "listar_alunos_godmode", token: TUTOR_TOKEN }),
+    fetchApi({ action: "listar_alunos_godmode" }),
 
   injetarXP: (matriculaAlvo: string, quantidadeXP: number, motivo: string) =>
     fetchApi({
       action: "injetar_xp_manual",
       matriculaAlvo,
       quantidadeXP,
-      motivo,
-      token: TUTOR_TOKEN,
+      motivo
     }),
 
   coroarElite: (matricula: string, tipoPlaca: string) =>
     fetchApi({
       action: "coroar_elite",
       matricula,
-      tipoPlaca,
-      token: TUTOR_TOKEN,
+      tipoPlaca
     }),
 
   // --- CONFIGURAÇÕES ---
@@ -341,12 +335,11 @@ export const apiTutor = {
   atualizarSenhaCheckin: (novaSenha: string) =>
     fetchApi({
       action: "atualizar_senha_checkin",
-      novaSenha,
-      token: TUTOR_TOKEN,
+      novaSenha
     }),
 
   toggleModoReposicao: (status: "LIGADO" | "DESLIGADO") =>
-    fetchApi({ action: "toggle_modo_reposicao", status, token: TUTOR_TOKEN }),
+    fetchApi({ action: "toggle_modo_reposicao", status }),
 
   buscarAniversariantes: async () => {
     const res = await fetch("/api/tutor/aniversariantes");
@@ -355,7 +348,7 @@ export const apiTutor = {
 
   // 🔥 NOVA ROTA DE CONFIGURAÇÕES INTEGRADAS
   salvarConfiguracoes: (configs: Record<string, unknown>) =>
-    fetchApi({ action: "salvar_configuracoes", configs, token: TUTOR_TOKEN }),
+    fetchApi({ action: "salvar_configuracoes", configs }),
 
   // Economia e Rifa
   sortearRifa: (turma: string, tokenSeguranca: string) =>

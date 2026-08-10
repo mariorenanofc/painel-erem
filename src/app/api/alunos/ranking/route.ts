@@ -6,8 +6,8 @@ import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
   : undefined;
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
-  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
+const TUTOR_TOKEN_SECRET = process.env.TUTOR_TOKEN_SECRET
+  ? process.env.TUTOR_TOKEN_SECRET.replace(/^["']|["']$/g, "").trim()
   : undefined;
 const CONTA_MESTRE = "1234567";
 
@@ -264,7 +264,7 @@ export async function GET(request: Request) {
         const response = await fetch(GOOGLE_API_URL, {
           method: "POST",
           headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "buscar_ranking", filtroTempo, token: TUTOR_TOKEN }),
+          body: JSON.stringify({ action: "buscar_ranking", filtroTempo, token: TUTOR_TOKEN_SECRET }),
         });
         const data = await response.json();
         return NextResponse.json(data);

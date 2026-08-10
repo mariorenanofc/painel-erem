@@ -2,12 +2,13 @@ import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
 import { QueryDocumentSnapshot, Transaction } from "firebase-admin/firestore";
+import { cookies } from "next/headers";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
   : undefined;
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
-  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
+const TUTOR_TOKEN_SECRET = process.env.TUTOR_TOKEN_SECRET
+  ? process.env.TUTOR_TOKEN_SECRET.replace(/^["']|["']$/g, "").trim()
   : undefined;
 
 interface Transacao {
@@ -35,6 +36,12 @@ function formatResposta(resposta: string, alunosMap: Record<string, string>) {
 // GET: Listar transações
 // -------------------------------------------------------------------------
 export async function GET(request: Request) {
+  const cookieStore = await cookies();
+  const sessionCookie = cookieStore.get("tutor_session");
+  if (!sessionCookie || sessionCookie.value !== "active") {
+    return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
+  }
+
   const { searchParams } = new URL(request.url);
   const page = Math.max(1, Number(searchParams.get("page") || 1));
   const limit = Math.max(1, Number(searchParams.get("limit") || 20));
@@ -81,8 +88,8 @@ export async function GET(request: Request) {
   } catch (firestoreError: unknown) {
     const fireErr = firestoreError as Error;
     console.warn("[Failover] Erro ao buscar transações no Firestore. Usando Planilha...", fireErr.message);
-    
-    if (!GOOGLE_API_URL || !TUTOR_TOKEN) {
+
+    if (!GOOGLE_API_URL || !TUTOR_TOKEN_SECRET) {
       return NextResponse.json({ error: "Serviço indisponível e sem credenciais de planilha." }, { status: 500 });
     }
 
@@ -90,7 +97,7 @@ export async function GET(request: Request) {
       const sheetsRes = await fetch(GOOGLE_API_URL, {
         method: "POST",
         headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({ action: "exportar_dados_migracao", token: TUTOR_TOKEN }),
+        body: JSON.stringify({ action: "exportar_dados_migracao", token: TUTOR_TOKEN_SECRET }),
       });
       const sheetsData = await sheetsRes.json();
       if (sheetsData.status !== "sucesso") {
@@ -120,7 +127,7 @@ export async function GET(request: Request) {
           feedback: String(entregasValues[i][7] || "").trim()
         });
       }
-      
+
       // Ordenar por timestamp desc
       transacoes.sort((a, b) => b.timestamp - a.timestamp);
 
@@ -141,7 +148,7 @@ export async function GET(request: Request) {
   // Filtrar por Categoria (tratar variações case-insensitive e sinônimos do banco de dados)
   if (categoria) {
     const catUpper = categoria.toUpperCase();
-    
+
     if (catUpper === "TRANSFERENCIA-XP") {
       resultadosFiltrados = resultadosFiltrados.filter(t => {
         const act = String(t.idAtividade || "").toUpperCase();
@@ -166,10 +173,10 @@ export async function GET(request: Request) {
       resultadosFiltrados = resultadosFiltrados.filter(t => {
         const act = String(t.idAtividade || "").toUpperCase();
         const ehEspecial = act.includes("TRANSFER") || act.includes("PIX") || act.includes("ENVIOU") || act.includes("RECEBEU") ||
-                           act.includes("RIFA") || act.includes("LOJA") || act.includes("VIRTUAL") || act.includes("COMPRA") ||
-                           act.includes("AJUSTE") || act.includes("MANUAL") || act.includes("BÔNUS") || act.includes("BONUS") ||
-                           act.includes("MULTA") || act.includes("INJET") || act.includes("SISTEMA") || act.includes("AUTO") ||
-                           t.id.startsWith("NOTIF-");
+          act.includes("RIFA") || act.includes("LOJA") || act.includes("VIRTUAL") || act.includes("COMPRA") ||
+          act.includes("AJUSTE") || act.includes("MANUAL") || act.includes("BÔNUS") || act.includes("BONUS") ||
+          act.includes("MULTA") || act.includes("INJET") || act.includes("SISTEMA") || act.includes("AUTO") ||
+          t.id.startsWith("NOTIF-");
         return !ehEspecial;
       });
     }
@@ -279,7 +286,7 @@ export async function PUT(request: Request) {
     const fireErr = firestoreError as Error;
     console.warn("[Failover] Erro ao editar transação no Firestore. Enviando para Planilha...", fireErr.message);
 
-    if (!GOOGLE_API_URL || !TUTOR_TOKEN) {
+    if (!GOOGLE_API_URL || !TUTOR_TOKEN_SECRET) {
       return NextResponse.json({ error: "Serviço indisponível e sem credenciais de planilha." }, { status: 500 });
     }
 
@@ -295,7 +302,7 @@ export async function PUT(request: Request) {
           xpGanho: novoXpGanho,
           novoStatus,
           feedback: novoFeedback,
-          token: TUTOR_TOKEN
+          token: TUTOR_TOKEN_SECRET
         }),
       });
       const sheetsData = await response.json();
@@ -368,7 +375,7 @@ export async function DELETE(request: Request) {
     const fireErr = firestoreError as Error;
     console.warn("[Failover] Erro ao excluir transação no Firestore. Sincronizando com Planilha...", fireErr.message);
 
-    if (!GOOGLE_API_URL || !TUTOR_TOKEN) {
+    if (!GOOGLE_API_URL || !TUTOR_TOKEN_SECRET) {
       return NextResponse.json({ error: "Serviço indisponível e sem credenciais de planilha." }, { status: 500 });
     }
 
@@ -384,7 +391,7 @@ export async function DELETE(request: Request) {
           xpGanho: 0,
           novoStatus: "EXCLUIDA",
           feedback: "Transação excluída pelo tutor no painel",
-          token: TUTOR_TOKEN
+          token: TUTOR_TOKEN_SECRET
         }),
       });
       const sheetsData = await response.json();

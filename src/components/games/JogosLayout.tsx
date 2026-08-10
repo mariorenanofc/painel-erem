@@ -80,6 +80,7 @@ export default function JogosLayout({
   const [saveMessage, setSaveMessage] = useState("");
   const [soundEnabled, setSoundEnabled] = useState(true);
   const tempoInicioRef = useRef<number>(0);
+  const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     tempoInicioRef.current = Date.now();
@@ -109,6 +110,9 @@ export default function JogosLayout({
   };
 
   const handleGameOver = async (finalScore: number, durationSeconds: number) => {
+    if (isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+
     setScore(finalScore);
     setGameState("gameover");
     handlePlaySound("success");

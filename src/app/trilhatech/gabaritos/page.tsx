@@ -58,6 +58,7 @@ export default function GestaoGabaritosLotePage() {
           setEdicoes(estadoInicial);
         }
       } catch (e) {
+        console.error(e);
         alert("Erro ao buscar as atividades.");
       } finally {
         setCarregando(false);
@@ -109,6 +110,7 @@ export default function GestaoGabaritosLotePage() {
         alert("⚠️ " + res.mensagem);
       }
     } catch (e) {
+      console.error(e);
       alert("❌ Erro ao tentar salvar em lote.");
     } finally {
       setSalvando(false);
@@ -177,8 +179,10 @@ export default function GestaoGabaritosLotePage() {
           carregando={carregando}
           nomeUsuario={nomeUsuario}
           onLogout={() => {
-            localStorage.removeItem("usuarioLogado");
-            window.location.href = "/";
+            fetch("/api/action-proxy", { method: "POST", body: JSON.stringify({ action: "logout" }) }).then(() => {
+              localStorage.removeItem("usuarioLogado");
+              window.location.href = "/";
+            });
           }}
         />
 

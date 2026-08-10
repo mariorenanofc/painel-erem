@@ -192,8 +192,10 @@ export default function TrilhaTechPage() {
           carregando={carregando}
           nomeUsuario={nomeUsuario}
           onLogout={() => {
-            localStorage.removeItem("usuarioLogado");
-            window.location.href = "/";
+            fetch("/api/action-proxy", { method: "POST", body: JSON.stringify({ action: "logout" }) }).then(() => {
+              localStorage.removeItem("usuarioLogado");
+              window.location.href = "/";
+            });
           }}
         />
 

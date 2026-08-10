@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
-import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches } from "@/src/lib/cache";
+import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades } from "@/src/lib/cache";
 import { Transaction, FieldValue } from "firebase-admin/firestore";
+import { cookies } from "next/headers";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
   : undefined;
 
-const TUTOR_TOKEN = process.env.NEXT_PUBLIC_TUTOR_TOKEN
-  ? process.env.NEXT_PUBLIC_TUTOR_TOKEN.replace(/^["']|["']$/g, "").trim()
+const TUTOR_TOKEN_SECRET = process.env.TUTOR_TOKEN_SECRET
+  ? process.env.TUTOR_TOKEN_SECRET.replace(/^["']|["']$/g, "").trim()
   : undefined;
 
 export async function POST(request: Request) {
@@ -19,17 +20,59 @@ export async function POST(request: Request) {
 
   try {
     const payload = await request.json();
+    const requestAction = payload.action;
+
+    // --- MIDDLEWARE DE SEGURANÇA ---
+    if (requestAction === "logout") {
+      const response = NextResponse.json({ status: "sucesso", mensagem: "Logout efetuado com sucesso." });
+      response.cookies.delete("tutor_session");
+      return response;
+    }
+
+    const ROTAS_PROTEGIDAS = [
+      "salvar_atividade", "excluir_atividade", "avaliar_entrega", 
+      "injetar_xp_manual", "cadastrar_aluno", "inscrever_trilhatech", "salvar_aluno",
+      "mudar_status_trilhatech", "atualizar_senha_checkin", "toggle_modo_reposicao",
+      "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "sincronizar_ava",
+      "justificar_falta", "buscar_analytics_geral", "buscar_ficha_360", "listar_alunos_godmode",
+      "coroar_elite", "sortear_rifa"
+    ];
+
+    if (ROTAS_PROTEGIDAS.includes(requestAction)) {
+      const cookieStore = await cookies();
+      const sessionCookie = cookieStore.get("tutor_session");
+      if (!sessionCookie || sessionCookie.value !== "active") {
+        return NextResponse.json({ status: "erro", mensagem: "Não autorizado. Faça login novamente." }, { status: 403 });
+      }
+      // Se autenticado, injeta a senha secreta no payload invisivelmente
+      payload.token = TUTOR_TOKEN_SECRET;
+    }
+    // ---------------------------------
     
     // 1. Executar na fila serializada do Google Sheets (evita LockService concurrency errors)
     const sheetsResponse = await fetchSheetsQueued(GOOGLE_API_URL, payload);
     const result = await sheetsResponse.json();
+
+    // Se for login e teve sucesso, cria a sessão!
+    if (requestAction === "login" && result.status === "sucesso") {
+      const response = NextResponse.json(result);
+      response.cookies.set("tutor_session", "active", { 
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === "production", 
+        path: "/",
+        maxAge: 60 * 60 * 24 * 7 // 7 dias
+      });
+      return response;
+    }
 
     // 2. Se for sucesso, e for uma ação de escrita/sincronização do tutor, rodar a escrita local no Firestore
     const ACTIONS_TO_SYNC = [
       "salvar_atividade", "excluir_atividade", "avaliar_entrega", 
       "injetar_xp_manual", "atualizar_senha_checkin", "toggle_modo_reposicao",
       "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote",
-      "justificar_falta"
+      "justificar_falta",
+      "resgatar_badge", "resgatar_aniversario", "confirmar_whatsapp",
+      "cadastrar_aluno", "salvar_aluno", "inscrever_trilhatech", "mudar_status_trilhatech"
     ];
 
     if (result.status === "sucesso" && ACTIONS_TO_SYNC.includes(String(payload.action))) {
@@ -69,6 +112,7 @@ export async function POST(request: Request) {
           }, { merge: true });
           invalidateRankingCache();
           clearAllPortalCaches();
+          await refreshFirestoreCacheAtividades(dbAdmin);
         }
       }
 
@@ -78,6 +122,7 @@ export async function POST(request: Request) {
           await dbAdmin.collection("atividades").doc(id).delete();
           invalidateRankingCache();
           clearAllPortalCaches();
+          await refreshFirestoreCacheAtividades(dbAdmin);
         }
       }
 
@@ -283,6 +328,117 @@ export async function POST(request: Request) {
           }
         }
       }
+
+      else if (action === "resgatar_badge") {
+        const { matricula, badgeId, xpGanho, nomeBadge } = payload;
+        const mat = String(matricula).trim();
+        const xp = Number(xpGanho) || 0;
+        if (mat && badgeId) {
+          const alunoRef = dbAdmin.collection("alunos").doc(mat);
+          const idEntrega = `BADGE-${badgeId}-${mat}`;
+          await dbAdmin.runTransaction(async (transaction: Transaction) => {
+            const alunoDoc = await transaction.get(alunoRef);
+            if (alunoDoc.exists) {
+              const currentXp = Number(alunoDoc.data()?.xp) || 0;
+              transaction.update(alunoRef, {
+                xp: currentXp + xp,
+                lastUpdated: Date.now()
+              });
+              transaction.set(dbAdmin.collection("entregas").doc(idEntrega), {
+                id: idEntrega,
+                matricula: mat,
+                idAtividade: "RECOMPENSA",
+                resposta: `Badge Resgatada: ${nomeBadge}`,
+                status: "Badge",
+                xpGanho: xp,
+                timestamp: Date.now()
+              });
+            }
+          });
+          invalidatePortalCache(mat);
+          invalidateRankingCache();
+        }
+      }
+
+      else if (action === "resgatar_aniversario") {
+        const { matricula } = payload;
+        const mat = String(matricula).trim();
+        if (mat) {
+          const alunoRef = dbAdmin.collection("alunos").doc(mat);
+          const ano = new Date().getFullYear();
+          const idEntrega = `BDAY-${ano}-${mat}`;
+          await dbAdmin.runTransaction(async (transaction: Transaction) => {
+            const alunoDoc = await transaction.get(alunoRef);
+            if (alunoDoc.exists) {
+              const currentXp = Number(alunoDoc.data()?.xp) || 0;
+              transaction.update(alunoRef, {
+                xp: currentXp + 500,
+                lastUpdated: Date.now()
+              });
+              transaction.set(dbAdmin.collection("entregas").doc(idEntrega), {
+                id: idEntrega,
+                matricula: mat,
+                idAtividade: "RECOMPENSA",
+                resposta: "Presente de Aniversário! 🎉",
+                status: "Aniversário",
+                xpGanho: 500,
+                timestamp: Date.now()
+              });
+            }
+          });
+          invalidatePortalCache(mat);
+          invalidateRankingCache();
+        }
+      }
+
+      else if (action === "confirmar_whatsapp") {
+        const { matricula } = payload;
+        const mat = String(matricula).trim();
+        if (mat) {
+          const alunoRef = dbAdmin.collection("alunos").doc(mat);
+          const alunoDoc = await alunoRef.get();
+          if (alunoDoc.exists) {
+            const currentXp = Number(alunoDoc.data()?.xp) || 0;
+            await alunoRef.update({
+              xp: currentXp + 200,
+              whatsapp: { confirmado: true }
+            });
+            invalidatePortalCache(mat);
+            invalidateRankingCache();
+          }
+        }
+      }
+
+      else if (action === "cadastrar_aluno" || action === "salvar_aluno") {
+        const mat = String(payload.matricula).trim();
+        if (mat) {
+          await dbAdmin.collection("alunos").doc(mat).set({
+            matricula: mat,
+            nome: String(payload.nome || ""),
+            dataNasc: String(payload.dataNasc || ""),
+            email: String(payload.email || ""),
+            turma: String(payload.turma || ""),
+            telefoneAluno: String(payload.telefoneAluno || ""),
+            telefoneResponsavel: String(payload.telefoneResponsavel || ""),
+            obs: String(payload.obs || "")
+          }, { merge: true });
+          invalidatePortalCache(mat);
+        }
+      }
+
+      else if (action === "inscrever_trilhatech" || action === "mudar_status_trilhatech") {
+        const mat = String(payload.matricula).trim();
+        if (mat) {
+          const updateData: Record<string, string> = {};
+          if (payload.turma) updateData.turmaTrilha = String(payload.turma).trim();
+          if (payload.novoStatus) updateData.statusTrilha = String(payload.novoStatus).trim();
+          if (action === "inscrever_trilhatech") updateData.statusTrilha = "Ativo";
+          
+          await dbAdmin.collection("alunos").doc(mat).set(updateData, { merge: true });
+          invalidatePortalCache(mat);
+        }
+      }
+
     }
 
     return NextResponse.json(result);

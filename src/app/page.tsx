@@ -230,8 +230,10 @@ export default function DashboardAlunos() {
   };
 
   const fazerLogout = () => {
-    localStorage.removeItem("usuarioLogado");
-    setUsuarioLogado(null);
+    fetch("/api/action-proxy", { method: "POST", body: JSON.stringify({ action: "logout" }) }).then(() => {
+      localStorage.removeItem("usuarioLogado");
+      setUsuarioLogado(null);
+    });
   };
 
   const abrirModalNovo = () => {

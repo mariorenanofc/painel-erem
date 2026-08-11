@@ -70,7 +70,14 @@ export async function POST(request: Request) {
 
     // 1. Executar na fila serializada do Google Sheets (evita LockService concurrency errors)
     const sheetsResponse = await fetchSheetsQueued(GOOGLE_API_URL, payload);
-    const result = await sheetsResponse.json();
+    const sheetsText = await sheetsResponse.text();
+    let result;
+    try {
+      result = JSON.parse(sheetsText);
+    } catch (parseError) {
+      console.error("[Google Script HTML Error]", sheetsText.substring(0, 500));
+      throw new Error(`A API do Google falhou ao retornar JSON (retornou HTML). A ação pode ter sido concluída parcialmente. Sincronize o AVA para confirmar.`);
+    }
 
     // Se for login e teve sucesso, cria a sessão!
     if (requestAction === "login" && result.status === "sucesso") {

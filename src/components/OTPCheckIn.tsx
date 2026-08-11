@@ -28,6 +28,7 @@ export default function OTPCheckIn({ onComplete, onCancel }: OTPCheckInProps) {
     if (phase === "LOADING") {
       const processCheckIn = async () => {
         const success = await onCompleteRef.current(otp.join(""));
+
         if (!isMounted) return;
         if (success) {
           setPhase("SUCCESS");
@@ -69,7 +70,7 @@ export default function OTPCheckIn({ onComplete, onCancel }: OTPCheckInProps) {
   // Função para lidar com a digitação
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     // Permite letras e números
-    const value = e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase(); 
+    const value = e.target.value.replace(/[^A-Za-z0-9]/g, "").toUpperCase();
     if (!value) return;
 
     const newOtp = [...otp];
@@ -94,7 +95,7 @@ export default function OTPCheckIn({ onComplete, onCancel }: OTPCheckInProps) {
 
     const newOtp = [...otp];
     let lastFilledIndex = 0;
-    
+
     // Preenche as caixas com os caracteres colados
     for (let i = 0; i < 6; i++) {
       if (pastedData[i]) {
@@ -102,9 +103,9 @@ export default function OTPCheckIn({ onComplete, onCancel }: OTPCheckInProps) {
         lastFilledIndex = i;
       }
     }
-    
+
     setOtp(newOtp);
-    
+
     if (lastFilledIndex < 5) {
       inputRefs.current[lastFilledIndex + 1]?.focus();
     } else {
@@ -133,7 +134,8 @@ export default function OTPCheckIn({ onComplete, onCancel }: OTPCheckInProps) {
 
   return (
     <div className="flex flex-col items-center justify-center w-full max-w-md mx-auto p-6 sm:p-8 bg-slate-950/80 backdrop-blur-xl rounded-[2rem] border border-white/5 shadow-2xl relative overflow-hidden">
-      
+      <h3 className="text-slate-400 text-2xl  font-bold text-center tracking-wider">SENHA DA LOUSA</h3>
+
       {/* Botão de Fechar */}
       {phase === "IDLE" && (
         <button
@@ -147,7 +149,7 @@ export default function OTPCheckIn({ onComplete, onCancel }: OTPCheckInProps) {
       )}
 
       <div className="relative flex items-center justify-center w-full h-[100px] mt-4">
-        
+
         {/* SPINNER DO LOADING & CÍRCULO DE SUCESSO (Abraço Magnético) */}
         <AnimatePresence>
           {(phase === "LOADING" || phase === "SUCCESS") && (
@@ -162,20 +164,20 @@ export default function OTPCheckIn({ onComplete, onCancel }: OTPCheckInProps) {
                 animate={
                   phase === "LOADING"
                     ? {
-                        rotate: 360,
-                        borderRadius: "50%",
-                        borderWidth: "4px",
-                        borderColor: "rgba(59, 130, 246, 0.1)",
-                        borderTopColor: "rgba(59, 130, 246, 1)",
-                        backgroundColor: "rgba(0, 0, 0, 0)",
-                      }
+                      rotate: 360,
+                      borderRadius: "50%",
+                      borderWidth: "4px",
+                      borderColor: "rgba(59, 130, 246, 0.1)",
+                      borderTopColor: "rgba(59, 130, 246, 1)",
+                      backgroundColor: "rgba(0, 0, 0, 0)",
+                    }
                     : {
-                        rotate: 0,
-                        borderRadius: "50%",
-                        borderWidth: "0px",
-                        borderColor: "rgba(0, 0, 0, 0)",
-                        backgroundColor: "rgba(34, 197, 94, 1)",
-                      }
+                      rotate: 0,
+                      borderRadius: "50%",
+                      borderWidth: "0px",
+                      borderColor: "rgba(0, 0, 0, 0)",
+                      backgroundColor: "rgba(34, 197, 94, 1)",
+                    }
                 }
                 transition={
                   phase === "LOADING"
@@ -184,7 +186,7 @@ export default function OTPCheckIn({ onComplete, onCancel }: OTPCheckInProps) {
                 }
                 className="w-24 h-24 flex items-center justify-center shadow-lg relative"
               />
-              
+
               {/* ÍCONE DE SUCESSO (Surge no fim) */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 <AnimatePresence>
@@ -223,7 +225,7 @@ export default function OTPCheckIn({ onComplete, onCancel }: OTPCheckInProps) {
           {otp.map((digit, index) => {
             // Cálculo do deslize horizontal para agrupar as letras no centro perfeitamente
             const translateX = phase === "IDLE" ? 0 : (2.5 - index) * 36;
-            
+
             return (
               <motion.input
                 key={index}
@@ -253,7 +255,7 @@ export default function OTPCheckIn({ onComplete, onCancel }: OTPCheckInProps) {
         </motion.div>
 
       </div>
-      
+
       {/* Texto de Status Inferior */}
       <div className="mt-8 text-center h-6">
         <AnimatePresence mode="wait">

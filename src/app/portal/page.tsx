@@ -1707,7 +1707,14 @@ export default function PortalDashboard() {
               
               setSenhaDigitada(otp);
               try {
-                const data = await apiAluno.fazerCheckin(aluno.matricula, otp);
+                const minLoadingTime = new Promise(resolve => setTimeout(resolve, 2500));
+                
+                // Dispara a requisição da API e o delay em paralelo. 
+                // Isso segura o "toast" até a animação de "LOADING" terminar.
+                const [data] = await Promise.all([
+                  apiAluno.fazerCheckin(aluno.matricula, otp),
+                  minLoadingTime
+                ]);
                 const dataHoje = new Date().toLocaleDateString("pt-BR");
 
                 if (data.status === "sucesso") {

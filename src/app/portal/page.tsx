@@ -22,7 +22,6 @@ import {
 } from "@/src/types";
 
 import { calcularBadges, Badge } from "@/src/utils/badges";
-import Footer from "@/src/components/Footer";
 import OTPCheckIn from "@/src/components/OTPCheckIn";
 import PixModal from "@/src/components/PixModal";
 import RankingModal from "@/src/components/RankingModal";

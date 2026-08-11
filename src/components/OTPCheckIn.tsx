@@ -63,7 +63,8 @@ export default function OTPCheckIn({ onComplete, onCancel }: OTPCheckInProps) {
     return () => {
       if (timeout) clearTimeout(timeout);
     };
-  }, [phase]); // Dependência de otp removida para não roubar o foco a cada digitação
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase]); // Dependência de otp removida intencionalmente para não roubar o foco a cada digitação
 
   // Função para lidar com a digitação
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -136,7 +137,7 @@ export default function OTPCheckIn({ onComplete, onCancel }: OTPCheckInProps) {
       {/* Botão de Fechar */}
       {phase === "IDLE" && (
         <button
-          onClick={onCancelRef.current}
+          onClick={onCancel}
           className="absolute top-4 right-4 sm:top-6 sm:right-6 text-slate-500 hover:text-white transition-colors cursor-pointer p-2 rounded-full hover:bg-white/10"
         >
           <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">

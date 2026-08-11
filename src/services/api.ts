@@ -19,7 +19,18 @@ async function fetchApi(payload: Record<string, unknown>) {
     });
 
     clearTimeout(timeoutId);
-    return await response.json();
+    const text = await response.text();
+    try {
+      return JSON.parse(text);
+    } catch (_e: unknown) {
+      if (text.includes("504") || text.includes("Time-out") || text.includes("Timeout")) {
+         return {
+           status: "erro",
+           mensagem: "Tempo limite excedido (Timeout). A ação pode ter sido concluída em segundo plano. Por favor, atualize ou sincronize para verificar."
+         };
+      }
+      throw new Error(`Erro inesperado do servidor. (Não é JSON valido)`);
+    }
   } catch (error: unknown) {
     const err = error as Error;
     clearTimeout(timeoutId);

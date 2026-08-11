@@ -13,6 +13,8 @@ const TUTOR_TOKEN_SECRET = process.env.TUTOR_TOKEN_SECRET
   ? process.env.TUTOR_TOKEN_SECRET.replace(/^["']|["']$/g, "").trim()
   : undefined;
 
+export const maxDuration = 60;
+
 export async function POST(request: Request) {
   if (!GOOGLE_API_URL) {
     return NextResponse.json({ status: "erro", mensagem: "URL da planilha não configurada no servidor." }, { status: 500 });

@@ -1,19 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
 import { GestaoFrequenciaModalProps } from "../types";
 
 export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps) {
-  if (!props.isOpen) return null;
-
   const totalPresentes = props.dadosFreqHoje.filter((a) => a.presenteHoje).length;
   const totalFaltantes = props.dadosFreqHoje.length - totalPresentes;
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-        {/* Backdrop */}
+    <>
+      <AnimatePresence>
+        {props.isOpen && (
+          <div key="modal-backdrop-freq" className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            {/* Backdrop */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
@@ -460,11 +459,13 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
           </div>
         </motion.div>
       </div>
+      )}
+      </AnimatePresence>
 
       {/* Justification sub-modal */}
       <AnimatePresence>
         {props.modalJustificativaAberto && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div key="sub-modal-just" className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             {/* Inner Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
@@ -519,6 +520,6 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
           </div>
         )}
       </AnimatePresence>
-    </AnimatePresence>
+    </>
   );
 }

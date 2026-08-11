@@ -118,6 +118,7 @@ export default function GestaoAulasPage() {
 
   // Estados da Sincronização AVA (Barra de Progresso)
   const [sincronizandoAVA, setSincronizandoAVA] = useState(false);
+  const [sincronizandoConfig, setSincronizandoConfig] = useState(false);
   const [filtroSyncTurma, setFiltroSyncTurma] = useState("Todas");
   const [filtroSyncModulo, setFiltroSyncModulo] = useState("Todos");
   const [progressoSync, setProgressoSync] = useState({
@@ -280,6 +281,23 @@ export default function GestaoAulasPage() {
       toast("Erro de conexão.", "error");
     } finally {
       setCarregandoReposicao(false);
+    }
+  };
+
+  const sincronizarPlanilha = async () => {
+    setSincronizandoConfig(true);
+    try {
+      const data = await apiTutor.sincronizarConfiguracoes();
+      if (data.status === "sucesso") {
+        toast("Configurações atualizadas da planilha! Atualizando página...", "success");
+        setTimeout(() => window.location.reload(), 1500);
+      } else {
+        toast("Erro: " + data.mensagem, "error");
+      }
+    } catch (e) {
+      toast("Erro de conexão ao sincronizar.", "error");
+    } finally {
+      setSincronizandoConfig(false);
     }
   };
 
@@ -1342,6 +1360,13 @@ export default function GestaoAulasPage() {
               </div>
 
               <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800 transition-colors">
+                <button
+                  onClick={sincronizarPlanilha}
+                  disabled={sincronizandoConfig}
+                  className="cursor-pointer w-full bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-800/50 text-indigo-600 dark:text-indigo-400 text-xs font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-2 border border-indigo-200 dark:border-indigo-800"
+                >
+                  <span>{sincronizandoConfig ? "⏳" : "🔄"}</span> {sincronizandoConfig ? "Sincronizando..." : "Sincronizar da Planilha"}
+                </button>
                 <button
                   onClick={() => router.push("/trilhatech/configuracoes")}
                   className="cursor-pointer w-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700"

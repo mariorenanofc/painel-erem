@@ -218,9 +218,12 @@ export const apiAluno = {
 // 3. API DO TUTOR E GESTÃO - BLINDADA COM O TOKEN
 // ==========================================
 export const apiTutor = {
-  // --- SINCRONIZAÇÃO CLASSROOM ---
+  // --- SINCRONIZAÇÃO CLASSROOM E CONFIG ---
   sincronizarAVA: () =>
     fetchApi({ action: "sincronizar_ava" }),
+
+  sincronizarConfiguracoes: () =>
+    fetchApi({ action: "sincronizar_configuracoes" }),
 
   // --- RANKING E ANALYTICS ---
   buscarRanking: async (filtroTempo: "geral" | "semanal" | "mensal", nocache?: boolean) => {

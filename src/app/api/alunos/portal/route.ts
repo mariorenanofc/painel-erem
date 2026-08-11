@@ -292,19 +292,37 @@ export async function GET(request: Request) {
       let cachedDates = getCachedClassDates(turmaDoAluno) as string[] | null;
       if (!cachedDates) {
         console.log(`[Firestore Query] Portal: Carregando dias com aula da turma ${turmaDoAluno} (sem cache)`);
-        const tempDatesSet = new Set<string>();
-        const turmaFreqSnap = await dbAdmin.collection("frequencia").where("turma", "==", turmaDoAluno).get();
-        turmaFreqSnap.forEach((doc: QueryDocumentSnapshot) => {
-          const f = doc.data();
-          const idFreq = String(f.id || doc.id).trim();
-          if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
-          let dataFormatada = f.data || "";
-          if (dataFormatada.includes("/") && dataFormatada.length > 10) {
-            dataFormatada = dataFormatada.slice(0, 10);
-          }
-          if (dataFormatada) tempDatesSet.add(dataFormatada);
-        });
-        cachedDates = Array.from(tempDatesSet);
+        
+        // 1. Tentar ler do documento unificado de metadados
+        const metadataRef = dbAdmin.collection("metadata").doc("dias_aula_turmas");
+        const metadataDoc = await metadataRef.get();
+        const metadata = metadataDoc.exists ? metadataDoc.data() || {} : {};
+        let datesArray = metadata[turmaDoAluno] as string[] | undefined;
+
+        // 2. Fallback: Se não existir no metadado, faz a query pesada UMA ÚNICA VEZ e salva
+        if (!datesArray || datesArray.length === 0) {
+          console.log(`[Firestore Query] Portal: Metadado vazio para ${turmaDoAluno}. Executando fallback pesado...`);
+          const tempDatesSet = new Set<string>();
+          const turmaFreqSnap = await dbAdmin.collection("frequencia").where("turma", "==", turmaDoAluno).get();
+          turmaFreqSnap.forEach((doc: QueryDocumentSnapshot) => {
+            const f = doc.data();
+            const idFreq = String(f.id || doc.id).trim();
+            if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
+            let dataFormatada = f.data || "";
+            if (dataFormatada.includes("/") && dataFormatada.length > 10) {
+              dataFormatada = dataFormatada.slice(0, 10);
+            }
+            if (dataFormatada) tempDatesSet.add(dataFormatada);
+          });
+          datesArray = Array.from(tempDatesSet);
+          
+          // Salva no metadado para garantir que a query pesada não rode novamente
+          await metadataRef.set({
+            [turmaDoAluno]: datesArray
+          }, { merge: true });
+        }
+
+        cachedDates = datesArray;
         setCachedClassDates(turmaDoAluno, cachedDates);
       }
       cachedDates.forEach(d => diasComAulaSet.add(d));

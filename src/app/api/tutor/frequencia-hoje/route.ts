@@ -26,7 +26,16 @@ export async function GET(request: Request) {
       .where("statusTrilha", "in", ["ativo", "Ativo"])
       .get();
 
-    const alunosMap: Record<string, any> = {};
+    interface AlunoFrequenciaHoje {
+      matricula: string;
+      nome: string;
+      presencasTotais: number;
+      faltasTotais: number;
+      presenteHoje: boolean;
+      horaHoje: string;
+    }
+
+    const alunosMap: Record<string, AlunoFrequenciaHoje> = {};
     alunosSnap.forEach((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
       const tTrilha = String(data.turmaTrilha || "").trim();
@@ -58,53 +67,75 @@ export async function GET(request: Request) {
       return NextResponse.json({ status: "sucesso", registros: [], totalAulas: 0 });
     }
 
-    // 3. Buscar todas as presenças da turma (buscando tudo e filtrando em memória pelos alunos da turma)
-    const freqSnap = await dbAdmin.collection("frequencia").get();
+    // 3. Obter o total de aulas a partir dos metadados unificados (1 leitura)
+    const metaRef = dbAdmin.collection("metadata").doc("dias_aula_turmas");
+    const metaSnap = await metaRef.get();
+    let totalAulasTurma = 0;
+    if (metaSnap.exists) {
+      const metaTurmas = metaSnap.data()?.turmas || {};
+      totalAulasTurma = metaTurmas[turma]?.dias_aula?.length || 0;
+    }
 
-    const diasDeAulaSet = new Set<string>();
-
-    freqSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const f = doc.data();
-      const rawDataStr = String(f.data || "").trim(); // "DD/MM/YYYY" ou "DD-MM-YYYY"
-
-      let d = 0, m = 0, y = 0;
-      if (rawDataStr.includes("/")) {
-        const parts = rawDataStr.split("/");
-        if (parts.length === 3) {
-          d = Number(parts[0]);
-          m = Number(parts[1]);
-          y = Number(parts[2]);
+    // Fallback: Se totalAulasTurma for 0, a turma não tem metadado cacheado.
+    // Fazemos uma varredura completa (custará as leituras normais apenas desta vez) e salvamos no metadado.
+    if (totalAulasTurma === 0) {
+      const fallbackSnap = await dbAdmin.collection("frequencia").where("turma", "==", turma).get();
+      const diasSet = new Set<string>();
+      fallbackSnap.forEach(doc => {
+        const dStr = String(doc.data().data || "").trim();
+        if (dStr.includes("/") || dStr.includes("-")) {
+          // Normaliza formato
+          let clean = dStr;
+          if (clean.includes("/") && clean.length > 10) clean = clean.slice(0, 10);
+          diasSet.add(clean);
         }
-      } else if (rawDataStr.includes("-")) {
-        const parts = rawDataStr.split("-");
-        if (parts.length === 3) {
-          d = Number(parts[0]);
-          m = Number(parts[1]);
-          y = Number(parts[2]);
-        }
+      });
+      
+      if (diasSet.size > 0) {
+        totalAulasTurma = diasSet.size;
+        await metaRef.set({
+          turmas: {
+            [turma]: { dias_aula: Array.from(diasSet).sort() }
+          }
+        }, { merge: true });
       }
+    }
 
-      if (d > 0) {
-        const dataFormatada = `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
-        const mat = f.matricula;
+    // 4. Buscar apenas os registros de frequência de HOJE para a turma específica (aprox. 40 leituras)
+    const freqHojeSnap = await dbAdmin.collection("frequencia")
+      .where("turma", "==", turma)
+      .where("data", "==", dataHojeStr)
+      .get();
 
-        if (alunosMap[mat]) {
-          diasDeAulaSet.add(dataFormatada);
-          const st = String(f.status || "").toLowerCase().trim();
-          if (st === "presente" || st === "p") {
-            alunosMap[mat].presencasTotais++;
-          }
-
-          if (dataFormatada === dataHojeStr && (st === "presente" || st === "p")) {
-            alunosMap[mat].presenteHoje = true;
-            alunosMap[mat].horaHoje = String(f.hora || f.timestamp ? new Date(f.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "Marcar");
-          }
+    freqHojeSnap.forEach((doc: QueryDocumentSnapshot) => {
+      const f = doc.data();
+      const mat = f.matricula;
+      if (alunosMap[mat]) {
+        const st = String(f.status || "").toLowerCase().trim();
+        if (st === "presente" || st === "p") {
+          alunosMap[mat].presenteHoje = true;
+          alunosMap[mat].horaHoje = String(f.hora || f.timestamp ? new Date(f.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "Marcar");
         }
       }
     });
 
-    const totalAulasTurma = diasDeAulaSet.size;
-    const listaFinal = Object.values(alunosMap).map((a: any) => {
+    // 5. Contar as presenças totais usando a API Count (1 leitura por aluno)
+    const countPromises = Object.values(alunosMap).map(async (aluno) => {
+      try {
+        const countSnap = await dbAdmin.collection("frequencia")
+          .where("matricula", "==", aluno.matricula)
+          .where("status", "in", ["presente", "p", "Presente", "P"])
+          .count()
+          .get();
+        aluno.presencasTotais = countSnap.data().count;
+      } catch (e) {
+        console.error(`Erro ao contar frequencia do aluno ${aluno.matricula}:`, e);
+      }
+    });
+
+    await Promise.all(countPromises);
+
+    const listaFinal = Object.values(alunosMap).map((a: AlunoFrequenciaHoje) => {
       a.faltasTotais = totalAulasTurma - a.presencasTotais;
       if (a.faltasTotais < 0) a.faltasTotais = 0;
       return a;

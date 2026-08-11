@@ -1,7 +1,7 @@
 import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { QueryDocumentSnapshot, Transaction } from "firebase-admin/firestore";
+import { QueryDocumentSnapshot, Transaction, FieldValue } from "firebase-admin/firestore";
 import { calcularGamificacao, GamificacaoStatus } from "@/src/lib/gamificacao";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
@@ -138,6 +138,12 @@ export async function POST(request: Request) {
         xp: finalXp,
         lastUpdated: spDate.getTime()
       });
+
+      // Registrar o dia de aula no metadado para não sobrecarregar a query do Portal
+      const metadataRef = dbAdmin.collection("metadata").doc("dias_aula_turmas");
+      transaction.set(metadataRef, {
+        [turmaDoAluno]: FieldValue.arrayUnion(dataHoje)
+      }, { merge: true });
 
       // Calcular gamificação com o novo XP
       finalGamificacao = calcularGamificacao(finalXp, xpGasto);

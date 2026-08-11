@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { getCachedConfigs, setCachedConfigs } from "@/src/lib/cache";
-import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
-  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
-  : undefined;
+export const dynamic = "force-dynamic";
 
 export async function GET() {
   // 1. Verificar Cache
@@ -17,10 +14,12 @@ export async function GET() {
 
   try {
     const snap = await dbAdmin.collection("configuracoes").get();
-    const configs: Record<string, string> = {};
+    const configs: Record<string, unknown> = {};
     snap.forEach((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
-      configs[doc.id] = String(data.valor || "").trim();
+      configs[doc.id] = Array.isArray(data.valor) 
+        ? data.valor 
+        : String(data.valor || "").trim();
     });
 
     const result = { status: "sucesso", configuracoes: configs };

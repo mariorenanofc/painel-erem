@@ -57,41 +57,53 @@ export async function GET(request: Request) {
     if (Object.keys(alunosMap).length === 0) {
       return NextResponse.json({ status: "sucesso", diasComAula: [], alunos: [] });
     }
-
-    // 2. Buscar todas as presenças da turma (buscando tudo e filtrando em memória pelos alunos da turma)
-    const freqSnap = await dbAdmin.collection("frequencia").get();
-
-    const diasComAulaSet = new Set<string>();
     const mesNum = Number(mes);
     const anoNum = Number(ano);
 
-    freqSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const f = doc.data();
-      let dataClean = String(f.data || "").trim(); // "DD/MM/YYYY" ou "DD-MM-YYYY"
-      if (dataClean.includes("/") && dataClean.length > 10) {
-        dataClean = dataClean.slice(0, 10);
-      }
-      
-      // Extrair dia, mes e ano do formato da string
-      let d = 0, m = 0, y = 0;
-      if (dataClean.includes("/")) {
-        const parts = dataClean.split("/");
-        if (parts.length === 3) {
-          d = Number(parts[0]);
-          m = Number(parts[1]);
-          y = Number(parts[2]);
-        }
-      } else if (dataClean.includes("-")) {
-        const parts = dataClean.split("-");
-        if (parts.length === 3) {
-          d = Number(parts[0]);
-          m = Number(parts[1]);
-          y = Number(parts[2]);
-        }
-      }
+    // 2. Gerar todos os dias possíveis para o mês selecionado
+    // Isso garante que buscaremos APENAS os dados deste mês, sem precisar ler 100% da tabela de frequência ou depender de metadados.
+    const diasNoMes = new Date(anoNum, mesNum, 0).getDate(); // Retorna 28, 29, 30 ou 31
+    const possiveisDatas: string[] = [];
+    
+    for (let d = 1; d <= diasNoMes; d++) {
+      const diaStr = String(d).padStart(2, "0");
+      const mesStr = String(mesNum).padStart(2, "0");
+      possiveisDatas.push(`${diaStr}/${mesStr}/${anoNum}`);
+      possiveisDatas.push(`${diaStr}-${mesStr}-${anoNum}`); // Cobrir formato alternativo salvo no banco
+    }
 
-      // Se coincidir com o mês e ano buscado
-      if (m === mesNum && y === anoNum && d > 0) {
+    const diasComAulaSet = new Set<string>();
+
+    // 3. Dividir em lotes de 10 (limite da cláusula 'in' do Firebase)
+    const chunks = [];
+    for (let i = 0; i < possiveisDatas.length; i += 10) {
+      chunks.push(possiveisDatas.slice(i, i + 10));
+    }
+
+    const freqPromises = chunks.map(chunk => 
+      dbAdmin.collection("frequencia")
+        .where("turma", "==", turma)
+        .where("data", "in", chunk)
+        .get()
+    );
+
+    const freqSnaps = await Promise.all(freqPromises);
+
+    freqSnaps.forEach(snap => {
+      snap.forEach((doc: QueryDocumentSnapshot) => {
+        const f = doc.data();
+        let dataClean = String(f.data || "").trim();
+        if (dataClean.includes("/") && dataClean.length > 10) {
+          dataClean = dataClean.slice(0, 10);
+        }
+        const delim = dataClean.includes("/") ? "/" : "-";
+        const parts = dataClean.split(delim);
+        if (parts.length !== 3) return;
+
+        const d = Number(parts[0]);
+        const m = Number(parts[1]);
+        const y = Number(parts[2]);
+        
         const mat = f.matricula;
         if (alunosMap[mat]) {
           const dataFormatada = `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
@@ -110,7 +122,7 @@ export async function GET(request: Request) {
             idFalta: f.id || doc.id
           };
         }
-      }
+      });
     });
 
     const diasComAula = Array.from(diasComAulaSet).sort((a, b) => {
@@ -119,7 +131,6 @@ export async function GET(request: Request) {
       return Number(partsA[0]) - Number(partsB[0]);
     });
 
-    // Preencher as faltas para alunos que não têm registro no dia com aula
     const alunosArray = Object.values(alunosMap);
     alunosArray.forEach((aluno) => {
       diasComAula.forEach((diaStr) => {

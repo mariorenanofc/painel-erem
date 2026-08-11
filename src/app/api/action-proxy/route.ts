@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       "salvar_atividade", "excluir_atividade", "avaliar_entrega", 
       "injetar_xp_manual", "cadastrar_aluno", "inscrever_trilhatech", "salvar_aluno",
       "mudar_status_trilhatech", "atualizar_senha_checkin", "toggle_modo_reposicao",
-      "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "sincronizar_ava",
+      "salvar_configuracoes", "sincronizar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "sincronizar_ava",
       "justificar_falta", "buscar_analytics_geral", "buscar_ficha_360", "listar_alunos_godmode",
       "coroar_elite", "sortear_rifa"
     ];
@@ -49,6 +49,23 @@ export async function POST(request: Request) {
     }
     // ---------------------------------
     
+    if (requestAction === "sincronizar_configuracoes") {
+      const sheetsResponse = await fetchSheetsQueued(GOOGLE_API_URL, { action: "buscar_configuracoes" });
+      const resultSync = await sheetsResponse.json();
+      
+      if (resultSync.status === "sucesso" && resultSync.configuracoes) {
+        const configs = resultSync.configuracoes;
+        const promises = Object.keys(configs).map(key => {
+          return dbAdmin.collection("configuracoes").doc(key).set({ valor: configs[key] });
+        });
+        await Promise.all(promises);
+        invalidateConfigCache();
+        return NextResponse.json({ status: "sucesso", mensagem: "Configurações sincronizadas com a planilha." });
+      } else {
+        return NextResponse.json({ status: "erro", mensagem: "Falha ao obter da planilha." }, { status: 500 });
+      }
+    }
+
     // 1. Executar na fila serializada do Google Sheets (evita LockService concurrency errors)
     const sheetsResponse = await fetchSheetsQueued(GOOGLE_API_URL, payload);
     const result = await sheetsResponse.json();

@@ -70,11 +70,11 @@ function doPost(e) {
     ];
     
     // A nossa "Chave Mestra" que só o Painel do Tutor conhece
-    const TOKEN_TUTOR = "TrilhaTech_Seguranca_Total_2026"; 
+    const TUTOR_TOKEN_SECRET = "TrilhaTech_Seguranca_Total_2026"; 
 
     // Se a ação for uma rota de professor, exige a chave!
     if (ROTAS_PROTEGIDAS.includes(action)) {
-      if (dadosApp.token !== TOKEN_TUTOR) {
+      if (dadosApp.token !== TUTOR_TOKEN_SECRET) {
         return ContentService.createTextOutput(JSON.stringify({ 
           status: "erro", 
           mensagem: "⛔ ALERTA DE SEGURANÇA: Tentativa de fraude bloqueada! O seu IP foi registado." 
@@ -4149,8 +4149,8 @@ function doPost(e) {
       // ROTA MIGRACAO: EXPORTAR TODOS OS DADOS PARA FIRESTORE
       // ==========================================
       if (action === "exportar_dados_migracao") {
-          const TOKEN_TUTOR = "TrilhaTech_Seguranca_Total_2026";
-          if (dadosApp.token !== TOKEN_TUTOR) {
+          const TUTOR_TOKEN_SECRET = "TrilhaTech_Seguranca_Total_2026";
+          if (dadosApp.token !== TUTOR_TOKEN_SECRET) {
               return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Não autorizado." })).setMimeType(ContentService.MimeType.JSON);
           }
           const getAbaValues = (nome) => {
@@ -4175,8 +4175,8 @@ function doPost(e) {
       // ROTA MIGRACAO: RECEBER DADOS EM LOTE E ATUALIZAR PLANILHA
       // ==========================================
       if (action === "sincronizar_dados_portal") {
-          const TOKEN_TUTOR = "TrilhaTech_Seguranca_Total_2026";
-          if (dadosApp.token !== TOKEN_TUTOR) {
+          const TUTOR_TOKEN_SECRET = "TrilhaTech_Seguranca_Total_2026";
+          if (dadosApp.token !== TUTOR_TOKEN_SECRET) {
               return ContentService.createTextOutput(JSON.stringify({ status: "erro", mensagem: "Não autorizado." })).setMimeType(ContentService.MimeType.JSON);
           }
 

@@ -53,10 +53,17 @@ export async function POST(request: Request) {
     const turmaDoAluno = aluno.turmaTrilha || aluno.turma || "";
 
     // 3. Regra de dias de aula por turma (se modo reposição desligado)
+    const isPrimeiroAno = turmaDoAluno.includes("1º") || turmaDoAluno.includes("1 ANO");
+    const isSegundoAno = turmaDoAluno.includes("2º") || turmaDoAluno.includes("2 ANO");
+
+    if (!isPrimeiroAno && !isSegundoAno) {
+      return NextResponse.json({ status: "erro", mensagem: "Sua conta não possui uma turma válida vinculada para o check-in." });
+    }
+
     if (modoReposicao !== "LIGADO") {
-      if ((turmaDoAluno.includes("1º") || turmaDoAluno.includes("1 ANO")) && diaSemana !== 1 && diaSemana !== 3) {
+      if (isPrimeiroAno && diaSemana !== 1 && diaSemana !== 3) {
         return NextResponse.json({ status: "erro", mensagem: "Hoje não é dia de aula para o 1º Ano." });
-      } else if ((turmaDoAluno.includes("2º") || turmaDoAluno.includes("2 ANO")) && diaSemana !== 2 && diaSemana !== 4) {
+      } else if (isSegundoAno && diaSemana !== 2 && diaSemana !== 4) {
         return NextResponse.json({ status: "erro", mensagem: "Hoje não é dia de aula para o 2º Ano." });
       }
     }

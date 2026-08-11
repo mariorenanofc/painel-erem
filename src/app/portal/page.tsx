@@ -22,6 +22,8 @@ import {
 } from "@/src/types";
 
 import { calcularBadges, Badge } from "@/src/utils/badges";
+import Footer from "@/src/components/Footer";
+import OTPCheckIn from "@/src/components/OTPCheckIn";
 import PixModal from "@/src/components/PixModal";
 import RankingModal from "@/src/components/RankingModal";
 import PortalHeader from "@/src/components/PortalHeader";
@@ -1696,42 +1698,55 @@ export default function PortalDashboard() {
 
       {modalSenhaAberto && (
         <div className="fixed inset-0 bg-slate-900/80 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border dark:border-slate-800 w-full max-w-sm overflow-hidden flex flex-col p-6 text-center select-text transition-colors duration-300">
-            <div className="text-4xl mb-4">🔐</div>
-            <h2 className="font-black text-xl text-slate-800 dark:text-slate-100 mb-2">
-              Presença em Sala
-            </h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-6">
-              Digite a senha que o tutor escreveu na lousa para garantir os seus
-              10 XP.
-            </p>
-            <form onSubmit={confirmarCheckin}>
-              <input
-                type="text"
-                value={senhaDigitada}
-                onChange={(e) => setSenhaDigitada(e.target.value.toUpperCase())}
-                placeholder="SENHA DA LOUSA"
-                className="w-full text-center text-2xl font-black font-mono border-2 border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-950 rounded-lg p-3 mb-4 focus:border-emerald-500 dark:focus:border-emerald-500 outline-none uppercase tracking-widest text-slate-800 dark:text-slate-100 transition-colors duration-300"
-                autoFocus
-              />
-              <div className="flex gap-3 mt-2">
-                <button
-                  type="button"
-                  onClick={() => setModalSenhaAberto(false)}
-                  className="cursor-pointer flex-1 py-3 font-bold text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  disabled={fazendoCheckin}
-                  className="cursor-pointer flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-lg shadow-md transition-colors disabled:bg-emerald-400 dark:disabled:bg-emerald-800"
-                >
-                  {fazendoCheckin ? "Validando..." : "Confirmar"}
-                </button>
-              </div>
-            </form>
-          </div>
+          <OTPCheckIn
+            onCancel={() => {
+              setModalSenhaAberto(false);
+              setFazendoCheckin(false);
+            }}
+            onComplete={async (otp) => {
+              if (!aluno) return false;
+              
+              setSenhaDigitada(otp);
+              try {
+                const data = await apiAluno.fazerCheckin(aluno.matricula, otp);
+                const dataHoje = new Date().toLocaleDateString("pt-BR");
+
+                if (data.status === "sucesso") {
+                  confetti({
+                    particleCount: 100,
+                    spread: 60,
+                    origin: { y: 0.7 },
+                    zIndex: 99999,
+                    colors: ["#10b981", "#34d399", "#ffffff"],
+                  });
+                  toast(data.mensagem, "success", "Presença Garantida!");
+                  localStorage.setItem(`checkin_${aluno.matricula}`, dataHoje);
+                  setCheckinRealizado(true);
+                  
+                  if (data.perfilAtualizado) {
+                    setXpTotalSistema(data.perfilAtualizado.xpTotal);
+                    setNivelSistema(data.perfilAtualizado.nivel);
+                    setSaldoCarteira(data.perfilAtualizado.saldoCarteira);
+                    if (data.perfilAtualizado.progressoNivel) {
+                      setProgressoNivel(data.perfilAtualizado.progressoNivel);
+                    }
+                  }
+                  return true;
+                } else {
+                  toast(data.mensagem, "warning", "Não foi possível");
+                  if (data.mensagem.includes("já garantiu")) {
+                    localStorage.setItem(`checkin_${aluno.matricula}`, dataHoje);
+                    setCheckinRealizado(true);
+                    return true;
+                  }
+                  return false;
+                }
+              } catch (err) {
+                toast("Erro ao tentar registar a presença.", "error", "Falha de Conexão");
+                return false;
+              }
+            }}
+          />
         </div>
       )}
 

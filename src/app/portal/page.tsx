@@ -302,7 +302,7 @@ export default function PortalDashboard() {
           "Conquista Épica!",
         );
         setNovasConquistas((prev) => prev.slice(1));
-        carregarPortal();
+        carregarPortal(true);
       } else {
         toast(data.mensagem, "warning", "Ops!");
         setNovasConquistas((prev) => prev.slice(1));

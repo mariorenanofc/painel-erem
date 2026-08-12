@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { invalidateConfigCache, clearAllPortalCaches } from "@/src/lib/cache";
+import { clearAllPortalCaches } from "@/src/lib/cache";
 
 export async function GET() {
   try {
@@ -9,8 +9,8 @@ export async function GET() {
     // Sort by name
     modulos.sort((a, b) => String(a.nomeMod).localeCompare(String(b.nomeMod)));
     return NextResponse.json({ status: "sucesso", modulos });
-  } catch (error: any) {
-    return NextResponse.json({ status: "erro", mensagem: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ status: "erro", mensagem: (error as Error).message }, { status: 500 });
   }
 }
 
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ status: "erro", mensagem: "Ação inválida." }, { status: 400 });
-  } catch (error: any) {
-    return NextResponse.json({ status: "erro", mensagem: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ status: "erro", mensagem: (error as Error).message }, { status: 500 });
   }
 }

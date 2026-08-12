@@ -56,8 +56,8 @@ export async function POST(req: Request) {
       mapaModulos[nome] = String(m.statusMod).toLowerCase();
     });
 
-    const listaAlunos: any[] = [];
-    const mapaBuscaAluno: Record<string, any> = {};
+    const listaAlunos: Array<{ idDoc: string; xpTotal: number; nomeNorm: string; email?: string; nome?: string; matricula?: string; turma?: string; turmaTrilha?: string }> = [];
+    const mapaBuscaAluno: Record<string, { idDoc: string; xpTotal: number; nomeNorm: string; email?: string; nome?: string; matricula?: string; turma?: string; turmaTrilha?: string }> = {};
     alunosSnap.forEach(doc => {
       const a = doc.data();
       if (a.statusCurso === "Ativo") {
@@ -68,16 +68,16 @@ export async function POST(req: Request) {
       }
     });
 
-    const mapaEntregas: Record<string, any> = {};
+    const mapaEntregas: Record<string, { idDoc?: string, status?: string }> = {};
     entregasSnap.forEach(doc => {
       const e = doc.data();
       mapaEntregas[`${e.matricula}_${e.idAtividade}`] = { idDoc: doc.id, status: e.status };
     });
 
     // Filtra Atividades do Classroom
-    const atividadesParaSincronizar: any[] = [];
+    const atividadesParaSincronizar: Array<{ idDoc: string; linkClassroom?: string; turmaAlvo?: string; modulo?: string; xp?: number; dataLimite?: string; gabaritoLiberado?: string | boolean }> = [];
     atividadesSnap.forEach(doc => {
-      const ativ = { idDoc: doc.id, ...(doc.data() as { linkClassroom?: string; turmaAlvo?: string; modulo?: string; xp?: number; dataLimite?: string }) };
+      const ativ = { idDoc: doc.id, ...(doc.data() as { linkClassroom?: string; turmaAlvo?: string; modulo?: string; xp?: number; dataLimite?: string; gabaritoLiberado?: string | boolean }) };
       const link = String(ativ.linkClassroom || "").trim();
       const turmaAlvo = String(ativ.turmaAlvo || "Todas");
       const nomeModulo = String(ativ.modulo || "Geral");
@@ -95,7 +95,7 @@ export async function POST(req: Request) {
 
     let entregasNovas = 0;
     const logsErro: string[] = [];
-    const cacheAlunosCurso: Record<string, Record<string, any>> = {};
+    const cacheAlunosCurso: Record<string, Record<string, { email: string, nomeNorm: string }>> = {};
 
     for (const ativ of atividadesParaSincronizar) {
       const idAtiv = ativ.idDoc;
@@ -120,7 +120,7 @@ export async function POST(req: Request) {
       }
       if (dataLimObj) dataLimObj.setHours(0,0,0,0);
 
-      const match = link.match(/\/c\/([^\/\?]+)\/(?:a|sa|q|mc)\/([^\/\?]+)/i);
+      const match = (link || "").match(/\/c\/([^\/\?]+)\/(?:a|sa|q|mc)\/([^\/\?]+)/i);
       if (match && match[1] && match[2]) {
         const courseId = match[1];
         const courseWorkId = match[2];
@@ -221,8 +221,8 @@ export async function POST(req: Request) {
 
                              // Para digitação
                              let matchDig = null;
-                             if (entregaExistente) {
-                                 const docSnap = await dbAdmin.collection("entregas").doc(entregaExistente.idDoc).get();
+                             if (entregaExistente && entregaExistente.idDoc) {
+                                 const docSnap = await dbAdmin.collection("entregas").doc(String(entregaExistente.idDoc)).get();
                                  const feedbackExistente = docSnap.exists ? String(docSnap.data()?.feedback || "") : "";
                                  matchDig = feedbackExistente.match(/\[XP_DIGITACAO:\s*(\d+)\]/);
                              }
@@ -246,7 +246,7 @@ export async function POST(req: Request) {
                          const msgAviso = "\n[🤖 AVA: Nota sincronizada automaticamente]";
 
                          if (entregaExistente) {
-                            const docRef = dbAdmin.collection("entregas").doc(entregaExistente.idDoc);
+                            const docRef = dbAdmin.collection("entregas").doc(String(entregaExistente.idDoc));
                             batch.update(docRef, {
                                 status: "Avaliado",
                                 xpGanho: xpGanhoFinal,
@@ -286,8 +286,8 @@ export async function POST(req: Request) {
             pageToken = response.data.nextPageToken;
           } while(pageToken);
 
-        } catch(e: any) {
-           logsErro.push(`Missão [${idAtiv}]: ${e.message}`);
+        } catch(e: unknown) {
+           logsErro.push(`Missão [${idAtiv}]: ${(e as Error).message}`);
         }
       }
     }
@@ -304,7 +304,7 @@ export async function POST(req: Request) {
     }
 
     return NextResponse.json({ status: "sucesso", mensagem: mensagemFinal });
-  } catch (error: any) {
-    return NextResponse.json({ status: "erro", mensagem: error.message }, { status: 500 });
+  } catch (error: unknown) {
+    return NextResponse.json({ status: "erro", mensagem: (error as Error).message }, { status: 500 });
   }
 }

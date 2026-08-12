@@ -5,7 +5,7 @@ import { invalidateConfigCache, clearAllPortalCaches } from "@/src/lib/cache";
 export async function GET() {
   try {
     const snap = await dbAdmin.collection("controle_modulos").get();
-    const modulos = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    const modulos = snap.docs.map(doc => ({ id: doc.id, ...(doc.data() as { nomeMod?: string, statusMod?: string, turmaMod?: string }) }));
     // Sort by name
     modulos.sort((a, b) => String(a.nomeMod).localeCompare(String(b.nomeMod)));
     return NextResponse.json({ status: "sucesso", modulos });

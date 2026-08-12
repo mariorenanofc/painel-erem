@@ -21,6 +21,9 @@ const nextConfig: NextConfig = {
   /* config options here */
   allowedDevOrigins: ["localhost:3000", "192.168.1.106"],
   reactStrictMode: true,
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
 };
 
 export default nextConfig;

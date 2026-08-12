@@ -77,7 +77,7 @@ export async function POST(req: Request) {
     // Filtra Atividades do Classroom
     const atividadesParaSincronizar: any[] = [];
     atividadesSnap.forEach(doc => {
-      const ativ = { idDoc: doc.id, ...doc.data() };
+      const ativ = { idDoc: doc.id, ...(doc.data() as { linkClassroom?: string; turmaAlvo?: string; modulo?: string; xp?: number; dataLimite?: string }) };
       const link = String(ativ.linkClassroom || "").trim();
       const turmaAlvo = String(ativ.turmaAlvo || "Todas");
       const nomeModulo = String(ativ.modulo || "Geral");
@@ -128,11 +128,11 @@ export async function POST(req: Request) {
         try {
           let pageToken: string | null | undefined = undefined;
           do {
-            const response = await classroom.courses.courseWork.studentSubmissions.list({
+            const response: { data: { nextPageToken?: string; studentSubmissions?: Array<{ state?: string; userId?: string; updateTime?: string }> } } = (await classroom.courses.courseWork.studentSubmissions.list({
               courseId,
               courseWorkId,
               pageToken: pageToken || undefined,
-            });
+            })) as unknown as { data: { nextPageToken?: string; studentSubmissions?: Array<{ state?: string; userId?: string; updateTime?: string }> } };
 
             const submissions = response.data.studentSubmissions || [];
             for (const sub of submissions) {
@@ -145,9 +145,9 @@ export async function POST(req: Request) {
                     try {
                         let stPageToken: string | null | undefined = undefined;
                         do {
-                            const stRes = await classroom.courses.students.list({ courseId, pageToken: stPageToken || undefined, pageSize: 500 });
+                            const stRes: { data: { nextPageToken?: string; students?: Array<{ userId?: string; profile?: { emailAddress?: string; name?: { fullName?: string } } }> } } = (await classroom.courses.students.list({ courseId, pageToken: stPageToken || undefined, pageSize: 500 })) as unknown as { data: { nextPageToken?: string; students?: Array<{ userId?: string; profile?: { emailAddress?: string; name?: { fullName?: string } } }> } };
                             const students = stRes.data.students || [];
-                            students.forEach(s => {
+                            students.forEach((s: { userId?: string; profile?: { emailAddress?: string; name?: { fullName?: string } } }) => {
                                 if (s.userId && s.profile) {
                                     const email = (s.profile.emailAddress || "").toLowerCase().trim();
                                     const nome = s.profile.name?.fullName || "";

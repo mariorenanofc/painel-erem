@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { dbAdmin, registrarLogSeguranca } from "@/src/lib/firebaseAdmin";
 import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
 import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades } from "@/src/lib/cache";
-import { Transaction, FieldValue, FieldPath } from "firebase-admin/firestore";
+import { Transaction, FieldValue, FieldPath, QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { cookies } from "next/headers";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
@@ -367,7 +367,7 @@ export async function POST(request: Request) {
         const alunosMap: Record<string, string> = {};
         alunosSnap.forEach(doc => { alunosMap[doc.id] = doc.data().nome || "Aluno"; });
 
-        const entregas: Record<string, unknown>[] = [];
+        const entregas: Array<{ idEntrega: string, matricula: string, nomeAluno: string, resposta: string, status: string, xpGanho: number, feedback: string }> = [];
         entregasSnap.forEach(doc => {
           const e = doc.data();
           const mat = e.matricula || doc.id.split("-")[1] || "";
@@ -421,7 +421,7 @@ export async function POST(request: Request) {
       }
 
       const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "==", mat).get();
-      const freqMap: Record<string, unknown> = {};
+      const freqMap: Record<string, { status?: string; xp?: number; justificativa?: string; id?: string; data?: string }> = {};
       freqSnap.forEach(doc => {
         const f = doc.data();
         if (f.data) freqMap[f.data] = f;
@@ -508,8 +508,8 @@ export async function POST(request: Request) {
     } else if (requestAction === "buscar_bilhetes_aluno") {
       const mat = String(payload.matricula || "").trim();
       const bilhetesSnap = await dbAdmin.collection("rifa_bilhetes").where("matricula", "==", mat).get();
-      const bilhetes: Record<string, unknown>[] = [];
-      bilhetesSnap.forEach(doc => bilhetes.push(doc.data()));
+      const bilhetes: Array<Record<string, string | number | boolean>> = [];
+      bilhetesSnap.forEach(doc => bilhetes.push(doc.data() as Record<string, string | number | boolean>));
       bilhetes.sort((a, b) => (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0));
       result = { status: "sucesso", bilhetes };
     } else if (requestAction === "iniciar_pix") {
@@ -536,7 +536,6 @@ export async function POST(request: Request) {
         const status = String(a.statusTrilha || "").trim().toLowerCase();
 
         if (matriculaCorrente === mat) {
-          minhaTurma = String(a.turmaTrilha || a.turma || "").trim();
           meuXpTotal = Number(a.xpRanking) || 0;
           temSenhaPix = String(a.senhaPix || "").trim().length >= 4;
         }
@@ -551,7 +550,7 @@ export async function POST(request: Request) {
       colegas.sort((a, b) => a.nome.localeCompare(b.nome));
 
       let xpDoadoHoje = 0;
-      let extratoPix: Record<string, unknown>[] = [];
+      let extratoPix: Array<{ id: string, mensagem: string, xp: number, tempo: number, tipo: string }> = [];
       const hojeObj = new Date();
       hojeObj.setHours(hojeObj.getHours() - 3); // BRT timezone approximation
       const y = hojeObj.getFullYear();
@@ -630,8 +629,8 @@ export async function POST(request: Request) {
         if (!origemDoc || !destinoDoc) {
           result = { status: "erro", mensagem: "Contas não encontradas." };
         } else {
-          const oData = origemDoc.data();
-          const dData = destinoDoc.data();
+          const oData = (origemDoc as QueryDocumentSnapshot).data();
+          const dData = (destinoDoc as QueryDocumentSnapshot).data();
           const statusOrigem = String(oData.statusTrilha || "").trim().toLowerCase();
           const statusDestino = String(dData.statusTrilha || "").trim().toLowerCase();
           const bloqueioPixOrigem = String(oData.bloqueioPix || "").trim().toLowerCase();
@@ -702,9 +701,9 @@ export async function POST(request: Request) {
                 result = { status: "erro", mensagem: "🚨 Você foi bloqueado de transferir para este colega por 7 dias!" };
               } else {
                 if (!ehMestre) {
-                  batch.update(origemDoc.ref, { xpRanking: (Number(oData.xpRanking) || 0) - quantidade });
+                  batch.update((origemDoc as QueryDocumentSnapshot).ref, { xpRanking: (Number(oData.xpRanking) || 0) - quantidade });
                 }
-                batch.update(destinoDoc.ref, { xpRanking: (Number(dData.xpRanking) || 0) + quantidade });
+                batch.update((destinoDoc as QueryDocumentSnapshot).ref, { xpRanking: (Number(dData.xpRanking) || 0) + quantidade });
                 
                 const idBase = `${prefixoHoje}-${agoraTime}`;
                 batch.set(dbAdmin.collection("entregas").doc(`${idBase}-ENVIOU`), {
@@ -759,8 +758,8 @@ export async function POST(request: Request) {
         const turmaSorteio = String(payload.turma || "").trim();
         const rifasSnap = await dbAdmin.collection("rifa_bilhetes").where("turma", "==", turmaSorteio).where("status", "==", "ATIVO").get();
         
-        const bilhetesValidos: Record<string, unknown>[] = [];
-        rifasSnap.forEach(doc => bilhetesValidos.push(doc.data()));
+        const bilhetesValidos: Array<{ id: string, nomeAluno?: string, nome?: string, matricula: string }> = [];
+        rifasSnap.forEach(doc => bilhetesValidos.push({ id: doc.id, ...(doc.data() as { nomeAluno?: string, nome?: string, matricula: string }) }));
 
         if (bilhetesValidos.length === 0) {
           result = { status: "erro", mensagem: "Nenhum bilhete ativo encontrado nesta turma!" };

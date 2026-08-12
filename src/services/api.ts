@@ -298,12 +298,12 @@ export const apiTutor = {
 
   // --- FREQUÊNCIA ---
   buscarDiarioClasse: async (turma: string, mes: string, ano: string) => {
-    const res = await fetch(`/api/tutor/diario-classe?turma=${encodeURIComponent(turma)}&mes=${encodeURIComponent(mes)}&ano=${encodeURIComponent(ano)}`);
+    const res = await fetch(`/api/tutor/diario-classe?turma=${encodeURIComponent(turma)}&mes=${encodeURIComponent(mes)}&ano=${encodeURIComponent(ano)}&_t=${Date.now()}`);
     return res.json();
   },
 
   buscarFrequenciaHoje: async (turma: string) => {
-    const res = await fetch(`/api/tutor/frequencia-hoje?turma=${encodeURIComponent(turma)}`);
+    const res = await fetch(`/api/tutor/frequencia-hoje?turma=${encodeURIComponent(turma)}&_t=${Date.now()}`);
     return res.json();
   },
 

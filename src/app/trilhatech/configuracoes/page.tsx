@@ -24,8 +24,23 @@ export default function ConfiguracoesPage() {
 
   // Controle de Abas
   const [abaAtiva, setAbaAtiva] = useState<
-    "geral" | "links" | "modulos" | "onboarding"
+    "geral" | "links" | "modulos" | "usuarios" | "seguranca" | "onboarding"
   >("geral");
+
+  // States para Controle de Módulos
+  const [modulosDb, setModulosDb] = useState<any[]>([]);
+  const [novoNomeMod, setNovoNomeMod] = useState("");
+  const [novoStatusMod, setNovoStatusMod] = useState("Aberto");
+  const [novaTurmaMod, setNovaTurmaMod] = useState("Todas");
+
+  // States para Usuários (Tutores)
+  const [usuariosDb, setUsuariosDb] = useState<any[]>([]);
+  const [novoUsuario, setNovoUsuario] = useState("");
+  const [novaSenha, setNovaSenha] = useState("");
+  const [novoNomeUsuario, setNovoNomeUsuario] = useState("");
+
+  // States para Segurança
+  const [logsSeguranca, setLogsSeguranca] = useState<any[]>([]);
 
   // Estado das Configurações
   const [configs, setConfigs] = useState<Record<string, string>>({
@@ -126,6 +141,86 @@ export default function ConfiguracoesPage() {
 
   const handleChange = (chave: string, valor: string) => {
     setConfigs((prev) => ({ ...prev, [chave]: valor }));
+  };
+
+  const carregarModulosDb = async () => {
+    try {
+      const res = await fetch("/api/tutor/modulos");
+      const data = await res.json();
+      if (data.modulos) setModulosDb(data.modulos);
+    } catch (e) { console.error(e); }
+  };
+
+  const carregarUsuariosDb = async () => {
+    try {
+      const res = await fetch("/api/tutor/usuarios");
+      const data = await res.json();
+      if (data.usuarios) setUsuariosDb(data.usuarios);
+    } catch (e) { console.error(e); }
+  };
+
+  const carregarLogsSeguranca = async () => {
+    try {
+      const res = await fetch("/api/tutor/seguranca");
+      const data = await res.json();
+      if (data.logs) setLogsSeguranca(data.logs);
+    } catch (e) { console.error(e); }
+  };
+
+  const adicionarModuloDb = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!novoNomeMod) return;
+    try {
+      await fetch("/api/tutor/modulos", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "adicionar", nomeMod: novoNomeMod, statusMod: novoStatusMod, turmaMod: novaTurmaMod })
+      });
+      setNovoNomeMod(""); carregarModulosDb();
+    } catch (e) { console.error(e); }
+  };
+
+  const atualizarStatusModDb = async (id: string, statusMod: string) => {
+    try {
+      await fetch("/api/tutor/modulos", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "atualizar_status", id, statusMod })
+      });
+      carregarModulosDb();
+    } catch (e) { console.error(e); }
+  };
+
+  const removerModuloDb = async (id: string) => {
+    if (!confirm("Tem certeza que deseja remover esta regra de módulo?")) return;
+    try {
+      await fetch("/api/tutor/modulos", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "remover", id })
+      });
+      carregarModulosDb();
+    } catch (e) { console.error(e); }
+  };
+
+  const adicionarUsuarioDb = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!novoUsuario || !novaSenha || !novoNomeUsuario) return;
+    try {
+      await fetch("/api/tutor/usuarios", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "adicionar", usuario: novoUsuario, senha: novaSenha, nome: novoNomeUsuario })
+      });
+      setNovoUsuario(""); setNovaSenha(""); setNovoNomeUsuario(""); carregarUsuariosDb();
+    } catch (e) { console.error(e); }
+  };
+
+  const removerUsuarioDb = async (id: string) => {
+    if (!confirm("Tem certeza que deseja remover este tutor?")) return;
+    try {
+      await fetch("/api/tutor/usuarios", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "remover", id })
+      });
+      carregarUsuariosDb();
+    } catch (e) { console.error(e); }
   };
 
   const salvarConfiguracoes = async () => {
@@ -233,7 +328,10 @@ export default function ConfiguracoesPage() {
               🔗 Links e WhatsApp
             </button>
             <button
-              onClick={() => setAbaAtiva("modulos")}
+              onClick={() => {
+                setAbaAtiva("modulos");
+                carregarModulosDb();
+              }}
               className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
                 abaAtiva === "modulos"
                   ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
@@ -241,6 +339,32 @@ export default function ConfiguracoesPage() {
               }`}
             >
               📚 Módulos & SIEPE
+            </button>
+            <button
+              onClick={() => {
+                setAbaAtiva("usuarios");
+                carregarUsuariosDb();
+              }}
+              className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
+                abaAtiva === "usuarios"
+                  ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
+                  : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+              }`}
+            >
+              👥 Usuários (Tutores)
+            </button>
+            <button
+              onClick={() => {
+                setAbaAtiva("seguranca");
+                carregarLogsSeguranca();
+              }}
+              className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
+                abaAtiva === "seguranca"
+                  ? "bg-red-600 border-red-700 text-white shadow-md"
+                  : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+              }`}
+            >
+              🛡️ Logs de Segurança
             </button>
             <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-800">
               <button
@@ -452,45 +576,190 @@ export default function ConfiguracoesPage() {
                   {abaAtiva === "modulos" && (
                     <div className="space-y-6">
                       <h3 className="text-xl font-black text-slate-800 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3 mb-6 font-display">
-                        Gestão de Módulos
+                        Controle de Módulos & Importação SIEPE
                       </h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div className="grid grid-cols-1 gap-6 mb-8">
                         <div>
                           <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
-                            Importação SIEPE
+                            Importação Automática SIEPE
                           </label>
-                          <div className="relative">
-                            <select
-                              value={configs.STATUS_SIEPE}
-                              onChange={(e) => handleChange("STATUS_SIEPE", e.target.value)}
-                              className="cursor-pointer w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl p-3.5 pr-10 font-bold focus:border-blue-555 outline-none transition-all appearance-none shadow-sm"
-                            >
-                              <option value="ATIVO" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Ativado (Recebendo dados)</option>
-                              <option value="INATIVO" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Pausado</option>
-                            </select>
-                            <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 font-bold text-xs">
-                              ▼
-                            </div>
-                          </div>
-                        </div>
-                        <div>
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
-                            Módulos Ativos (Separados por vírgula)
-                          </label>
-                          <input
-                            type="text"
-                            value={configs.MODULOS_ATIVOS}
-                            onChange={(e) => handleChange("MODULOS_ATIVOS", e.target.value)}
-                            placeholder="Módulo 1, Nano-curso Cloud..."
-                            className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 text-slate-800 dark:text-slate-100 font-bold focus:border-blue-500 outline-none transition-all"
-                          />
+                          <select
+                            value={configs.STATUS_SIEPE || "ATIVO"}
+                            onChange={(e) => handleChange("STATUS_SIEPE", e.target.value)}
+                            className="cursor-pointer w-full md:w-1/2 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl p-3.5 font-bold outline-none"
+                          >
+                            <option value="ATIVO">Ativado (Recebendo dados)</option>
+                            <option value="INATIVO">Pausado</option>
+                          </select>
                         </div>
                       </div>
-                      <div className="bg-blue-500/10 dark:bg-blue-950/20 p-4.5 rounded-[1.5rem] border border-blue-500/20 dark:border-blue-900/10 mt-6 flex gap-3.5 items-center">
-                        <div className="text-2xl select-none">💡</div>
-                        <p className="text-xs text-blue-800 dark:text-blue-300 font-bold leading-normal uppercase tracking-wider">
-                          <strong>Dica:</strong> A estrutura detalhada dos módulos e as chaves de importação avançadas continuam disponíveis na aba <code>controle_modulos</code> da Planilha.
-                        </p>
+                      
+                      <div className="bg-slate-100 dark:bg-slate-800/30 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+                        <h4 className="font-bold mb-4">Nova Regra de Módulo</h4>
+                        <form onSubmit={adicionarModuloDb} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          <input 
+                            type="text" placeholder="Nome do Módulo (ex: Aula 01)" 
+                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-slate-800 dark:text-white"
+                            value={novoNomeMod} onChange={e => setNovoNomeMod(e.target.value)} required
+                          />
+                          <select 
+                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-slate-800 dark:text-white"
+                            value={novaTurmaMod} onChange={e => setNovaTurmaMod(e.target.value)} required
+                          >
+                            <option value="Todas">Todas as Turmas</option>
+                            <option value="Turma 1 - 1º Ano">Turma 1 - 1º Ano</option>
+                            <option value="Turma 2 - 2º Ano">Turma 2 - 2º Ano</option>
+                          </select>
+                          <select 
+                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-slate-800 dark:text-white"
+                            value={novoStatusMod} onChange={e => setNovoStatusMod(e.target.value)} required
+                          >
+                            <option value="Aberto">Aberto</option>
+                            <option value="Em breve">Em Breve</option>
+                            <option value="Encerrado">Encerrado</option>
+                          </select>
+                          <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg p-3 transition">
+                            Adicionar
+                          </button>
+                        </form>
+                      </div>
+
+                      <table className="w-full text-left mt-6">
+                        <thead>
+                          <tr className="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                            <th className="pb-3">Módulo</th>
+                            <th className="pb-3">Turma Alvo</th>
+                            <th className="pb-3">Status</th>
+                            <th className="pb-3 text-right">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {modulosDb.map(m => (
+                            <tr key={m.id} className="border-b border-slate-100 dark:border-slate-800/50">
+                              <td className="py-3 text-slate-800 dark:text-white font-medium">{m.nomeMod}</td>
+                              <td className="py-3 text-slate-600 dark:text-slate-400">{m.turmaMod}</td>
+                              <td className="py-3">
+                                <select 
+                                  className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-2 rounded text-sm"
+                                  value={m.statusMod}
+                                  onChange={(e) => atualizarStatusModDb(m.id, e.target.value)}
+                                >
+                                  <option value="Aberto">Aberto</option>
+                                  <option value="Em breve">Em breve</option>
+                                  <option value="Encerrado">Encerrado</option>
+                                </select>
+                              </td>
+                              <td className="py-3 text-right">
+                                <button onClick={() => removerModuloDb(m.id)} className="text-red-500 hover:text-red-600 px-2">Remover</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* CONTEÚDO: USUÁRIOS */}
+                  {abaAtiva === "usuarios" && (
+                    <div className="space-y-6">
+                      <h3 className="text-xl font-black text-slate-800 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3 mb-6 font-display">
+                        Gestão de Acesso (Tutores)
+                      </h3>
+                      <div className="bg-slate-100 dark:bg-slate-800/30 rounded-xl p-6 border border-slate-200 dark:border-slate-800">
+                        <h4 className="font-bold mb-4">Novo Tutor</h4>
+                        <form onSubmit={adicionarUsuarioDb} className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                          <input 
+                            type="text" placeholder="Usuário (ex: admin)" 
+                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-slate-800 dark:text-white"
+                            value={novoUsuario} onChange={e => setNovoUsuario(e.target.value)} required
+                          />
+                          <input 
+                            type="text" placeholder="Nome Completo" 
+                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-slate-800 dark:text-white"
+                            value={novoNomeUsuario} onChange={e => setNovoNomeUsuario(e.target.value)} required
+                          />
+                          <input 
+                            type="password" placeholder="Senha" 
+                            className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-3 text-slate-800 dark:text-white"
+                            value={novaSenha} onChange={e => setNovaSenha(e.target.value)} required
+                          />
+                          <button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg p-3 transition">
+                            Adicionar
+                          </button>
+                        </form>
+                      </div>
+
+                      <table className="w-full text-left mt-6">
+                        <thead>
+                          <tr className="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                            <th className="pb-3">Usuário</th>
+                            <th className="pb-3">Nome</th>
+                            <th className="pb-3 text-right">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {usuariosDb.map(u => (
+                            <tr key={u.id} className="border-b border-slate-100 dark:border-slate-800/50">
+                              <td className="py-3 text-slate-800 dark:text-white font-medium">{u.usuario}</td>
+                              <td className="py-3 text-slate-600 dark:text-slate-400">{u.nome}</td>
+                              <td className="py-3 text-right">
+                                <button onClick={() => removerUsuarioDb(u.id)} className="text-red-500 hover:text-red-600 px-2">Remover</button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+
+                  {/* CONTEÚDO: SEGURANÇA */}
+                  {abaAtiva === "seguranca" && (
+                    <div className="space-y-6">
+                      <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-6">
+                        <h3 className="text-xl font-black text-slate-800 dark:text-white font-display">
+                          Logs de Auditoria e Segurança
+                        </h3>
+                        <button onClick={carregarLogsSeguranca} className="text-xs bg-slate-200 dark:bg-slate-800 px-3 py-1.5 rounded-lg">
+                          Atualizar
+                        </button>
+                      </div>
+                      
+                      <div className="overflow-x-auto">
+                        <table className="w-full text-left min-w-[800px]">
+                          <thead>
+                            <tr className="text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                              <th className="pb-3 font-medium">Data/Hora</th>
+                              <th className="pb-3 font-medium">Matrícula</th>
+                              <th className="pb-3 font-medium">Nome</th>
+                              <th className="pb-3 font-medium">Ação Detectada</th>
+                              <th className="pb-3 font-medium">Detalhes Técnicos</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {logsSeguranca.map((log, i) => (
+                              <tr key={log.id || i} className="border-b border-slate-100 dark:border-slate-800/50">
+                                <td className="py-3 text-slate-500 text-sm">{log.dataHora}</td>
+                                <td className="py-3 text-slate-800 dark:text-white font-mono">{log.matricula}</td>
+                                <td className="py-3 text-slate-600 dark:text-slate-400">{log.nome}</td>
+                                <td className="py-3">
+                                  <span className="bg-red-500/10 text-red-500 px-2 py-1 rounded text-xs font-bold">
+                                    {log.acao}
+                                  </span>
+                                </td>
+                                <td className="py-3 text-slate-500 text-sm max-w-xs truncate" title={log.detalhes}>
+                                  {log.detalhes}
+                                </td>
+                              </tr>
+                            ))}
+                            {logsSeguranca.length === 0 && (
+                              <tr>
+                                <td colSpan={5} className="text-center py-12 text-emerald-500 font-medium">
+                                  Nenhuma ocorrência registrada. Sistema limpo!
+                                </td>
+                              </tr>
+                            )}
+                          </tbody>
+                        </table>
                       </div>
                     </div>
                   )}

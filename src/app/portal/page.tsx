@@ -1886,7 +1886,7 @@ export default function PortalDashboard() {
                                 <span className="text-[11px] font-black text-slate-600 dark:text-slate-300 font-mono">
                                   {reg.data.slice(0, 5)}
                                 </span>
-                                {reg.status === "presente" && (
+                                {(reg.status === "presente" || reg.status === "P") && (
                                   <span
                                     className="bg-emerald-100/90 dark:bg-emerald-950/45 text-emerald-600 dark:text-emerald-400 text-[10px] font-black px-2 py-0.5 rounded-lg border border-emerald-200/40 dark:border-emerald-900/20"
                                     title="Presente"
@@ -1894,7 +1894,7 @@ export default function PortalDashboard() {
                                     P
                                   </span>
                                 )}
-                                {reg.status === "justificada" && (
+                                {(reg.status === "justificada" || reg.status === "J") && (
                                   <span
                                     className="bg-amber-100/90 dark:bg-amber-950/45 text-amber-600 dark:text-amber-400 text-[10px] font-black px-2 py-0.5 rounded-lg border border-amber-200/40 dark:border-amber-900/20"
                                     title="Falta Justificada"
@@ -1902,7 +1902,7 @@ export default function PortalDashboard() {
                                     J
                                   </span>
                                 )}
-                                {reg.status === "falta" && (
+                                {(reg.status === "falta" || reg.status === "F") && (
                                   <span
                                     className="bg-red-100/90 dark:bg-red-955/45 text-red-600 dark:text-red-400 text-[10px] font-black px-2 py-0.5 rounded-lg border border-red-200/40 dark:border-red-900/20"
                                     title="Falta"

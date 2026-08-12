@@ -658,75 +658,40 @@ export default function GestaoAulasPage() {
     }
   };
 
-  // 🔥 NOVA LÓGICA DE SINCRONIZAÇÃO BLINDADA 🔥
+  // 🔥 NOVA LÓGICA DE SINCRONIZAÇÃO NATIVA 🔥
   const iniciarSincronizacaoAVA = async () => {
-    // Tenta pegar a URL do .env. Se não tiver, impede o código de falhar em silêncio
-    const URL_API = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
-
-    if (!URL_API) {
-      toast(
-        "Link da API não configurado! Verifique o seu arquivo .env",
-        "error",
-      );
-      return;
-    }
-
     setModalSyncAberto(false);
     setSincronizandoAVA(true);
     setProgressoSync({
       progresso: 5,
-      mensagem: "Iniciando processo no servidor...",
+      mensagem: "Conectando com o Google Classroom...",
     });
 
-    const TOKEN_SEGURANCA = "TrilhaTech_Seguranca_Total_2026";
-
-    const intervalStatus = setInterval(async () => {
-      try {
-        const res = await fetch(URL_API, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({
-            action: "status_sync",
-            token: TOKEN_SEGURANCA,
-          }),
-        });
-        const data = await res.json();
-        if (data && data.progresso > 0) {
-          setProgressoSync(data);
-        }
-      } catch (e) {
-        // Ignora erro de rede temporário no polling
-      }
-    }, 2500);
+    let fakeProgress = 5;
+    const intervalStatus = setInterval(() => {
+      fakeProgress += Math.floor(Math.random() * 5) + 2;
+      if (fakeProgress > 95) fakeProgress = 95;
+      setProgressoSync({
+        progresso: fakeProgress,
+        mensagem: fakeProgress < 40 ? "Buscando atividades e alunos..." : fakeProgress < 75 ? "Validando entregas e atrasos..." : "Atualizando notas no banco de dados...",
+      });
+    }, 3000);
 
     try {
-      const res = await fetch(URL_API, {
+      const res = await fetch("/api/tutor/sincronizar-ava", {
         method: "POST",
-        headers: { "Content-Type": "text/plain" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "sincronizar_ava",
-          token: TOKEN_SEGURANCA,
           filtroTurma: filtroSyncTurma,
           filtroModulo: filtroSyncModulo,
         }),
       });
 
-      const data = await res.json();
       clearInterval(intervalStatus);
+      const data = await res.json();
 
       if (data.status === "sucesso") {
-        toast("Atualizando banco de dados local...", "info", "Aguarde");
-        try {
-          const migRes = await fetch("/api/migrar");
-          const migData = await migRes.json();
-          if (migData.status === "sucesso") {
-            toast(data.mensagem, "sync", "Varredura e Sincronização Concluídas!");
-          } else {
-            toast("Varredura feita, mas erro ao sincronizar local: " + migData.error, "warning", "Sync Parcial");
-          }
-        } catch (migErr: any) {
-          toast("Erro de conexão ao sincronizar Firestore.", "error");
-        }
+        toast(data.mensagem, "sync", "Varredura e Sincronização Concluídas!");
         mutate();
       } else {
         toast(data.mensagem, "error", "Falha na Sincronização");
@@ -734,7 +699,7 @@ export default function GestaoAulasPage() {
     } catch (err) {
       clearInterval(intervalStatus);
       toast(
-        "O servidor demorou muito a responder. Verifique os dados.",
+        "Erro de conexão ao sincronizar com o Google Classroom.",
         "error",
         "Timeout",
       );

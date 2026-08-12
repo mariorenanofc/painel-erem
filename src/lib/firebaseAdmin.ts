@@ -45,3 +45,30 @@ if (!isPlaceholder(projectId) && !isPlaceholder(clientEmail) && !isPlaceholder(p
 }
 
 export { dbAdmin };
+
+/**
+ * Registra um evento de segurança (fraudes, tokens inválidos, etc)
+ */
+export async function registrarLogSeguranca(
+  matricula: string,
+  nome: string,
+  acao: string,
+  detalhes: string
+) {
+  try {
+    const tzOffset = -3 * 60 * 60 * 1000;
+    const now = new Date(Date.now() + tzOffset);
+    const dataHoraStr = now.toISOString().replace("T", " ").split(".")[0];
+    
+    await dbAdmin.collection("logs_seguranca").add({
+      dataHora: dataHoraStr,
+      matricula,
+      nome,
+      acao,
+      detalhes,
+      timestamp: Date.now()
+    });
+  } catch (error) {
+    console.error("[Security Log Error]", error);
+  }
+}

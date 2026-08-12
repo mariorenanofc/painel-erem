@@ -60,70 +60,78 @@ export async function GET(request: Request) {
     const mesNum = Number(mes);
     const anoNum = Number(ano);
 
-    // 2. Gerar todos os dias possíveis para o mês selecionado
-    // Isso garante que buscaremos APENAS os dados deste mês, sem precisar ler 100% da tabela de frequência ou depender de metadados.
-    const diasNoMes = new Date(anoNum, mesNum, 0).getDate(); // Retorna 28, 29, 30 ou 31
-    const possiveisDatas: string[] = [];
+    // 2. Buscar dias letivos oficiais da turma
+    const metaRef = dbAdmin.collection("metadata").doc("dias_aula_turmas");
+    const metaSnap = await metaRef.get();
+    let diasDaTurmaGeral: string[] = [];
+    if (metaSnap.exists && metaSnap.data()![turma]) {
+      diasDaTurmaGeral = metaSnap.data()![turma];
+    }
+
+    const mesStrFiltro = String(mesNum).padStart(2, "0");
+    const anoStrFiltro = String(anoNum);
     
-    for (let d = 1; d <= diasNoMes; d++) {
-      const diaStr = String(d).padStart(2, "0");
-      const mesStr = String(mesNum).padStart(2, "0");
-      possiveisDatas.push(`${diaStr}/${mesStr}/${anoNum}`);
-      possiveisDatas.push(`${diaStr}-${mesStr}-${anoNum}`); // Cobrir formato alternativo salvo no banco
-    }
+    // Filtra apenas os dias oficiais que pertencem ao mês e ano solicitados
+    let diasDoMesOficiais = diasDaTurmaGeral.filter(data => {
+      const parts = data.split("/");
+      return parts.length === 3 && parts[1] === mesStrFiltro && parts[2] === anoStrFiltro;
+    });
 
-    const diasComAulaSet = new Set<string>();
+    const diasComAulaSet = new Set<string>(diasDoMesOficiais);
+    const matriculasAtivas = Object.keys(alunosMap);
 
-    // 3. Dividir em lotes de 10 (limite da cláusula 'in' do Firebase)
-    const chunks = [];
-    for (let i = 0; i < possiveisDatas.length; i += 10) {
-      chunks.push(possiveisDatas.slice(i, i + 10));
-    }
-
-    const freqPromises = chunks.map(chunk => 
-      dbAdmin.collection("frequencia")
-        .where("turma", "==", turma)
-        .where("data", "in", chunk)
-        .get()
-    );
-
-    const freqSnaps = await Promise.all(freqPromises);
-
-    freqSnaps.forEach(snap => {
-      snap.forEach((doc: QueryDocumentSnapshot) => {
+    // 3. Buscar todas as frequências desses alunos (Fallback e Preenchimento)
+    for (let i = 0; i < matriculasAtivas.length; i += 30) {
+      const chunk = matriculasAtivas.slice(i, i + 30);
+      if (chunk.length === 0) continue;
+      
+      const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "in", chunk).get();
+      freqSnap.forEach((doc: QueryDocumentSnapshot) => {
         const f = doc.data();
+        const idFreq = String(f.id || doc.id).trim();
+        if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
+        
         let dataClean = String(f.data || "").trim();
         if (dataClean.includes("/") && dataClean.length > 10) {
           dataClean = dataClean.slice(0, 10);
         }
+        
         const delim = dataClean.includes("/") ? "/" : "-";
         const parts = dataClean.split(delim);
         if (parts.length !== 3) return;
 
-        const d = Number(parts[0]);
-        const m = Number(parts[1]);
-        const y = Number(parts[2]);
-        
-        const mat = f.matricula;
-        if (alunosMap[mat]) {
-          const dataFormatada = `${String(d).padStart(2, "0")}/${String(m).padStart(2, "0")}/${y}`;
-          diasComAulaSet.add(dataFormatada);
+        const d = String(parts[0]).padStart(2, "0");
+        const m = String(parts[1]).padStart(2, "0");
+        const y = String(parts[2]);
 
-          const rawSt = String(f.status || "").toLowerCase().trim();
-          let statusMapeado = "presente";
-          if (rawSt === "presente" || rawSt === "p") statusMapeado = "presente";
-          else if (rawSt === "falta" || rawSt === "f") statusMapeado = "falta";
-          else if (rawSt === "justificada" || rawSt === "j") statusMapeado = "justificada";
+        // Só processamos se a frequência for do mês que estamos olhando
+        if (m === mesStrFiltro && y === anoStrFiltro) {
+          const dataFormatada = `${d}/${m}/${y}`;
+          const mat = f.matricula;
+          if (alunosMap[mat]) {
+            // Se não tínhamos dias oficiais (fallback), adicionamos o dia encontrado no Set
+            if (diasDoMesOficiais.length === 0) {
+              diasComAulaSet.add(dataFormatada);
+            }
 
-          alunosMap[mat].frequencia[dataFormatada] = {
-            status: statusMapeado,
-            justificativa: f.justificativa || "",
-            xp: f.xpGanho !== undefined ? f.xpGanho : 10,
-            idFalta: f.id || doc.id
-          };
+            const rawSt = String(f.status || "").toLowerCase().trim();
+            const isPresenteOuJustificada = (f.xpGanho === 0 && f.justificativa) || rawSt === "presente" || rawSt === "p" || rawSt === "justificada" || rawSt === "j";
+            
+            let statusMapeado = "falta";
+            if (isPresenteOuJustificada) {
+              statusMapeado = (rawSt === "justificada" || rawSt === "j" || (f.xpGanho === 0 && f.justificativa)) ? "justificada" : "presente";
+            }
+
+            alunosMap[mat].frequencia[dataFormatada] = {
+              status: statusMapeado,
+              justificativa: f.justificativa || "",
+              xp: f.xpGanho !== undefined ? Number(f.xpGanho) : 10,
+              idFalta: idFreq
+            };
+          }
         }
       });
-    });
+    }
 
     const diasComAula = Array.from(diasComAulaSet).sort((a, b) => {
       const partsA = a.split("/");

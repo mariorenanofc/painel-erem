@@ -78,20 +78,80 @@ export async function POST(request: Request) {
     }
 
     // 5. Calcular Taxa de Presença para determinar o XP de recompensa
-    const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "==", matricula).get();
-    const diasComAulaSet = new Set<string>();
-    let presencasAluno = 0;
+    const metaDoc = await dbAdmin.collection("metadata").doc("dias_aula_turmas").get();
+    const metaData = metaDoc.exists ? metaDoc.data() || {} : {};
+    let diasDaTurma: string[] = metaData[turmaDoAluno] || [];
 
+    if (diasDaTurma.length === 0) {
+      // Fallback Avançado (Igual ao action-proxy)
+      const tempDatesSet = new Set<string>();
+      const todosAlunosSnap = await dbAdmin.collection("alunos").get();
+      const alunosDaTurma: string[] = [];
+      todosAlunosSnap.forEach(doc => {
+        const d = doc.data();
+        const t = String(d.turmaTrilha || d.turma || "").trim();
+        if (t === turmaDoAluno && String(d.statusTrilha || "").toLowerCase() === "ativo") {
+           alunosDaTurma.push(doc.id);
+        }
+      });
+
+      for (let i = 0; i < alunosDaTurma.length; i += 30) {
+        const chunk = alunosDaTurma.slice(i, i + 30);
+        if (chunk.length === 0) continue;
+        const fallbackSnap = await dbAdmin.collection("frequencia").where("matricula", "in", chunk).get();
+        fallbackSnap.forEach(doc => {
+          const f = doc.data();
+          const idFreq = String(f.id || doc.id).trim();
+          if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
+          let dataFormatada = f.data || "";
+          if (dataFormatada.includes("/") && dataFormatada.length > 10) {
+            dataFormatada = dataFormatada.slice(0, 10);
+          }
+          if (dataFormatada) tempDatesSet.add(dataFormatada);
+        });
+      }
+      diasDaTurma = Array.from(tempDatesSet);
+    }
+
+    // Adiciona o dia de hoje, já que o check-in está sendo feito agora
+    if (!diasDaTurma.includes(dataHoje)) {
+      diasDaTurma.push(dataHoje);
+    }
+
+    // Conta apenas presenças/justificadas em dias oficiais da turma
+    let presencasAluno = 1; // +1 porque ele está fazendo check-in hoje
+    const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "==", matricula).get();
+    
+    const freqMap: Record<string, any> = {};
     freqSnap.forEach((doc: QueryDocumentSnapshot) => {
       const f = doc.data();
-      if (String(f.id || doc.id).startsWith("BDAY")) return;
-      const dataFormatada = f.data || "";
-      if (dataFormatada) diasComAulaSet.add(dataFormatada);
-      const st = String(f.status || "").toLowerCase().trim();
-      if (st === "presente" || st === "p") presencasAluno++;
+      const idFreq = String(f.id || doc.id).trim();
+      if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
+      
+      let dataFormatada = f.data || "";
+      if (dataFormatada.includes("/") && dataFormatada.length > 10) {
+        dataFormatada = dataFormatada.slice(0, 10);
+      }
+      if (dataFormatada) {
+        freqMap[dataFormatada] = f;
+      }
     });
 
-    const totalAulas = diasComAulaSet.size;
+    // Cruzar com os dias oficiais da turma, exatamente igual ao action-proxy
+    diasDaTurma.forEach(data => {
+      if (data === dataHoje) return; // O dia de hoje já foi somado em presencasAluno = 1
+      const f = freqMap[data];
+      if (f) {
+        const st = String(f.status || "").toLowerCase().trim();
+        if ((f.xpGanho === 0 && f.justificativa) || st === "justificada" || st === "j") {
+          presencasAluno++;
+        } else if (st === "presente" || st === "p") {
+          presencasAluno++;
+        }
+      }
+    });
+
+    const totalAulas = diasDaTurma.length;
     const taxa = totalAulas === 0 ? 100 : Math.round((presencasAluno / totalAulas) * 100);
 
     let xpGanho = 10;

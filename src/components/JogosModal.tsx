@@ -153,8 +153,10 @@ export default function JogosModal({
 
   useEffect(() => {
     if (isOpen) {
-      carregarProgressoXp();
-      setActiveGame(null);
+      setTimeout(() => {
+        carregarProgressoXp();
+        setActiveGame(null);
+      }, 0);
     }
   }, [isOpen, carregarProgressoXp]);
 

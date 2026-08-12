@@ -118,3 +118,37 @@ Criação de uma rota leve para retornar o status de uma atividade específica e
 - Abrir uma missão (verificar que apenas aquela missão é consultada/atualizada sob demanda).
 - Responder um Quiz / Missão de Digitação: validar que o XP e o progresso mudam na tela sem que novas leituras em massa de atividades/frequências ocorram no backend.
 - Fazer check-in e comprar rifa: confirmar atualização de saldo e logs na lousa/carteira de XP.
+
+---
+
+# Fase 4: Desvínculo Total (Sincronização Nativa e APIs Faltantes)
+
+## 1. Migração e Gestão das Coleções Pendentes (Usuários, Módulos e Logs)
+
+### [NEW] Interfaces de Gestão (GodMode Frontend)
+Para garantir que a gestão não perca a habilidade de manipular esses dados (que antes ficavam facilmente acessíveis na planilha), iremos aproveitar a interface existente de configurações no painel do Tutor (`src/app/trilhatech/configuracoes/page.tsx`):
+- **[MODIFY] `src/app/trilhatech/configuracoes/page.tsx`**: Adicionaremos as abas internas de 'Usuários' para adicionar/remover tutores, atualizaremos a aba de 'Módulos' para controle detalhado de destrancamento por turmas, e criaremos a aba de 'Logs de Segurança' para visualizar a auditoria do sistema.
+
+### [NEW] `api/migrar-pendentes/route.ts`
+- Criar script de migração (disparado uma única vez sob demanda) que utiliza a API do Google Sheets (`googleapis`) para extrair os dados antigos e formatá-los para o Firestore antes do desligamento da planilha.
+
+## 2. Lógica Nativa para as Rotas Dependentes (`action-proxy`)
+
+### [MODIFY] `api/action-proxy/route.ts`
+- **Rota `login` (Gestão/Tutor):** Interceptar requisições `action === "login"`. Substituir o fallback para AppScript por uma consulta à coleção `usuarios` no Firestore.
+- **Rota `login_aluno`:** Interceptar `action === "login_aluno"`. Consultar coleção `alunos` nativamente.
+- **Lógica de `controle_modulos`:** Substituir leituras em memória da planilha por consultas no cache do Firestore para validar se um módulo está "Aberto", "Em breve" ou "Encerrado" na montagem do portal do aluno e envio de missões.
+- **Lógica `logs_seguranca`:** Substituir as chamadas `registrarLogSeguranca` para o Sheets por inserções diretas na coleção `logs_seguranca` no Firestore (ex: compras indevidas, tokens falhos).
+
+## Fase 4.2: Sincronização Google Classroom (`sincronizar_ava`)
+
+### O que será feito:
+1. **[NEW] `src/app/api/tutor/sincronizar-ava/route.ts`**: Criar a rota de API que conectará ao Google Classroom utilizando o pacote `googleapis` já instalado.
+2. **Migrar Regra de Negócio**: Transcreveremos a lógica do arquivo `appscript.md` para o TypeScript. Ela fará o mapeamento de ID do curso e ID da atividade a partir do `linkClassroom`, buscará as entregas (`studentSubmissions`), aplicará penalidades por atraso ou gabarito liberado, e injetará as notas validadas diretamente na coleção `entregas` e somará o XP no aluno.
+3. **[MODIFY] `src/app/trilhatech/aulas/page.tsx`**: O botão "Sincronizar AVA" que antes chamava o `action-proxy` enviando ação para o AppScript, passará a consumir a nossa nova rota `/api/tutor/sincronizar-ava` de forma 100% nativa.
+
+> [!WARNING] 
+> **Questão de Segurança & Acesso:** O Google Classroom exige que a conta de serviço (a mesma do Firebase) tenha permissão nas turmas, ou que se utilize Delegação de Domínio Amplo (Domain-Wide Delegation) caso seja Google Workspace For Education. Precisaremos garantir que a API consegue ler as turmas.
+
+> [!IMPORTANT]
+> **Dúvida sobre as Rubricas (Ouro, Prata, Bronze):** No arquivo `appscript.md` analisado (na rota `sincronizar_ava`), a lógica deduz o XP baseado no valor da atividade (`xpAtiv`) e aplica descontos (Atraso, Gabarito Liberado). Não encontrei menção a "Ouro, Prata, Bronze" ou "Rubricas" no código legado do AppScript. Devemos manter o cálculo legado de atraso/gabarito, ou devemos implementar uma lógica **nova** que leia as rubricas (`assignedGrade`) do Classroom?

@@ -5,7 +5,7 @@ let queuePromise = Promise.resolve();
  * Executa requisições ao Google Apps Script uma por vez, garantindo que
  * o LockService do Google não sofra timeouts por concorrência local.
  */
-export async function fetchSheetsQueued(url: string, payload: any): Promise<Response> {
+export async function fetchSheetsQueued(url: string, payload: Record<string, unknown>): Promise<Response> {
   const nextPromise = queuePromise.then(async () => {
     // Pequeno intervalo entre chamadas para liberação limpa do LockService
     await new Promise(resolve => setTimeout(resolve, 400));

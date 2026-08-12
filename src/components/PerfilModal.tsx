@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { PerfilAluno } from "@/src/types";
 import { DadosParaBadges } from "@/src/utils/badges";
 import BadgesGallery from "./BadgesGallery";
@@ -48,13 +48,12 @@ export default function PerfilModal({
   ofensivaDias,
 }: PerfilModalProps) {
   const [abaAtiva, setAbaAtiva] = useState<"dados" | "avatar" | "badges" | "aparencia">("dados");
-  const [selectedBg, setSelectedBg] = useState("constellation");
-
-  useEffect(() => {
+  const [selectedBg, setSelectedBg] = useState(() => {
     if (typeof window !== "undefined") {
-      setSelectedBg(localStorage.getItem("interactiveBg") || "constellation");
+      return localStorage.getItem("interactiveBg") || "constellation";
     }
-  }, []);
+    return "constellation";
+  });
 
   const handleBgSelect = (id: string) => {
     localStorage.setItem("interactiveBg", id);
@@ -123,7 +122,7 @@ export default function PerfilModal({
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setAbaAtiva(tab.id as any)}
+              onClick={() => setAbaAtiva(tab.id as "dados" | "avatar" | "badges" | "aparencia")}
               className={`cursor-pointer flex-1 py-3.5 text-xs md:text-sm font-bold border-b-2 transition-all duration-200 ${
                 abaAtiva === tab.id
                   ? "border-brand-primary text-brand-primary dark:text-brand-secondary bg-white/70 dark:bg-slate-900/60"

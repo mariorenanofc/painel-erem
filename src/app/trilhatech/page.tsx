@@ -212,14 +212,24 @@ export default function TrilhaTechPage() {
               Gerencie inscrições, turmas e emita listas de frequência da trilha gamificada.
             </p>
           </div>
-          <motion.button
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => (window.location.href = "/trilhatech/aulas")}
-            className="cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-650 hover:brightness-110 text-white text-xs font-black uppercase tracking-wider py-3.5 px-6 rounded-2xl shadow-lg shadow-blue-500/10 transition-all flex items-center gap-2"
-          >
-            <span>👨‍🏫</span> Gestão de Aulas
-          </motion.button>
+          <div className="flex gap-2 flex-wrap">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => (window.location.href = "/trilhatech/aulas")}
+              className="cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-650 hover:brightness-110 text-white text-xs font-black uppercase tracking-wider py-3.5 px-6 rounded-2xl shadow-lg shadow-blue-500/10 transition-all flex items-center gap-2"
+            >
+              <span>👨‍🏫</span> Gestão de Aulas
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => (window.location.href = "/trilhatech/configuracoes")}
+              className="cursor-pointer bg-gray-800 hover:bg-gray-700 text-white text-xs font-black uppercase tracking-wider py-3.5 px-6 rounded-2xl transition-all flex items-center gap-2"
+            >
+              <span>⚙️</span> Configurações
+            </motion.button>
+          </div>
         </div>
 
         {/* Stats Cards Dashboard */}

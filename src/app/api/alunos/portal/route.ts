@@ -115,13 +115,13 @@ export async function GET(request: Request) {
     let statusModulosMap = getCachedModulos() as Record<string, string> | null;
     if (!statusModulosMap) {
       console.log(`[Firestore Query] Portal: Carregando modulos (sem cache)`);
-      const modulosSnap = await dbAdmin.collection("modulos").get();
+      const modulosSnap = await dbAdmin.collection("controle_modulos").get();
       const tempMap: Record<string, string> = {};
       modulosSnap.forEach((doc: QueryDocumentSnapshot) => {
         const data = doc.data();
-        const nomeMod = String(data.nome || doc.id.split("|")[0]).trim();
-        const statusMod = String(data.status || "Aberto").trim();
-        const turmaMod = String(data.turma || doc.id.split("|")[1] || "Todas").trim();
+        const nomeMod = String(data.nomeMod || data.nome || "").trim();
+        const statusMod = String(data.statusMod || data.status || "Aberto").trim();
+        const turmaMod = String(data.turmaMod || data.turma || "Todas").trim();
         if (nomeMod) {
           tempMap[`${nomeMod}|${turmaMod}`] = statusMod;
         }
@@ -299,21 +299,36 @@ export async function GET(request: Request) {
         const metadata = metadataDoc.exists ? metadataDoc.data() || {} : {};
         let datesArray = metadata[turmaDoAluno] as string[] | undefined;
 
-        // 2. Fallback: Se não existir no metadado, faz a query pesada UMA ÚNICA VEZ e salva
+        // 2. Fallback Avançado: Puxa todos os alunos e filtra a turma atual para descobrir os dias letais dela
         if (!datesArray || datesArray.length === 0) {
-          console.log(`[Firestore Query] Portal: Metadado vazio para ${turmaDoAluno}. Executando fallback pesado...`);
+          console.log(`[Firestore Query] Portal: Metadado vazio para ${turmaDoAluno}. Executando fallback avancado...`);
           const tempDatesSet = new Set<string>();
-          const turmaFreqSnap = await dbAdmin.collection("frequencia").where("turma", "==", turmaDoAluno).get();
-          turmaFreqSnap.forEach((doc: QueryDocumentSnapshot) => {
-            const f = doc.data();
-            const idFreq = String(f.id || doc.id).trim();
-            if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
-            let dataFormatada = f.data || "";
-            if (dataFormatada.includes("/") && dataFormatada.length > 10) {
-              dataFormatada = dataFormatada.slice(0, 10);
+          
+          const todosAlunosSnap = await dbAdmin.collection("alunos").get();
+          const alunosDaTurma: string[] = [];
+          todosAlunosSnap.forEach(doc => {
+            const d = doc.data();
+            const t = String(d.turmaTrilha || d.turma || "").trim();
+            if (t === turmaDoAluno && String(d.statusTrilha || "").toLowerCase() === "ativo") {
+               alunosDaTurma.push(doc.id);
             }
-            if (dataFormatada) tempDatesSet.add(dataFormatada);
           });
+
+          for (let i = 0; i < alunosDaTurma.length; i += 30) {
+            const chunk = alunosDaTurma.slice(i, i + 30);
+            if (chunk.length === 0) continue;
+            const fallbackSnap = await dbAdmin.collection("frequencia").where("matricula", "in", chunk).get();
+            fallbackSnap.forEach(doc => {
+              const f = doc.data();
+              const idFreq = String(f.id || doc.id).trim();
+              if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
+              let dataFormatada = f.data || "";
+              if (dataFormatada.includes("/") && dataFormatada.length > 10) {
+                dataFormatada = dataFormatada.slice(0, 10);
+              }
+              if (dataFormatada) tempDatesSet.add(dataFormatada);
+            });
+          }
           datesArray = Array.from(tempDatesSet);
           
           // Salva no metadado para garantir que a query pesada não rode novamente
@@ -347,7 +362,7 @@ export async function GET(request: Request) {
       checkinsMap[dataFormatada] = true;
 
       const st = String(f.status || "").toLowerCase().trim();
-      const isPresence = !idFreq.startsWith("FALTA-") && (st === "presente" || st === "p");
+      const isPresence = !idFreq.startsWith("FALTA-") && (st === "presente" || st === "p" || st === "justificada" || st === "j");
       if (isPresence) {
         presencasAluno++;
         dadosRetorno.stats.totalCheckins++;

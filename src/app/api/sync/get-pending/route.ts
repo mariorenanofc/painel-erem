@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -11,8 +12,8 @@ export async function GET(request: Request) {
       .where("lastUpdated", ">", since)
       .get();
     
-    const alunos: any[] = [];
-    alunosSnap.forEach((doc: any) => {
+    const alunos: Record<string, unknown>[] = [];
+    alunosSnap.forEach((doc: QueryDocumentSnapshot) => {
       alunos.push(doc.data());
     });
 
@@ -21,8 +22,8 @@ export async function GET(request: Request) {
       .where("timestamp", ">", since)
       .get();
     
-    const entregas: any[] = [];
-    entregasSnap.forEach((doc: any) => {
+    const entregas: Record<string, unknown>[] = [];
+    entregasSnap.forEach((doc: QueryDocumentSnapshot) => {
       entregas.push(doc.data());
     });
 
@@ -31,8 +32,8 @@ export async function GET(request: Request) {
       .where("timestamp", ">", since)
       .get();
     
-    const frequencia: any[] = [];
-    freqSnap.forEach((doc: any) => {
+    const frequencia: Record<string, unknown>[] = [];
+    freqSnap.forEach((doc: QueryDocumentSnapshot) => {
       frequencia.push(doc.data());
     });
 
@@ -41,8 +42,8 @@ export async function GET(request: Request) {
       .where("timestamp", ">", since)
       .get();
     
-    const rifa_bilhetes: any[] = [];
-    rifaSnap.forEach((doc: any) => {
+    const rifa_bilhetes: Record<string, unknown>[] = [];
+    rifaSnap.forEach((doc: QueryDocumentSnapshot) => {
       rifa_bilhetes.push(doc.data());
     });
 
@@ -51,8 +52,8 @@ export async function GET(request: Request) {
       .where("timestamp", ">", since)
       .get();
     
-    const curtidas: any[] = [];
-    curtidasSnap.forEach((doc: any) => {
+    const curtidas: Record<string, unknown>[] = [];
+    curtidasSnap.forEach((doc: QueryDocumentSnapshot) => {
       curtidas.push(doc.data());
     });
 
@@ -66,7 +67,8 @@ export async function GET(request: Request) {
       curtidas
     });
 
-  } catch (error: any) {
-    return NextResponse.json({ error: "Erro ao obter atualizações pendentes: " + error.message }, { status: 500 });
+  } catch (error: unknown) {
+    const err = error as Error;
+    return NextResponse.json({ error: "Erro ao obter atualizações pendentes: " + err.message }, { status: 500 });
   }
 }

@@ -92,7 +92,7 @@ export async function GET(request: Request) {
       alunosRankMap[mat] = {
         matricula: mat,
         nome: data.nome || `Aluno ${mat}`,
-        turma: data.turma || data.turmaTrilha || "",
+        turma: data.turmaTrilha || data.turma || "",
         nivel: data.nivel || "Iniciante",
         avatar: data.avatarId || "avatar-padrao",
         xpCalculado: filtroTempo === "geral" ? (data.xp || 0) : 0,
@@ -147,20 +147,22 @@ export async function GET(request: Request) {
       });
 
       const entregasSnap = await dbAdmin.collection("entregas")
-        .where("status", "==", "Avaliado")
         .where("timestamp", ">=", timeInicio)
+        .where("timestamp", "<=", timeFim)
         .get();
 
       entregasSnap.forEach((doc: QueryDocumentSnapshot) => {
-        const val = doc.data();
-        const mat = val.matricula;
-        const xp = val.xpGanho || 0;
-        const timestampEnvio = val.timestamp || 0;
+        const e = doc.data();
+        if (e.status !== "Avaliado") return;
+        const mat = e.matricula;
+        const xp = e.xpGanho || 0;
+        const timestampEnvio = e.timestamp || 0;
+        const idAtividade = e.idAtividade || doc.id.split("-")[0];
 
         if (alunosRankMap[mat]) {
           if (timestampEnvio <= timeFim) {
             // Verificar se o envio foi com atraso
-            const ativ = atividadesMap[val.idAtividade];
+            const ativ = atividadesMap[idAtividade];
             let ehAtrasado = false;
             if (ativ && ativ.dataLimite) {
               const dataLimiteStr = String(ativ.dataLimite).trim();
@@ -199,14 +201,15 @@ export async function GET(request: Request) {
         }
       });
 
-      // Também filtrar presenças/frequência no período
+      // Também filtrar presenças/frequência no período (Filtrando status em memória)
       const freqSnap = await dbAdmin.collection("frequencia")
-        .where("status", "in", ["Presente", "P", "p", "presente"])
         .where("timestamp", ">=", timeInicio)
         .get();
 
       freqSnap.forEach((doc: QueryDocumentSnapshot) => {
         const f = doc.data();
+        const statusVal = String(f.status || "").trim();
+        if (!["Presente", "P", "p", "presente"].includes(statusVal)) return;
         const mat = f.matricula;
         const xp = f.xpGanho || 10;
         const timestampFreq = f.timestamp || 0;

@@ -68,19 +68,18 @@ export async function POST(request: Request) {
     }
 
     // 3. Regras de Módulos (Encerrado)
-    const moduloAtiv = String(ativ.modulo || "Geral").toLowerCase().trim();
     let xpFinalPermitido = Number(ativ.xp) || 0;
 
-    // Buscar controle do módulo
-    const modKey = `${ativ.modulo}|${turmaAlvo}`;
-    const modKeyTodas = `${ativ.modulo}|Todas`;
+    const moduloDaAtividade = String(ativ.modulo || "Geral").trim();
+    const modKey = `${moduloDaAtividade}_${turmaAlvo}`.replace(/\s+/g, '_').toLowerCase();
+    const modKeyTodas = `${moduloDaAtividade}_Todas`.replace(/\s+/g, '_').toLowerCase();
     
-    const modDoc = await dbAdmin.collection("modulos").doc(modKey).get();
-    const modDocTodas = await dbAdmin.collection("modulos").doc(modKeyTodas).get();
+    const modDoc = await dbAdmin.collection("controle_modulos").doc(modKey).get();
+    const modDocTodas = await dbAdmin.collection("controle_modulos").doc(modKeyTodas).get();
 
-    const statusMod = modDoc.exists 
-      ? String(modDoc.data()?.status || "Aberto").toLowerCase().trim()
-      : (modDocTodas.exists ? String(modDocTodas.data()?.status || "Aberto").toLowerCase().trim() : "aberto");
+    let statusMod = "aberto";
+    if (modDoc.exists) statusMod = String(modDoc.data()?.statusMod || "aberto").toLowerCase().trim();
+    else if (modDocTodas.exists) statusMod = String(modDocTodas.data()?.statusMod || "aberto").toLowerCase().trim();
 
     if (statusMod === "encerrado") {
       xpFinalPermitido = 0;

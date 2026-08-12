@@ -280,7 +280,7 @@ export interface GestaoFrequenciaModalProps {
   anoDiario: string;
   setAnoDiario: (val: string) => void;
   carregandoFreq: boolean;
-  diasComAula: number[];
+  diasComAula: string[];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   alunosDiario: any[];
   carregandoFreqHoje: boolean;
@@ -296,14 +296,14 @@ export interface GestaoFrequenciaModalProps {
   modalJustificativaAberto: {
     matricula: string;
     nome: string;
-    dia: number;
+    dia: string;
     idFalta?: string;
   } | null;
   setModalJustificativaAberto: (
     val: {
       matricula: string;
       nome: string;
-      dia: number;
+      dia: string;
       idFalta?: string;
     } | null,
   ) => void;

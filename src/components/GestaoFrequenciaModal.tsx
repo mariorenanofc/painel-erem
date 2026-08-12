@@ -487,7 +487,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
               </h3>
               <p className="text-[11px] font-semibold text-slate-550 dark:text-slate-400 leading-relaxed mb-4">
                 Aluno: <strong className="text-slate-800 dark:text-slate-200 font-black">{props.modalJustificativaAberto.nome}</strong> <br />
-                Data da Falta: <strong className="text-slate-800 dark:text-slate-200 font-mono font-black">{String(props.modalJustificativaAberto.dia).padStart(2, "0")}/{String(props.mesDiario).padStart(2, "0")}</strong>
+                Data da Falta: <strong className="text-slate-800 dark:text-slate-200 font-mono font-black">{props.modalJustificativaAberto.dia}</strong>
               </p>
               
               <textarea

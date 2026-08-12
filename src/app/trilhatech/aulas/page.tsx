@@ -113,7 +113,7 @@ export default function GestaoAulasPage() {
   const [modalGodModeAberto, setModalGodModeAberto] = useState(false);
   const [abaDiario, setAbaDiario] = useState<"mensal" | "hoje">("mensal");
   const [carregandoFreq, setCarregandoFreq] = useState(false);
-  const [diasComAula, setDiasComAula] = useState<number[]>([]);
+  const [diasComAula, setDiasComAula] = useState<string[]>([]);
   const [alunosDiario, setAlunosDiario] = useState<any[]>([]);
 
   // Estados da Sincronização AVA (Barra de Progresso)
@@ -132,7 +132,7 @@ export default function GestaoAulasPage() {
   const [modalJustificativaAberto, setModalJustificativaAberto] = useState<{
     matricula: string;
     nome: string;
-    dia: number;
+    dia: string;
     idFalta?: string;
   } | null>(null);
   const [textoJustificativa, setTextoJustificativa] = useState("");
@@ -720,7 +720,8 @@ export default function GestaoAulasPage() {
   const salvarJustificativa = async () => {
     if (!modalJustificativaAberto || !textoJustificativa)
       return toast("Digite o motivo da falta.", "warning");
-    const dataIso = `${anoDiario}-${String(mesDiario).padStart(2, "0")}-${String(modalJustificativaAberto.dia).padStart(2, "0")}`;
+    const partesData = modalJustificativaAberto.dia.split("/");
+    const dataIso = `${partesData[2]}-${partesData[1]}-${partesData[0]}`;
     try {
       const data = await apiTutor.justificarFalta(
         modalJustificativaAberto.matricula,

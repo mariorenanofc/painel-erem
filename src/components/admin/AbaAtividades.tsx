@@ -65,7 +65,7 @@ export default function AbaAtividades() {
       }
     } catch (error) {
       console.error(error);
-      toast("Falha ao carregar atividades. Tente novamente.", "erro");
+      toast("Falha ao carregar atividades. Tente novamente.", "error");
     } finally {
       setCarregando(false);
     }
@@ -89,12 +89,12 @@ export default function AbaAtividades() {
       });
       const data = await res.json();
       if (data.status === "sucesso") {
-        toast(data.mensagem || "Atividade sincronizada!", "sucesso");
+        toast(data.mensagem || "Atividade sincronizada!", "success");
       } else {
-        toast(data.mensagem || "Falha ao sincronizar.", "erro");
+        toast(data.mensagem || "Falha ao sincronizar.", "error");
       }
     } catch (error) {
-      toast("Erro de conexão ao sincronizar com o AVA.", "erro");
+      toast("Erro de conexão ao sincronizar com o AVA.", "error");
     } finally {
       setSincronizandoId(null);
     }

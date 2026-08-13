@@ -68,10 +68,12 @@ export default function CSSSelectorHunter({
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
   const [currentOptions, setCurrentOptions] = useState<string[]>([]);
   const [score, setScore] = useState(0);
+  const isFinishedRef = React.useRef(false);
   
   const startTimeRef = useRef<number>(0);
 
   const handleStart = () => {
+    if (isFinishedRef) isFinishedRef.current = false;
     playSound("click");
     // Gerar 5 questões procedurais
     const qList: Question[] = [];
@@ -95,6 +97,7 @@ export default function CSSSelectorHunter({
   };
 
   const handleOptionClick = (option: string) => {
+    if (isFinishedRef.current) return;
     const currentQ = shuffledQuestions[currentQuestionIndex];
     const isCorrect = option === currentQ.correct;
 
@@ -114,6 +117,7 @@ export default function CSSSelectorHunter({
       const duration = Math.max(1, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
       // Bônus proporcional aos acertos
       const finalScore = score + (isCorrect ? 1000 : 0);
+      isFinishedRef.current = true;
       onGameOver(finalScore, duration);
     }
   };

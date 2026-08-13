@@ -26,10 +26,12 @@ export default function QuizTeoricoInfinito({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
   const [score, setScore] = useState(0);
+  const isFinishedRef = React.useRef(false);
   
   const startTimeRef = useRef<number>(0);
 
   const handleStart = () => {
+    if (isFinishedRef) isFinishedRef.current = false;
     playSound("click");
     
     // Sortear 10 perguntas aleatórias do banco garantindo textos base únicos
@@ -59,6 +61,7 @@ export default function QuizTeoricoInfinito({
   };
 
   const handleOptionClick = (option: string) => {
+    if (isFinishedRef.current) return;
     const currentQ = shuffledQuestions[currentIndex];
     const isCorrect = option === currentQ.answer;
 
@@ -75,6 +78,7 @@ export default function QuizTeoricoInfinito({
       // Fim do jogo
       const duration = Math.max(1, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
       const finalScore = score + (isCorrect ? 1000 : 0);
+      isFinishedRef.current = true;
       onGameOver(finalScore, duration);
     }
   };

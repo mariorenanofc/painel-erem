@@ -64,7 +64,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ status: "erro", mensagem: "Você não precisa entregar por aqui! O sistema já avaliou automaticamente pelo Classroom. 🤖" });
     }
     if (linhaExistente && statusAtualBD !== "devolvida") {
-      return NextResponse.json({ status: "erro", mensagem: "Você já enviou esta missão! Não é possível reenviar." });
+      const isTyping = ativ.resolucaoTyping && String(ativ.resolucaoTyping).trim() !== "";
+      if (isTyping && statusAtualBD === "aguardando validação") {
+        // PERMITIR RE-ENVIO SILENCIOSO PARA O JOGO DE DIGITAÇÃO (Permite Auto-Save + Resgate Manual)
+      } else {
+        return NextResponse.json({ status: "erro", mensagem: "Você já enviou esta missão! Não é possível reenviar." });
+      }
     }
 
     // 3. Regras de Módulos (Encerrado)

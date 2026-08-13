@@ -63,12 +63,14 @@ export default function AlgorithmStepBuilder({
   const [availableSteps, setAvailableSteps] = useState<string[]>([]);
   const [placedSteps, setPlacedSteps] = useState<string[]>([]);
   const [score, setScore] = useState(0);
+  const isFinishedRef = React.useRef(false);
   const [feedback, setFeedback] = useState("");
   const [validated, setValidated] = useState(false);
   
   const startTimeRef = useRef<number>(0);
 
   const handleStart = () => {
+    if (isFinishedRef) isFinishedRef.current = false;
     playSound("click");
     // Selecionar 3 perguntas aleatórias
     const questions = [...QUESTIONS].sort(() => 0.5 - Math.random()).slice(0, 3);
@@ -138,7 +140,8 @@ export default function AlgorithmStepBuilder({
         // Fim do jogo
         const duration = Math.max(1, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
         const finalScore = score + (isCorrect ? 1500 : 0);
-        onGameOver(finalScore, duration);
+        isFinishedRef.current = true;
+      onGameOver(finalScore, duration);
       }
     }, 4000);
   };

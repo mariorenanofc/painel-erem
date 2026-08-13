@@ -260,18 +260,20 @@ export default function CodingPractice({
   const maxXP = Number(missaoAberta.xp) || 200;
   const totalSecondsAllowed = timeLimitMinutes * 60;
 
-  // Estados do Treino
+  // Controle de estado
   const [iniciado, setIniciado] = useState(false);
-  const [hasSavedProgress, setHasSavedProgress] = useState(false);
   const [pausado, setPausado] = useState(false);
+  const [completed, setCompleted] = useState(false);
+
+  // Teclado virtual
   const [tecladoMinimizado, setTecladoMinimizado] = useState(false);
   const [muted, setMuted] = useState(false);
   const [theme, setTheme] = useState<"vscode" | "hacker" | "cyberpunk">("vscode");
   const [shakeTrigger, setShakeTrigger] = useState(0);
   
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [hasSavedProgress, setHasSavedProgress] = useState(false);
   const [errorsCount, setErrorsCount] = useState(0);
-  const [completed, setCompleted] = useState(false);
   const [secondsRemaining, setSecondsRemaining] = useState(timeLimitMinutes * 60);
   const [extraSecondsUsed, setExtraSecondsUsed] = useState(0);
   const [inputFoco, setInputFoco] = useState(true);
@@ -427,6 +429,29 @@ export default function CodingPractice({
   const xpDescontoTempo = extraMinutes * 5;
   const floorXP = Math.ceil(maxXP * 0.1); // Piso mínimo de 10%
   const currentXP = Math.max(floorXP, maxXP - xpDescontoErros - xpDescontoTempo);
+
+  // ⚡ AUTO-SAVE DE FUNDO PARA EVITAR ABANDONO SEM XP
+  const hasAutoSaved = useRef(false);
+  useEffect(() => {
+    if (completed && !hasAutoSaved.current) {
+      hasAutoSaved.current = true;
+      const usr = JSON.parse(localStorage.getItem("usuario") || "{}");
+      if (usr.matricula) {
+        // Envia silenciosamente para o backend. 
+        // O backend foi ajustado para aceitar atualizações de Typing se estiver "aguardando validação".
+        fetch("/api/alunos/enviar-missao", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            matricula: usr.matricula,
+            idAtividade: missaoAberta.id,
+            resposta: targetCode,
+            xpGanho: currentXP
+          })
+        }).catch(console.error);
+      }
+    }
+  }, [completed, currentXP, missaoAberta.id, targetCode]);
 
   // Obter tecla esperada atual
   const expectedChar = targetCode[currentIndex] || "";

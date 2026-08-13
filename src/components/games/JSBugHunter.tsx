@@ -119,12 +119,14 @@ export default function JSBugHunter({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [shuffledQuestions, setShuffledQuestions] = useState<BugQuestion[]>([]);
   const [score, setScore] = useState(0);
+  const isFinishedRef = React.useRef(false);
   const [feedbackMsg, setFeedbackMsg] = useState("");
   const [selectedLine, setSelectedLine] = useState<number | null>(null);
   
   const startTimeRef = useRef<number>(0);
 
   const handleStart = () => {
+    if (isFinishedRef) isFinishedRef.current = false;
     playSound("click");
     // Gerar 5 questões procedurais únicas
     const questions: BugQuestion[] = [];
@@ -168,7 +170,8 @@ export default function JSBugHunter({
         // Concluiu todas as 5
         const duration = Math.max(1, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
         const finalScore = score + (isCorrect ? 1000 : 0);
-        onGameOver(finalScore, duration);
+        isFinishedRef.current = true;
+      onGameOver(finalScore, duration);
       }
     }, 3200);
   };

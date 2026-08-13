@@ -26,6 +26,7 @@ export default function FlexAlignMaster({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentJustify, setCurrentJustify] = useState<JustifyValue>("flex-start");
   const [score, setScore] = useState(0);
+  const isFinishedRef = React.useRef(false);
   const [validated, setValidated] = useState(false);
   const [feedback, setFeedback] = useState("");
   
@@ -86,6 +87,7 @@ export default function FlexAlignMaster({
   const [shuffledChallenges, setShuffledChallenges] = useState<Challenge[]>([]);
 
   const handleStart = () => {
+    if (isFinishedRef) isFinishedRef.current = false;
     playSound("click");
     // Embaralhar desafios
     const chufs = [...CHALLENGES].sort(() => 0.5 - Math.random());
@@ -130,7 +132,8 @@ export default function FlexAlignMaster({
       } else {
         const duration = Math.max(1, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
         const finalScore = score + (isCorrect ? 1250 : 0);
-        onGameOver(finalScore, duration);
+        isFinishedRef.current = true;
+      onGameOver(finalScore, duration);
       }
     }, 3800);
   };

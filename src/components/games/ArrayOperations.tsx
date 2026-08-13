@@ -116,10 +116,12 @@ export default function ArrayOperations({
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
   const [currentOptions, setCurrentOptions] = useState<string[]>([]);
   const [score, setScore] = useState(0);
+  const isFinishedRef = React.useRef(false);
   
   const startTimeRef = useRef<number>(0);
 
   const handleStart = () => {
+    if (isFinishedRef) isFinishedRef.current = false;
     playSound("click");
     // Gerar 5 questões procedurais
     const questions: Question[] = [];
@@ -140,6 +142,7 @@ export default function ArrayOperations({
   };
 
   const handleOptionClick = (option: string) => {
+    if (isFinishedRef.current) return;
     const currentQ = shuffledQuestions[currentIndex];
     const isCorrect = option === currentQ.correctAnswer;
 
@@ -158,6 +161,7 @@ export default function ArrayOperations({
       // Fim do jogo
       const duration = Math.max(1, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
       const finalScore = score + (isCorrect ? 1000 : 0);
+      isFinishedRef.current = true;
       onGameOver(finalScore, duration);
     }
   };

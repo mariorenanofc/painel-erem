@@ -65,12 +65,14 @@ export default function LogicGatesSpeedrun({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
   const [score, setScore] = useState(0);
+  const isFinishedRef = React.useRef(false);
   const [timeRemaining, setTimeRemaining] = useState(40); // 40 segundos totais
   
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
 
   const handleStart = () => {
+    if (isFinishedRef) isFinishedRef.current = false;
     playSound("click");
     // Gerar 10 questões procedurais únicas
     const questions: Question[] = [];
@@ -98,12 +100,15 @@ export default function LogicGatesSpeedrun({
   };
 
   const handleTimeUp = () => {
+    if (isFinishedRef.current) return;
     if (timerRef.current) clearInterval(timerRef.current);
     const duration = Math.min(40, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
-    onGameOver(score, duration);
+    isFinishedRef.current = true;
+      onGameOver(score, duration);
   };
 
   const handleAnswer = (answer: boolean) => {
+    if (isFinishedRef.current) return;
     const currentQ = shuffledQuestions[currentIndex];
     const isCorrect = answer === currentQ.correctAnswer;
 
@@ -121,6 +126,7 @@ export default function LogicGatesSpeedrun({
       if (timerRef.current) clearInterval(timerRef.current);
       const duration = Math.max(1, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
       const finalScore = score + (isCorrect ? 1000 : 0);
+      isFinishedRef.current = true;
       onGameOver(finalScore, duration);
     }
   };

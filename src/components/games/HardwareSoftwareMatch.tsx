@@ -84,10 +84,12 @@ export default function HardwareSoftwareMatch({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [shuffledItems, setShuffledItems] = useState<Item[]>([]);
   const [score, setScore] = useState(0);
+  const isFinishedRef = React.useRef(false);
   
   const startTimeRef = useRef<number>(0);
 
   const handleStart = () => {
+    if (isFinishedRef) isFinishedRef.current = false;
     playSound("click");
     // Embaralhar e selecionar 10 itens
     const items = [...ITEMS].sort(() => 0.5 - Math.random()).slice(0, 10);
@@ -99,6 +101,7 @@ export default function HardwareSoftwareMatch({
   };
 
   const handleCategorySelect = (category: typeof ITEMS[0]["category"]) => {
+    if (isFinishedRef.current) return;
     const currentItem = shuffledItems[currentIndex];
     const isCorrect = currentItem.category === category;
 
@@ -115,6 +118,7 @@ export default function HardwareSoftwareMatch({
       // Concluiu os 10 itens
       const duration = Math.max(1, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
       const finalScore = score + (isCorrect ? 1000 : 0);
+      isFinishedRef.current = true;
       onGameOver(finalScore, duration);
     }
   };

@@ -40,6 +40,7 @@ export default function CodingSpeedrun({
 
   // Iniciar jogo e selecionar 5 códigos aleatórios
   const handleStart = () => {
+    if (isFinishedRef) isFinishedRef.current = false;
     playSound("click");
     
     // Embaralhar e selecionar 5
@@ -72,6 +73,7 @@ export default function CodingSpeedrun({
   };
 
   const handleTimeUp = () => {
+    if (isFinishedRef.current) return;
     if (timerRef.current) clearInterval(timerRef.current);
     const duration = Math.min(60, Math.round((new Date().getTime() - startTimeRef.current) / 1000));
     
@@ -79,7 +81,8 @@ export default function CodingSpeedrun({
     const accuracy = totalKeysTyped > 0 ? Math.max(0, (totalKeysTyped - errorsCount) / totalKeysTyped) : 0;
     const finalScore = Math.round(totalKeysTyped * 10 * accuracy);
     
-    onGameOver(finalScore, duration);
+    isFinishedRef.current = true;
+      onGameOver(finalScore, duration);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -116,7 +119,8 @@ export default function CodingSpeedrun({
         const accuracy = totalKeysTyped > 0 ? Math.max(0, (totalKeysTyped - errorsCount) / totalKeysTyped) : 1;
         const finalScore = Math.round(totalKeysTyped * 15 * accuracy) + 1000; // bônus de conclusão
         
-        onGameOver(finalScore, duration);
+        isFinishedRef.current = true;
+      onGameOver(finalScore, duration);
       }
     }
   };

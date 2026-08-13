@@ -330,6 +330,7 @@ export interface MissoesListProps {
   onEdit: (ativ: Atividade) => void;
   onDelete: (id: string) => void;
   onViewEntregas: (ativ: Atividade) => void;
+  onSyncAula?: (missoes: { id: string; titulo: string }[], nomeAula: string) => void;
 }
 
 export interface NovaConquistaModalProps {

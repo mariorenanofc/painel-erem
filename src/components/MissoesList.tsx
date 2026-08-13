@@ -10,6 +10,7 @@ export default function MissoesList({
   onEdit,
   onDelete,
   onViewEntregas,
+  onSyncAula,
 }: MissoesListProps) {
   const [busca, setBusca] = useState("");
   const [filtroTurma, setFiltroTurma] = useState("Todas");
@@ -296,6 +297,18 @@ export default function MissoesList({
                                   {nomeAula}
                                 </h4>
                                 <div className="flex items-center gap-3">
+                                  {onSyncAula && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSyncAula(missoes.map(m => ({ id: m.id, titulo: m.titulo })), nomeAula);
+                                      }}
+                                      className="text-[10px] uppercase font-black tracking-wider bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white px-2.5 py-1 rounded-md transition-colors"
+                                      title="Sincronizar Todas as Missões desta Aula"
+                                    >
+                                      🔄 Sync Aula
+                                    </button>
+                                  )}
                                   <span className="text-[11px] text-slate-400 dark:text-slate-500 font-bold">
                                     {missoes.length} {missoes.length === 1 ? "missão" : "missões"}
                                   </span>

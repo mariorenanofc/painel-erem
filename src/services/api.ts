@@ -19,6 +19,14 @@ async function fetchApi(payload: Record<string, unknown>) {
     });
 
     clearTimeout(timeoutId);
+    
+    if (response.status === 403) {
+      if (typeof window !== "undefined") {
+        window.location.href = "/trilhatech";
+      }
+      return { status: "erro", mensagem: "Sessão expirada. Faça login novamente." };
+    }
+
     const text = await response.text();
     try {
       return JSON.parse(text);
@@ -307,6 +315,13 @@ export const apiTutor = {
     return res.json();
   },
 
+  excluirDiaLetivo: (turma: string, data: string) =>
+    fetchApi({
+      action: "excluir_dia_letivo",
+      turma,
+      data
+    }),
+
   justificarFalta: (
     matricula: string,
     dataIso: string,
@@ -325,12 +340,28 @@ export const apiTutor = {
   listarAlunosGodMode: () =>
     fetchApi({ action: "listar_alunos_godmode" }),
 
+  buscarAlunosAdmin: () =>
+    fetchApi({ action: "buscar_alunos_admin" }),
+
+  sincronizarAlunos: () =>
+    fetchApi({ action: "sincronizar_alunos" }),
+
+  atualizarSenhaAluno: (matricula: string, novaSenha: string) =>
+    fetchApi({ action: "atualizar_senha_aluno", matricula, novaSenha }),
+
   injetarXP: (matriculaAlvo: string, quantidadeXP: number, motivo: string) =>
     fetchApi({
       action: "injetar_xp_manual",
       matriculaAlvo,
       quantidadeXP,
       motivo
+    }),
+
+  mudarStatusTrilhaTech: (matricula: string, novoStatus: string) =>
+    fetchApi({
+      action: "mudar_status_trilhatech",
+      matricula,
+      novoStatus
     }),
 
   coroarElite: (matricula: string, tipoPlaca: string) =>
@@ -370,5 +401,24 @@ export const apiTutor = {
       action: "sortear_rifa",
       turma,
       token: tokenSeguranca,
+    }),
+
+  // --- ATIVIDADES (GERENCIAMENTO) ---
+  buscarAtividadesAdmin: async () => {
+    // Reutilizamos a rota existente que retorna a listagem completa (filtros no frontend)
+    const res = await fetch("/api/tutor/atividades?filtroTurma=Todas&filtroTipo=Todos");
+    return res.json();
+  },
+
+  salvarAtividade: (atividadeData: Record<string, unknown>) =>
+    fetchApi({
+      action: "salvar_atividade",
+      ...atividadeData
+    }),
+
+  excluirAtividade: (idAtividade: string) =>
+    fetchApi({
+      action: "excluir_atividade",
+      idAtividade
     }),
 };

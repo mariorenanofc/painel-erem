@@ -13,6 +13,7 @@ export async function POST(req: Request) {
     const body = await req.json();
     const filtroTurma = body.filtroTurma || "Todas";
     const filtroModulo = body.filtroModulo || "Todos";
+    const filtroAtividadesIds: string[] = body.filtroAtividadesIds || [];
 
     // 1. Setup Google API (Usando as credenciais de Serviço do Firebase)
     const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
@@ -39,10 +40,15 @@ export async function POST(req: Request) {
     const classroom = google.classroom({ version: 'v1', auth });
 
     // 2. Buscar Dados do Firestore
+    let entregasPromise = dbAdmin.collection("entregas").get();
+    if (filtroAtividadesIds.length > 0 && filtroAtividadesIds.length <= 30) {
+      entregasPromise = dbAdmin.collection("entregas").where("idAtividade", "in", filtroAtividadesIds).get();
+    }
+
     const [atividadesSnap, alunosSnap, entregasSnap, modulosSnap] = await Promise.all([
       dbAdmin.collection("atividades").get(),
       dbAdmin.collection("alunos").get(),
-      dbAdmin.collection("entregas").get(),
+      entregasPromise,
       dbAdmin.collection("modulos").get()
     ]);
 
@@ -83,6 +89,7 @@ export async function POST(req: Request) {
       const nomeModulo = String(ativ.modulo || "Geral");
 
       if (!link.includes("classroom.google.com")) return;
+      if (filtroAtividadesIds.length > 0 && !filtroAtividadesIds.includes(ativ.idDoc)) return;
       if (filtroTurma !== "Todas" && turmaAlvo !== "Todas" && turmaAlvo !== filtroTurma) return;
       if (filtroModulo !== "Todos" && nomeModulo !== filtroModulo) return;
 

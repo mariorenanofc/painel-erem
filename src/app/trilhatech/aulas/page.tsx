@@ -708,6 +708,56 @@ export default function GestaoAulasPage() {
     }
   };
 
+  const sincronizarAula = async (missoes: { id: string; titulo: string }[], nomeAula: string) => {
+    if (missoes.length === 0) return toast("Nenhuma missão encontrada para sincronizar.", "warning");
+    
+    setSincronizandoAVA(true);
+    let novasEntregasTotais = 0;
+    
+    try {
+      for (let i = 0; i < missoes.length; i++) {
+        const missao = missoes[i];
+        
+        setProgressoSync({
+          progresso: Math.round((i / missoes.length) * 100),
+          mensagem: `Validando ${i + 1}/${missoes.length}: ${missao.titulo}...`
+        });
+
+        const res = await fetch("/api/tutor/sincronizar-ava", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            filtroTurma: "Todas",
+            filtroModulo: "Todos",
+            filtroAtividadesIds: [missao.id]
+          }),
+        });
+
+        const data = await res.json();
+        
+        // Extrai a quantidade de novas entregas da mensagem retornada pela API
+        const match = data.mensagem?.match(/(\d+) nova\(s\)/);
+        if (match && match[1]) {
+           novasEntregasTotais += parseInt(match[1], 10);
+        }
+      }
+
+      setProgressoSync({ progresso: 100, mensagem: "Concluído!" });
+      
+      if (novasEntregasTotais > 0) {
+        toast(`Sincronização da ${nomeAula} concluída! ${novasEntregasTotais} nova(s) entrega(s) importada(s).`, "sync", "Sucesso!");
+      } else {
+        toast(`Sincronização da ${nomeAula} concluída. Nenhuma nota nova.`, "info", "Tudo em dia!");
+      }
+      
+      mutate();
+    } catch (error) {
+      toast("Erro de conexão ao sincronizar com o AVA.", "error");
+    } finally {
+      setSincronizandoAVA(false);
+    }
+  };
+
   useEffect(() => {
     if (modalFreqAberto && turmaDiario)
       buscarDiarioClasse(turmaDiario, mesDiario, anoDiario);
@@ -1397,6 +1447,7 @@ export default function GestaoAulasPage() {
                   onEdit={preencherEdicao}
                   onDelete={excluirAtividade}
                   onViewEntregas={abrirModalEntregas}
+                  onSyncAula={sincronizarAula}
                 />
               </div>
             </div>

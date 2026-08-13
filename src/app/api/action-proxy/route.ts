@@ -23,6 +23,7 @@ export async function POST(request: Request) {
   try {
     const payload = await request.json();
     const requestAction = payload.action;
+    console.log("[DEBUG] requestAction:", requestAction);
 
     // --- MIDDLEWARE DE SEGURANÇA ---
     if (requestAction === "logout") {
@@ -36,8 +37,8 @@ export async function POST(request: Request) {
       "injetar_xp_manual", "cadastrar_aluno", "inscrever_trilhatech", "salvar_aluno",
       "mudar_status_trilhatech", "atualizar_senha_checkin", "toggle_modo_reposicao",
       "salvar_configuracoes", "sincronizar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "sincronizar_ava",
-      "justificar_falta", "buscar_analytics_geral", "buscar_ficha_360", "listar_alunos_godmode",
-      "coroar_elite", "sortear_rifa"
+      "justificar_falta", "buscar_analytics_geral", "buscar_ficha_360", "listar_alunos_godmode", "buscar_alunos_admin",
+      "coroar_elite", "sortear_rifa", "atualizar_senha_aluno"
     ];
 
     if (ROTAS_PROTEGIDAS.includes(requestAction)) {
@@ -66,6 +67,85 @@ export async function POST(request: Request) {
         return NextResponse.json({ status: "sucesso", mensagem: "Configurações sincronizadas com a planilha." });
       } else {
         return NextResponse.json({ status: "erro", mensagem: "Falha ao obter da planilha." }, { status: 500 });
+      }
+    }
+    
+    if (requestAction === "sincronizar_alunos") {
+      const sheetsResponse = await fetchSheetsQueued(GOOGLE_API_URL, { action: "listar_alunos_godmode" });
+      const resultSyncText = await sheetsResponse.text();
+      let resultSync: { status?: string, alunos?: Array<{matricula: string | number, nome: string, turma: string}> } = {};
+      try {
+        resultSync = JSON.parse(resultSyncText);
+      } catch (e) {
+        console.error("Erro ao parsear listar_alunos_godmode:", resultSyncText.substring(0, 100));
+      }
+      
+      const rankingResponse = await fetchSheetsQueued(GOOGLE_API_URL, { action: "buscar_ranking" });
+      const rankingSyncText = await rankingResponse.text();
+      let rankingSync: { status?: string, ranking?: Array<{matricula: string | number, xp: number | string, nivel: string}>, listaAlunos?: Array<{matricula: string | number, xpTotal: number | string, nivel: string}> } = {};
+      try {
+        rankingSync = JSON.parse(rankingSyncText);
+      } catch (e) {
+        console.error("Erro ao parsear ranking:", rankingSyncText.substring(0, 100));
+      }
+      
+      if (resultSync.status === "sucesso" && resultSync.alunos) {
+        const batch = dbAdmin.batch();
+        const alunosList = resultSync.alunos;
+        
+        // Map de XP vindo do Ranking ou Analytics
+        const xpMap: Record<string, {xp: number, nivel: string}> = {};
+        
+        if (rankingSync.status === "sucesso") {
+          // O Google Script pode retornar como ranking ou listaAlunos dependendo da versão
+          const arrayRanking = rankingSync.ranking || rankingSync.listaAlunos;
+          if (arrayRanking && Array.isArray(arrayRanking)) {
+            arrayRanking.forEach((a) => {
+              const xpValue = "xpTotal" in a ? Number(a.xpTotal) : Number("xp" in a ? a.xp : 0);
+              xpMap[String(a.matricula)] = {
+                xp: isNaN(xpValue) ? 0 : xpValue,
+                nivel: a.nivel || "Iniciante"
+              };
+            });
+          }
+        }
+
+        const currentAlunosSnap = await dbAdmin.collection("alunos").get();
+        const currentData: Record<string, FirebaseFirestore.DocumentData> = {};
+        currentAlunosSnap.forEach(doc => { currentData[doc.id] = doc.data(); });
+
+        for (const aluno of alunosList) {
+          const mat = String(aluno.matricula).trim();
+          if (!mat) continue;
+          
+          const extra = xpMap[mat] || { xp: 0, nivel: "Iniciante" };
+          const existing = currentData[mat] || {};
+          
+          const updatePayload: Record<string, unknown> = {
+            matricula: mat,
+            nome: aluno.nome || existing.nome || "",
+            turma: aluno.turma || existing.turma || ""
+          };
+
+          // Se a planilha tiver mais XP que o Firestore (ex: carga inicial), atualizamos
+          if (extra.xp > Number(existing.xp || 0)) {
+            updatePayload.xp = extra.xp;
+            updatePayload.nivel = extra.nivel;
+          }
+
+          // Só gera senha provisória se não tiver nenhuma
+          if (!existing.pinPix && !existing.senha) {
+            updatePayload.pinPix = "erem" + mat.substring(0, 4);
+          }
+
+          const docRef = dbAdmin.collection("alunos").doc(mat);
+          batch.set(docRef, updatePayload, { merge: true });
+        }
+        await batch.commit();
+        clearAllPortalCaches();
+        return NextResponse.json({ status: "sucesso", mensagem: "Alunos e XP sincronizados com a planilha." });
+      } else {
+        return NextResponse.json({ status: "erro", mensagem: "Falha ao obter alunos da planilha." }, { status: 500 });
       }
     }
 
@@ -160,6 +240,13 @@ export async function POST(request: Request) {
         idAtividade: idAtiv,
         mensagem: "Missão excluída diretamente no Firestore!"
       };
+    } else if (requestAction === "buscar_configuracoes") {
+      const snapshot = await dbAdmin.collection("configuracoes").get();
+      const configuracoes: Record<string, unknown> = {};
+      snapshot.forEach(doc => {
+        configuracoes[doc.id] = doc.data().valor;
+      });
+      result = { status: "sucesso", configuracoes };
     } else if (requestAction === "listar_alunos_godmode") {
       const snapshot = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
       const alunos = snapshot.docs.map(doc => {
@@ -171,8 +258,49 @@ export async function POST(request: Request) {
         };
       });
       // Ordena por turma e depois alfabeticamente
-      alunos.sort((a, b) => a.turma.localeCompare(b.turma) || a.nome.localeCompare(b.nome));
+      alunos.sort((a, b) => {
+        if (a.turma < b.turma) return -1;
+        if (a.turma > b.turma) return 1;
+        return a.nome.localeCompare(b.nome);
+      });
       result = { status: "sucesso", alunos };
+
+    } else if (requestAction === "buscar_alunos_admin") {
+      // Retorna os dados completos dos alunos para o painel de gerenciamento
+      const snapshot = await dbAdmin.collection("alunos").get();
+      const alunos = snapshot.docs.map(doc => {
+        const data = doc.data();
+        return {
+          matricula: doc.id,
+          nome: data.nome || `Aluno ${doc.id}`,
+          turma: data.turmaTrilha || data.turma || "",
+          statusTrilha: data.statusTrilha || "Inativo",
+          xp: Number(data.xpTotal) || Number(data.xp) || 0,
+          xpGasto: Number(data.xpGasto) || 0,
+          senha: data.pinPix || data.senha || ""
+        };
+      });
+      
+      alunos.sort((a, b) => {
+        if (a.turma < b.turma) return -1;
+        if (a.turma > b.turma) return 1;
+        return a.nome.localeCompare(b.nome);
+      });
+      
+      result = { status: "sucesso", alunos };
+    } else if (requestAction === "atualizar_senha_aluno") {
+      const mat = String(payload.matricula).trim();
+      const novaSenha = payload.novaSenha !== undefined ? String(payload.novaSenha).trim() : "";
+      if (mat) {
+        await dbAdmin.collection("alunos").doc(mat).set({
+          pinPix: novaSenha,
+          senha: FieldValue.delete() // Remove the old senha field if it exists
+        }, { merge: true });
+        invalidatePortalCache(mat);
+        result = { status: "sucesso", mensagem: "Senha atualizada com sucesso!" };
+      } else {
+        result = { status: "erro", mensagem: "Matrícula inválida." };
+      }
     } else if (requestAction === "buscar_analytics_geral") {
       const alunosSnap = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
       const entregasSnap = await dbAdmin.collection("entregas").get();
@@ -756,7 +884,13 @@ export async function POST(request: Request) {
         result = { status: "erro", mensagem: "Acesso Negado. Credenciais inválidas." };
       } else {
         const turmaSorteio = String(payload.turma || "").trim();
-        const rifasSnap = await dbAdmin.collection("rifa_bilhetes").where("turma", "==", turmaSorteio).where("status", "==", "ATIVO").get();
+        let query: FirebaseFirestore.Query = dbAdmin.collection("rifa_bilhetes").where("status", "==", "ATIVO");
+        
+        if (turmaSorteio && turmaSorteio !== "Todas" && turmaSorteio !== "Todas as Turmas") {
+          query = query.where("turma", "==", turmaSorteio);
+        }
+        
+        const rifasSnap = await query.get();
         
         const bilhetesValidos: Array<{ id: string, nomeAluno?: string, nome?: string, matricula: string }> = [];
         rifasSnap.forEach(doc => bilhetesValidos.push({ id: doc.id, ...(doc.data() as { nomeAluno?: string, nome?: string, matricula: string }) }));
@@ -769,7 +903,7 @@ export async function POST(request: Request) {
           result = { status: "sucesso", ganhador: { nome: vencedor.nomeAluno || vencedor.nome, matricula: vencedor.matricula, bilhete: vencedor.id } };
         }
       }
-    } else if (["avaliar_entrega", "injetar_xp_manual", "atualizar_senha_checkin", "toggle_modo_reposicao", "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "justificar_falta", "resgatar_badge", "resgatar_aniversario", "confirmar_whatsapp", "cadastrar_aluno", "salvar_aluno", "inscrever_trilhatech", "mudar_status_trilhatech", "atualizar_contatos_aluno"].includes(requestAction)) {
+    } else if (["avaliar_entrega", "injetar_xp_manual", "atualizar_senha_checkin", "toggle_modo_reposicao", "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "justificar_falta", "resgatar_badge", "resgatar_aniversario", "confirmar_whatsapp", "cadastrar_aluno", "salvar_aluno", "inscrever_trilhatech", "mudar_status_trilhatech", "atualizar_contatos_aluno", "excluir_dia_letivo"].includes(requestAction)) {
       // FASE 4: Bypass total da planilha para escritas lentas. 
       // Simula o sucesso para forçar a execução do bloco de gravação local no Firestore logo abaixo.
       result = { status: "sucesso", mensagem: "Sincronizado via Firestore nativo (Bypass)" };
@@ -803,7 +937,7 @@ export async function POST(request: Request) {
       "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote",
       "justificar_falta",
       "resgatar_badge", "resgatar_aniversario", "confirmar_whatsapp",
-      "cadastrar_aluno", "salvar_aluno", "inscrever_trilhatech", "mudar_status_trilhatech", "atualizar_contatos_aluno"
+      "cadastrar_aluno", "salvar_aluno", "inscrever_trilhatech", "mudar_status_trilhatech", "atualizar_contatos_aluno", "excluir_dia_letivo"
     ];
 
     if (result.status === "sucesso" && ACTIONS_TO_SYNC.includes(String(payload.action))) {
@@ -844,6 +978,35 @@ export async function POST(request: Request) {
           invalidateRankingCache();
           clearAllPortalCaches();
           await refreshFirestoreCacheAtividades(dbAdmin);
+        }
+      }
+
+      else if (action === "excluir_dia_letivo") {
+        const turma = String(payload.turma || "").trim();
+        const dataStr = String(payload.data || "").trim();
+        
+        if (turma && dataStr) {
+          const metaRef = dbAdmin.collection("metadata").doc("dias_aula_turmas");
+          
+          // Tenta remover a data do array da turma usando FieldValue
+          // OBS: Pode ser que dê erro se não tiver importado FieldValue, mas aqui estamos importando 'FieldValue' do firebase-admin/firestore.
+          // Se não estiver importado no arquivo, precisaremos ajustar. 
+          // O arquivo tem: import { QueryDocumentSnapshot, FieldValue, Timestamp } from "firebase-admin/firestore";
+          await metaRef.update({
+            [turma]: FieldValue.arrayRemove(dataStr)
+          }).catch(() => {}); // catch caso o doc/campo não exista
+          
+          // Opcional: deletar todas as frequencias da turma neste dia
+          const snap = await dbAdmin.collection("frequencia")
+            .where("turma", "==", turma)
+            .where("data", "==", dataStr)
+            .get();
+          
+          const batchFreq = dbAdmin.batch();
+          snap.forEach(doc => batchFreq.delete(doc.ref));
+          await batchFreq.commit();
+          
+          clearAllPortalCaches();
         }
       }
 

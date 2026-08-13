@@ -9,6 +9,13 @@ import { apiGeral, apiTutor } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
 import { motion } from "framer-motion";
 
+// Novos Componentes do Super Painel
+import AbaFrequencia from "@/src/components/admin/AbaFrequencia";
+import AbaAlunos from "@/src/components/admin/AbaAlunos";
+import AbaAtividades from "@/src/components/admin/AbaAtividades";
+import AbaEntregas from "@/src/components/admin/AbaEntregas";
+import AbaRifas from "@/src/components/admin/AbaRifas";
+import AbaCurtidas from "@/src/components/admin/AbaCurtidas";
 export default function ConfiguracoesPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -24,7 +31,18 @@ export default function ConfiguracoesPage() {
 
   // Controle de Abas
   const [abaAtiva, setAbaAtiva] = useState<
-    "geral" | "links" | "modulos" | "usuarios" | "seguranca" | "onboarding"
+    | "alunos"
+    | "frequencia"
+    | "atividades"
+    | "entregas"
+    | "rifas"
+    | "curtidas"
+    | "geral"
+    | "links"
+    | "modulos"
+    | "usuarios"
+    | "seguranca"
+    | "onboarding"
   >("geral");
 
   // States para Controle de Módulos
@@ -307,65 +325,137 @@ export default function ConfiguracoesPage() {
           
           {/* MENU LATERAL DE ABAS */}
           <div className="lg:col-span-1 space-y-2">
-            <button
-              onClick={() => setAbaAtiva("geral")}
-              className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
-                abaAtiva === "geral"
-                  ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
-                  : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
-              }`}
-            >
-              ⚙️ Ajustes Gerais
-            </button>
-            <button
-              onClick={() => setAbaAtiva("links")}
-              className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
-                abaAtiva === "links"
-                  ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
-                  : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
-              }`}
-            >
-              🔗 Links e WhatsApp
-            </button>
-            <button
-              onClick={() => {
-                setAbaAtiva("modulos");
-                carregarModulosDb();
-              }}
-              className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
-                abaAtiva === "modulos"
-                  ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
-                  : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
-              }`}
-            >
-              📚 Módulos & SIEPE
-            </button>
-            <button
-              onClick={() => {
-                setAbaAtiva("usuarios");
-                carregarUsuariosDb();
-              }}
-              className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
-                abaAtiva === "usuarios"
-                  ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
-                  : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
-              }`}
-            >
-              👥 Usuários (Tutores)
-            </button>
-            <button
-              onClick={() => {
-                setAbaAtiva("seguranca");
-                carregarLogsSeguranca();
-              }}
-              className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
-                abaAtiva === "seguranca"
-                  ? "bg-red-600 border-red-700 text-white shadow-md"
-                  : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
-              }`}
-            >
-              🛡️ Logs de Segurança
-            </button>
+            <div className="mb-6">
+              <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 px-2">Gestão de Dados</h4>
+              <div className="space-y-2">
+                <button
+                  onClick={() => setAbaAtiva("alunos")}
+                  className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
+                    abaAtiva === "alunos"
+                      ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                  }`}
+                >
+                  👥 Alunos & Gamificação
+                </button>
+                <button
+                  onClick={() => setAbaAtiva("frequencia")}
+                  className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
+                    abaAtiva === "frequencia"
+                      ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                  }`}
+                >
+                  📅 Diário (Dias & Logs)
+                </button>
+                <button
+                  onClick={() => setAbaAtiva("atividades")}
+                  className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
+                    abaAtiva === "atividades"
+                      ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                  }`}
+                >
+                  📚 Atividades & Gabaritos
+                </button>
+                <button
+                  onClick={() => setAbaAtiva("entregas")}
+                  className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
+                    abaAtiva === "entregas"
+                      ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                  }`}
+                >
+                  📤 Entregas (Projetos)
+                </button>
+                <button
+                  onClick={() => setAbaAtiva("rifas")}
+                  className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
+                    abaAtiva === "rifas"
+                      ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                  }`}
+                >
+                  🎟️ Rifas e Sorteios
+                </button>
+                <button
+                  onClick={() => setAbaAtiva("curtidas")}
+                  className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
+                    abaAtiva === "curtidas"
+                      ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                  }`}
+                >
+                  ❤️ Pix de XP (Transações)
+                </button>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <h4 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3 px-2">Configurações de Sistema</h4>
+              <div className="space-y-2">
+                <button
+                  onClick={() => setAbaAtiva("geral")}
+                  className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
+                    abaAtiva === "geral"
+                      ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                  }`}
+                >
+                  ⚙️ Ajustes Gerais
+                </button>
+                <button
+                  onClick={() => setAbaAtiva("links")}
+                  className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
+                    abaAtiva === "links"
+                      ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                  }`}
+                >
+                  🔗 Links e WhatsApp
+                </button>
+                <button
+                  onClick={() => {
+                    setAbaAtiva("modulos");
+                    carregarModulosDb();
+                  }}
+                  className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
+                    abaAtiva === "modulos"
+                      ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                  }`}
+                >
+                  📚 Módulos & SIEPE
+                </button>
+                <button
+                  onClick={() => {
+                    setAbaAtiva("usuarios");
+                    carregarUsuariosDb();
+                  }}
+                  className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
+                    abaAtiva === "usuarios"
+                      ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                  }`}
+                >
+                  👥 Usuários (Tutores)
+                </button>
+                <button
+                  onClick={() => {
+                    setAbaAtiva("seguranca");
+                    carregarLogsSeguranca();
+                  }}
+                  className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
+                    abaAtiva === "seguranca"
+                      ? "bg-red-600 border-red-700 text-white shadow-md"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                  }`}
+                >
+                  🛡️ Logs de Segurança
+                </button>
+              </div>
+            </div>
+            
             <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-800">
               <button
                 onClick={() => setAbaAtiva("onboarding")}
@@ -389,6 +479,14 @@ export default function ConfiguracoesPage() {
                 </div>
               ) : (
                 <div className="animate-in fade-in slide-in-from-bottom-4 text-left">
+                  {/* NOVOS COMPONENTES DO SUPER PAINEL */}
+                  {abaAtiva === "frequencia" && <AbaFrequencia />}
+                  {abaAtiva === "alunos" && <AbaAlunos />}
+                  {abaAtiva === "atividades" && <AbaAtividades />}
+                  {abaAtiva === "entregas" && <AbaEntregas />}
+                  {abaAtiva === "rifas" && <AbaRifas />}
+                  {abaAtiva === "curtidas" && <AbaCurtidas />}
+
                   {/* CONTEÚDO: GERAL */}
                   {abaAtiva === "geral" && (
                     <div className="space-y-6">

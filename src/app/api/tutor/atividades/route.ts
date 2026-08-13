@@ -122,7 +122,7 @@ export async function GET(request: Request) {
         opcaoC: String(d.opcaoC || ""),
         opcaoD: String(d.opcaoD || ""),
         respostaCorreta: String(d.respostaCorreta || "A"),
-        linkClassroom: String(d.linkClassroom || ""),
+        linkClassroom: String(d.links_ava || d.link || d.linkClassroom || ""),
         statusPublicacao: String(d.statusPublicacao || "Publicada").trim(),
         imagemUrl: String(d.imageUrl || ""),
         modulo: nomeModulo,

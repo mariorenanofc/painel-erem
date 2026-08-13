@@ -30,7 +30,7 @@ async function fetchApi(payload: Record<string, unknown>) {
     const text = await response.text();
     try {
       return JSON.parse(text);
-    } catch (_e: unknown) {
+    } catch {
       if (text.includes("504") || text.includes("Time-out") || text.includes("Timeout")) {
          return {
            status: "erro",
@@ -409,16 +409,4 @@ export const apiTutor = {
     const res = await fetch("/api/tutor/atividades?filtroTurma=Todas&filtroTipo=Todos");
     return res.json();
   },
-
-  salvarAtividade: (atividadeData: Record<string, unknown>) =>
-    fetchApi({
-      action: "salvar_atividade",
-      ...atividadeData
-    }),
-
-  excluirAtividade: (idAtividade: string) =>
-    fetchApi({
-      action: "excluir_atividade",
-      idAtividade
-    }),
 };

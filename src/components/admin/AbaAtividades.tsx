@@ -94,6 +94,7 @@ export default function AbaAtividades() {
         toast(data.mensagem || "Falha ao sincronizar.", "error");
       }
     } catch (error) {
+      console.error(error);
       toast("Erro de conexão ao sincronizar com o AVA.", "error");
     } finally {
       setSincronizandoId(null);
@@ -186,16 +187,7 @@ export default function AbaAtividades() {
   };
 
   const abrirEdicao = (ativ: AtividadeAdmin) => {
-    setAtividadeEmEdicao({ 
-      opcaoA: "",
-      opcaoB: "",
-      opcaoC: "",
-      opcaoD: "",
-      linkClassroom: "",
-      imagemUrl: "",
-      resolucaoTyping: "",
-      ...ativ 
-    });
+    setAtividadeEmEdicao(ativ);
     setModalAberto(true);
   };
 
@@ -210,15 +202,15 @@ export default function AbaAtividades() {
         idAtividadeEdit: atividadeEmEdicao.id // Para o backend saber se é edição ou novo
       });
       if (res.status === "sucesso") {
-        toast("Atividade salva com sucesso!", "sucesso");
+        toast("Atividade salva com sucesso!", "success");
         setModalAberto(false);
         carregarAtividades();
       } else {
-        toast(res.mensagem || "Erro ao salvar", "erro");
+        toast(res.mensagem || "Erro ao salvar", "error");
       }
     } catch (error) {
       console.error(error);
-      toast("Erro de conexão ao salvar.", "erro");
+      toast("Erro de conexão ao salvar.", "error");
     } finally {
       setSalvando(false);
     }
@@ -229,14 +221,14 @@ export default function AbaAtividades() {
     try {
       const res = await apiTutor.excluirAtividade(id);
       if (res.status === "sucesso") {
-        toast("Atividade excluída!", "sucesso");
+        toast("Atividade excluída!", "success");
         carregarAtividades();
       } else {
-        toast(res.mensagem || "Erro ao excluir", "erro");
+        toast(res.mensagem || "Erro ao excluir", "error");
       }
     } catch (error) {
       console.error(error);
-      toast("Erro de conexão ao excluir.", "erro");
+      toast("Erro de conexão ao excluir.", "error");
     }
   };
 

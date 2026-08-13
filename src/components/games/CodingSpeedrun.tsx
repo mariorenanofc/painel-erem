@@ -37,6 +37,7 @@ export default function CodingSpeedrun({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isFinishedRef = useRef(false);
 
   // Iniciar jogo e selecionar 5 códigos aleatórios
   const handleStart = () => {

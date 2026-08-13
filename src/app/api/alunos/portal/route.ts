@@ -394,7 +394,10 @@ export async function GET(request: Request) {
       
       const cacheDoc = await dbAdmin.collection("cache").doc("atividades_publicadas").get();
       if (cacheDoc.exists) {
-        atividadesList = cacheDoc.data()?.atividades as AtividadeDoc[] || [];
+        const data = cacheDoc.data();
+        atividadesList = data?.atividades as AtividadeDoc[] || [];
+        const updatedAt = data?.updatedAt;
+        setCachedAtividades(atividadesList, updatedAt);
       } else {
         console.warn(`[Firestore Query] Portal: Singleton vazio, carregando fallback...`);
         const atividadesSnap = await dbAdmin.collection("atividades").where("statusPublicacao", "==", "Publicada").get();
@@ -424,8 +427,8 @@ export async function GET(request: Request) {
           });
         });
         atividadesList = tempAtivList;
+        setCachedAtividades(atividadesList);
       }
-      setCachedAtividades(atividadesList);
     }
 
     const hojeTime = new Date();

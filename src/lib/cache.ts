@@ -1,7 +1,8 @@
 // Cache simples em memória para reduzir leituras no Firestore e otimizar performance
 export const rankingCache: Record<string, { data: unknown; timestamp: number }> = {};
-export const portalCache: Record<string, { data: unknown; timestamp: number }> = {};
+export const portalCache: Record<string, { data: unknown; globalUpdateReference: number; timestamp: number }> = {};
 let configCache: { data: unknown; timestamp: number } | null = null;
+let lastKnownGlobalUpdate: number = 0;
 
 // Caches globais compartilhados para coleções de turmas e atividades
 let globalAtividadesCache: { data: unknown; timestamp: number } | null = null;
@@ -12,7 +13,13 @@ let aniversariantesCache: { dateKey: string; data: unknown; timestamp: number } 
 
 export function getCachedPortal(matricula: string): unknown | null {
   const cached = portalCache[matricula.trim()];
-  if (cached && Date.now() - cached.timestamp < 43200000) { // 12 horas (invalidação ativa nos endpoints de escrita)
+  if (!cached) return null;
+  
+  if (cached.globalUpdateReference < lastKnownGlobalUpdate) {
+    return null; // Atividades foram atualizadas no Firestore! Invalida o portal.
+  }
+  
+  if (Date.now() - cached.timestamp < 43200000) { // 12 horas ou até o aluno enviar entrega
     return cached.data;
   }
   return null;
@@ -21,13 +28,14 @@ export function getCachedPortal(matricula: string): unknown | null {
 export function setCachedPortal(matricula: string, data: unknown) {
   portalCache[matricula.trim()] = {
     data,
+    globalUpdateReference: lastKnownGlobalUpdate,
     timestamp: Date.now()
   };
 }
 
 export function getCachedRanking(filtro: string): unknown | null {
   const cached = rankingCache[filtro.trim()];
-  if (cached && Date.now() - cached.timestamp < 43200000) { // 12 horas (invalidação ativa nos endpoints de escrita)
+  if (cached && Date.now() - cached.timestamp < 60000) { // 1 minuto
     return cached.data;
   }
   return null;
@@ -41,7 +49,7 @@ export function setCachedRanking(filtro: string, data: unknown) {
 }
 
 export function getCachedConfigs(): unknown | null {
-  if (configCache && Date.now() - configCache.timestamp < 43200000) { // 12 horas (invalidação ativa nos endpoints de escrita)
+  if (configCache && Date.now() - configCache.timestamp < 300000) { // 5 minutos
     return configCache.data;
   }
   return null;
@@ -55,13 +63,18 @@ export function setCachedConfigs(data: unknown) {
 }
 
 export function getCachedAtividades(): unknown | null {
-  if (globalAtividadesCache && Date.now() - globalAtividadesCache.timestamp < 43200000) { // 12 horas
+  if (globalAtividadesCache && Date.now() - globalAtividadesCache.timestamp < 10000) { // 10 segundos
     return globalAtividadesCache.data;
   }
   return null;
 }
 
-export function setCachedAtividades(data: unknown) {
+export function setCachedAtividades(data: unknown, updatedAtISO?: string) {
+  if (updatedAtISO) {
+    lastKnownGlobalUpdate = new Date(updatedAtISO).getTime();
+  } else if (lastKnownGlobalUpdate === 0) {
+    lastKnownGlobalUpdate = Date.now();
+  }
   globalAtividadesCache = {
     data,
     timestamp: Date.now()
@@ -84,7 +97,7 @@ export function setCachedClassDates(turma: string, data: unknown) {
 }
 
 export function getCachedModulos(): unknown | null {
-  if (globalModulosCache && Date.now() - globalModulosCache.timestamp < 43200000) { // 12 horas
+  if (globalModulosCache && Date.now() - globalModulosCache.timestamp < 300000) { // 5 minutos
     return globalModulosCache.data;
   }
   return null;
@@ -99,7 +112,7 @@ export function setCachedModulos(data: unknown) {
 
 export function getCachedTutorAtividades(filtroTurma: string, filtroTipo: string): unknown | null {
   const cached = tutorAtividadesCache[`${filtroTurma}|${filtroTipo}`];
-  if (cached && Date.now() - cached.timestamp < 43200000) { // 12 horas (invalidação ativa nos endpoints de escrita)
+  if (cached && Date.now() - cached.timestamp < 10000) { // 10 segundos
     return cached.data;
   }
   return null;

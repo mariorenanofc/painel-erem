@@ -16,6 +16,8 @@ import AbaAtividades from "@/src/components/admin/AbaAtividades";
 import AbaEntregas from "@/src/components/admin/AbaEntregas";
 import AbaRifas from "@/src/components/admin/AbaRifas";
 import AbaCurtidas from "@/src/components/admin/AbaCurtidas";
+import LancamentoNovidadesModal from "@/src/components/LancamentoNovidadesModal";
+
 export default function ConfiguracoesPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -28,6 +30,7 @@ export default function ConfiguracoesPage() {
   const [montado, setMontado] = useState(false);
   const [salvando, setSalvando] = useState(false);
   const [carregando, setCarregando] = useState(true);
+  const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
   // Controle de Abas
   const [abaAtiva, setAbaAtiva] = useState<
@@ -490,9 +493,17 @@ export default function ConfiguracoesPage() {
                   {/* CONTEÚDO: GERAL */}
                   {abaAtiva === "geral" && (
                     <div className="space-y-6">
-                      <h3 className="text-xl font-black text-slate-800 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3 mb-6 font-display">
-                        Ajustes Gerais da Escola
-                      </h3>
+                      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-slate-100 dark:border-slate-800 pb-3 mb-6 gap-4">
+                        <h3 className="text-xl font-black text-slate-800 dark:text-white font-display">
+                          Ajustes Gerais da Escola
+                        </h3>
+                        <button
+                          onClick={() => setModalNovidadesAberto(true)}
+                          className="bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white text-xs font-black uppercase tracking-wider py-2.5 px-5 rounded-xl transition-all shadow-lg shadow-indigo-500/30 flex items-center gap-2"
+                        >
+                          <span>🚀</span> Lançar Patch Notes
+                        </button>
+                      </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                           <label className="block text-xs font-bold text-slate-500 dark:text-slate-450 uppercase mb-2">
@@ -943,6 +954,12 @@ export default function ConfiguracoesPage() {
 
         </div>
       </div>
+
+      {/* MODAL DE NOVIDADES DA IA */}
+      {modalNovidadesAberto && (
+        <LancamentoNovidadesModal onClose={() => setModalNovidadesAberto(false)} />
+      )}
+
     </main>
   );
 }

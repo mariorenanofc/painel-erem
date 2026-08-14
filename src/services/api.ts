@@ -366,6 +366,15 @@ export const apiTutor = {
     return res.json();
   },
 
+  gerarNovidadesIA: async (rascunho: string) => {
+    const res = await fetch("/api/tutor/gerar-novidades", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ rascunho })
+    });
+    return res.json();
+  },
+
   mudarStatusTrilhaTech: (matricula: string, novoStatus: string) =>
     fetchApi({
       action: "mudar_status_trilhatech",

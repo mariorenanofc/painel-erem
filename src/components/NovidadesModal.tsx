@@ -1,15 +1,18 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from "framer-motion";
+import ReactMarkdown from "react-markdown";
 
 interface NovidadesModalProps {
   onClose: () => void;
+  versao?: string;
+  markdown?: string;
 }
 
-export default function NovidadesModal({ onClose }: NovidadesModalProps) {
+export default function NovidadesModal({ onClose, versao = "2.0.0", markdown = "" }: NovidadesModalProps) {
   useEffect(() => {
     confetti({
       particleCount: 150,
@@ -52,78 +55,22 @@ export default function NovidadesModal({ onClose }: NovidadesModalProps) {
               🚀
             </motion.div>
             <h2 className="font-display font-black text-2xl text-white uppercase tracking-widest relative z-10 drop-shadow-md">
-              Atualização v2.0.0
+              Atualização {versao}
             </h2>
             <p className="text-indigo-150 text-[10px] font-black mt-1.5 relative z-10 tracking-widest uppercase opacity-90">
-              A Nova Era Visual do Trilha Tech
+              Novidades Gamificadas da Plataforma
             </p>
           </div>
 
           {/* Conteúdo rolável */}
           <div className="p-6 md:p-8 overflow-y-auto max-h-[55vh] custom-scrollbar bg-white/40 dark:bg-transparent space-y-5">
-            <p className="text-slate-600 dark:text-slate-300 font-semibold text-center text-sm mb-4 leading-relaxed">
-              Preparamos uma reformulação completa na interface da plataforma com o novo padrão **Aurora UI & Glassmorphism**. Confira as principais novidades:
-            </p>
-
-            {/* Novidade 1: Nova Interface Premium */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.2 }}
-              className="bg-gradient-to-br from-indigo-500 to-purple-600 p-5 rounded-2xl shadow-md border border-indigo-400 relative overflow-hidden"
-            >
-              <h3 className="font-display font-black text-white text-sm md:text-base flex items-center gap-2 mb-2">
-                <span>🎨</span> Visual Premium Redesenhado
-              </h3>
-              <p className="text-xs md:text-sm text-indigo-50 leading-relaxed font-medium">
-                Interface com painéis flutuantes translúcidos de alto contraste, fundos interativos de constelação e micro-interações fluidas no dashboard e configurações de perfil.
-              </p>
-            </motion.div>
-
-            {/* Novidade 2: Trilha de Aprendizado */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.25 }}
-              className="bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/15 dark:to-emerald-900/10 border border-emerald-250 dark:border-emerald-900/30 p-4.5 rounded-2xl shadow-sm"
-            >
-              <h3 className="font-display font-black text-emerald-900 dark:text-emerald-400 text-sm md:text-base flex items-center gap-2 mb-1.5">
-                <span>🗺️</span> Modo Trilha de Aprendizado
-              </h3>
-              <p className="text-xs md:text-sm text-emerald-800 dark:text-emerald-350 leading-relaxed font-medium">
-                Mude a visualização das atividades das aulas em tempo real! Escolha entre a tradicional Grade ou uma inovadora **Trilha de Aprendizado** com nós interativos conectados.
-              </p>
-            </motion.div>
-
-            {/* Novidade 3: Notificações Toast Gamificadas */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
-              className="bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-800 p-4.5 rounded-2xl shadow-sm"
-            >
-              <h3 className="font-display font-black text-slate-800 dark:text-slate-200 text-sm md:text-base flex items-center gap-2 mb-1.5">
-                <span>🚨</span> Feedbacks e Toasts Animados
-              </h3>
-              <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                Novo sistema de avisos flutuantes integrados à sua gamificação com glows coloridos de acordo com o tipo de retorno (Quiz Correto, Recompensas, Erros ou Avisos).
-              </p>
-            </motion.div>
-
-            {/* Novidade 4: Bento Modais e Sorteios */}
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-              className="bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-800 p-4.5 rounded-2xl shadow-sm"
-            >
-              <h3 className="font-display font-black text-slate-800 dark:text-slate-200 text-sm md:text-base flex items-center gap-2 mb-1.5">
-                <span>🎫</span> Pix de XP e Bilhetes Bento Grid
-              </h3>
-              <p className="text-xs md:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium">
-                Os modais de **Pix de XP**, **Frequência** e **Meus Bilhetes** foram organizados no formato Bento, trazendo relatórios visuais limpos e maior rapidez nas transações.
-              </p>
-            </motion.div>
+            <div className="prose prose-slate dark:prose-invert prose-sm md:prose-base prose-headings:font-black prose-headings:text-indigo-600 dark:prose-headings:text-indigo-400 prose-a:text-pink-500 max-w-none">
+              {markdown ? (
+                <ReactMarkdown>{markdown}</ReactMarkdown>
+              ) : (
+                <p className="text-center italic opacity-70">Nenhuma novidade registrada no momento.</p>
+              )}
+            </div>
           </div>
 
           {/* Rodapé fixo do Modal */}

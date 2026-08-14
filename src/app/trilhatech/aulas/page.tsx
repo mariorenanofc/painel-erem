@@ -174,6 +174,48 @@ export default function GestaoAulasPage() {
   const modulosCadastrados: string[] =
     data?.status === "sucesso" ? data.modulosMatriz || [] : [];
 
+  const iniciarSincronizacaoAVA = async () => {
+    setSincronizandoAVA(true);
+    setProgressoSync({ progresso: 10, mensagem: "Conectando ao banco de dados..." });
+    try {
+      await new Promise((r) => setTimeout(r, 800));
+      setProgressoSync({ progresso: 40, mensagem: "Analisando módulos e buscando entregas ativas..." });
+
+      const res = await fetch("/api/tutor/sincronizar-ava", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ filtroTurma: filtroSyncTurma, filtroModulo: filtroSyncModulo }),
+      });
+      
+      setProgressoSync({ progresso: 80, mensagem: "Cruzando dados com o Classroom..." });
+      
+      if (!res.ok) throw new Error("Falha na API");
+      
+      const data = await res.json();
+      
+      setProgressoSync({ progresso: 100, mensagem: "Concluído!" });
+      
+      const match = data.mensagem?.match(/(\d+) nova\(s\)/);
+      let novasEntregasTotais = 0;
+      if (match && match[1]) {
+         novasEntregasTotais = parseInt(match[1], 10);
+      }
+      
+      if (novasEntregasTotais > 0) {
+        toast(`Sincronização concluída! ${novasEntregasTotais} nova(s) entrega(s) importada(s).`, "sync", "Sucesso!");
+      } else {
+        toast(`Sincronização concluída. Nenhuma nota nova.`, "info", "Tudo em dia!");
+      }
+      
+      setModalSyncAberto(false);
+      mutate();
+    } catch (error) {
+      toast("Erro de conexão ao sincronizar com o AVA.", "error");
+    } finally {
+      setTimeout(() => setSincronizandoAVA(false), 1000);
+    }
+  };
+
   useEffect(() => {
     setMontado(true);
     if (!nomeUsuario) window.location.href = "/";
@@ -229,22 +271,24 @@ export default function GestaoAulasPage() {
           idAtividadeEdit: null,
           titulo: ativ.titulo,
           descricao:
-            "Acesse o Google Classroom para visualizar as instruções detalhadas desta atividade.",
-          dataLimite: "",
+            ativ.descricao || "Acesse o Google Classroom para visualizar as instruções detalhadas desta atividade.",
+          dataLimite: ativ.dataLimite || "",
           xp: ativ.xp.toString(),
           turmaAlvo: turmaSelecionada,
           tipo: ativ.tipo,
-          opcaoA: "",
+          opcaoA: ativ.opcaoA || "",
           opcaoB: "",
           opcaoC: "",
           opcaoD: "",
           respostaCorreta: "A",
-          linkClassroom: "",
-          statusPublicacao: "Rascunho",
+          linkClassroom: ativ.linkClassroom || "",
+          statusPublicacao: "Publicada",
           imagemUrl: "",
           modulo: moduloSelecionado,
           gabarito: "",
           gabaritoLiberado: false,
+          resolucaoTyping: ativ.resolucaoTyping || "",
+          limiteTempoTyping: ativ.limiteTempoTyping || 0,
         });
         if (res.status === "sucesso") {
           importCount++;
@@ -252,7 +296,7 @@ export default function GestaoAulasPage() {
       }
       if (importCount === atividadesMapeadas.length) {
         toast(
-          `Importação de ${importCount} rascunhos concluída com sucesso!`,
+          `Importação de ${importCount} atividades concluída com sucesso!`,
           "success",
         );
       } else {
@@ -658,105 +702,7 @@ export default function GestaoAulasPage() {
     }
   };
 
-  // 🔥 NOVA LÓGICA DE SINCRONIZAÇÃO NATIVA 🔥
-  const iniciarSincronizacaoAVA = async () => {
-    setModalSyncAberto(false);
-    setSincronizandoAVA(true);
-    setProgressoSync({
-      progresso: 5,
-      mensagem: "Conectando com o Google Classroom...",
-    });
 
-    let fakeProgress = 5;
-    const intervalStatus = setInterval(() => {
-      fakeProgress += Math.floor(Math.random() * 5) + 2;
-      if (fakeProgress > 95) fakeProgress = 95;
-      setProgressoSync({
-        progresso: fakeProgress,
-        mensagem: fakeProgress < 40 ? "Buscando atividades e alunos..." : fakeProgress < 75 ? "Validando entregas e atrasos..." : "Atualizando notas no banco de dados...",
-      });
-    }, 3000);
-
-    try {
-      const res = await fetch("/api/tutor/sincronizar-ava", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          filtroTurma: filtroSyncTurma,
-          filtroModulo: filtroSyncModulo,
-        }),
-      });
-
-      clearInterval(intervalStatus);
-      const data = await res.json();
-
-      if (data.status === "sucesso") {
-        toast(data.mensagem, "sync", "Varredura e Sincronização Concluídas!");
-        mutate();
-      } else {
-        toast(data.mensagem, "error", "Falha na Sincronização");
-      }
-    } catch (err) {
-      clearInterval(intervalStatus);
-      toast(
-        "Erro de conexão ao sincronizar com o Google Classroom.",
-        "error",
-        "Timeout",
-      );
-    } finally {
-      setSincronizandoAVA(false);
-    }
-  };
-
-  const sincronizarAula = async (missoes: { id: string; titulo: string }[], nomeAula: string) => {
-    if (missoes.length === 0) return toast("Nenhuma missão encontrada para sincronizar.", "warning");
-    
-    setSincronizandoAVA(true);
-    let novasEntregasTotais = 0;
-    
-    try {
-      for (let i = 0; i < missoes.length; i++) {
-        const missao = missoes[i];
-        
-        setProgressoSync({
-          progresso: Math.round((i / missoes.length) * 100),
-          mensagem: `Validando ${i + 1}/${missoes.length}: ${missao.titulo}...`
-        });
-
-        const res = await fetch("/api/tutor/sincronizar-ava", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            filtroTurma: "Todas",
-            filtroModulo: "Todos",
-            filtroAtividadesIds: [missao.id]
-          }),
-        });
-
-        const data = await res.json();
-        
-        // Extrai a quantidade de novas entregas da mensagem retornada pela API
-        const match = data.mensagem?.match(/(\d+) nova\(s\)/);
-        if (match && match[1]) {
-           novasEntregasTotais += parseInt(match[1], 10);
-        }
-      }
-
-      setProgressoSync({ progresso: 100, mensagem: "Concluído!" });
-      
-      if (novasEntregasTotais > 0) {
-        toast(`Sincronização da ${nomeAula} concluída! ${novasEntregasTotais} nova(s) entrega(s) importada(s).`, "sync", "Sucesso!");
-      } else {
-        toast(`Sincronização da ${nomeAula} concluída. Nenhuma nota nova.`, "info", "Tudo em dia!");
-      }
-      
-      mutate();
-    } catch (error) {
-      toast("Erro de conexão ao sincronizar com o AVA.", "error");
-    } finally {
-      setSincronizandoAVA(false);
-    }
-  };
 
   useEffect(() => {
     if (modalFreqAberto && turmaDiario)
@@ -931,9 +877,10 @@ export default function GestaoAulasPage() {
         />
       )}
 
+      
       {/* 🚀 MODAL 1: FILTRO DE SINCRONIZAÇÃO */}
       {modalSyncAberto && (
-        <div className="fixed inset-0 z-5000 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in">
+        <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 dark:border-slate-800">
             <div className="text-5xl mb-4 text-center">⚙️</div>
             <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2 text-center">
@@ -991,9 +938,10 @@ export default function GestaoAulasPage() {
               </button>
               <button
                 onClick={iniciarSincronizacaoAVA}
-                className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-black py-3 rounded-xl shadow-md active:scale-95 transition-all cursor-pointer"
+                disabled={sincronizandoAVA}
+                className="flex-1 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-black py-3 rounded-xl shadow-md active:scale-95 transition-all cursor-pointer"
               >
-                Sincronizar
+                {sincronizandoAVA ? "Aguarde..." : "Sincronizar"}
               </button>
             </div>
           </div>
@@ -1002,7 +950,7 @@ export default function GestaoAulasPage() {
 
       {/* 🚀 MODAL 2: CARREGAMENTO DA SINCRONIZAÇÃO */}
       {sincronizandoAVA && (
-        <div className="fixed inset-0 z-9999 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 max-w-md w-full text-center border-4 border-indigo-500">
             <div className="text-6xl mb-4 animate-spin-slow">⚙️</div>
             <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">
@@ -1082,15 +1030,6 @@ export default function GestaoAulasPage() {
               className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-fuchsia-500/35 dark:hover:border-fuchsia-500/35 hover:bg-fuchsia-500/5 dark:hover:bg-fuchsia-500/10 shadow-sm transition-all flex items-center gap-1.5"
             >
               ⚙️ Configs
-            </motion.button>
-
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => setModalSyncAberto(true)}
-              className="cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-650 hover:brightness-110 text-white font-black py-2.5 px-4.5 rounded-xl shadow-md shadow-blue-500/5 flex items-center gap-1.5 text-xs uppercase tracking-wider border-none"
-            >
-              <span>🔄</span> Sincronizar AVA
             </motion.button>
 
             <motion.button
@@ -1421,10 +1360,16 @@ export default function GestaoAulasPage() {
 
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <button
+                    onClick={() => setModalSyncAberto(true)}
+                    className="cursor-pointer bg-white dark:bg-slate-900 border-2 border-emerald-200 dark:border-emerald-800/50 hover:border-emerald-400 dark:hover:border-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
+                  >
+                    <span className="text-base leading-none">🔄</span> Sincronizar AVA
+                  </button>
+                  <button
                     onClick={() => setModalImportadorAberto(true)}
                     className="cursor-pointer bg-white dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-800/50 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-4 py-2 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
                   >
-                    <span className="text-base leading-none">⚡</span> Importar Lote
+                    <span className="text-base leading-none">📡</span> Radar Classroom
                   </button>
                   <button
                     onClick={() => {
@@ -1447,7 +1392,6 @@ export default function GestaoAulasPage() {
                   onEdit={preencherEdicao}
                   onDelete={excluirAtividade}
                   onViewEntregas={abrirModalEntregas}
-                  onSyncAula={sincronizarAula}
                 />
               </div>
             </div>

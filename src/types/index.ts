@@ -199,6 +199,7 @@ export interface AlunoRankingTutor {
   nivel: string | number; // O back manda string ("Iniciante"), mas o front antigo esperava number
   xp: number;
   posicao?: number;
+  avatar?: string;
 }
 
 // Tipagem para a Frequência do Diário (Mensal)
@@ -330,7 +331,7 @@ export interface MissoesListProps {
   onEdit: (ativ: Atividade) => void;
   onDelete: (id: string) => void;
   onViewEntregas: (ativ: Atividade) => void;
-  onSyncAula?: (missoes: { id: string; titulo: string }[], nomeAula: string) => void;
+  onSyncAula?: (missoes: Partial<Atividade>[], nomeAula: string) => void;
 }
 
 export interface NovaConquistaModalProps {

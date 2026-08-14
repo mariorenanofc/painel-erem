@@ -357,6 +357,15 @@ export const apiTutor = {
       motivo
     }),
 
+  gerarMensagemIA: async (top10: any[], turma: string, tipo: string) => {
+    const res = await fetch("/api/tutor/gerar-mensagem", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ top10, turma, tipo })
+    });
+    return res.json();
+  },
+
   mudarStatusTrilhaTech: (matricula: string, novoStatus: string) =>
     fetchApi({
       action: "mudar_status_trilhatech",

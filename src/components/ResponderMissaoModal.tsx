@@ -448,7 +448,7 @@ export default function ResponderMissaoModal({
                       </AnimatePresence>
 
                       <AnimatePresence>
-                        {classroomAberto && timerClassroom === 0 && (
+                        {classroomAberto && timerClassroom === 0 && missaoAberta.tipo === "Projeto" && (
                           <motion.label
                             initial={{ opacity: 0, y: 8 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -475,7 +475,7 @@ export default function ResponderMissaoModal({
                 )}
 
               {/* ─── LABEL: Sua Resposta ─── */}
-              {missaoAberta.tipo !== "Material" && (
+              {missaoAberta.tipo !== "Material" && !missaoAberta.linkClassroom && (
                 <h3 className="font-display font-black text-slate-800 dark:text-slate-200 mb-3 uppercase text-[11px] tracking-[0.2em] mt-4 transition-colors flex items-center gap-2">
                   <span className="w-1.5 h-4 bg-gradient-to-b from-indigo-500 to-pink-500 rounded-full" />
                   Sua Resposta
@@ -483,7 +483,7 @@ export default function ResponderMissaoModal({
               )}
 
               {/* ─── OPÇÕES: Quiz ─── */}
-              {missaoAberta.tipo === "Quiz" ? (
+              {missaoAberta.tipo === "Quiz" && !missaoAberta.linkClassroom ? (
                 <div className="space-y-3">
                   {["A", "B", "C", "D"].map((letra) => {
                     const opcaoTexto =
@@ -536,8 +536,8 @@ export default function ResponderMissaoModal({
                     className={`w-full bg-white/80 dark:bg-slate-800/60 border-2 border-slate-200/80 dark:border-slate-700/50 text-slate-800 dark:text-slate-100 rounded-2xl p-4 focus:border-indigo-500 dark:focus:border-indigo-500 outline-none transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600 backdrop-blur-sm ${inputDesabilitado ? "opacity-60 cursor-not-allowed bg-slate-100/80 dark:bg-slate-900/60" : ""}`}
                   />
                 </div>
-              ) : (
-                /* ─── BLOCO: Material de Apoio ─── */
+              ) : !missaoAberta.linkClassroom ? (
+                /* ─── BLOCO: Material de Apoio (Somente Portal) ─── */
                 <div className="bg-indigo-50/80 dark:bg-indigo-900/15 border border-indigo-200/60 dark:border-indigo-800/40 p-6 rounded-2xl text-center shadow-sm backdrop-blur-sm transition-colors">
                   <motion.span
                     className="text-4xl block mb-3"
@@ -555,7 +555,7 @@ export default function ResponderMissaoModal({
                   </p>
                   <input type="hidden" value="Material Consumido" />
                 </div>
-              )}
+              ) : null}
 
               {/* ─── LOADING ESTADO ─── */}
               <AnimatePresence>
@@ -572,7 +572,7 @@ export default function ResponderMissaoModal({
 
               {/* ─── BARRA DE AÇÕES ─── */}
               <div className="mt-8 flex justify-end gap-3 border-t border-slate-200/60 dark:border-slate-700/40 pt-5 transition-colors pb-2">
-                {statusAtual !== "pendente" && (
+                {statusAtual !== "pendente" && !missaoAberta.linkClassroom && (
                   <motion.button
                     type="button"
                     whileHover={!atualizandoStatus ? { scale: 1.02 } : {}}
@@ -608,34 +608,47 @@ export default function ResponderMissaoModal({
                 >
                   Cancelar
                 </motion.button>
-                <motion.button
-                  type="submit"
-                  whileHover={!inputDesabilitado ? { scale: 1.02 } : {}}
-                  whileTap={!inputDesabilitado ? { scale: 0.97 } : {}}
-                  disabled={inputDesabilitado}
-                  className={`cursor-pointer text-white px-8 py-3 rounded-xl font-black text-sm shadow-md transition-all uppercase tracking-wider ${
-                    inputDesabilitado
-                      ? "bg-slate-400 dark:bg-slate-700 shadow-none"
-                      : prazoEncerrado
-                        ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/20 active:scale-95"
-                        : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/20 active:scale-95"
-                  }`}
-                >
-                  {enviando
-                    ? "Processando..."
-                    : statusAtual === "aguardando correção" ||
-                        statusAtual === "avaliador" ||
-                        statusAtual === "avaliado" ||
-                        statusAtual === "avaliada"
-                      ? "Já Concluído"
-                      : statusAtual === "devolvida"
-                        ? "Reenviar Missão"
-                        : missaoAberta.tipo === "Material"
-                          ? "Resgatar XP do Material"
-                          : prazoEncerrado
-                            ? "Enviar Atrasado"
-                            : "Enviar Resposta"}
-                </motion.button>
+                
+                {missaoAberta.linkClassroom && missaoAberta.tipo !== "Projeto" ? (
+                  <div
+                    className={`px-8 py-3 rounded-xl font-black text-sm shadow-md transition-all uppercase tracking-wider text-white ${
+                      statusAtual === "pendente" 
+                        ? "bg-slate-400 dark:bg-slate-700" 
+                        : "bg-emerald-500 dark:bg-emerald-600"
+                    }`}
+                  >
+                    {statusAtual === "pendente" ? "Aguardando Sincronização..." : "Entregue via Classroom"}
+                  </div>
+                ) : (
+                  <motion.button
+                    type="submit"
+                    whileHover={!inputDesabilitado ? { scale: 1.02 } : {}}
+                    whileTap={!inputDesabilitado ? { scale: 0.97 } : {}}
+                    disabled={inputDesabilitado}
+                    className={`cursor-pointer text-white px-8 py-3 rounded-xl font-black text-sm shadow-md transition-all uppercase tracking-wider ${
+                      inputDesabilitado
+                        ? "bg-slate-400 dark:bg-slate-700 shadow-none"
+                        : prazoEncerrado
+                          ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/20 active:scale-95"
+                          : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/20 active:scale-95"
+                    }`}
+                  >
+                    {enviando
+                      ? "Processando..."
+                      : statusAtual === "aguardando correção" ||
+                          statusAtual === "avaliador" ||
+                          statusAtual === "avaliado" ||
+                          statusAtual === "avaliada"
+                        ? "Já Concluído"
+                        : statusAtual === "devolvida"
+                          ? "Reenviar Missão"
+                          : missaoAberta.tipo === "Material"
+                            ? "Resgatar XP do Material"
+                            : prazoEncerrado
+                              ? "Enviar Atrasado"
+                              : "Enviar Resposta"}
+                  </motion.button>
+                )}
               </div>
             </form>
           </div>

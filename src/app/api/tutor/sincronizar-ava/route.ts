@@ -1,9 +1,41 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { invalidateRankingCache, clearAllPortalCaches } from "@/src/lib/cache";
 import { google } from "googleapis";
+import { FieldValue } from "firebase-admin/firestore";
 
 // Normalização de nomes para busca
 const normalizar = (texto: string) => String(texto).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+
+const compararNomes = (nome1: string, nome2: string) => {
+  if (!nome1 || !nome2) return false;
+  const n1 = normalizar(nome1);
+  const n2 = normalizar(nome2);
+  if (n1 === n2) return true;
+  
+  if (n1.indexOf(n2) === 0 || n2.indexOf(n1) === 0) return true;
+  
+  const p1 = n1.split(/\s+/);
+  const p2 = n2.split(/\s+/);
+  if (p1.length > 0 && p2.length > 0) {
+      if (p1[0] === p2[0]) {
+          for (let i = 1; i < p1.length; i++) {
+              if (p1[i].length > 2 && p2.indexOf(p1[i]) !== -1) {
+                  return true;
+              }
+          }
+      }
+  }
+  return false;
+};
+
+const decodificarId = (idUrl: string) => {
+  try {
+    const decodificado = Buffer.from(idUrl, "base64").toString("utf8");
+    if (/^\d+$/.test(decodificado)) return decodificado;
+  } catch { }
+  return idUrl;
+};
 
 export async function POST(req: Request) {
   try {
@@ -15,40 +47,24 @@ export async function POST(req: Request) {
     const filtroModulo = body.filtroModulo || "Todos";
     const filtroAtividadesIds: string[] = body.filtroAtividadesIds || [];
 
-    // 1. Setup Google API (Usando as credenciais de Serviço do Firebase)
-    const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
-    const privateKey = (process.env.FIREBASE_PRIVATE_KEY || "").replace(/\\n/g, "\n");
-    const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
+    // 1. Setup Google API (Usando as credenciais OAuth do Tutor)
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+    const refreshToken = process.env.GOOGLE_REFRESH_TOKEN;
 
-    if (!clientEmail || !privateKey) {
-      throw new Error("Variáveis FIREBASE_CLIENT_EMAIL ou FIREBASE_PRIVATE_KEY ausentes no .env.local");
+    if (!clientId || !clientSecret || !refreshToken) {
+      throw new Error("Variáveis GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET ou GOOGLE_REFRESH_TOKEN ausentes no .env.local");
     }
 
-    const auth = new google.auth.GoogleAuth({
-      credentials: {
-        client_email: clientEmail,
-        private_key: privateKey,
-        project_id: projectId,
-      },
-      scopes: [
-        'https://www.googleapis.com/auth/classroom.courses.readonly',
-        'https://www.googleapis.com/auth/classroom.coursework.students.readonly',
-        'https://www.googleapis.com/auth/classroom.profile.emails',
-        'https://www.googleapis.com/auth/classroom.rosters.readonly'
-      ],
-    });
+    const auth = new google.auth.OAuth2(clientId, clientSecret);
+    auth.setCredentials({ refresh_token: refreshToken });
+
     const classroom = google.classroom({ version: 'v1', auth });
 
-    // 2. Buscar Dados do Firestore
-    let entregasPromise = dbAdmin.collection("entregas").get();
-    if (filtroAtividadesIds.length > 0 && filtroAtividadesIds.length <= 30) {
-      entregasPromise = dbAdmin.collection("entregas").where("idAtividade", "in", filtroAtividadesIds).get();
-    }
-
-    const [atividadesSnap, alunosSnap, entregasSnap, modulosSnap] = await Promise.all([
+    // 2. Buscar Dados Estruturais do Firestore
+    const [atividadesSnap, alunosSnap, modulosSnap] = await Promise.all([
       dbAdmin.collection("atividades").get(),
       dbAdmin.collection("alunos").get(),
-      entregasPromise,
       dbAdmin.collection("modulos").get()
     ]);
 
@@ -66,18 +82,10 @@ export async function POST(req: Request) {
     const mapaBuscaAluno: Record<string, { idDoc: string; xpTotal: number; nomeNorm: string; email?: string; nome?: string; matricula?: string; turma?: string; turmaTrilha?: string }> = {};
     alunosSnap.forEach(doc => {
       const a = doc.data();
-      if (a.statusCurso === "Ativo") {
-        const obj = { idDoc: doc.id, ...a, xpTotal: Number(a.xpTotal) || 0, nomeNorm: normalizar(a.nome) };
-        if (a.email) mapaBuscaAluno[a.email.toLowerCase()] = obj;
-        if (a.nome) mapaBuscaAluno[obj.nomeNorm] = obj;
-        listaAlunos.push(obj);
-      }
-    });
-
-    const mapaEntregas: Record<string, { idDoc?: string, status?: string }> = {};
-    entregasSnap.forEach(doc => {
-      const e = doc.data();
-      mapaEntregas[`${e.matricula}_${e.idAtividade}`] = { idDoc: doc.id, status: e.status };
+      const obj = { idDoc: doc.id, ...a, xpTotal: Number(a.xpTotal) || 0, nomeNorm: normalizar(a.nome) };
+      if (a.email) mapaBuscaAluno[a.email.toLowerCase()] = obj;
+      if (a.nome) mapaBuscaAluno[obj.nomeNorm] = obj;
+      listaAlunos.push(obj);
     });
 
     // Filtra Atividades do Classroom
@@ -93,8 +101,36 @@ export async function POST(req: Request) {
       if (filtroTurma !== "Todas" && turmaAlvo !== "Todas" && turmaAlvo !== filtroTurma) return;
       if (filtroModulo !== "Todos" && nomeModulo !== filtroModulo) return;
 
+      // Proteção extra: ignora módulos encerrados ou em breve já na filtragem
+      const moduloNorm = nomeModulo.toLowerCase();
+      const turmaAlvoNorm = turmaAlvo.toLowerCase();
+      const statusModulo = mapaModulos[`${moduloNorm}_${turmaAlvoNorm}`] || mapaModulos[moduloNorm] || "aberto";
+      if (statusModulo === "em breve" || statusModulo === "encerrado") return;
+
       atividadesParaSincronizar.push(ativ);
     });
+
+    // 3. Buscar Entregas APENAS das atividades mapeadas (Chunks de 30)
+    const mapaEntregas: Record<string, { idDoc?: string, status?: string }> = {};
+    
+    if (atividadesParaSincronizar.length > 0) {
+      const idsAtividades = atividadesParaSincronizar.map(a => a.idDoc);
+      const chunks = [];
+      for (let i = 0; i < idsAtividades.length; i += 30) {
+        chunks.push(idsAtividades.slice(i, i + 30));
+      }
+
+      const entregasSnaps = await Promise.all(
+        chunks.map(chunk => dbAdmin.collection("entregas").where("idAtividade", "in", chunk).get())
+      );
+
+      entregasSnaps.forEach(snap => {
+        snap.forEach(doc => {
+          const e = doc.data();
+          mapaEntregas[`${e.matricula}_${e.idAtividade}`] = { idDoc: doc.id, status: e.status };
+        });
+      });
+    }
 
     if (atividadesParaSincronizar.length === 0) {
       return NextResponse.json({ status: "sucesso", mensagem: "Nenhuma atividade correspondente com link do Classroom encontrada." });
@@ -112,7 +148,7 @@ export async function POST(req: Request) {
       const moduloNorm = String(ativ.modulo || "").trim().toLowerCase();
       const statusModulo = mapaModulos[`${moduloNorm}_${turmaAlvoNorm}`] || mapaModulos[moduloNorm] || "aberto";
 
-      if (statusModulo === "em breve") continue;
+      if (statusModulo === "em breve" || statusModulo === "encerrado") continue;
 
       let dataLimObj: Date | null = null;
       if (ativ.dataLimite) {
@@ -129,8 +165,8 @@ export async function POST(req: Request) {
 
       const match = (link || "").match(/\/c\/([^\/\?]+)\/(?:a|sa|q|mc)\/([^\/\?]+)/i);
       if (match && match[1] && match[2]) {
-        const courseId = match[1];
-        const courseWorkId = match[2];
+        const courseId = decodificarId(match[1]);
+        const courseWorkId = decodificarId(match[2]);
 
         try {
           let pageToken: string | null | undefined = undefined;
@@ -142,6 +178,8 @@ export async function POST(req: Request) {
             })) as unknown as { data: { nextPageToken?: string; studentSubmissions?: Array<{ state?: string; userId?: string; updateTime?: string }> } };
 
             const submissions = response.data.studentSubmissions || [];
+            logsErro.push(`✅ Atividade ${idAtiv}: ${submissions.length} entregas totais encontradas no Classroom.`);
+            
             for (const sub of submissions) {
               if (sub.state === "TURNED_IN" || sub.state === "RETURNED") {
                  const userId = sub.userId!;
@@ -169,16 +207,35 @@ export async function POST(req: Request) {
                  }
 
                  const usr = cacheAlunosCurso[courseId][userId] || { email: "", nomeNorm: "" };
+
+                 // Fallback: se não tiver e-mail ou nome (provavelmente falha de listagem de roster)
+                 if (!usr.email && !usr.nomeNorm) {
+                     try {
+                         const prof = await classroom.userProfiles.get({ userId });
+                         if (prof.data && prof.data.emailAddress) usr.email = prof.data.emailAddress.toLowerCase().trim();
+                         if (prof.data && prof.data.name && prof.data.name.fullName) usr.nomeNorm = normalizar(prof.data.name.fullName);
+                         cacheAlunosCurso[courseId] = cacheAlunosCurso[courseId] || {};
+                         cacheAlunosCurso[courseId][userId] = usr; // atualiza cache local
+                     } catch(error: unknown) {
+                         const e = error as Error;
+                         logsErro.push(`⚠️ Falha ao buscar nome do aluno (ID: ${userId}): ${e.message}`);
+                     }
+                 }
+
                  let alunoDb = mapaBuscaAluno[usr.email] || mapaBuscaAluno[usr.nomeNorm];
 
                  // Fallback Busca Parcial
                  if (!alunoDb && usr.nomeNorm) {
                      for (const al of listaAlunos) {
-                         if (al.nomeNorm === usr.nomeNorm || al.nomeNorm.startsWith(usr.nomeNorm) || usr.nomeNorm.startsWith(al.nomeNorm)) {
+                         if (compararNomes(al.nomeNorm, usr.nomeNorm)) {
                              alunoDb = al;
                              break;
                          }
                      }
+                 }
+
+                 if (!alunoDb) {
+                     logsErro.push(`⚠️ Aluno não cadastrado ou não encontrado no banco (Email: ${usr.email}, Nome: ${usr.nomeNorm})`);
                  }
 
                  if (alunoDb) {
@@ -235,13 +292,13 @@ export async function POST(req: Request) {
                              }
 
                              if (matchDig) {
-                                 xpGanhoFinal = parseInt(matchDig[1], 10);
-                             } else {
-                                 const piso = Math.ceil(xpAtiv * 0.1);
-                                 if (xpGanhoFinal < piso && xpAtiv > 0) xpGanhoFinal = piso;
+                                 xpGanhoFinal = parseInt(matchDig[1], 10) - Math.min(descontoTotal, parseInt(matchDig[1], 10));
                              }
 
-                             if (descontoTotal > 0 && !matchDig) {
+                             const piso = Math.ceil(xpAtiv * 0.1);
+                             if (xpGanhoFinal < piso && xpAtiv > 0) xpGanhoFinal = piso;
+
+                             if (descontoTotal > 0) {
                                  const msgs = [];
                                  if (descontoAtraso > 0) msgs.push(`-${descontoAtraso}XP por Atraso`);
                                  if (descontoGabarito > 0) msgs.push(`-30% por Gabarito Liberado`);
@@ -251,12 +308,17 @@ export async function POST(req: Request) {
 
                          const batch = dbAdmin.batch();
                          const msgAviso = "\n[🤖 AVA: Nota sincronizada automaticamente]";
+                         let oldCat: string | null = null;
 
                          if (entregaExistente) {
+                            if (entregaExistente.status === "Aguardando Correção") oldCat = "pendentes";
+                            else if (entregaExistente.status === "Aguardando Validação" || entregaExistente.status === "Aguardando Validacao") oldCat = "aguardandoValidacao";
+
                             const docRef = dbAdmin.collection("entregas").doc(String(entregaExistente.idDoc));
                             batch.update(docRef, {
                                 status: "Avaliado",
                                 xpGanho: xpGanhoFinal,
+                                timestamp: timestampRealDaEntrega,
                             });
                             // Seria ideal ler o feedback antigo aqui para anexar a string em vez de sobrescrever
                             // Mas por otimização, faremos via transação ou assumiremos anexação
@@ -280,12 +342,19 @@ export async function POST(req: Request) {
                              xpTotal: (alunoDb.xpTotal || 0) + xpGanhoFinal
                          });
 
+                         const statsRef = dbAdmin.collection("estatisticas_atividades").doc(idAtiv);
+                         const statsUpdates: Record<string, FieldValue> = { validadasAVA: FieldValue.increment(1) };
+                         if (oldCat) statsUpdates[oldCat] = FieldValue.increment(-1);
+                         batch.set(statsRef, statsUpdates, { merge: true });
+
                          await batch.commit();
 
                          // Atualizar cache em memória para próximas iterações n resincronizarem errado
                          mapaEntregas[chaveEntrega] = { status: "Avaliado" };
                          alunoDb.xpTotal += xpGanhoFinal;
                          entregasNovas++;
+                     } else {
+                         logsErro.push(`⏭️ Ignorada (Já estava ${entregaExistente.status}): ${alunoDb.nomeNorm}`);
                      }
                  }
               }
@@ -294,7 +363,7 @@ export async function POST(req: Request) {
           } while(pageToken);
 
         } catch(e: unknown) {
-           logsErro.push(`Missão [${idAtiv}]: ${(e as Error).message}`);
+           logsErro.push(`❌ Erro ao ler atividade [${idAtiv}]: ${(e as Error).message}`);
         }
       }
     }
@@ -302,12 +371,15 @@ export async function POST(req: Request) {
     let mensagemFinal = "";
     if (entregasNovas > 0) {
         mensagemFinal = `Sincronização Perfeita! ${entregasNovas} nova(s) entrega(s) validadas e pontuadas pelo AVA.`;
+        // Limpar caches para forçar a tela do ranking a atualizar imediatamente
+        invalidateRankingCache();
+        clearAllPortalCaches();
     } else {
         mensagemFinal = `Sincronização concluída. Nenhuma nova nota importada do AVA.`;
     }
 
     if (logsErro.length > 0) {
-        mensagemFinal += `\n\n⚠️ Erros ignorados da API:\n` + logsErro.slice(0, 3).join("\n");
+        mensagemFinal += `\n\n📋 Relatório de Validação e Ignorados:\n` + logsErro.join("\n");
     }
 
     return NextResponse.json({ status: "sucesso", mensagem: mensagemFinal });

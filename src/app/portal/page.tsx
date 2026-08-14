@@ -109,6 +109,7 @@ export default function PortalDashboard() {
     "Pendentes" | "Atrasadas" | "Concluidas"
   >("Pendentes");
   const [buscaAtividade, setBuscaAtividade] = useState("");
+  const [ordemAulasPortal, setOrdemAulasPortal] = useState<"asc" | "desc">("asc");
 
   const [fazendoCheckin, setFazendoCheckin] = useState(false);
   const [checkinRealizado, setCheckinRealizado] = useState(false);
@@ -1120,13 +1121,22 @@ export default function PortalDashboard() {
             >
               🚨 Atrasadas ({qtdAtrasadas})
             </button>
-            <button
-              onClick={() => setAbaAtividade("Concluidas")}
-              className={`cursor-pointer whitespace-nowrap px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold transition-all border ${abaAtividade === "Concluidas" ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-500/40 shadow-lg shadow-emerald-500/10 scale-102" : "bg-slate-100 dark:bg-slate-950/30 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/5 hover:bg-slate-200 dark:hover:bg-slate-900/40 hover:text-slate-800 dark:hover:text-white"}`}
-            >
-              ✅ Concluídas ({qtdConcluidas})
-            </button>
-          </div>
+                          <button
+                onClick={() => setAbaAtividade("Concluidas")}
+                className={`cursor-pointer whitespace-nowrap px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold transition-all border ${abaAtividade === "Concluidas" ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-500/40 shadow-lg shadow-emerald-500/10 scale-102" : "bg-slate-100 dark:bg-slate-950/30 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/5 hover:bg-slate-200 dark:hover:bg-slate-900/40 hover:text-slate-800 dark:hover:text-white"}`}
+              >
+                ✅ Concluídas ({qtdConcluidas})
+              </button>
+
+              <div className="flex-1" />
+
+              <button
+                onClick={() => setOrdemAulasPortal(prev => prev === "asc" ? "desc" : "asc")}
+                className="cursor-pointer whitespace-nowrap px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold transition-all border bg-indigo-500/10 text-indigo-500 dark:text-indigo-400 border-indigo-500/30 hover:bg-indigo-500/20"
+              >
+                {ordemAulasPortal === "asc" ? "⬇️ Aulas Crescentes" : "⬆️ Aulas Decrescentes"}
+              </button>
+            </div>
 
           {atividadesFiltradas.length === 0 ? (
             <div className="bg-slate-100 dark:bg-slate-950/40 p-12 rounded-2xl border border-slate-200 dark:border-white/5 text-center text-slate-500 dark:text-slate-400 shadow-inner flex flex-col items-center animate-in fade-in">
@@ -1378,7 +1388,9 @@ export default function PortalDashboard() {
                         .sort(([aulaA], [aulaB]) => {
                           if (aulaA === "Outras Atividades") return 1;
                           if (aulaB === "Outras Atividades") return -1;
-                          return aulaA.localeCompare(aulaB);
+                          return ordemAulasPortal === "asc"
+                            ? aulaA.localeCompare(aulaB, undefined, { numeric: true, sensitivity: 'base' })
+                            : aulaB.localeCompare(aulaA, undefined, { numeric: true, sensitivity: 'base' });
                         })
                         .map(([nomeAula, missoesDaAula]) => {
                           const isAulaFechada = aulasFechadas[nomeAula] || false;

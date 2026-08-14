@@ -18,6 +18,8 @@ const SCOPES = [
   'https://www.googleapis.com/auth/classroom.courses.readonly',
   'https://www.googleapis.com/auth/classroom.coursework.students', // Para criar/editar atividades
   'https://www.googleapis.com/auth/classroom.announcements',       // Para criar avisos
+  'https://www.googleapis.com/auth/classroom.profile.emails',      // Para buscar e-mails dos perfis
+  'https://www.googleapis.com/auth/classroom.rosters.readonly',    // Para ler membros/alunos
 ];
 
 const url = oauth2Client.generateAuthUrl({
@@ -42,8 +44,16 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-rl.question('\nCole o "code" aqui: ', async (code) => {
+rl.question('\nCole o "code" ou a URL inteira aqui: ', async (inputCode) => {
   try {
+    let code = inputCode.trim();
+    // Se o usuário colou a URL inteira ou algo com "code="
+    if (code.includes('code=')) {
+      const match = code.match(/code=([^&]+)/);
+      if (match) {
+        code = match[1];
+      }
+    }
     const { tokens } = await oauth2Client.getToken(decodeURIComponent(code));
     console.log('\n✅ AUTORIZAÇÃO BEM SUCEDIDA!\n');
     console.log('Abra o seu arquivo .env.local e adicione este REFRESH_TOKEN:');

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -12,6 +11,11 @@ interface FechamentoCicloModalProps {
   isOpen: boolean;
   onClose: () => void;
   turmasDisponiveis: string[];
+}
+
+interface AlunoTop10 extends AlunoRankingTutor {
+  posicao: number;
+  xpBonus: number;
 }
 
 const REGRAS_XP = {
@@ -32,7 +36,8 @@ export default function FechamentoCicloModal({
 
   const [carregando, setCarregando] = useState(false);
   const [processandoXP, setProcessandoXP] = useState(false);
-  const [top10, setTop10] = useState<any[]>([]);
+  const [gerandoIA, setGerandoIA] = useState(false);
+  const [top10, setTop10] = useState<AlunoTop10[]>([]);
   const [mensagemWhatsApp, setMensagemWhatsApp] = useState("");
 
   useEffect(() => {
@@ -56,9 +61,9 @@ export default function FechamentoCicloModal({
         const rankingTurma = data.ranking.filter(
           (a: AlunoRankingTutor) => a.turma === turma,
         );
-        const dezPrimeiros = rankingTurma
+        const dezPrimeiros: AlunoTop10[] = rankingTurma
           .slice(0, 10)
-          .map((aluno: any, index: number) => {
+          .map((aluno: AlunoRankingTutor, index: number) => {
             const posicao = index + 1;
             let xpBonus = 0;
 
@@ -82,7 +87,7 @@ export default function FechamentoCicloModal({
     }
   };
 
-  const gerarTextoWhatsApp = (lista: any[]) => {
+  const gerarTextoWhatsApp = (lista: AlunoTop10[]) => {
     const tituloTipo = tipo === "mensal" ? "MENSAL" : "SEMANAL";
     const palavraTempo = tipo === "mensal" ? "do mês" : "da semana";
     const getAvatar = (a?: string) => (a && a !== "avatar-padrao" ? a : "👨‍💻");
@@ -122,6 +127,23 @@ export default function FechamentoCicloModal({
     text += `Descansem, comemorem seus resultados e bora com tudo para o próximo ciclo! 💪💻🔥`;
 
     setMensagemWhatsApp(text);
+  };
+
+  const gerarTextoComIA = async () => {
+    setGerandoIA(true);
+    try {
+      const data = await apiTutor.gerarMensagemIA(top10, turma, tipo);
+      if (data.status === "sucesso") {
+        setMensagemWhatsApp(data.mensagem);
+        toast("A IA reescreveu a mensagem com sucesso!", "success", "Mensagem Gerada ✨");
+      } else {
+        toast(data.mensagem || "Erro ao gerar com IA.", "error", "Falha na IA");
+      }
+    } catch {
+      toast("Erro de conexão ao gerar com IA.", "error", "Falha na Rede");
+    } finally {
+      setGerandoIA(false);
+    }
   };
 
   const aplicarPremicoesEFinalizar = async () => {
@@ -425,14 +447,32 @@ export default function FechamentoCicloModal({
                         <h3 className="font-display font-black text-emerald-600 dark:text-emerald-500 uppercase tracking-wider text-xs flex items-center gap-2">
                           <span>💬</span> Mensagem do WhatsApp
                         </h3>
-                        <motion.button
-                          whileHover={{ scale: 1.02 }}
-                          whileTap={{ scale: 0.98 }}
-                          onClick={copiarTexto}
-                          className="cursor-pointer bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-xl transition-all shadow-sm"
-                        >
-                          Copiar Texto
-                        </motion.button>
+                        <div className="flex gap-2">
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={gerarTextoComIA}
+                            disabled={gerandoIA || top10.length === 0}
+                            className="cursor-pointer bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-xl transition-all shadow-md disabled:opacity-50 flex items-center gap-1.5"
+                          >
+                            {gerandoIA ? (
+                              <>
+                                <div className="w-3 h-3 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                                GERANDO...
+                              </>
+                            ) : (
+                              "✨ Reescrever com IA"
+                            )}
+                          </motion.button>
+                          <motion.button
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={copiarTexto}
+                            className="cursor-pointer bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-xl transition-all shadow-sm"
+                          >
+                            Copiar
+                          </motion.button>
+                        </div>
                       </div>
                       <textarea
                         readOnly

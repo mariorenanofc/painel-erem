@@ -1101,9 +1101,11 @@ export async function POST(request: Request) {
           await dbAdmin.runTransaction(async (transaction: Transaction) => {
             const alunoDoc = await transaction.get(alunoRef);
             if (alunoDoc.exists) {
-              const currentXp = Number(alunoDoc.data()?.xp) || 0;
+              const data = alunoDoc.data();
+              const currentXp = Number(data?.xpTotal) || Number(data?.xp) || 0;
               transaction.update(alunoRef, {
                 xp: currentXp + xp,
+                xpTotal: currentXp + xp,
                 lastUpdated: timestamp
               });
 

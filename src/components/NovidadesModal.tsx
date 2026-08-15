@@ -67,8 +67,8 @@ export default function NovidadesModal({ onClose, versao = "2.0.0", markdown = "
             {!markdown ? (
               <p className="text-center italic opacity-70">Nenhuma novidade registrada no momento.</p>
             ) : (
-              markdown.split(/(?=### )/g).map((parte, index) => {
-                if (!parte.startsWith("### ")) {
+              markdown.split(/(?=^### |^\*\*\*|^---)/gm).map((parte, index) => {
+                if (!parte.trim().startsWith("###")) {
                   return (
                     <div key={index} className="px-1 prose prose-slate dark:prose-invert prose-sm md:prose-base prose-a:text-pink-500 font-medium text-slate-600 dark:text-slate-300 text-center leading-relaxed mb-4 max-w-none">
                       <ReactMarkdown>{parte}</ReactMarkdown>

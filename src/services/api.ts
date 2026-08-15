@@ -19,7 +19,7 @@ async function fetchApi(payload: Record<string, unknown>) {
     });
 
     clearTimeout(timeoutId);
-    
+
     if (response.status === 403) {
       if (typeof window !== "undefined") {
         window.location.href = "/trilhatech";
@@ -32,10 +32,10 @@ async function fetchApi(payload: Record<string, unknown>) {
       return JSON.parse(text);
     } catch {
       if (text.includes("504") || text.includes("Time-out") || text.includes("Timeout")) {
-         return {
-           status: "erro",
-           mensagem: "Tempo limite excedido (Timeout). A ação pode ter sido concluída em segundo plano. Por favor, atualize ou sincronize para verificar."
-         };
+        return {
+          status: "erro",
+          mensagem: "Tempo limite excedido (Timeout). A ação pode ter sido concluída em segundo plano. Por favor, atualize ou sincronize para verificar."
+        };
       }
       throw new Error(`Erro inesperado do servidor. (Não é JSON valido)`);
     }

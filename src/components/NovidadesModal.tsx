@@ -64,13 +64,58 @@ export default function NovidadesModal({ onClose, versao = "2.0.0", markdown = "
 
           {/* Conteúdo rolável */}
           <div className="p-6 md:p-8 overflow-y-auto max-h-[55vh] custom-scrollbar bg-white/40 dark:bg-transparent space-y-5">
-            <div className="prose prose-slate dark:prose-invert prose-sm md:prose-base prose-headings:font-black prose-headings:text-indigo-600 dark:prose-headings:text-indigo-400 prose-a:text-pink-500 max-w-none">
-              {markdown ? (
-                <ReactMarkdown>{markdown}</ReactMarkdown>
-              ) : (
-                <p className="text-center italic opacity-70">Nenhuma novidade registrada no momento.</p>
-              )}
-            </div>
+            {!markdown ? (
+              <p className="text-center italic opacity-70">Nenhuma novidade registrada no momento.</p>
+            ) : (
+              markdown.split(/(?=### )/g).map((parte, index) => {
+                if (!parte.startsWith("### ")) {
+                  return (
+                    <div key={index} className="px-1 prose prose-slate dark:prose-invert prose-sm md:prose-base prose-a:text-pink-500 font-medium text-slate-600 dark:text-slate-300 text-center leading-relaxed mb-4 max-w-none">
+                      <ReactMarkdown>{parte}</ReactMarkdown>
+                    </div>
+                  );
+                }
+
+                // Definir estilos baseados no índice para variar o visual
+                let cardClass = "";
+                let headingClass = "";
+                let pClass = "";
+
+                if (index % 3 === 1) {
+                  cardClass = "bg-gradient-to-br from-indigo-500 to-purple-600 p-5 rounded-2xl shadow-md border border-indigo-400 relative overflow-hidden";
+                  headingClass = "font-display font-black text-white text-sm md:text-base flex items-center gap-2 mb-2 m-0";
+                  pClass = "text-xs md:text-sm text-indigo-50 leading-relaxed font-medium m-0";
+                } else if (index % 3 === 2) {
+                  cardClass = "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/15 dark:to-emerald-900/10 border border-emerald-250 dark:border-emerald-900/30 p-4.5 rounded-2xl shadow-sm";
+                  headingClass = "font-display font-black text-emerald-900 dark:text-emerald-400 text-sm md:text-base flex items-center gap-2 mb-1.5 m-0";
+                  pClass = "text-xs md:text-sm text-emerald-800 dark:text-emerald-350 leading-relaxed font-medium m-0";
+                } else {
+                  cardClass = "bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-800 p-4.5 rounded-2xl shadow-sm";
+                  headingClass = "font-display font-black text-slate-800 dark:text-slate-200 text-sm md:text-base flex items-center gap-2 mb-1.5 m-0";
+                  pClass = "text-xs md:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium m-0";
+                }
+
+                return (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.15 + index * 0.05 }}
+                    className={cardClass}
+                  >
+                    <ReactMarkdown
+                      components={{
+                        h3: ({ node, ...props }) => <h3 className={headingClass} {...props} />,
+                        p: ({ node, ...props }) => <p className={pClass} {...props} />,
+                        strong: ({ node, ...props }) => <strong className="font-bold opacity-100" {...props} />
+                      }}
+                    >
+                      {parte}
+                    </ReactMarkdown>
+                  </motion.div>
+                );
+              })
+            )}
           </div>
 
           {/* Rodapé fixo do Modal */}

@@ -141,7 +141,8 @@ export default function PortalDashboard() {
   const [rankingAberto, setRankingAberto] = useState(false);
   const [jogosAberto, setJogosAberto] = useState(false);
 
-  const VERSAO_ATUALIZACAO = "1.9.0";
+  const [versaoAtualizacao, setVersaoAtualizacao] = useState("1.9.0");
+  const [markdownAtualizacao, setMarkdownAtualizacao] = useState("");
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
   // ================= EFEITOS =================
@@ -198,10 +199,17 @@ export default function PortalDashboard() {
     const buscarConfiguracoes = async () => {
       try {
         const data = await apiGeral.buscarConfiguracoes();
-        if (data.status === "sucesso")
+        if (data.status === "sucesso") {
           setNomeProjeto(
             data.configuracoes.nomeProjeto || "Portal Educacional",
           );
+          if (data.configuracoes.VERSAO_NOVIDADES) {
+            setVersaoAtualizacao(String(data.configuracoes.VERSAO_NOVIDADES));
+          }
+          if (data.configuracoes.NOVIDADES_MARKDOWN) {
+            setMarkdownAtualizacao(String(data.configuracoes.NOVIDADES_MARKDOWN));
+          }
+        }
       } catch (e) {}
     };
     buscarConfiguracoes();
@@ -216,11 +224,11 @@ export default function PortalDashboard() {
       if (ultimoCheckin === dataHoje) setCheckinRealizado(true);
 
       const versaoLida = localStorage.getItem(`novidades_${aluno.matricula}`);
-      if (versaoLida !== VERSAO_ATUALIZACAO) {
+      if (versaoAtualizacao && versaoLida !== versaoAtualizacao) {
         setModalNovidadesAberto(true);
       }
     }
-  }, [montado, aluno, carregarPortal, router, dadosSalvos]);
+  }, [montado, aluno, carregarPortal, router, dadosSalvos, versaoAtualizacao]);
 
   useEffect(() => {
     if (novasConquistas.length > 0)
@@ -717,11 +725,13 @@ export default function PortalDashboard() {
       )}
       {modalNovidadesAberto && (
         <NovidadesModal
+          versao={versaoAtualizacao}
+          markdown={markdownAtualizacao}
           onClose={() => {
             if (aluno)
               localStorage.setItem(
                 `novidades_${aluno.matricula}`,
-                VERSAO_ATUALIZACAO,
+                versaoAtualizacao,
               );
             setModalNovidadesAberto(false);
           }}

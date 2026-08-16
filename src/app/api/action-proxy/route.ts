@@ -275,7 +275,7 @@ export async function POST(request: Request) {
           nome: data.nome || `Aluno ${doc.id}`,
           turma: data.turmaTrilha || data.turma || "",
           statusTrilha: data.statusTrilha || "Inativo",
-          xp: Number(data.xpTotal) || Number(data.xp) || 0,
+          xp: Number(data.xp) || 0,
           xpGasto: Number(data.xpGasto) || 0,
           senha: data.pinPix || data.senha || ""
         };
@@ -1102,10 +1102,9 @@ export async function POST(request: Request) {
             const alunoDoc = await transaction.get(alunoRef);
             if (alunoDoc.exists) {
               const data = alunoDoc.data();
-              const currentXp = Number(data?.xpTotal) || Number(data?.xp) || 0;
+              const currentXp = Number(data?.xp) || 0;
               transaction.update(alunoRef, {
                 xp: currentXp + xp,
-                xpTotal: currentXp + xp,
                 lastUpdated: timestamp
               });
 

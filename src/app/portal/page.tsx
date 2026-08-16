@@ -1391,7 +1391,7 @@ export default function PortalDashboard() {
                       {Object.entries(
                         trilhasDeEstudo[cursoSelecionado].missoesFiltradas.reduce(
                           (acc, ativ) => {
-                            const match = ativ.titulo.match(/^\[(Aula\s*\d+)\]/i);
+                            const match = ativ.titulo.match(/^(?:\[\s*)?(Aula\s*\d+)(?:\s*\]|\s*[-:]|\s|$)/i);
                             const aula = match ? match[1] : "Outras Atividades";
                             if (!acc[aula]) acc[aula] = [];
                             acc[aula].push(ativ);

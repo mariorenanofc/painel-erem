@@ -671,7 +671,8 @@ export async function POST(request: Request) {
 
         if (matriculaCorrente === mat) {
           meuXpTotal = (Number(a.xp) || 0) - (Number(a.xpGasto) || 0);
-          temSenhaPix = String(a.pinPix || a.senha || "").trim().length >= 4;
+          const pinPixSalvo = String(a.pinPix || a.senha || "").trim();
+          temSenhaPix = pinPixSalvo.length === 6 && /^\d+$/.test(pinPixSalvo);
         }
 
         if (matriculaCorrente !== mat && status === "ativo") {

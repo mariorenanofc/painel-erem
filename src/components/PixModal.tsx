@@ -29,7 +29,7 @@ export default function PixModal({
   const [confirmarNovaSenhaPix, setConfirmarNovaSenhaPix] = useState("");
 
   const [pixColega, setPixColega] = useState(alunoAlvoInicial || "");
-  const [pixQuantidade, setPixQuantidade] = useState<number | "">("");
+  const [pixQuantidade, setPixQuantidade] = useState<string>("");
   const [pixMotivo, setPixMotivo] = useState("🤝 Parceria de Equipe");
   const [pixSenha, setPixSenha] = useState("");
   const [enviandoPix, setEnviandoPix] = useState(false);
@@ -368,14 +368,15 @@ export default function PixModal({
                           <input
                             type="number"
                             min="1"
-                            max={Math.min(
-                              dadosPix.meuXpTotal,
-                              dadosPix.limiteDiario - dadosPix.xpDoadoHoje,
+                            max={Math.max(
+                              1,
+                              Math.min(
+                                dadosPix.meuXpTotal,
+                                dadosPix.limiteDiario - dadosPix.xpDoadoHoje,
+                              )
                             )}
                             value={pixQuantidade}
-                            onChange={(e) =>
-                              setPixQuantidade(Number(e.target.value))
-                            }
+                            onChange={(e) => setPixQuantidade(e.target.value)}
                             required
                             className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-emerald-700 dark:text-emerald-450 font-black rounded-2xl p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors font-mono placeholder-slate-400"
                             placeholder="10"

@@ -198,10 +198,10 @@ export default function FormularioMissaoModal({
                         onChange={(e) => {
                           if (e.target.value) {
                             const tipoEtiq = `${e.target.value} - `;
-                            const matchAula = titulo.match(/^(\[Aula \d+\]\s*)(.*)/);
+                            const matchAula = titulo.match(/^((?:\[\s*)?Aula\s*\d+(?:\s*\]|\s*[-:]|\s)?\s*)(.*)/i);
                             if (matchAula) {
                               setTitulo(
-                                `${matchAula[1]}${tipoEtiq}${matchAula[2].replace(/^(Desafio|Mini Projeto|Material de Apoio|Apresentação) - /, "")}`,
+                                `${matchAula[1].trim()} ${tipoEtiq}${matchAula[2].replace(/^(Desafio|Mini Projeto|Material de Apoio|Apresentação) - /, "")}`.trim(),
                               );
                             } else {
                               setTitulo(

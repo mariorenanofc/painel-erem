@@ -146,6 +146,7 @@ export default function JogosLayout({
   };
 
   const handleRestart = () => {
+    isSubmittingRef.current = false;
     tempoInicioRef.current = Date.now();
     setGameState("playing");
     setScore(0);

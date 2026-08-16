@@ -208,7 +208,7 @@ export default function ImportadorLoteModal({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.93, opacity: 0, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="glass-panel-heavy bg-white/95 dark:bg-slate-900/95 rounded-[2.5rem] shadow-[0_0_50px_rgba(59,130,246,0.15)] border border-slate-200/80 dark:border-white/5 w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh] relative z-10"
+            className={`glass-panel-heavy bg-white/95 dark:bg-slate-900/95 rounded-[2.5rem] shadow-[0_0_50px_rgba(59,130,246,0.15)] border border-slate-200/80 dark:border-white/5 w-full overflow-hidden flex flex-col relative z-10 transition-all duration-300 ${etapa === 2 ? 'max-w-[95vw] h-[95vh]' : 'max-w-4xl max-h-[90vh]'}`}
           >
             <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
 
@@ -303,74 +303,80 @@ export default function ImportadorLoteModal({
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -15 }}
                     transition={{ duration: 0.2 }}
-                    className="space-y-6"
+                    className="flex flex-col lg:flex-row gap-6 h-full"
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-2xl border border-slate-200 dark:border-slate-800">
-                      <div className="space-y-2 text-left">
-                        <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          Módulo da Matriz (Curso) *
-                        </label>
-                        <select
-                          value={modulo}
-                          onChange={(e) => setModulo(e.target.value)}
-                          className="cursor-pointer w-full p-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:border-blue-500 text-sm font-bold"
-                        >
-                          <option value="">Selecione o Módulo...</option>
-                          {modulosCadastrados.map((m) => (
-                            <option key={m} value={m}>{m}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div className="space-y-2 text-left">
-                        <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                          Turma Alvo no Portal *
-                        </label>
-                        <select
-                          value={turma}
-                          onChange={(e) => setTurma(e.target.value)}
-                          className="cursor-pointer w-full p-3 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:border-blue-500 text-sm font-bold"
-                        >
-                          <option value="Todas">Todas as Turmas (Padrão)</option>
-                          {turmasDisponiveis.map((t) => (
-                            <option key={t} value={t}>{t}</option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-
-                    <div className="bg-blue-500/5 dark:bg-blue-955/10 border border-blue-500/20 dark:border-blue-900/30 p-4.5 rounded-3xl flex justify-between items-center">
-                      <div>
-                        <h3 className="font-display font-black text-blue-900 dark:text-blue-400 text-sm uppercase tracking-wider">
-                          Revisão das Atividades
-                        </h3>
-                        <p className="text-xs text-blue-700 dark:text-blue-300 font-semibold mt-1">
-                          Encontramos {atividades.length} atividade(s) não mapeada(s) nesta turma.
-                        </p>
-                      </div>
-                      <div className="text-center bg-white/70 dark:bg-slate-950/60 px-5 py-2.5 rounded-2xl border border-blue-500/20 dark:border-blue-900/30 shadow-sm">
-                        <span className="text-blue-600 dark:text-blue-450 font-display font-black text-2xl font-mono">
-                          {atividades.filter((a) => a.selecionado).length}
-                        </span>
-                        <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">A Importar</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 max-h-[35vh] overflow-y-auto pr-2 custom-scrollbar">
-                      {atividades.length === 0 && (
-                        <div className="text-center py-10 text-slate-500 dark:text-slate-400 font-bold">
-                          🎉 Nenhuma atividade nova! Tudo já está mapeado para esta turma.
+                    {/* Left Sidebar */}
+                    <div className="w-full lg:w-[35%] xl:w-[30%] flex flex-col gap-6 shrink-0">
+                      <div className="flex flex-col gap-6 bg-slate-50 dark:bg-slate-900/50 p-5 rounded-3xl border border-slate-200 dark:border-slate-800">
+                        <div className="space-y-2 text-left">
+                          <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            Módulo da Matriz (Curso) *
+                          </label>
+                          <select
+                            value={modulo}
+                            onChange={(e) => setModulo(e.target.value)}
+                            className="cursor-pointer w-full p-4 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:border-blue-500 text-sm font-bold shadow-sm"
+                          >
+                            <option value="">Selecione o Módulo...</option>
+                            {modulosCadastrados.map((m) => (
+                              <option key={m} value={m}>{m}</option>
+                            ))}
+                          </select>
                         </div>
-                      )}
-                      
-                      {atividades.map((ativ) => (
-                        <div
-                          key={ativ.idTemp}
-                          className={`flex flex-col gap-3 p-4 rounded-2xl border transition-all duration-300 ${
-                            ativ.selecionado
-                              ? "bg-white dark:bg-slate-800 border-blue-400 dark:border-blue-650 shadow-md"
-                              : "bg-slate-50/40 dark:bg-slate-950/15 border-slate-200/50 dark:border-slate-800 opacity-60"
-                          }`}
-                        >
+                        <div className="space-y-2 text-left">
+                          <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                            Turma Alvo no Portal *
+                          </label>
+                          <select
+                            value={turma}
+                            onChange={(e) => setTurma(e.target.value)}
+                            className="cursor-pointer w-full p-4 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:border-blue-500 text-sm font-bold shadow-sm"
+                          >
+                            <option value="Todas">Todas as Turmas (Padrão)</option>
+                            {turmasDisponiveis.map((t) => (
+                              <option key={t} value={t}>{t}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="bg-blue-500/5 dark:bg-blue-955/10 border border-blue-500/20 dark:border-blue-900/30 p-5 rounded-3xl flex flex-col justify-between items-center text-center gap-4">
+                        <div>
+                          <h3 className="font-display font-black text-blue-900 dark:text-blue-400 text-sm uppercase tracking-wider">
+                            Revisão das Atividades
+                          </h3>
+                          <p className="text-xs text-blue-700 dark:text-blue-300 font-semibold mt-1">
+                            Encontramos {atividades.length} atividade(s) não mapeada(s) nesta turma.
+                          </p>
+                        </div>
+                        <div className="w-full text-center bg-white/70 dark:bg-slate-950/60 px-5 py-3.5 rounded-2xl border border-blue-500/20 dark:border-blue-900/30 shadow-sm">
+                          <span className="text-blue-600 dark:text-blue-450 font-display font-black text-4xl font-mono">
+                            {atividades.filter((a) => a.selecionado).length}
+                          </span>
+                          <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Atividades Selecionadas</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Content Area */}
+                    <div className="w-full lg:w-[65%] xl:w-[70%] flex flex-col min-h-[40vh] bg-white/50 dark:bg-slate-900/30 rounded-3xl border border-slate-200 dark:border-slate-800 p-2 overflow-hidden relative">
+                      <div className="absolute inset-x-0 top-0 h-4 bg-gradient-to-b from-slate-50 dark:from-slate-900 to-transparent z-10 pointer-events-none rounded-t-3xl" />
+                      <div className="overflow-y-auto custom-scrollbar p-2 h-full space-y-4">
+                        {atividades.length === 0 && (
+                          <div className="text-center py-10 text-slate-500 dark:text-slate-400 font-bold">
+                            🎉 Nenhuma atividade nova! Tudo já está mapeado para esta turma.
+                          </div>
+                        )}
+                        
+                        {atividades.map((ativ) => (
+                          <div
+                            key={ativ.idTemp}
+                            className={`flex flex-col gap-3 p-5 rounded-2xl border transition-all duration-300 ${
+                              ativ.selecionado
+                                ? "bg-white dark:bg-slate-800 border-blue-400 dark:border-blue-650 shadow-md"
+                                : "bg-slate-50/40 dark:bg-slate-950/15 border-slate-200/50 dark:border-slate-800 opacity-60"
+                            }`}
+                          >
                           <div className="flex items-start gap-4">
                             <input
                               type="checkbox"
@@ -467,7 +473,9 @@ export default function ImportadorLoteModal({
                             </div>
                           )}
                         </div>
-                      ))}
+                        ))}
+                      </div>
+                      <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-slate-50 dark:from-slate-900 to-transparent z-10 pointer-events-none rounded-b-3xl" />
                     </div>
                   </motion.div>
                 )}

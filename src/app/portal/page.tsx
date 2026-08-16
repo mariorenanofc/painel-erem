@@ -141,7 +141,7 @@ export default function PortalDashboard() {
   const [rankingAberto, setRankingAberto] = useState(false);
   const [jogosAberto, setJogosAberto] = useState(false);
 
-  const [versaoAtualizacao, setVersaoAtualizacao] = useState("1.9.0");
+  const [versaoAtualizacao, setVersaoAtualizacao] = useState("");
   const [markdownAtualizacao, setMarkdownAtualizacao] = useState("");
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
 
@@ -222,13 +222,18 @@ export default function PortalDashboard() {
       const dataHoje = new Date().toLocaleDateString("pt-BR");
       const ultimoCheckin = localStorage.getItem(`checkin_${aluno.matricula}`);
       if (ultimoCheckin === dataHoje) setCheckinRealizado(true);
+    }
+  }, [montado, aluno, carregarPortal, router, dadosSalvos]);
 
+  // Efeito exclusivo para a versão do modal (não mistura com o carregarPortal)
+  useEffect(() => {
+    if (montado && aluno && versaoAtualizacao) {
       const versaoLida = localStorage.getItem(`novidades_${aluno.matricula}`);
-      if (versaoAtualizacao && versaoLida !== versaoAtualizacao) {
+      if (versaoLida !== versaoAtualizacao) {
         setModalNovidadesAberto(true);
       }
     }
-  }, [montado, aluno, carregarPortal, router, dadosSalvos, versaoAtualizacao]);
+  }, [montado, aluno, versaoAtualizacao]);
 
   useEffect(() => {
     if (novasConquistas.length > 0)

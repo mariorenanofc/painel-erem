@@ -71,7 +71,7 @@ export default function MissoesList({
       const modulo =
         ativ.modulo && ativ.modulo.trim() !== "" ? ativ.modulo : "Módulo Geral";
 
-      const match = ativ.titulo.match(/^\[(Aula\s*\d+)\]/i);
+      const match = ativ.titulo.match(/^(?:\[\s*)?(Aula\s*\d+)(?:\s*\]|\s*[-:]|\s|$)/i);
       const aula = match ? match[1] : "Outras Atividades";
 
       if (!arvore[modulo]) arvore[modulo] = {};

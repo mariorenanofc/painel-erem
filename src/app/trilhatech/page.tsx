@@ -9,9 +9,7 @@ import { useState, useMemo, useEffect } from "react";
 import useSWR from "swr";
 import { Aluno } from "@/src/types";
 import { motion } from "framer-motion";
-
-// --- O "Buscador" que o SWR vai usar para ler a API ---
-const fetcher = (url: string) => fetch(url).then((res) => res.json());
+import { apiTutor } from "@/src/services/api";
 
 export default function TrilhaTechPage() {
   const [nomeUsuario, setNomeUsuario] = useState("");
@@ -44,15 +42,15 @@ export default function TrilhaTechPage() {
   const [filtroStatus, setFiltroStatus] = useState("");
   const [mostrarComObs, setMostrarComObs] = useState(false);
 
-  const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
-
-  // 🚀 SWR para leitura da API
+  // 🚀 SWR com economia agressiva (Cache 24 horas no frontend)
   const {
     data: dadosBrutos,
     isLoading: carregando,
     mutate,
-  } = useSWR(GOOGLE_API_URL, fetcher, {
-    revalidateOnFocus: true,
+  } = useSWR("buscar_alunos_admin", () => apiTutor.buscarAlunosAdmin(), {
+    revalidateOnFocus: false,
+    revalidateIfStale: false,
+    dedupingInterval: 86400000, // 24 horas
   });
 
   // Filtra a base geral para pegar apenas os alunos do Projeto

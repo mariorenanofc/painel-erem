@@ -234,3 +234,24 @@ export async function refreshFirestoreCacheAtividades(dbAdmin: Firestore) {
     console.error("[Firestore Cache] Erro ao atualizar cache de atividades:", err);
   }
 }
+
+// Cache para o painel administrativo (TrilhaTech e GodMode)
+let adminAlunosCache: { data: unknown; timestamp: number } | null = null;
+
+export function getCachedAdminAlunos(): unknown | null {
+  if (adminAlunosCache && Date.now() - adminAlunosCache.timestamp < 86400000) { // 24 horas
+    return adminAlunosCache.data;
+  }
+  return null;
+}
+
+export function setCachedAdminAlunos(data: unknown) {
+  adminAlunosCache = {
+    data,
+    timestamp: Date.now()
+  };
+}
+
+export function invalidateAdminAlunosCache() {
+  adminAlunosCache = null;
+}

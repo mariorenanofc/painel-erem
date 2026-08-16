@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbAdmin, registrarLogSeguranca } from "@/src/lib/firebaseAdmin";
 import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
-import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades } from "@/src/lib/cache";
+import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades, getCachedAdminAlunos, setCachedAdminAlunos, invalidateAdminAlunosCache } from "@/src/lib/cache";
 import { Transaction, FieldValue, FieldPath, QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { cookies } from "next/headers";
 
@@ -267,27 +267,33 @@ export async function POST(request: Request) {
 
     } else if (requestAction === "buscar_alunos_admin") {
       // Retorna os dados completos dos alunos para o painel de gerenciamento
-      const snapshot = await dbAdmin.collection("alunos").get();
-      const alunos = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          matricula: doc.id,
-          nome: data.nome || `Aluno ${doc.id}`,
-          turma: data.turmaTrilha || data.turma || "",
-          statusTrilha: data.statusTrilha || "Inativo",
-          xp: Number(data.xp) || 0,
-          xpGasto: Number(data.xpGasto) || 0,
-          senha: data.pinPix || data.senha || ""
-        };
-      });
-      
-      alunos.sort((a, b) => {
-        if (a.turma < b.turma) return -1;
-        if (a.turma > b.turma) return 1;
-        return a.nome.localeCompare(b.nome);
-      });
-      
-      result = { status: "sucesso", alunos };
+      const cachedAdmin = getCachedAdminAlunos();
+      if (cachedAdmin) {
+        result = { status: "sucesso", alunos: cachedAdmin };
+      } else {
+        const snapshot = await dbAdmin.collection("alunos").get();
+        const alunos = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            matricula: doc.id,
+            nome: data.nome || `Aluno ${doc.id}`,
+            turma: data.turmaTrilha || data.turma || "",
+            statusTrilha: data.statusTrilha || "Inativo",
+            xp: Number(data.xp) || 0,
+            xpGasto: Number(data.xpGasto) || 0,
+            senha: data.pinPix || data.senha || ""
+          };
+        });
+        
+        alunos.sort((a, b) => {
+          if (a.turma < b.turma) return -1;
+          if (a.turma > b.turma) return 1;
+          return a.nome.localeCompare(b.nome);
+        });
+        
+        setCachedAdminAlunos(alunos);
+        result = { status: "sucesso", alunos };
+      }
     } else if (requestAction === "atualizar_senha_aluno") {
       const mat = String(payload.matricula).trim();
       const novaSenha = payload.novaSenha !== undefined ? String(payload.novaSenha).trim() : "";
@@ -941,6 +947,8 @@ export async function POST(request: Request) {
     ];
 
     if (result.status === "sucesso" && ACTIONS_TO_SYNC.includes(String(payload.action))) {
+      invalidateAdminAlunosCache(); // Limpa o cache das tabelas administrativas do Painel
+      
       let idAtiv = (result.idAtividade || payload.idAtividadeEdit || payload.id) as string | undefined;
       if (!idAtiv && result.mensagem) {
         const match = String(result.mensagem).match(/ATIV-\d+/);

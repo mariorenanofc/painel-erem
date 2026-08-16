@@ -117,16 +117,7 @@ export default function TrilhaTechPage() {
       return;
     setAtualizandoMatricula(matricula);
     try {
-      const res = await fetch(GOOGLE_API_URL, {
-        method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
-        body: JSON.stringify({
-          action: "mudar_status_trilhatech",
-          matricula,
-          novoStatus,
-        }),
-      });
-      const resposta = await res.json();
+      const resposta = await apiTutor.mudarStatusTrilhaTech(matricula, novoStatus);
       if (resposta.status === "sucesso") {
         alert("✅ " + resposta.mensagem);
         mutate();

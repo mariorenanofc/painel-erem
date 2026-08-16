@@ -670,8 +670,8 @@ export async function POST(request: Request) {
         const status = String(a.statusTrilha || "").trim().toLowerCase();
 
         if (matriculaCorrente === mat) {
-          meuXpTotal = Number(a.xpRanking) || 0;
-          temSenhaPix = String(a.senhaPix || "").trim().length >= 4;
+          meuXpTotal = (Number(a.xp) || 0) - (Number(a.xpGasto) || 0);
+          temSenhaPix = String(a.pinPix || a.senha || "").trim().length >= 4;
         }
 
         if (matriculaCorrente !== mat && status === "ativo") {
@@ -729,7 +729,7 @@ export async function POST(request: Request) {
       const alunoRef = dbAdmin.collection("alunos").doc(mat);
       const docSnap = await alunoRef.get();
       if (docSnap.exists) {
-        await alunoRef.update({ senhaPix: senha });
+        await alunoRef.update({ pinPix: senha });
         result = { status: "sucesso" };
       } else {
         result = { status: "erro", mensagem: "Aluno não encontrado." };
@@ -768,8 +768,8 @@ export async function POST(request: Request) {
           const statusOrigem = String(oData.statusTrilha || "").trim().toLowerCase();
           const statusDestino = String(dData.statusTrilha || "").trim().toLowerCase();
           const bloqueioPixOrigem = String(oData.bloqueioPix || "").trim().toLowerCase();
-          const senhaReal = String(oData.senhaPix || "").trim();
-          const xpOrigem = Number(oData.xpRanking) || 0;
+          const senhaReal = String(oData.pinPix || oData.senha || "").trim();
+          const xpOrigem = (Number(oData.xp) || 0) - (Number(oData.xpGasto) || 0);
 
           if (statusOrigem !== "ativo") result = { status: "erro", mensagem: "Apenas alunos ativos podem enviar Pix de XP." };
           else if (statusDestino !== "ativo") result = { status: "erro", mensagem: "Apenas alunos ativos podem receber Pix de XP." };

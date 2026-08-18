@@ -280,6 +280,7 @@ export default function CodingPractice({
   const [codigoCopiado, setCodigoCopiado] = useState(false);
   const [editorAberto, setEditorAberto] = useState(false);
   const [classroomAberto, setClassroomAberto] = useState(false);
+  const [fixedXP, setFixedXP] = useState<number | null>(null);
 
   // Monitor de Altura da Janela para Layouts Responsivos Integrados
   const [windowHeight, setWindowHeight] = useState(800);
@@ -334,6 +335,18 @@ export default function CodingPractice({
 
   // Efeito para checar progresso salvo no localStorage no mount
   useEffect(() => {
+    // 1. Checa se o aluno JÁ termino na nuvem
+    const statusBD = missaoAberta.status?.toLowerCase().trim() || "";
+    if (statusBD === "aguardando validação" || statusBD === "aguardando validacao") {
+      setCompleted(true);
+      setIniciado(true);
+      setCurrentIndex(targetCode.length);
+      if (missaoAberta.xpGanho !== undefined) {
+        setFixedXP(Number(missaoAberta.xpGanho));
+      }
+      return; // Já terminou, ignora localStorage
+    }
+
     const saveKey = `coding_practice_${missaoAberta.id}`;
     const saved = localStorage.getItem(saveKey);
     if (saved) {
@@ -349,7 +362,7 @@ export default function CodingPractice({
         console.error(e);
       }
     }
-  }, [missaoAberta.id, targetCode.length]);
+  }, [missaoAberta, targetCode.length]);
 
   // Efeito para salvar progresso dinamicamente
   useEffect(() => {
@@ -432,7 +445,8 @@ export default function CodingPractice({
   const xpDescontoErros = errorsCount;
   const xpDescontoTempo = extraMinutes * 5;
   const floorXP = Math.ceil(maxXP * 0.1); // Piso mínimo de 10%
-  const currentXP = Math.max(floorXP, maxXP - xpDescontoErros - xpDescontoTempo);
+  const calculatedXP = Math.max(floorXP, maxXP - xpDescontoErros - xpDescontoTempo);
+  const currentXP = fixedXP !== null ? fixedXP : calculatedXP;
 
   // ⚡ AUTO-SAVE DE FUNDO PARA EVITAR ABANDONO SEM XP
   const hasAutoSaved = useRef(false);
@@ -894,17 +908,44 @@ export default function CodingPractice({
                 </button>
                 <button
                   onClick={() => {
-                    const saveKey = `coding_practice_${missaoAberta.id}`;
-                    localStorage.removeItem(saveKey);
-                    setCurrentIndex(0);
-                    setErrorsCount(0);
-                    setSecondsRemaining(timeLimitMinutes * 60);
-                    setExtraSecondsUsed(0);
-                    setIniciado(true);
+                    const confirmou = window.confirm(
+                      "⚠️ ATENÇÃO: Ao recomeçar a atividade, os erros cometidos até agora NÃO serão apagados. Eles continuarão acumulados na sua pontuação final. Deseja mesmo reiniciar do começo?"
+                    );
+                    if (confirmou) {
+                      const saveKey = `coding_practice_${missaoAberta.id}`;
+                      const saved = localStorage.getItem(saveKey);
+                      let accumulatedErrors = 0;
+                      if (saved) {
+                        try {
+                          const parsed = JSON.parse(saved);
+                          if (parsed.errorsCount !== undefined) {
+                            accumulatedErrors = parsed.errorsCount;
+                          }
+                        } catch (e) { }
+                      }
+
+                      localStorage.setItem(
+                        saveKey,
+                        JSON.stringify({
+                          currentIndex: 0,
+                          errorsCount: accumulatedErrors,
+                          secondsRemaining: timeLimitMinutes * 60,
+                          extraSecondsUsed: 0,
+                          iniciado: true,
+                          codeLength: targetCode.length,
+                        })
+                      );
+
+                      setCurrentIndex(0);
+                      setErrorsCount(accumulatedErrors);
+                      setSecondsRemaining(timeLimitMinutes * 60);
+                      setExtraSecondsUsed(0);
+                      setIniciado(true);
+                    }
                   }}
                   className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase tracking-widest py-3 rounded-xl transition-all cursor-pointer border-none"
                 >
-                  Recomeçar do zero
+                  Recomeçar (Mantendo Erros)
                 </button>
               </>
             ) : (

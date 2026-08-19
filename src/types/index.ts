@@ -207,6 +207,7 @@ export interface BilheteRifa {
   turma: string;
   timestamp: number;
   status: "ATIVO" | "SORTEADO_GANHADOR";
+  nomeAluno?: string;
 }
 
 export interface Transacao {
@@ -220,6 +221,10 @@ export interface Transacao {
   dataEnvio: number | string;
   feedback?: string;
   resposta?: string;
+  timestamp?: number;
+  nomeAluno?: string;
+  idAtividade?: string;
+  respostaFormatada?: string;
 }
 
 export interface ModuloConfig {
@@ -269,7 +274,7 @@ export interface RegistroDiario {
   matricula: string;
   nome: string;
   frequencia: Record<
-    number,
+    string,
     { status: string; justificativa?: string; idFalta?: string }
   >;
 }

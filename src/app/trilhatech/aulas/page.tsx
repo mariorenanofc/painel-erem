@@ -1506,7 +1506,7 @@ export default function GestaoAulasPage() {
                       </thead>
                       <tbody className="divide-y divide-slate-100 dark:divide-slate-800/60 text-slate-700 dark:text-slate-300 transition-colors">
                         {transacoes.map((t) => {
-                          const dataFormatada = new Date(t.timestamp).toLocaleString("pt-BR", {
+                          const dataFormatada = new Date(t.timestamp || 0).toLocaleString("pt-BR", {
                             day: "2-digit",
                             month: "2-digit",
                             year: "numeric",

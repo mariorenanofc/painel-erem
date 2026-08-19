@@ -37,14 +37,15 @@ export default function PerfilPublicoModal({
   }, [matriculaAlvo, matriculaVisualizador]);
 
   const handleCurtir = async () => {
-    if (curtindo || perfil.jaCurtiuHoje) return;
+    if (curtindo || !perfil || perfil.jaCurtiuHoje) return;
     setCurtindo(true);
 
-    setPerfil({
-      ...perfil,
-      totalCurtidas: perfil.totalCurtidas + 1,
+    setPerfil(prev => prev ? {
+      ...prev,
+      matricula: prev.matricula || "",
+      totalCurtidas: prev.totalCurtidas + 1,
       jaCurtiuHoje: true,
-    });
+    } : null);
 
     confetti({
       particleCount: 50,

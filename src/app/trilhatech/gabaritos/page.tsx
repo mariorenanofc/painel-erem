@@ -46,7 +46,7 @@ export default function GestaoGabaritosLotePage() {
         if (data.status === "sucesso") {
           setAtividades(data.atividades);
 
-          const estadoInicial: Record<string, Partial<Atividade>> = {};
+          const estadoInicial: Record<string, { gabarito: string; linkClassroom: string; gabaritoLiberado: boolean }> = {};
           data.atividades.forEach((ativ: Atividade) => {
             estadoInicial[ativ.id] = {
               gabarito: ativ.gabarito || "",

@@ -29,11 +29,11 @@ export async function POST(req: Request) {
     // Para evitar que busque todo o histórico de anos, podemos limitar
     // Mas vamos buscar todos os ativos dessa turma
     do {
-      const cwRes: unknown = await classroom.courses.courseWork.list({
+      const cwRes = await classroom.courses.courseWork.list({
         courseId: courseId,
         courseWorkStates: ["PUBLISHED"],
         pageToken: pageToken
-      });
+      }) as { data: { courseWork: Array<{ alternateLink?: string, id: string, title: string, description?: string, maxPoints?: number, dueDate?: { day: number, month: number, year: number }, creationTime: string }>, nextPageToken?: string } };
       
       const courseWorks = cwRes.data.courseWork || [];
       

@@ -91,7 +91,7 @@ export async function GET(request: Request) {
     const diasSet = new Set<string>();
 
     // 1ª Passagem: Buscar todos os registros e armazenar em memória
-    const todosRegistros: Record<string, unknown>[] = [];
+    const todosRegistros: Array<{ matricula: string, dataFormatada: string, id?: string, status?: string, xpGanho?: number, justificativa?: string, hora?: string, timestamp?: number }> = [];
     for (let i = 0; i < matriculasAtivas.length; i += 30) {
       const chunk = matriculasAtivas.slice(i, i + 30);
       if (chunk.length === 0) continue;
@@ -107,8 +107,16 @@ export async function GET(request: Request) {
           dataFormatada = dataFormatada.slice(0, 10);
         }
         if (dataFormatada) {
-          f.dataFormatada = dataFormatada;
-          todosRegistros.push(f);
+          todosRegistros.push({
+            matricula: f.matricula,
+            dataFormatada: dataFormatada,
+            id: idFreq,
+            status: f.status,
+            xpGanho: f.xpGanho,
+            justificativa: f.justificativa,
+            hora: f.hora,
+            timestamp: f.timestamp
+          });
           diasSet.add(dataFormatada);
         }
       });
@@ -141,7 +149,7 @@ export async function GET(request: Request) {
       if (dataFormatada === dataHojeStr) {
          if (isPresenteOuJustificada && !idFreq.startsWith("FALTA-") && st !== "justificada" && st !== "j") {
            alunosMap[mat].presenteHoje = true;
-           alunosMap[mat].horaHoje = String(f.hora || f.timestamp ? new Date(f.timestamp).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "Marcar");
+           alunosMap[mat].horaHoje = String(f.hora || f.timestamp ? new Date(f.timestamp || 0).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "Marcar");
          }
       }
     });

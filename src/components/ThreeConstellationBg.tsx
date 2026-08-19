@@ -36,8 +36,8 @@ export default function ThreeConstellationBg() {
     container.appendChild(renderer.domElement);
 
     // Setup color configurations
-    const isDark = document.documentElement.classList.contains("dark");
-    const baseHex = isDark ? 0x818cf8 : 0x6366f1; // Indigo colors
+    let isDark = document.documentElement.classList.contains("dark");
+    let baseHex = isDark ? 0x818cf8 : 0x6366f1; // Indigo colors
     const baseColor = isDark ? new THREE.Color(0x38bdf8) : new THREE.Color(0x0284c7);
 
     // Nodes definition

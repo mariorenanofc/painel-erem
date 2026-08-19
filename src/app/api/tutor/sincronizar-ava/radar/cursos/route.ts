@@ -28,6 +28,6 @@ export async function GET(req: Request) {
     return NextResponse.json({ status: "sucesso", cursos: cursosFormatados });
   } catch (error: unknown) {
     console.error("Erro ao buscar cursos do Classroom:", error);
-    return NextResponse.json({ status: "erro", mensagem: error.message }, { status: 500 });
+    return NextResponse.json({ status: "erro", mensagem: (error as Error).message }, { status: 500 });
   }
 }

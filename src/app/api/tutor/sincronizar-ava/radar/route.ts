@@ -95,6 +95,6 @@ export async function POST(req: Request) {
     return NextResponse.json({ status: "sucesso", atividades: novasAtividades });
   } catch (error: unknown) {
     console.error("Erro Radar Classroom (Curso Especifico):", error);
-    return NextResponse.json({ status: "erro", mensagem: error.message }, { status: 500 });
+    return NextResponse.json({ status: "erro", mensagem: (error as Error).message }, { status: 500 });
   }
 }

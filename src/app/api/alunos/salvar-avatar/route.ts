@@ -31,7 +31,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ status: "sucesso", mensagem: "Avatar atualizado!" });
   } catch (error: unknown) {
-    console.warn("[Failover] Erro ao salvar avatar no Firestore:", error.message);
+    console.warn("[Failover] Erro ao salvar avatar no Firestore:", (error as Error).message);
     if (GOOGLE_API_URL) {
       try {
         const response = await fetch(GOOGLE_API_URL, {
@@ -42,6 +42,6 @@ export async function POST(request: Request) {
         return NextResponse.json(await response.json());
       } catch (sheetsErr) {}
     }
-    return NextResponse.json({ status: "erro", mensagem: "Erro ao salvar avatar: " + error.message }, { status: 500 });
+    return NextResponse.json({ status: "erro", mensagem: "Erro ao salvar avatar: " + (error as Error).message }, { status: 500 });
   }
 }

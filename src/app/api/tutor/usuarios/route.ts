@@ -7,7 +7,7 @@ export async function GET() {
     const usuarios = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     return NextResponse.json({ status: "sucesso", usuarios });
   } catch (error: unknown) {
-    return NextResponse.json({ status: "erro", mensagem: error.message }, { status: 500 });
+    return NextResponse.json({ status: "erro", mensagem: (error as Error).message }, { status: 500 });
   }
 }
 
@@ -33,6 +33,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ status: "erro", mensagem: "Ação inválida." }, { status: 400 });
   } catch (error: unknown) {
-    return NextResponse.json({ status: "erro", mensagem: error.message }, { status: 500 });
+    return NextResponse.json({ status: "erro", mensagem: (error as Error).message }, { status: 500 });
   }
 }

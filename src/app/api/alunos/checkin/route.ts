@@ -122,7 +122,7 @@ export async function POST(request: Request) {
     let presencasAluno = 1; // +1 porque ele está fazendo check-in hoje
     const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "==", matricula).get();
     
-    const freqMap: Record<string, unknown> = {};
+    const freqMap: Record<string, { status?: string; xpGanho?: number; justificativa?: string }> = {};
     freqSnap.forEach((doc: QueryDocumentSnapshot) => {
       const f = doc.data();
       const idFreq = String(f.id || doc.id).trim();
@@ -133,7 +133,11 @@ export async function POST(request: Request) {
         dataFormatada = dataFormatada.slice(0, 10);
       }
       if (dataFormatada) {
-        freqMap[dataFormatada] = f;
+        freqMap[dataFormatada] = {
+          status: f.status,
+          xpGanho: f.xpGanho,
+          justificativa: f.justificativa
+        };
       }
     });
 

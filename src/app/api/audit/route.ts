@@ -46,6 +46,6 @@ export async function GET() {
 
     return NextResponse.json({ status: 'sucesso', report });
   } catch (error: unknown) {
-    return NextResponse.json({ status: 'erro', message: error.message }, { status: 500 });
+    return NextResponse.json({ status: 'erro', message: (error as Error).message }, { status: 500 });
   }
 }

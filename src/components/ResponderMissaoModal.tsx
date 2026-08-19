@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -152,7 +151,7 @@ export default function ResponderMissaoModal({
     (statusAtual !== "pendente" && statusAtual !== "devolvida") ||
     bloqueioClassroom;
 
-  const rawDataEnvio = (missaoAberta as any).dataEnvio;
+  const rawDataEnvio = missaoAberta.dataEnvio;
   const dataFormatada = rawDataEnvio
     ? new Date(rawDataEnvio)
         .toLocaleString("pt-BR", {

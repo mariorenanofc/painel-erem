@@ -1,4 +1,4 @@
-import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
+import { invalidatePortalCache,  } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
 import { QueryDocumentSnapshot, Transaction } from "firebase-admin/firestore";
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
@@ -227,7 +227,7 @@ export async function POST(request: Request) {
 
     invalidatePortalCache(matriculaOrigem);
     invalidatePortalCache(matriculaDestino);
-    invalidateRankingCache();
+
     return NextResponse.json({ status: "sucesso", mensagem: `Pix realizado com sucesso! Enviados ${quantidade} XP.` });
 
   } catch (error: unknown) {

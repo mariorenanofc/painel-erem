@@ -8,9 +8,6 @@ Este documento apresenta uma análise profunda de toda a estrutura do projeto, d
 
 Durante as sessões de desenvolvimento, identificamos problemas críticos que precisam ser endereçados imediatamente antes de adicionar novas funcionalidades:
 
-> [!WARNING]
-> **Explosão de Leituras no Firestore (10k+ Reads)**
-> O sistema está realizando um número excessivo de leituras (reads) no banco de dados na coleção `entregas` ou `atividades` durante o carregamento dos painéis. Isso ocorre provavelmente devido a loops (ex: `.map` ou `for`) executando queries individuais em vez de utilizar buscas em lote (batch queries / `where in`) ou por falta de paginação/caching na carga inicial.
 
 > [!IMPORTANT]
 > **Validação do TOP 10 Semanal**
@@ -31,17 +28,6 @@ O sistema está crescendo rapidamente e alguns arquivos tornaram-se "monolítico
 
 ---
 
-## 3. 🚨 Violações de Regras do Projeto (AGENTS.md)
-
-O projeto possui uma regra de extrema importância no arquivo de configuração (`AGENTS.md`): a **Proibição Estrita do Tipo `any`**.
-
-> [!CAUTION]
-> A varredura no código acusou cerca de **72 ocorrências ativas** da palavra-chave `any` (excluindo dependências), além do uso inadequado em tratamentos de erro (`catch (e: any)`).
-
-*   **Onde ocorre mais:** `src/types/index.ts`, `src/components/MissoesList.tsx`, `src/app/trilhatech/aulas/page.tsx`, entre outros.
-*   **Proposta:** Tipagem rigorosa. Definir interfaces robustas (`interface Missao`, `interface DadosAluno`), substituir casts de `(ativ as any)` por tipos reais e substituir blocos `catch (e: any)` por `catch (error: unknown) { const err = error as Error; ... }`.
-
----
 
 ## 4. 🗄️ Estratégia de Dados, Cache e Sincronização
 
@@ -54,17 +40,9 @@ A transição gradual do Google Sheets para o Firestore Nativo (Fase 4) está fl
 
 ## 5. 🛠️ Plano de Ação Proposto (Próximos Passos)
 
-Se você aprovar, podemos seguir com a seguinte ordem de execução para "limpar a casa":
-
-1.  **Fase 1: Estancar o Sangramento (Leituras Firestore)**
-    *   Analisar e refatorar as queries de `entregas` e `atividades` que estão causando as 10 mil requisições. Otimizar a busca substituindo chamadas dentro de loops por uma busca única em lote.
-2.  **Fase 2: Erradicação do Tipo `any`**
-    *   Aplicar uma força-tarefa rápida para substituir as variáveis `any` por suas interfaces corretas nos arquivos de componentes vitais, respeitando a regra principal do projeto.
-3.  **Fase 3: Refatoração do Action Proxy**
-    *   Desmembrar o `action-proxy/route.ts` dividindo as responsabilidades, para não perdermos o controle da API conforme a TrilhaTech cresce.
-4.  **Fase 4: Validação do TOP 10 (Funcional)**
+1.  **Fase Seguinte: Refatoração do Action Proxy**
+    *   Desmembrar o arquivo monolítico `action-proxy/route.ts` dividindo as responsabilidades para `/handlers/`, garantindo a manutenibilidade da API conforme a TrilhaTech cresce.
+2.  **Fase Final: Validação Funcional Sistêmica**
+    *   Validar o desconto de 30% do XP e as regras do gabarito.
     *   Testar de ponta a ponta o fechamento da semana e injeção do bônus.
 
-## User Review Required
-
-Você concorda com essa avaliação de cenário? Gostaria de atacar o problema da **explosão de leituras (10k reads) no Firebase** agora como nossa primeira prioridade?

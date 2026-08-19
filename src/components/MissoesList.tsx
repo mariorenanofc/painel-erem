@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useState, useMemo } from "react";
 import { Atividade, MissoesListProps } from "../types";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,7 +46,7 @@ export default function MissoesList({
         filtroStatusPub === "Todos" ||
         ativ.statusPublicacao === filtroStatusPub;
 
-      const qtdPendentes = (ativ as any).pendentes || 0;
+      const qtdPendentes = ativ.pendentes || 0;
       const matchPendentes = filtroPendentes ? qtdPendentes > 0 : true;
 
       return (
@@ -335,7 +334,7 @@ export default function MissoesList({
                                       const isRascunho =
                                         ativ.statusPublicacao === "Rascunho";
                                       const qtdPendentes =
-                                        (ativ as any).pendentes || 0;
+                                        ativ.pendentes || 0;
 
                                       // Estilos temáticos de borda e sombra baseados no tipo
                                       let themeBorder = "border-slate-200 dark:border-slate-800 bg-white/70 dark:bg-slate-900/60";
@@ -388,14 +387,14 @@ export default function MissoesList({
                                                 </span>
                                               )}
                                               {/* CONTADORES DO AVA (Validadas e Nao Sincronizadas) */}
-                                              {(ativ as any).aguardandoValidacao > 0 && (
+                                              {ativ.aguardandoValidacao && ativ.aguardandoValidacao > 0 && (
                                                 <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-lg bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-450 border border-amber-250 dark:border-amber-900/35 shadow-sm">
-                                                  ⏳ {(ativ as any).aguardandoValidacao} Pendentes AVA
+                                                  ⏳ {ativ.aguardandoValidacao} Pendentes AVA
                                                 </span>
                                               )}
-                                              {(ativ as any).validadasAVA > 0 && (
+                                              {ativ.validadasAVA && ativ.validadasAVA > 0 && (
                                                 <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-450 border border-emerald-250 dark:border-emerald-900/35 shadow-sm">
-                                                  ✅ {(ativ as any).validadasAVA} Validadas AVA
+                                                  ✅ {ativ.validadasAVA} Validadas AVA
                                                 </span>
                                               )}
                                               <span className="text-[10px] text-slate-400 dark:text-slate-550 font-mono">

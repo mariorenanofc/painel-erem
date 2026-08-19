@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -38,7 +37,7 @@ export default function GodModeModal({
       try {
         const data = await apiTutor.listarAlunosGodMode();
         if (data.status === "sucesso") setAlunos(data.alunos);
-      } catch (e) {
+      } catch (error: unknown) {
         toast("Erro ao buscar alunos.", "error", "Falha de Conexão");
       } finally {
         setCarregando(false);
@@ -344,7 +343,7 @@ export default function GodModeModal({
                       <div className="relative">
                         <select
                           value={tipoPlaca}
-                          onChange={(e) => setTipoPlaca(e.target.value as any)}
+                          onChange={(e) => setTipoPlaca(e.target.value as "Elite Ouro" | "Elite Prata" | "Elite Bronze")}
                           className="cursor-pointer w-full p-4 pr-10 border border-amber-200 dark:border-amber-900 bg-white dark:bg-slate-950 text-amber-700 dark:text-amber-500 rounded-2xl outline-none focus:border-amber-500 font-bold text-sm transition-all shadow-sm appearance-none"
                         >
                           <option value="Elite Ouro">👑 Elite Ouro (Top 1)</option>

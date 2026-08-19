@@ -26,7 +26,7 @@ export async function GET(req: Request) {
     }));
 
     return NextResponse.json({ status: "sucesso", cursos: cursosFormatados });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro ao buscar cursos do Classroom:", error);
     return NextResponse.json({ status: "erro", mensagem: error.message }, { status: 500 });
   }

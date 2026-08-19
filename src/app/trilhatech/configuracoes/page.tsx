@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
@@ -8,6 +7,7 @@ import Header from "@/src/components/Header";
 import { apiGeral, apiTutor } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
 import { motion } from "framer-motion";
+import { ModuloConfig, UsuarioConfig, LogSeguranca } from "@/src/types";
 
 // Novos Componentes do Super Painel
 import AbaFrequencia from "@/src/components/admin/AbaFrequencia";
@@ -49,19 +49,19 @@ export default function ConfiguracoesPage() {
   >("geral");
 
   // States para Controle de Módulos
-  const [modulosDb, setModulosDb] = useState<any[]>([]);
+  const [modulosDb, setModulosDb] = useState<ModuloConfig[]>([]);
   const [novoNomeMod, setNovoNomeMod] = useState("");
   const [novoStatusMod, setNovoStatusMod] = useState("Aberto");
   const [novaTurmaMod, setNovaTurmaMod] = useState("Todas");
 
   // States para Usuários (Tutores)
-  const [usuariosDb, setUsuariosDb] = useState<any[]>([]);
+  const [usuariosDb, setUsuariosDb] = useState<UsuarioConfig[]>([]);
   const [novoUsuario, setNovoUsuario] = useState("");
   const [novaSenha, setNovaSenha] = useState("");
   const [novoNomeUsuario, setNovoNomeUsuario] = useState("");
 
   // States para Segurança
-  const [logsSeguranca, setLogsSeguranca] = useState<any[]>([]);
+  const [logsSeguranca, setLogsSeguranca] = useState<LogSeguranca[]>([]);
 
   // Estado das Configurações
   const [configs, setConfigs] = useState<Record<string, string>>({
@@ -95,7 +95,7 @@ export default function ConfiguracoesPage() {
         if (res.status === "sucesso" && res.configuracoes) {
           const dados = res.configuracoes;
 
-          const formatarTurmas = (t: any) => {
+          const formatarTurmas = (t: string | string[] | undefined | null) => {
             if (!t) return "";
             if (Array.isArray(t)) return t.join(", ");
             return String(t);

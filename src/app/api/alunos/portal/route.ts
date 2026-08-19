@@ -300,7 +300,7 @@ export async function GET(request: Request) {
         let datesArray = metadata[turmaDoAluno] as string[] | undefined;
 
         // 2. Fallback Avançado: Puxa todos os alunos e filtra a turma atual para descobrir os dias letais dela
-        if (!datesArray || datesArray.length === 0) {
+        if (datesArray === undefined) {
           console.log(`[Firestore Query] Portal: Metadado vazio para ${turmaDoAluno}. Executando fallback avancado...`);
           const tempDatesSet = new Set<string>();
           

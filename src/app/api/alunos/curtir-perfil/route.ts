@@ -1,4 +1,4 @@
-import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
+import { invalidatePortalCache,  } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     const likeId = `LIKE-${timestamp}`;
     const likeRef = dbAdmin.collection("curtidas").doc(likeId);
 
-    await dbAdmin.runTransaction(async (transaction: any) => {
+    await dbAdmin.runTransaction(async (transaction: FirebaseFirestore.Transaction) => {
       const freshDest = (await transaction.get(destRef)).data()!;
       const currentLikes = Number(freshDest.likes) || 0;
 
@@ -71,10 +71,10 @@ export async function POST(request: Request) {
 
     invalidatePortalCache(matriculaRemetente);
     invalidatePortalCache(matriculaDestinatario);
-    invalidateRankingCache();
+
     return NextResponse.json({ status: "sucesso", mensagem: "Perfil curtido com sucesso!" });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.warn("[Failover] Erro ao curtir perfil no Firestore:", error.message);
     if (GOOGLE_API_URL) {
       try {

@@ -4,11 +4,12 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/src/contexts/ToastContext";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiTutor } from "@/src/services/api";
+import { BilheteRifa } from "../../types";
 
 export default function AbaRifas() {
   const { toast } = useToast();
   const [carregando, setCarregando] = useState(true);
-  const [bilhetes, setBilhetes] = useState<any[]>([]);
+  const [bilhetes, setBilhetes] = useState<BilheteRifa[]>([]);
   const [estatisticas, setEstatisticas] = useState({ total: 0, ativos: 0, sorteados: 0 });
   const [busca, setBusca] = useState("");
   
@@ -30,7 +31,7 @@ export default function AbaRifas() {
       } else {
         toast(data.mensagem || "Erro ao buscar rifas", "error", "Erro");
       }
-    } catch (error) {
+    } catch (error: unknown) {
       toast("Erro de conexão", "error", "Erro");
     } finally {
       setCarregando(false);
@@ -59,8 +60,8 @@ export default function AbaRifas() {
       } else {
         toast(res.mensagem || "Erro ao sortear", "warning", "Atenção");
       }
-    } catch (error) {
-      toast("Erro na conexão ao sortear", "error", "Erro");
+    } catch (error: unknown) {
+      toast("Erro ao sortear", "error", "Erro de Rede");
     } finally {
       setSorteando(false);
     }

@@ -18,7 +18,7 @@ export async function GET() {
     const sheetInfo = await sheets.spreadsheets.get({ spreadsheetId: SPREADSHEET_ID });
     const tabNames = sheetInfo.data.sheets?.map(s => s.properties?.title) || [];
 
-    const report: any[] = [];
+    const report: Record<string, unknown>[] = [];
 
     const targetTabs = ['basededados', 'trilhatech', 'frequencia', 'atividades', 'entregas', 'curtidas', 'configuracoes', 'usuarios', 'controle_modulos', 'logs_seguranca', 'rifa_bilhetes'];
 
@@ -26,7 +26,7 @@ export async function GET() {
       if (tabNames.includes(tab)) {
         const sRes = await sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: `${tab}!A2:A` });
         const sRows = sRes.data?.values || [];
-        const sheetsCount = sRows.filter((r: any) => r[0] && String(r[0]).trim() !== '').length;
+        const sheetsCount = sRows.filter((r: unknown[]) => r[0] && String(r[0]).trim() !== '').length;
         
         let collectionName = tab;
         if (tab === 'basededados' || tab === 'trilhatech') collectionName = 'alunos';
@@ -45,7 +45,7 @@ export async function GET() {
     }
 
     return NextResponse.json({ status: 'sucesso', report });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({ status: 'erro', message: error.message }, { status: 500 });
   }
 }

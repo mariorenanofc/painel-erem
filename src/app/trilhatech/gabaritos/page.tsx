@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -47,8 +46,8 @@ export default function GestaoGabaritosLotePage() {
         if (data.status === "sucesso") {
           setAtividades(data.atividades);
 
-          const estadoInicial: Record<string, any> = {};
-          data.atividades.forEach((ativ: any) => {
+          const estadoInicial: Record<string, Partial<Atividade>> = {};
+          data.atividades.forEach((ativ: Atividade) => {
             estadoInicial[ativ.id] = {
               gabarito: ativ.gabarito || "",
               linkClassroom: ativ.linkClassroom || "",
@@ -68,7 +67,7 @@ export default function GestaoGabaritosLotePage() {
     carregarAtividades();
   }, [nomeUsuario]);
 
-  const handleChange = (id: string, campo: string, valor: any) => {
+  const handleChange = (id: string, campo: string, valor: string | boolean) => {
     setEdicoes((prev) => ({
       ...prev,
       [id]: { ...prev[id], [campo]: valor },

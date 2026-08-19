@@ -1,5 +1,4 @@
-
-
+import { AlunoRankingTutor } from "../types";
 
 /**
  * Função central de comunicação com o Google Apps Script.
@@ -22,7 +21,11 @@ async function fetchApi(payload: Record<string, unknown>) {
 
     if (response.status === 403) {
       if (typeof window !== "undefined") {
-        window.location.href = "/trilhatech";
+        if (window.location.pathname.startsWith("/portal")) {
+          window.location.href = "/portal/login";
+        } else {
+          window.location.href = "/";
+        }
       }
       return { status: "erro", mensagem: "Sessão expirada. Faça login novamente." };
     }
@@ -357,7 +360,7 @@ export const apiTutor = {
       motivo
     }),
 
-  gerarMensagemIA: async (top10: any[], turma: string, tipo: string) => {
+  gerarMensagemIA: async (top10: AlunoRankingTutor[], turma: string, tipo: string) => {
     const res = await fetch("/api/tutor/gerar-mensagem", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

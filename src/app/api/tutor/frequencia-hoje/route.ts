@@ -91,7 +91,7 @@ export async function GET(request: Request) {
     const diasSet = new Set<string>();
 
     // 1ª Passagem: Buscar todos os registros e armazenar em memória
-    const todosRegistros: any[] = [];
+    const todosRegistros: Record<string, unknown>[] = [];
     for (let i = 0; i < matriculasAtivas.length; i += 30) {
       const chunk = matriculasAtivas.slice(i, i + 30);
       if (chunk.length === 0) continue;

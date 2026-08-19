@@ -1,5 +1,5 @@
 import { ChangeEvent } from "react";
-import { Badge } from "../utils/badges";
+import { Badge, DadosParaBadges } from "../utils/badges";
 
 // ==========================================
 // 1. MODELOS DE DADOS GERAIS
@@ -58,6 +58,7 @@ export interface Atividade {
   pendentes?: number;
   aguardandoValidacao?: number;
   validadasAVA?: number;
+  statusModulo?: string;
 }
 
 export interface PerfilAluno {
@@ -68,6 +69,22 @@ export interface PerfilAluno {
   turma: string;
   telefoneAluno: string;
   telefoneResponsavel: string;
+}
+
+export interface PerfilPublico {
+  matricula: string;
+  nome: string;
+  turma: string;
+  xpTotal: number;
+  nivel: string;
+  avatar: string;
+  totalCurtidas: number;
+  jaCurtiuHoje: boolean;
+  missoesConcluidas: number;
+  pixEnviado: number;
+  pixRecebido: number;
+  badges: string[];
+  ofensivaDias: number;
 }
 
 export interface AlunoRanking {
@@ -180,6 +197,51 @@ export interface Entrega {
   resposta: string;
   status: string;
   xpGanho: number;
+  dataEnvio?: number;
+}
+
+export interface BilheteRifa {
+  id: string;
+  matricula: string;
+  nome: string;
+  turma: string;
+  timestamp: number;
+  status: "ATIVO" | "SORTEADO_GANHADOR";
+}
+
+export interface Transacao {
+  id: string;
+  matricula: string;
+  nome: string;
+  turma: string;
+  xpGanho: number;
+  status: string;
+  atividade: string;
+  dataEnvio: number | string;
+  feedback?: string;
+  resposta?: string;
+}
+
+export interface ModuloConfig {
+  id: string;
+  nomeMod: string;
+  turmaMod: string;
+  statusMod: string;
+}
+
+export interface UsuarioConfig {
+  id: string;
+  usuario: string;
+  nome: string;
+}
+
+export interface LogSeguranca {
+  id: string;
+  dataHora: string;
+  matricula: string;
+  nome: string;
+  acao: string;
+  detalhes: string;
 }
 
 export interface FrequenciaHoje {
@@ -282,8 +344,7 @@ export interface GestaoFrequenciaModalProps {
   setAnoDiario: (val: string) => void;
   carregandoFreq: boolean;
   diasComAula: string[];
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  alunosDiario: any[];
+  alunosDiario: RegistroDiario[];
   carregandoFreqHoje: boolean;
   freqHojeFiltrada: FrequenciaHoje[];
   dadosFreqHoje: FrequenciaHoje[];
@@ -347,8 +408,7 @@ export interface PerfilModalProps {
   onClose: () => void;
   onSalvar: (dadosAtualizados: PerfilAluno) => void;
   setDadosPerfil: (dados: PerfilAluno) => void;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  dadosBadges: any;
+  dadosBadges: DadosParaBadges | null;
   avatarAtual: string;
   totalCurtidas: number;
   onSalvarAvatar: (avatarId: string) => void;

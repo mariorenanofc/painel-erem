@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import { useState, useEffect, useMemo, useCallback } from "react";
@@ -15,6 +13,8 @@ import {
   Entrega,
   AlunoRankingTutor,
   FrequenciaHoje,
+  RegistroDiario,
+  Transacao,
 } from "@/src/types";
 import RankingTutorModal from "@/src/components/RankingTutorModal";
 import CorrecaoMissoesModal from "@/src/components/CorrecaoMissoesModal";
@@ -114,7 +114,7 @@ export default function GestaoAulasPage() {
   const [abaDiario, setAbaDiario] = useState<"mensal" | "hoje">("mensal");
   const [carregandoFreq, setCarregandoFreq] = useState(false);
   const [diasComAula, setDiasComAula] = useState<string[]>([]);
-  const [alunosDiario, setAlunosDiario] = useState<any[]>([]);
+  const [alunosDiario, setAlunosDiario] = useState<RegistroDiario[]>([]);
 
   // Estados da Sincronização AVA (Barra de Progresso)
   const [sincronizandoAVA, setSincronizandoAVA] = useState(false);
@@ -148,7 +148,7 @@ export default function GestaoAulasPage() {
   >("mais_faltas");
 
   // Estados de Transações/Extrato do Tutor
-  const [transacoes, setTransacoes] = useState<any[]>([]);
+  const [transacoes, setTransacoes] = useState<Transacao[]>([]);
   const [carregandoTransacoes, setCarregandoTransacoes] = useState(false);
   const [totalTransacoes, setTotalTransacoes] = useState(0);
   const [paginaTransacoes, setPaginaTransacoes] = useState(1);
@@ -156,7 +156,7 @@ export default function GestaoAulasPage() {
   const [filtroCategoriaTransacoes, setFiltroCategoriaTransacoes] = useState("");
   const [filtroStatusTransacoes, setFiltroStatusTransacoes] = useState("");
   const [limiteTransacoes, setLimiteTransacoes] = useState(20);
-  const [transacaoEditando, setTransacaoEditando] = useState<any | null>(null);
+  const [transacaoEditando, setTransacaoEditando] = useState<Transacao | null>(null);
   const [editXpGanho, setEditXpGanho] = useState<number>(0);
   const [editStatus, setEditStatus] = useState("");
   const [editFeedback, setEditFeedback] = useState("");
@@ -259,7 +259,7 @@ export default function GestaoAulasPage() {
   }, [nomeUsuario]);
 
   const executarImportacaoLote = async (
-    atividadesMapeadas: any[],
+    atividadesMapeadas: Partial<Atividade>[],
     moduloSelecionado: string,
     turmaSelecionada: string,
   ) => {
@@ -273,9 +273,9 @@ export default function GestaoAulasPage() {
           descricao:
             ativ.descricao || "Acesse o Google Classroom para visualizar as instruções detalhadas desta atividade.",
           dataLimite: ativ.dataLimite || "",
-          xp: ativ.xp.toString(),
+          xp: ativ.xp ? ativ.xp.toString() : "100",
           turmaAlvo: turmaSelecionada,
-          tipo: ativ.tipo,
+          tipo: ativ.tipo || "Projeto",
           opcaoA: ativ.opcaoA || "",
           opcaoB: "",
           opcaoC: "",
@@ -447,7 +447,7 @@ export default function GestaoAulasPage() {
     setImagemUrl(String(ativ.imagemUrl || ""));
     setModulo(String(ativ.modulo || "Geral"));
     setGabarito(String(ativ.gabarito || ""));
-    setGabaritoLiberado((ativ as any).gabaritoLiberado || false);
+    setGabaritoLiberado(ativ.gabaritoLiberado || false);
     setResolucaoTyping(String(ativ.resolucaoTyping || ""));
     setLimiteTempoTyping(Number(ativ.limiteTempoTyping) || 0);
     setModalNovaMissaoAberto(true);
@@ -480,8 +480,9 @@ export default function GestaoAulasPage() {
       } else {
         toast(data.mensagem || "Erro ao carregar transações.", "error");
       }
-    } catch (err: any) {
-      toast("Erro de conexão ao carregar transações.", "error");
+    } catch (error: unknown) {
+      const err = error as Error;
+      toast(err.message || "Erro desconhecido.", "error");
     } finally {
       setCarregandoTransacoes(false);
     }
@@ -494,7 +495,7 @@ export default function GestaoAulasPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, paginaTransacoes, buscaTransacoes, filtroCategoriaTransacoes, filtroStatusTransacoes, limiteTransacoes]);
 
-  const abrirModalEditarTransacao = (t: any) => {
+  const abrirModalEditarTransacao = (t: Transacao) => {
     setTransacaoEditando(t);
     setEditXpGanho(t.xpGanho);
     setEditStatus(t.status);
@@ -534,7 +535,7 @@ export default function GestaoAulasPage() {
     }
   };
 
-  const excluirTransacao = async (t: any) => {
+  const excluirTransacao = async (t: Transacao) => {
     if (!confirm(`Tem certeza que deseja excluir/estornar esta transação? O saldo de XP do aluno será ajustado.`)) return;
     try {
       const res = await fetch(`/api/tutor/transacoes?id=${t.id}&matricula=${t.matricula}`, {

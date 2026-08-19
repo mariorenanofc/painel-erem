@@ -1,4 +1,4 @@
-import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
+import { invalidatePortalCache,  } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { Transaction } from "firebase-admin/firestore";
@@ -118,7 +118,6 @@ export async function POST(request: Request) {
     });
 
     invalidatePortalCache(matricula);
-    invalidateRankingCache();
 
     return NextResponse.json({ 
       status: "sucesso", 

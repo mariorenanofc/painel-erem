@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { getCachedRanking, setCachedRanking } from "@/src/lib/cache";
+import { getCachedRanking, setCachedRanking, getCachedAtividades, setCachedAtividades, getCachedJustificativas, setCachedJustificativas } from "@/src/lib/cache";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
@@ -120,31 +120,37 @@ export async function GET(request: Request) {
     // Processar Entregas (Apenas no filtro de tempo ativo)
     if (filtroTempo !== "geral") {
       // 1. Carregar atividades para verificar prazos e detectar atrasos
-      const atividadesSnap = await dbAdmin.collection("atividades").get();
-      const atividadesMap: Record<string, { dataLimite?: string }> = {};
-      atividadesSnap.forEach((doc: QueryDocumentSnapshot) => {
-        const d = doc.data();
-        atividadesMap[doc.id] = { dataLimite: d.dataLimite };
-      });
+      let atividadesMap = getCachedAtividades() as Record<string, { dataLimite?: string }> | null;
+      if (!atividadesMap) {
+        atividadesMap = {};
+        const atividadesSnap = await dbAdmin.collection("atividades").get();
+        atividadesSnap.forEach((doc: QueryDocumentSnapshot) => {
+          const d = doc.data();
+          atividadesMap![doc.id] = { dataLimite: d.dataLimite };
+        });
+        setCachedAtividades(atividadesMap);
+      }
 
       // 2. Mapear todas as faltas justificadas
-      const freqAllSnap = await dbAdmin.collection("frequencia").get();
-      const justificativasMap: Record<string, Set<string>> = {};
-      freqAllSnap.forEach((doc: QueryDocumentSnapshot) => {
-        const f = doc.data();
-        const status = String(f.status || "").toLowerCase().trim();
-        const idFreq = String(f.id || doc.id).trim();
-        if (status === "justificada" || status === "j" || idFreq.startsWith("FALTA-")) {
+      let justificativasMap = getCachedJustificativas() as Record<string, Set<string>> | null;
+      if (!justificativasMap) {
+        justificativasMap = {};
+        const justificadasSnap = await dbAdmin.collection("frequencia")
+          .where("status", "in", ["Justificada", "justificada", "J", "j", "JUSTIFICADA"])
+          .get();
+        justificadasSnap.forEach((doc: QueryDocumentSnapshot) => {
+          const f = doc.data();
           const mat = f.matricula;
           const dataFormatada = normalizeToDateStr(f.data || "");
           if (mat && dataFormatada) {
-            if (!justificativasMap[mat]) {
-              justificativasMap[mat] = new Set<string>();
+            if (!justificativasMap![mat]) {
+              justificativasMap![mat] = new Set<string>();
             }
-            justificativasMap[mat].add(dataFormatada);
+            justificativasMap![mat].add(dataFormatada);
           }
-        }
-      });
+        });
+        setCachedJustificativas(justificativasMap);
+      }
 
       const entregasSnap = await dbAdmin.collection("entregas")
         .where("timestamp", ">=", timeInicio)

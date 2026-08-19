@@ -15,7 +15,7 @@ export async function GET() {
     });
     const sheets = google.sheets({ version: 'v4', auth });
 
-    const report: any = {};
+    const report: Record<string, unknown> = {};
 
     // 1. Migrate usuarios
     const uRes = await sheets.spreadsheets.values.get({ spreadsheetId: SPREADSHEET_ID, range: 'usuarios!A2:C' });
@@ -77,7 +77,7 @@ export async function GET() {
     report.logsMigrados = lCount;
 
     return NextResponse.json({ status: 'sucesso', report });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({ status: 'erro', message: error.message }, { status: 500 });
   }
 }

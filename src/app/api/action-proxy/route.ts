@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbAdmin, registrarLogSeguranca } from "@/src/lib/firebaseAdmin";
 import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
-import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades, getCachedAdminAlunos, setCachedAdminAlunos, invalidateAdminAlunosCache } from "@/src/lib/cache";
+import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades, getCachedAdminAlunos, setCachedAdminAlunos, invalidateAdminAlunosCache, getCachedAnalyticsGeral, setCachedAnalyticsGeral, getCachedClassDates } from "@/src/lib/cache";
 import { Transaction, FieldValue, FieldPath, QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { cookies } from "next/headers";
 
@@ -76,7 +76,7 @@ export async function POST(request: Request) {
       let resultSync: { status?: string, alunos?: Array<{matricula: string | number, nome: string, turma: string}> } = {};
       try {
         resultSync = JSON.parse(resultSyncText);
-      } catch (e) {
+      } catch (error: unknown) {
         console.error("Erro ao parsear listar_alunos_godmode:", resultSyncText.substring(0, 100));
       }
       
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
       let rankingSync: { status?: string, ranking?: Array<{matricula: string | number, xp: number | string, nivel: string}>, listaAlunos?: Array<{matricula: string | number, xpTotal: number | string, nivel: string}> } = {};
       try {
         rankingSync = JSON.parse(rankingSyncText);
-      } catch (e) {
+      } catch (error: unknown) {
         console.error("Erro ao parsear ranking:", rankingSyncText.substring(0, 100));
       }
       
@@ -308,10 +308,14 @@ export async function POST(request: Request) {
         result = { status: "erro", mensagem: "Matrícula inválida." };
       }
     } else if (requestAction === "buscar_analytics_geral") {
-      const alunosSnap = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
-      const entregasSnap = await dbAdmin.collection("entregas").get();
-      const freqSnap = await dbAdmin.collection("frequencia").get();
-      const ativsSnap = await dbAdmin.collection("atividades").get();
+      const cachedAnalytics = getCachedAnalyticsGeral();
+      if (cachedAnalytics) {
+        result = cachedAnalytics;
+      } else {
+        const alunosSnap = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
+        const entregasSnap = await dbAdmin.collection("entregas").get();
+        const freqSnap = await dbAdmin.collection("frequencia").get();
+        const ativsSnap = await dbAdmin.collection("atividades").get();
 
       const missoesFeitasMap: Record<string, number> = {};
       const presencasMap: Record<string, number> = {};
@@ -387,6 +391,8 @@ export async function POST(request: Request) {
       listaAlunos.sort((a, b) => b.xpTotal - a.xpTotal);
       radarRisco.sort((a, b) => a.taxaPresenca - b.taxaPresenca);
       result = { status: "sucesso", totalAlunos, totalXpEscola, volumePix: 0, alunos: listaAlunos, radarRisco };
+      setCachedAnalyticsGeral(result);
+      }
     } else if (requestAction === "buscar_ficha_360") {
       const mat = String(payload.matricula || "").trim();
       const doc = await dbAdmin.collection("alunos").doc(mat).get();
@@ -396,21 +402,26 @@ export async function POST(request: Request) {
         const data = doc.data() || {};
         const turma = data.turmaTrilha || data.turma || "";
         
-        const freqSnap = await dbAdmin.collection("frequencia").get();
-        let totalAulas = 0;
+        let cachedDates = getCachedClassDates(turma) as string[] | null;
+        if (!cachedDates) {
+          const metadataDoc = await dbAdmin.collection("metadata").doc("dias_aula_turmas").get();
+          const metadata = metadataDoc.exists ? metadataDoc.data() || {} : {};
+          cachedDates = metadata[turma] as string[] || [];
+        }
+        const totalAulas = cachedDates.length;
         let totalPresencas = 0;
         let totalFaltas = 0;
-        const aulasSet = new Set<string>();
+
+        const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "==", mat).get();
 
         freqSnap.forEach(fDoc => {
           const f = fDoc.data();
-          if (String(f.turma || "").trim() === turma && f.data) aulasSet.add(f.data);
-          if (f.matricula === mat) {
-             const isPresent = f.hora && f.hora !== "00:00:00" && f.hora !== "00:00" && f.hora !== "";
-             if (isPresent || f.status?.toLowerCase() === "justificada" || f.status?.toLowerCase() === "j") totalPresencas++;
+          const isPresent = f.hora && f.hora !== "00:00:00" && f.hora !== "00:00" && f.hora !== "";
+          if (isPresent || f.status?.toLowerCase() === "justificada" || f.status?.toLowerCase() === "j") {
+             totalPresencas++;
           }
         });
-        totalAulas = aulasSet.size;
+        
         totalFaltas = Math.max(0, totalAulas - totalPresencas);
         const taxaFreq = totalAulas === 0 ? 100 : Math.round((totalPresencas / totalAulas) * 100);
 
@@ -562,24 +573,36 @@ export async function POST(request: Request) {
       });
 
       if (diasAula.length === 0 && turma) {
-        // Fallback Avançado: Puxa todos os alunos e filtra a turma atual para descobrir os dias letais dela
-        const todosAlunosSnap = await dbAdmin.collection("alunos").get();
+        // Fallback Avançado Otimizado: Usa cache de alunos e pega apenas até 5 alunos da turma para mapear os dias letais
+        let alunosCache = getCachedAdminAlunos() as Array<{ matricula: string, nome: string, turmaTrilha?: string, turma?: string, statusTrilha?: string }> | null;
+        if (!alunosCache) {
+          const snapshot = await dbAdmin.collection("alunos").get();
+          alunosCache = snapshot.docs.map((doc: QueryDocumentSnapshot) => {
+            const data = doc.data();
+            return {
+              matricula: doc.id,
+              nome: String(data.nome || ""),
+              turmaTrilha: String(data.turmaTrilha || ""),
+              turma: String(data.turma || ""),
+              statusTrilha: String(data.statusTrilha || "")
+            };
+          });
+          setCachedAdminAlunos(alunosCache);
+        }
+
         const alunosDaTurma: string[] = [];
-        todosAlunosSnap.forEach(doc => {
-          const d = doc.data();
+        for (const d of alunosCache) {
           const t = String(d.turmaTrilha || d.turma || "").trim();
           if (t === turma && String(d.statusTrilha || "").toLowerCase() === "ativo") {
-             alunosDaTurma.push(doc.id);
+             alunosDaTurma.push(d.matricula);
+             if (alunosDaTurma.length >= 5) break; // 5 alunos já dão uma margem excelente para achar todos os dias
           }
-        });
+        }
 
         const diasSet = new Set<string>();
-        // Dividir em blocos de 30 (limite do Firestore 'in')
-        for (let i = 0; i < alunosDaTurma.length; i += 30) {
-          const chunk = alunosDaTurma.slice(i, i + 30);
-          if (chunk.length === 0) continue;
-          const fallbackSnap = await dbAdmin.collection("frequencia").where("matricula", "in", chunk).get();
-          fallbackSnap.forEach(doc => {
+        if (alunosDaTurma.length > 0) {
+          const fallbackSnap = await dbAdmin.collection("frequencia").where("matricula", "in", alunosDaTurma).get();
+          fallbackSnap.forEach((doc: QueryDocumentSnapshot) => {
             const f = doc.data();
             if (f.data && !doc.id.startsWith("BDAY")) diasSet.add(f.data);
           });
@@ -1327,6 +1350,7 @@ export async function POST(request: Request) {
             obs: String(payload.obs || "")
           }, { merge: true });
           invalidatePortalCache(mat);
+          invalidateAdminAlunosCache();
         }
       }
 
@@ -1351,6 +1375,7 @@ export async function POST(request: Request) {
           
           await dbAdmin.collection("alunos").doc(mat).set(updateData, { merge: true });
           invalidatePortalCache(mat);
+          invalidateAdminAlunosCache();
         }
       }
 

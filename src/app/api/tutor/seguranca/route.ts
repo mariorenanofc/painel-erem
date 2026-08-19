@@ -11,7 +11,7 @@ export async function GET() {
     
     const logs = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
     return NextResponse.json({ status: "sucesso", logs });
-  } catch (error: any) {
+  } catch (error: unknown) {
     return NextResponse.json({ status: "erro", mensagem: error.message }, { status: 500 });
   }
 }

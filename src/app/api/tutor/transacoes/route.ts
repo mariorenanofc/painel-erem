@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
+import { invalidatePortalCache, invalidateRankingCache, getCachedAdminAlunos, setCachedAdminAlunos } from "@/src/lib/cache";
 import { QueryDocumentSnapshot, Transaction } from "firebase-admin/firestore";
 import { cookies } from "next/headers";
 
@@ -53,12 +53,28 @@ export async function GET(request: Request) {
   const transacoes: Transacao[] = [];
 
   try {
-    // 1. Carregar mapa de estudantes para tradução de matrícula -> nome
-    const alunosSnap = await dbAdmin.collection("alunos").get();
-    alunosSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const data = doc.data();
-      if (data.matricula) {
-        alunosMap[String(data.matricula).trim()] = String(data.nome || "").trim();
+    // 1. Carregar mapa de estudantes para tradução de matrícula -> nome (Usando Cache)
+    let alunosArray = getCachedAdminAlunos() as Array<{ matricula: string, nome: string, turma: string, statusTrilha: string, xp: number, xpGasto: number, senha: string }> | null;
+    if (!alunosArray) {
+      const snapshot = await dbAdmin.collection("alunos").get();
+      alunosArray = snapshot.docs.map((doc: QueryDocumentSnapshot) => {
+        const data = doc.data();
+        return {
+          matricula: doc.id,
+          nome: data.nome || `Aluno ${doc.id}`,
+          turma: data.turmaTrilha || data.turma || "",
+          statusTrilha: data.statusTrilha || "Inativo",
+          xp: Number(data.xp) || 0,
+          xpGasto: Number(data.xpGasto) || 0,
+          senha: data.pinPix || data.senha || ""
+        };
+      });
+      setCachedAdminAlunos(alunosArray);
+    }
+
+    alunosArray.forEach((aluno) => {
+      if (aluno.matricula) {
+        alunosMap[String(aluno.matricula).trim()] = String(aluno.nome || "").trim();
       }
     });
 

@@ -10,6 +10,8 @@ const globalClassDatesCache: Record<string, { data: unknown; timestamp: number }
 let globalModulosCache: { data: unknown; timestamp: number } | null = null;
 export const tutorAtividadesCache: Record<string, { data: unknown; timestamp: number }> = {};
 let aniversariantesCache: { dateKey: string; data: unknown; timestamp: number } | null = null;
+let globalJustificativasCache: { data: unknown; timestamp: number } | null = null;
+let analyticsGeralCache: { data: unknown; timestamp: number } | null = null;
 
 export function getCachedPortal(matricula: string): unknown | null {
   const cached = portalCache[matricula.trim()];
@@ -255,3 +257,32 @@ export function setCachedAdminAlunos(data: unknown) {
 export function invalidateAdminAlunosCache() {
   adminAlunosCache = null;
 }
+
+export function getCachedJustificativas(): unknown | null {
+  if (globalJustificativasCache && Date.now() - globalJustificativasCache.timestamp < 43200000) { // 12 horas
+    return globalJustificativasCache.data;
+  }
+  return null;
+}
+
+export function setCachedJustificativas(data: unknown) {
+  globalJustificativasCache = {
+    data,
+    timestamp: Date.now()
+  };
+}
+
+export function getCachedAnalyticsGeral(): unknown | null {
+  if (analyticsGeralCache && Date.now() - analyticsGeralCache.timestamp < 1800000) { // 30 minutos
+    return analyticsGeralCache.data;
+  }
+  return null;
+}
+
+export function setCachedAnalyticsGeral(data: unknown) {
+  analyticsGeralCache = {
+    data,
+    timestamp: Date.now()
+  };
+}
+

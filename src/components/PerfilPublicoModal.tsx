@@ -1,11 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { calcularBadges } from "../utils/badges";
-import { Atividade, PerfilPublicoModalProps } from "../types";
+import { Atividade, PerfilPublicoModalProps, PerfilPublico } from "../types";
 import { apiAluno } from "@/src/services/api";
 
 export default function PerfilPublicoModal({
@@ -13,7 +12,7 @@ export default function PerfilPublicoModal({
   matriculaVisualizador,
   onClose,
 }: PerfilPublicoModalProps) {
-  const [perfil, setPerfil] = useState<any>(null);
+  const [perfil, setPerfil] = useState<PerfilPublico | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [curtindo, setCurtindo] = useState(false);
 
@@ -417,7 +416,7 @@ export default function PerfilPublicoModal({
                     </div>
                   ) : (
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                      {badgesExibicao.map((badge: any, idx: number) => (
+                      {badgesExibicao.map((badge, idx: number) => (
                         <div
                           key={idx}
                           className="bg-white/85 dark:bg-slate-950/65 border border-slate-200/80 dark:border-slate-800 p-3 rounded-2xl flex items-center gap-3.5 shadow-sm hover:shadow-md transition-all duration-200"

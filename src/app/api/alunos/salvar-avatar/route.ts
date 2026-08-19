@@ -1,4 +1,4 @@
-import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
+import { invalidatePortalCache,  } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
@@ -28,9 +28,9 @@ export async function POST(request: Request) {
     });
 
     invalidatePortalCache(matricula);
-    invalidateRankingCache();
+
     return NextResponse.json({ status: "sucesso", mensagem: "Avatar atualizado!" });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.warn("[Failover] Erro ao salvar avatar no Firestore:", error.message);
     if (GOOGLE_API_URL) {
       try {

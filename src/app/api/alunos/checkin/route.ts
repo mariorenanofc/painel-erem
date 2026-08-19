@@ -1,4 +1,4 @@
-import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
+import { invalidatePortalCache,  } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot, Transaction, FieldValue } from "firebase-admin/firestore";
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
 
     if (!matricula || !senhaInformada) {
       invalidatePortalCache(matricula);
-    invalidateRankingCache();
+
     return NextResponse.json({ status: "erro", mensagem: "Parâmetros inválidos." }, { status: 400 });
     }
 
@@ -122,7 +122,7 @@ export async function POST(request: Request) {
     let presencasAluno = 1; // +1 porque ele está fazendo check-in hoje
     const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "==", matricula).get();
     
-    const freqMap: Record<string, any> = {};
+    const freqMap: Record<string, unknown> = {};
     freqSnap.forEach((doc: QueryDocumentSnapshot) => {
       const f = doc.data();
       const idFreq = String(f.id || doc.id).trim();
@@ -223,7 +223,6 @@ export async function POST(request: Request) {
 
     // Invalidar caches locais do portal deste aluno e ranking
     invalidatePortalCache(matricula);
-    invalidateRankingCache();
 
     return NextResponse.json({
       status: "sucesso",

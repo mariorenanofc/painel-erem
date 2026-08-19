@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -96,7 +95,7 @@ export default function ImportadorLoteModal({
       } else {
         setErroBuscar(data.mensagem || "Erro ao buscar turmas do Classroom.");
       }
-    } catch (e: any) {
+    } catch (error: unknown) {
       setErroBuscar("Falha de comunicação ao buscar turmas.");
     } finally {
       setBuscandoCursos(false);
@@ -152,8 +151,9 @@ export default function ImportadorLoteModal({
       } else {
         setErroBuscar(data.mensagem || "Erro desconhecido ao buscar radar.");
       }
-    } catch (e: any) {
-      setErroBuscar(e.message || "Falha na comunicação com o servidor.");
+    } catch (error: unknown) {
+      const err = error as Error;
+      setErroBuscar(err.message || "Falha na comunicação com o servidor.");
     } finally {
       setBuscando(false);
     }
@@ -167,7 +167,7 @@ export default function ImportadorLoteModal({
     );
   };
 
-  const atualizarAtividade = (idTemp: string, campo: string, valor: any) => {
+  const atualizarAtividade = (idTemp: string, campo: string, valor: string | number | boolean) => {
     setAtividades((prev) =>
       prev.map((a) => (a.idTemp === idTemp ? { ...a, [campo]: valor } : a))
     );

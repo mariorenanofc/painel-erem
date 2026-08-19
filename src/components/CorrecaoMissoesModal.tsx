@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState } from "react";
@@ -100,7 +99,7 @@ export default function CorrecaoMissoesModal({
                   const aguardando = entrega.status === "Aguardando Correção";
 
                   // Formatação de data
-                  const rawDataEnvio = (entrega as any).dataEnvio;
+                  const rawDataEnvio = entrega.dataEnvio;
                   const dataFormatada = rawDataEnvio
                     ? new Date(rawDataEnvio)
                         .toLocaleString("pt-BR", {

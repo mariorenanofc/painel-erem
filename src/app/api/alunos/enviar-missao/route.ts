@@ -1,4 +1,4 @@
-import { invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
+import { invalidatePortalCache,  } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { Transaction, FieldValue } from "firebase-admin/firestore";
@@ -250,7 +250,6 @@ export async function POST(request: Request) {
             : "Missão enviada com sucesso!";
 
     invalidatePortalCache(matricula);
-    invalidateRankingCache();
 
     // Sincronizar com Google Sheets em segundo plano (assíncrono, sem travar o usuário)
     if (GOOGLE_API_URL) {

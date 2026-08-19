@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -561,7 +559,7 @@ export default function PortalDashboard() {
 
   const missoesPendentes = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
-    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
+    const stMod = a.statusModulo?.toLowerCase() || "aberto";
     if (stMod === "encerrado" || stMod === "em breve") return false;
 
     return st === "pendente" || st === "devolvida";
@@ -569,7 +567,7 @@ export default function PortalDashboard() {
 
   const qtdPendentes = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
-    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
+    const stMod = a.statusModulo?.toLowerCase() || "aberto";
     if (stMod === "encerrado" || stMod === "em breve") return false;
 
     return (
@@ -579,7 +577,7 @@ export default function PortalDashboard() {
 
   const qtdAtrasadas = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
-    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
+    const stMod = a.statusModulo?.toLowerCase() || "aberto";
     if (stMod === "encerrado" || stMod === "em breve") return false;
 
     return (
@@ -599,7 +597,7 @@ export default function PortalDashboard() {
     if (!matchBusca) return false;
 
     const st = a.status?.toLowerCase().trim() || "pendente";
-    const stMod = (a as any).statusModulo?.toLowerCase() || "aberto";
+    const stMod = a.statusModulo?.toLowerCase() || "aberto";
 
     if (abaAtividade === "Pendentes") {
       if (stMod === "encerrado" || stMod === "em breve") return false;
@@ -638,7 +636,7 @@ export default function PortalDashboard() {
         ativ.modulo && ativ.modulo.trim() !== "" ? ativ.modulo : "Módulo Geral";
       if (!grupos[nomeMod]) {
         grupos[nomeMod] = {
-          status: (ativ as any).statusModulo || "Aberto",
+          status: ativ.statusModulo || "Aberto",
           todasMissoes: [],
           missoesFiltradas: [],
           concluidas: 0,

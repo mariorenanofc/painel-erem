@@ -29,7 +29,7 @@ export async function POST(req: Request) {
     // Para evitar que busque todo o histórico de anos, podemos limitar
     // Mas vamos buscar todos os ativos dessa turma
     do {
-      const cwRes: any = await classroom.courses.courseWork.list({
+      const cwRes: unknown = await classroom.courses.courseWork.list({
         courseId: courseId,
         courseWorkStates: ["PUBLISHED"],
         pageToken: pageToken
@@ -93,7 +93,7 @@ export async function POST(req: Request) {
     novasAtividades.sort((a, b) => new Date(b.creationTime || 0).getTime() - new Date(a.creationTime || 0).getTime());
 
     return NextResponse.json({ status: "sucesso", atividades: novasAtividades });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Erro Radar Classroom (Curso Especifico):", error);
     return NextResponse.json({ status: "erro", mensagem: error.message }, { status: 500 });
   }

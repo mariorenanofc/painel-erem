@@ -34,12 +34,70 @@ if (!isPlaceholder(projectId) && !isPlaceholder(clientEmail) && !isPlaceholder(p
   }
   dbAdmin = getFirestore();
 
-  // === INJEÇÃO DO MONITOR DE LEITURAS (MONKEY PATCH) ===
+  // === INJEÇÃO DO MONITOR SEGURO DE LEITURAS (MONKEY PATCH) ===
+  const globalAny = global as any;
+
+  if (!globalAny.firestoreReadStats) {
+    globalAny.firestoreReadStats = {};
+    globalAny.firestoreMonitorTimeout = null;
+  }
+
+  function registrarLeitura(collectionPath: string, size: number) {
+    if (collectionPath.includes("monitor_leituras")) return;
+    
+    if (!globalAny.firestoreReadStats[collectionPath]) {
+      globalAny.firestoreReadStats[collectionPath] = { buscas: 0, documentosLidos: 0 };
+    }
+    globalAny.firestoreReadStats[collectionPath].buscas += 1;
+    globalAny.firestoreReadStats[collectionPath].documentosLidos += size;
+    
+    if (!globalAny.firestoreMonitorTimeout) {
+      globalAny.firestoreMonitorTimeout = setTimeout(async () => {
+        const statsToSave = { ...globalAny.firestoreReadStats };
+        globalAny.firestoreReadStats = {};
+        globalAny.firestoreMonitorTimeout = null;
+        
+        let totalLidos = 0;
+        for (const key in statsToSave) {
+          totalLidos += statsToSave[key].documentosLidos;
+        }
+        
+        if (totalLidos > 0) {
+          try {
+            const tzOffset = -3 * 60 * 60 * 1000;
+            const now = new Date(Date.now() + tzOffset);
+            const dataHoraStr = now.toISOString().replace("T", " ").split(".")[0];
+            
+            await dbAdmin.collection("monitor_leituras").add({
+              dataHora: dataHoraStr,
+              totalLeiturasNestaJanela: totalLidos,
+              detalhesPorColecao: statsToSave,
+              timestamp: Date.now()
+            });
+            console.log(`[FIRESTORE MONITOR] 📊 Agregador Salvo no Banco! ${totalLidos} leituras contabilizadas.`);
+          } catch (err) {
+            console.error("[FIRESTORE MONITOR] Erro ao salvar agregado:", err);
+          }
+        }
+      }, 10000); // Tenta salvar a cada 10 segundos
+    }
+  }
+
   const origQueryGet = Query.prototype.get;
   Query.prototype.get = async function (...args) {
     const snap = await origQueryGet.apply(this, args);
     const size = snap.size || 0;
-    console.log(`[FIRESTORE MONITOR] 🔍 Query retornou ${size} leitura(s)`);
+    
+    let path = "query_desconhecida";
+    try {
+      if ((this as any)._queryOptions?.collectionId) {
+        path = (this as any)._queryOptions.collectionId;
+      } else if ((this as any)._queryOptions?.parentPath?.segments) {
+        path = (this as any)._queryOptions.parentPath.segments.join('/');
+      }
+    } catch {}
+
+    registrarLeitura(path, size);
     return snap;
   };
 
@@ -47,7 +105,15 @@ if (!isPlaceholder(projectId) && !isPlaceholder(clientEmail) && !isPlaceholder(p
   DocumentReference.prototype.get = async function (...args) {
     const snap = await origDocGet.apply(this, args);
     const size = snap.exists ? 1 : 0;
-    console.log(`[FIRESTORE MONITOR] 📄 Doc (${this.path}) retornou ${size} leitura(s)`);
+    
+    let path = "doc_desconhecido";
+    try {
+      if (this.path) {
+        path = this.path.split('/')[0];
+      }
+    } catch {}
+
+    registrarLeitura(path, size);
     return snap;
   };
 

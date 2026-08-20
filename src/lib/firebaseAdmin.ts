@@ -35,27 +35,36 @@ if (!isPlaceholder(projectId) && !isPlaceholder(clientEmail) && !isPlaceholder(p
   dbAdmin = getFirestore();
 
   // === INJEÇÃO DO MONITOR SEGURO DE LEITURAS (MONKEY PATCH) ===
-  const globalAny = global as any;
+  interface GlobalWithStats {
+    firestoreReadStats?: Record<string, { buscas: number; documentosLidos: number }>;
+    firestoreMonitorTimeout?: NodeJS.Timeout | null;
+  }
+  const globalStats = global as unknown as GlobalWithStats;
 
-  if (!globalAny.firestoreReadStats) {
-    globalAny.firestoreReadStats = {};
-    globalAny.firestoreMonitorTimeout = null;
+  if (!globalStats.firestoreReadStats) {
+    globalStats.firestoreReadStats = {};
+    globalStats.firestoreMonitorTimeout = null;
   }
 
   function registrarLeitura(collectionPath: string, size: number) {
     if (collectionPath.includes("monitor_leituras")) return;
     
-    if (!globalAny.firestoreReadStats[collectionPath]) {
-      globalAny.firestoreReadStats[collectionPath] = { buscas: 0, documentosLidos: 0 };
+    // Assegura que o objeto principal existe
+    if (!globalStats.firestoreReadStats) {
+      globalStats.firestoreReadStats = {};
     }
-    globalAny.firestoreReadStats[collectionPath].buscas += 1;
-    globalAny.firestoreReadStats[collectionPath].documentosLidos += size;
     
-    if (!globalAny.firestoreMonitorTimeout) {
-      globalAny.firestoreMonitorTimeout = setTimeout(async () => {
-        const statsToSave = { ...globalAny.firestoreReadStats };
-        globalAny.firestoreReadStats = {};
-        globalAny.firestoreMonitorTimeout = null;
+    if (!globalStats.firestoreReadStats[collectionPath]) {
+      globalStats.firestoreReadStats[collectionPath] = { buscas: 0, documentosLidos: 0 };
+    }
+    globalStats.firestoreReadStats[collectionPath].buscas += 1;
+    globalStats.firestoreReadStats[collectionPath].documentosLidos += size;
+    
+    if (!globalStats.firestoreMonitorTimeout) {
+      globalStats.firestoreMonitorTimeout = setTimeout(async () => {
+        const statsToSave = { ...globalStats.firestoreReadStats };
+        globalStats.firestoreReadStats = {};
+        globalStats.firestoreMonitorTimeout = null;
         
         let totalLidos = 0;
         for (const key in statsToSave) {
@@ -83,6 +92,15 @@ if (!isPlaceholder(projectId) && !isPlaceholder(clientEmail) && !isPlaceholder(p
     }
   }
 
+  interface InternalQuery {
+    _queryOptions?: {
+      collectionId?: string;
+      parentPath?: {
+        segments: string[];
+      };
+    };
+  }
+
   const origQueryGet = Query.prototype.get;
   Query.prototype.get = async function (...args) {
     const snap = await origQueryGet.apply(this, args);
@@ -90,10 +108,11 @@ if (!isPlaceholder(projectId) && !isPlaceholder(clientEmail) && !isPlaceholder(p
     
     let path = "query_desconhecida";
     try {
-      if ((this as any)._queryOptions?.collectionId) {
-        path = (this as any)._queryOptions.collectionId;
-      } else if ((this as any)._queryOptions?.parentPath?.segments) {
-        path = (this as any)._queryOptions.parentPath.segments.join('/');
+      const internalQuery = this as unknown as InternalQuery;
+      if (internalQuery._queryOptions?.collectionId) {
+        path = internalQuery._queryOptions.collectionId;
+      } else if (internalQuery._queryOptions?.parentPath?.segments) {
+        path = internalQuery._queryOptions.parentPath.segments.join('/');
       }
     } catch {}
 

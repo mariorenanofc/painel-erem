@@ -25,6 +25,7 @@ export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: F
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentJustify, setCurrentJustify] = useState<JustifyValue>("flex-start");
+  const [selectedJustify, setSelectedJustify] = useState<JustifyValue | null>(null);
   const [score, setScore] = useState(0);
   const isFinishedRef = React.useRef(false);
   const [validated, setValidated] = useState(false);
@@ -94,6 +95,7 @@ export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: F
     setShuffledChallenges(chufs);
     setCurrentIndex(0);
     setCurrentJustify("flex-start");
+    setSelectedJustify(null);
     setScore(0);
     setFeedback("");
     setValidated(false);
@@ -104,12 +106,16 @@ export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: F
   const handleJustifyClick = (val: JustifyValue) => {
     if (validated) return;
     playSound("click");
-    setCurrentJustify(val);
+    setSelectedJustify(val);
   };
 
   const handleValidate = () => {
+    if (!selectedJustify) return;
+    
     const currentC = shuffledChallenges[currentIndex];
-    const isCorrect = currentJustify === currentC.targetJustify;
+    const isCorrect = selectedJustify === currentC.targetJustify;
+    
+    setCurrentJustify(selectedJustify);
     setValidated(true);
 
     if (isCorrect) {
@@ -120,7 +126,7 @@ export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: F
       playSound("error");
       if (perderVida) perderVida();
       setFeedback(`Incorreto. O alinhamento correto é '${currentC.targetJustify}'.`);
-      setCurrentJustify(currentC.targetJustify); // mostra resposta no container
+      setTimeout(() => setCurrentJustify(currentC.targetJustify), 1500); // mostra resposta no container após um tempo
     }
 
     setTimeout(() => {
@@ -128,6 +134,7 @@ export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: F
         const nextIdx = currentIndex + 1;
         setCurrentIndex(nextIdx);
         setCurrentJustify("flex-start");
+        setSelectedJustify(null);
         setValidated(false);
         setFeedback("");
       } else {
@@ -201,7 +208,7 @@ export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: F
               disabled={validated}
               onClick={() => handleJustifyClick(val)}
               className={`py-2.5 px-2 rounded-xl border text-xs font-mono font-bold transition-all active:scale-98 ${
-                currentJustify === val
+                selectedJustify === val
                   ? "bg-indigo-500 border-indigo-400 text-white shadow-lg"
                   : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700"
               }`}
@@ -217,7 +224,7 @@ export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: F
               disabled={validated}
               onClick={() => handleJustifyClick(val)}
               className={`py-2.5 px-2 rounded-xl border text-xs font-mono font-bold transition-all active:scale-98 ${
-                currentJustify === val
+                selectedJustify === val
                   ? "bg-indigo-500 border-indigo-400 text-white shadow-lg"
                   : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700"
               }`}
@@ -236,7 +243,7 @@ export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: F
       )}
 
       <button
-        disabled={validated}
+        disabled={validated || !selectedJustify}
         onClick={handleValidate}
         className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold hover:shadow-lg hover:shadow-indigo-500/20 transition-all text-sm disabled:opacity-40 disabled:pointer-events-none active:scale-98"
       >

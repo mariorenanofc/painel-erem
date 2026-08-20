@@ -41,14 +41,7 @@ export async function POST(request: Request) {
     }
 
     // 2. Calcular XP correspondente (1 XP por 1000 pontos)
-    const xpCalculado = Math.floor(score / 1000);
-    if (xpCalculado <= 0) {
-      return NextResponse.json({ 
-        status: "sucesso", 
-        xpGanho: 0, 
-        mensagem: `Partida concluída! Você fez ${score} pontos. (Precisa de pelo menos 1.000 pontos para ganhar 1 XP)` 
-      });
-    }
+    const xpCalculado = Math.max(0, Math.floor(score / 1000));
 
     // 3. Obter início do dia no fuso horário de São Paulo para verificação do limite diário (25 XP)
     const startOfDayTimestamp = new Date(
@@ -76,8 +69,6 @@ export async function POST(request: Request) {
 
     const LIMITE_VIDAS_DIARIAS = 12;
     
-    // Se o limite de vidas for excedido, nega o ganho de XP mas ainda processa a dedução (se aplicável)
-    // Opcionalmente, podemos apenas zerar o xpCalculado
     if (vidasGastasHoje >= LIMITE_VIDAS_DIARIAS && xpCalculado > 0) {
       return NextResponse.json({ 
         status: "erro", 
@@ -92,11 +83,17 @@ export async function POST(request: Request) {
       });
     }
 
-    const xpAdicionar = Math.min(xpCalculado, 25 - xpGanhoHoje);
-    if (xpAdicionar <= 0) {
+    let xpAdicionar = 0;
+    if (xpCalculado > 0) {
+      xpAdicionar = Math.max(0, Math.min(xpCalculado, 25 - xpGanhoHoje));
+    }
+
+    // Se não há XP a ganhar e nenhuma vida foi perdida, pode apenas retornar sucesso.
+    if (xpAdicionar <= 0 && vidasPerdidas <= 0) {
       return NextResponse.json({ 
-        status: "erro", 
-        mensagem: "Você já atingiu o limite diário de 25 XP com jogos hoje!" 
+        status: "sucesso", 
+        xpGanho: 0, 
+        mensagem: `Partida concluída! Você fez ${score} pontos.` 
       });
     }
 

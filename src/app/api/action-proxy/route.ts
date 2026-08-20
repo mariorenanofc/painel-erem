@@ -1193,6 +1193,7 @@ export async function POST(request: Request) {
             const current = doc.data()?.gabaritoLiberado === true;
             await ref.update({ gabaritoLiberado: !current });
             clearAllPortalCaches();
+            await refreshFirestoreCacheAtividades(dbAdmin);
           }
         }
       }
@@ -1208,6 +1209,7 @@ export async function POST(request: Request) {
           });
           await Promise.all(promises);
           clearAllPortalCaches();
+          await refreshFirestoreCacheAtividades(dbAdmin);
         }
       }
 

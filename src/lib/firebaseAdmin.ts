@@ -1,5 +1,5 @@
 import { getApps, initializeApp, cert } from "firebase-admin/app";
-import { Firestore, getFirestore } from "firebase-admin/firestore";
+import { Firestore, getFirestore, Query, DocumentReference, CollectionReference } from "firebase-admin/firestore";
 
 let dbAdmin: Firestore;
 
@@ -33,6 +33,24 @@ if (!isPlaceholder(projectId) && !isPlaceholder(clientEmail) && !isPlaceholder(p
     });
   }
   dbAdmin = getFirestore();
+
+  // === INJEÇÃO DO MONITOR DE LEITURAS (MONKEY PATCH) ===
+  const origQueryGet = Query.prototype.get;
+  Query.prototype.get = async function (...args) {
+    const snap = await origQueryGet.apply(this, args);
+    const size = snap.size || 0;
+    console.log(`[FIRESTORE MONITOR] 🔍 Query retornou ${size} leitura(s)`);
+    return snap;
+  };
+
+  const origDocGet = DocumentReference.prototype.get;
+  DocumentReference.prototype.get = async function (...args) {
+    const snap = await origDocGet.apply(this, args);
+    const size = snap.exists ? 1 : 0;
+    console.log(`[FIRESTORE MONITOR] 📄 Doc (${this.path}) retornou ${size} leitura(s)`);
+    return snap;
+  };
+
 } else {
   // Durante o build ou se as chaves não forem configuradas, evitamos quebrar o processo com erros do OpenSSL
   dbAdmin = new Proxy({}, {

@@ -330,15 +330,12 @@ export async function GET(request: Request) {
             });
           }
           datesArray = Array.from(tempDatesSet);
-          
-          // Salva no metadado para garantir que a query pesada não rode novamente
-          await metadataRef.set({
-            [turmaDoAluno]: datesArray
-          }, { merge: true });
         }
 
         cachedDates = datesArray;
-        setCachedClassDates(turmaDoAluno, cachedDates);
+        if (cachedDates) {
+          setCachedClassDates(turmaDoAluno, cachedDates);
+        }
       }
       cachedDates.forEach(d => diasComAulaSet.add(d));
     }
@@ -462,7 +459,7 @@ export async function GET(request: Request) {
           }
         }
 
-        const isGabaritoLiberado = ativ.gabaritoLiberado === true;
+        const isGabaritoLiberado = ativ.gabaritoLiberado === true || String(ativ.gabaritoLiberado).toLowerCase() === "true";
         dadosRetorno.atividades.push({
           id: idAtiv,
           titulo: ativ.titulo || "",

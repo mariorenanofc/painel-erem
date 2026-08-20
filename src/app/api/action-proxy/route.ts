@@ -312,6 +312,18 @@ export async function POST(request: Request) {
       if (cachedAnalytics) {
         result = cachedAnalytics;
       } else {
+        // Tenta buscar do Firestore cache (válido por 30 minutos)
+        const cacheDoc = await dbAdmin.collection("cache").doc("analytics_geral").get();
+        const agora = Date.now();
+        if (cacheDoc.exists) {
+          const cacheData = cacheDoc.data();
+          if (cacheData && cacheData.timestamp && (agora - cacheData.timestamp < 30 * 60 * 1000) && !payload.forceRefresh) {
+            setCachedAnalyticsGeral(cacheData.result);
+            result = cacheData.result;
+            return NextResponse.json(result);
+          }
+        }
+
         const alunosSnap = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
         const entregasSnap = await dbAdmin.collection("entregas").get();
         const freqSnap = await dbAdmin.collection("frequencia").get();
@@ -392,6 +404,12 @@ export async function POST(request: Request) {
       radarRisco.sort((a, b) => a.taxaPresenca - b.taxaPresenca);
       result = { status: "sucesso", totalAlunos, totalXpEscola, volumePix: 0, alunos: listaAlunos, radarRisco };
       setCachedAnalyticsGeral(result);
+      
+      // Salva no Firestore cache (sem esperar para não travar a resposta)
+      dbAdmin.collection("cache").doc("analytics_geral").set({
+        timestamp: Date.now(),
+        result
+      }).catch(err => console.error("Erro ao salvar cache analytics", err));
       }
     } else if (requestAction === "buscar_ficha_360") {
       const mat = String(payload.matricula || "").trim();
@@ -406,9 +424,15 @@ export async function POST(request: Request) {
         if (!cachedDates) {
           const metadataDoc = await dbAdmin.collection("metadata").doc("dias_aula_turmas").get();
           const metadata = metadataDoc.exists ? metadataDoc.data() || {} : {};
-          cachedDates = metadata[turma] as string[] || [];
+          if (Array.isArray(metadata[turma])) {
+             cachedDates = metadata[turma];
+          } else if (metadata.turmas && metadata.turmas[turma] && metadata.turmas[turma].dias_aula) {
+             cachedDates = metadata.turmas[turma].dias_aula;
+          } else {
+             cachedDates = [];
+          }
         }
-        const totalAulas = cachedDates.length;
+        const totalAulas = (cachedDates as string[]).length;
         let totalPresencas = 0;
         let totalFaltas = 0;
 
@@ -508,9 +532,15 @@ export async function POST(request: Request) {
           .where(FieldPath.documentId(), "<=", `${idAtiv}-\uf8ff`)
           .get();
 
-        const alunosSnap = await dbAdmin.collection("alunos").get();
+        let alunosCache = getCachedAdminAlunos() as Array<{ matricula: string, nome: string }> | null;
+        if (!alunosCache) {
+          const snapshot = await dbAdmin.collection("alunos").get();
+          alunosCache = snapshot.docs.map(doc => ({ matricula: doc.id, nome: String(doc.data().nome || "") }));
+          // O setCachedAdminAlunos não tem a tipagem exata exportada aqui, mas garantimos que funciona
+          setCachedAdminAlunos(alunosCache as any);
+        }
         const alunosMap: Record<string, string> = {};
-        alunosSnap.forEach(doc => { alunosMap[doc.id] = doc.data().nome || "Aluno"; });
+        alunosCache.forEach(a => { alunosMap[a.matricula] = a.nome || "Aluno"; });
 
         const entregas: Array<{ idEntrega: string, matricula: string, nomeAluno: string, resposta: string, status: string, xpGanho: number, feedback: string }> = [];
         entregasSnap.forEach(doc => {

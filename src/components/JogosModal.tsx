@@ -210,6 +210,7 @@ export default function JogosModal({
                       }}
                       playSound={gameProps.playSound}
                       soundEnabled={gameProps.soundEnabled}
+                      perderVida={gameProps.perderVida}
                     />
                   );
                 }}

@@ -84,10 +84,10 @@ export default function JogosLayout({
   // Controle de Vidas
   const [vidasGlobais, setVidasGlobais] = useState<number | null>(null);
   const [vidasLocais, setVidasLocais] = useState<number>(3);
-  const [vidasPerdidasNaPartida, setVidasPerdidasNaPartida] = useState<number>(0);
   
   const tempoInicioRef = useRef<number>(0);
   const isSubmittingRef = useRef(false);
+  const vidasPerdidasRef = useRef<number>(0);
 
   useEffect(() => {
     tempoInicioRef.current = Date.now();
@@ -142,7 +142,7 @@ export default function JogosLayout({
         scoreFinal,
         durationSeconds,
         tempoInicioRef.current,
-        vidasPerdidasNaPartida
+        vidasPerdidasRef.current
       );
       
       if (res.status === "sucesso") {
@@ -164,7 +164,7 @@ export default function JogosLayout({
   const perderVida = () => {
     if (vidasLocais > 0) {
       setVidasLocais(prev => prev - 1);
-      setVidasPerdidasNaPartida(prev => prev + 1);
+      vidasPerdidasRef.current += 1;
       handlePlaySound("error");
       
       // Se zerar as 3 vidas locais da partida, Game Over forçado com 0 pontos
@@ -183,7 +183,7 @@ export default function JogosLayout({
     setXpGanho(0);
     setSaveMessage("");
     setVidasLocais(3);
-    setVidasPerdidasNaPartida(0);
+    vidasPerdidasRef.current = 0;
     handlePlaySound("click");
     
     // Atualiza vidas globais após reinício

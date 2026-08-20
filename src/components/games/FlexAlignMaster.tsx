@@ -1,4 +1,6 @@
 "use client";
+import { fisherYatesShuffle } from "@/src/lib/fisherYates";
+
 
 import React, { useState, useRef } from "react";
 import { Sparkles, LayoutGrid } from "lucide-react";
@@ -6,6 +8,7 @@ import { Sparkles, LayoutGrid } from "lucide-react";
 interface FlexAlignMasterProps {
   onGameOver: (score: number, durationSeconds: number) => void;
   playSound: (type: "click" | "success" | "error") => void;
+  perderVida?: () => void;
   soundEnabled: boolean;
 }
 
@@ -18,10 +21,7 @@ interface Challenge {
   targetLayout: React.ReactNode;
 }
 
-export default function FlexAlignMaster({
-  onGameOver,
-  playSound
-}: FlexAlignMasterProps) {
+export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: FlexAlignMasterProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [currentJustify, setCurrentJustify] = useState<JustifyValue>("flex-start");
@@ -90,7 +90,7 @@ export default function FlexAlignMaster({
     if (isFinishedRef) isFinishedRef.current = false;
     playSound("click");
     // Embaralhar desafios
-    const chufs = [...CHALLENGES].sort(() => 0.5 - Math.random());
+    const chufs = fisherYatesShuffle([...CHALLENGES]);
     setShuffledChallenges(chufs);
     setCurrentIndex(0);
     setCurrentJustify("flex-start");
@@ -118,6 +118,7 @@ export default function FlexAlignMaster({
       setFeedback("Alinhamento Flexbox perfeito!");
     } else {
       playSound("error");
+      if (perderVida) perderVida();
       setFeedback(`Incorreto. O alinhamento correto é '${currentC.targetJustify}'.`);
       setCurrentJustify(currentC.targetJustify); // mostra resposta no container
     }

@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiAluno } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
-import { Volume2, VolumeX, X, Trophy, RefreshCw, Zap, Shield } from "lucide-react";
+import { Volume2, VolumeX, X, Trophy, RefreshCw, Zap, Shield, Heart, HeartCrack } from "lucide-react";
 
 // Sintetizador Chiptune nativo para efeitos retro de áudio
 export function playChiptuneSound(type: "click" | "success" | "error") {
@@ -61,6 +61,7 @@ interface JogosLayoutProps {
     onGameOver: (score: number, durationSeconds: number) => void; 
     playSound: (type: "click" | "success" | "error") => void;
     soundEnabled: boolean;
+    perderVida: () => void;
   }) => React.ReactNode;
 }
 
@@ -79,12 +80,24 @@ export default function JogosLayout({
   const [saving, setSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
   const [soundEnabled, setSoundEnabled] = useState(true);
+  
+  // Controle de Vidas
+  const [vidasGlobais, setVidasGlobais] = useState<number | null>(null);
+  const [vidasLocais, setVidasLocais] = useState<number>(3);
+  const [vidasPerdidasNaPartida, setVidasPerdidasNaPartida] = useState<number>(0);
+  
   const tempoInicioRef = useRef<number>(0);
   const isSubmittingRef = useRef(false);
 
   useEffect(() => {
     tempoInicioRef.current = Date.now();
-  }, []);
+    // Busca as vidas globais diárias
+    apiAluno.buscarJogosStatus(aluno.matricula).then(res => {
+      if (res.status === "sucesso") {
+        setVidasGlobais(res.vidasRestantes ?? 12);
+      }
+    }).catch(() => {});
+  }, [aluno.matricula]);
 
   // 1. Bloquear copiar, colar, cortar e menu de contexto (Botão direito)
   useEffect(() => {
@@ -109,13 +122,15 @@ export default function JogosLayout({
     }
   };
 
-  const handleGameOver = async (finalScore: number, durationSeconds: number) => {
+  const handleGameOver = async (finalScore: number, durationSeconds: number, forcarDerrota: boolean = false) => {
     if (isSubmittingRef.current) return;
     isSubmittingRef.current = true;
 
-    setScore(finalScore);
+    const scoreFinal = forcarDerrota ? 0 : finalScore;
+
+    setScore(scoreFinal);
     setGameState("gameover");
-    handlePlaySound("success");
+    handlePlaySound(scoreFinal > 0 ? "success" : "error");
     
     setSaving(true);
     setSaveMessage("Processando pontuação com segurança...");
@@ -124,9 +139,10 @@ export default function JogosLayout({
       const res = await apiAluno.salvarPontuacaoJogo(
         aluno.matricula,
         tipoJogo,
-        finalScore,
+        scoreFinal,
         durationSeconds,
-        tempoInicioRef.current
+        tempoInicioRef.current,
+        vidasPerdidasNaPartida
       );
       
       if (res.status === "sucesso") {
@@ -135,13 +151,27 @@ export default function JogosLayout({
         toast(res.mensagem || "Pontuação enviada com sucesso!", "success");
       } else {
         setSaveMessage(res.mensagem || "Não foi possível resgatar XP nesta partida.");
-        toast(res.mensagem || "Limite diário atingido ou erro de pontuação.", "warning");
+        toast(res.mensagem || "Erro ao salvar pontuação.", "warning");
       }
     } catch {
       setSaveMessage("Erro de conexão com o servidor ao salvar score.");
       toast("Falha na rede ao salvar pontuação.", "error");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const perderVida = () => {
+    if (vidasLocais > 0) {
+      setVidasLocais(prev => prev - 1);
+      setVidasPerdidasNaPartida(prev => prev + 1);
+      handlePlaySound("error");
+      
+      // Se zerar as 3 vidas locais da partida, Game Over forçado com 0 pontos
+      if (vidasLocais === 1) { // Estava em 1 e acabou de virar 0
+        const duracao = Math.floor((Date.now() - tempoInicioRef.current) / 1000);
+        setTimeout(() => handleGameOver(0, duracao, true), 500);
+      }
     }
   };
 
@@ -152,7 +182,16 @@ export default function JogosLayout({
     setScore(0);
     setXpGanho(0);
     setSaveMessage("");
+    setVidasLocais(3);
+    setVidasPerdidasNaPartida(0);
     handlePlaySound("click");
+    
+    // Atualiza vidas globais após reinício
+    apiAluno.buscarJogosStatus(aluno.matricula).then(res => {
+      if (res.status === "sucesso") {
+        setVidasGlobais(res.vidasRestantes ?? 12);
+      }
+    }).catch(() => {});
   };
 
   // Marca d'água visível, porém ajustada para não quebrar a leitura
@@ -185,6 +224,25 @@ export default function JogosLayout({
         </div>
         
         <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
+          {/* Corações Locais (Vidas da Partida) */}
+          {gameState === "playing" && (
+            <div className="flex items-center gap-1 bg-slate-900 px-3 py-2 rounded-xl border border-slate-800">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <motion.div key={i} animate={vidasLocais > i ? {} : { scale: [1, 1.5, 0], opacity: 0 }}>
+                  {vidasLocais > i ? (
+                    <Heart className="w-4 h-4 fill-red-500 text-red-500 drop-shadow-[0_0_5px_rgba(239,68,68,0.5)]" />
+                  ) : (
+                    <HeartCrack className="w-4 h-4 text-slate-700 absolute top-2" />
+                  )}
+                </motion.div>
+              ))}
+              <div className="w-px h-4 bg-slate-800 mx-1"></div>
+              <span className="text-xs text-slate-400 font-bold" title="Vidas Globais Restantes Hoje">
+                {vidasGlobais !== null ? `${vidasGlobais}/12` : "..."}
+              </span>
+            </div>
+          )}
+
           {/* Controle de Som */}
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}
@@ -221,7 +279,20 @@ export default function JogosLayout({
               exit={{ opacity: 0, scale: 0.98 }}
               className="w-full h-full flex flex-col"
             >
-              {children({ onGameOver: handleGameOver, playSound: handlePlaySound, soundEnabled })}
+              {vidasGlobais !== null && vidasGlobais < 3 && gameState === "playing" ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center bg-slate-900/80 rounded-2xl border border-slate-800">
+                  <HeartCrack className="w-12 h-12 text-red-500 mb-4" />
+                  <h3 className="text-xl font-bold text-white mb-2">Sem Corações Suficientes</h3>
+                  <p className="text-slate-400 max-w-sm mb-6">
+                    Você precisa de pelo menos 3 corações diários para iniciar uma nova partida. Você tem {vidasGlobais}. Volte amanhã!
+                  </p>
+                  <button onClick={onClose} className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-all">
+                    Voltar para o Menu
+                  </button>
+                </div>
+              ) : (
+                children({ onGameOver: handleGameOver, playSound: handlePlaySound, soundEnabled, perderVida })
+              )}
             </motion.div>
           ) : (
             <motion.div

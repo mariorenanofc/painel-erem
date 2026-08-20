@@ -1,4 +1,6 @@
 "use client";
+import { fisherYatesShuffle } from "@/src/lib/fisherYates";
+
 
 import React, { useState, useRef } from "react";
 import { Sparkles, Layout } from "lucide-react";
@@ -6,6 +8,7 @@ import { Sparkles, Layout } from "lucide-react";
 interface HTMLStructurerProps {
   onGameOver: (score: number, durationSeconds: number) => void;
   playSound: (type: "click" | "success" | "error") => void;
+  perderVida?: () => void;
   soundEnabled: boolean;
 }
 
@@ -33,10 +36,7 @@ const QUESTIONS: StructQuestion[] = [
   }
 ];
 
-export default function HTMLStructurer({
-  onGameOver,
-  playSound
-}: HTMLStructurerProps) {
+export default function HTMLStructurer({ onGameOver, playSound, perderVida }: HTMLStructurerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [shuffledQuestions, setShuffledQuestions] = useState<StructQuestion[]>([]);
@@ -53,7 +53,7 @@ export default function HTMLStructurer({
     if (isFinishedRef) isFinishedRef.current = false;
     playSound("click");
     // Selecionar 3 aleatórias
-    const questions = [...QUESTIONS].sort(() => 0.5 - Math.random()).slice(0, 3);
+    const questions = fisherYatesShuffle([...QUESTIONS]).slice(0, 3);
     setShuffledQuestions(questions);
     setCurrentIndex(0);
     setScore(0);
@@ -67,7 +67,7 @@ export default function HTMLStructurer({
 
   const setupQuestion = (q: StructQuestion) => {
     // Embaralhar blocos
-    const shuf = [...q.correctSequence].sort(() => 0.5 - Math.random());
+    const shuf = fisherYatesShuffle([...q.correctSequence]);
     setAvailableBlocks(shuf);
     setPlacedBlocks([]);
     setValidated(false);
@@ -93,6 +93,7 @@ export default function HTMLStructurer({
     
     if (placedBlocks.length < currentQ.correctSequence.length) {
       playSound("error");
+      if (perderVida) perderVida();
       setFeedback("Selecione todas as tags para montar o quebra-cabeça HTML!");
       return;
     }
@@ -106,6 +107,7 @@ export default function HTMLStructurer({
       setFeedback("HTML estruturado corretamente!");
     } else {
       playSound("error");
+      if (perderVida) perderVida();
       setFeedback("Incorreto. A estrutura HTML semântica foi exibida.");
       setPlacedBlocks(currentQ.correctSequence); // gabarito
     }

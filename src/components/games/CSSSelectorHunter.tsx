@@ -1,4 +1,6 @@
 "use client";
+import { fisherYatesShuffle } from "@/src/lib/fisherYates";
+
 
 import React, { useState, useRef } from "react";
 import { Sparkles } from "lucide-react";
@@ -6,6 +8,7 @@ import { Sparkles } from "lucide-react";
 interface CSSSelectorHunterProps {
   onGameOver: (score: number, durationSeconds: number) => void;
   playSound: (type: "click" | "success" | "error") => void;
+  perderVida?: () => void;
   soundEnabled: boolean;
 }
 
@@ -59,10 +62,7 @@ function generateCSSQuestion(): Question {
   return { html, targetDesc, correct, options };
 }
 
-export default function CSSSelectorHunter({
-  onGameOver,
-  playSound
-}: CSSSelectorHunterProps) {
+export default function CSSSelectorHunter({ onGameOver, playSound, perderVida }: CSSSelectorHunterProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
@@ -92,7 +92,7 @@ export default function CSSSelectorHunter({
 
   const setupQuestion = (q: Question) => {
     // Embaralhar as alternativas
-    const opts = [...q.options].sort(() => 0.5 - Math.random());
+    const opts = fisherYatesShuffle([...q.options]);
     setCurrentOptions(opts);
   };
 
@@ -106,6 +106,7 @@ export default function CSSSelectorHunter({
       setScore((prev) => prev + 1000); // 1000 pontos por acerto
     } else {
       playSound("error");
+      if (perderVida) perderVida();
     }
 
     if (currentQuestionIndex < shuffledQuestions.length - 1) {

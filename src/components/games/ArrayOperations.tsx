@@ -1,4 +1,6 @@
 "use client";
+import { fisherYatesShuffle } from "@/src/lib/fisherYates";
+
 
 import React, { useState, useRef } from "react";
 import { Sparkles, HelpCircle } from "lucide-react";
@@ -6,6 +8,7 @@ import { Sparkles, HelpCircle } from "lucide-react";
 interface ArrayOperationsProps {
   onGameOver: (score: number, durationSeconds: number) => void;
   playSound: (type: "click" | "success" | "error") => void;
+  perderVida?: () => void;
   soundEnabled: boolean;
 }
 
@@ -107,10 +110,7 @@ function generateArrayQuestion(): Question {
   };
 }
 
-export default function ArrayOperations({
-  onGameOver,
-  playSound
-}: ArrayOperationsProps) {
+export default function ArrayOperations({ onGameOver, playSound, perderVida }: ArrayOperationsProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
@@ -137,7 +137,7 @@ export default function ArrayOperations({
   };
 
   const setupQuestion = (q: Question) => {
-    const opts = [...q.options].sort(() => 0.5 - Math.random());
+    const opts = fisherYatesShuffle([...q.options]);
     setCurrentOptions(opts);
   };
 
@@ -151,6 +151,7 @@ export default function ArrayOperations({
       setScore((prev) => prev + 1000); // 1000 por acerto
     } else {
       playSound("error");
+      if (perderVida) perderVida();
     }
 
     if (currentIndex < shuffledQuestions.length - 1) {

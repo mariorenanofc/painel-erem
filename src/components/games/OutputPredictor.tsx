@@ -1,4 +1,6 @@
 "use client";
+import { fisherYatesShuffle } from "@/src/lib/fisherYates";
+
 
 import React, { useState, useRef } from "react";
 import { Sparkles, Terminal } from "lucide-react";
@@ -6,6 +8,7 @@ import { Sparkles, Terminal } from "lucide-react";
 interface OutputPredictorProps {
   onGameOver: (score: number, durationSeconds: number) => void;
   playSound: (type: "click" | "success" | "error") => void;
+  perderVida?: () => void;
   soundEnabled: boolean;
 }
 
@@ -104,10 +107,7 @@ function generateOutputQuestion(): Question {
   };
 }
 
-export default function OutputPredictor({
-  onGameOver,
-  playSound
-}: OutputPredictorProps) {
+export default function OutputPredictor({ onGameOver, playSound, perderVida }: OutputPredictorProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
@@ -134,7 +134,7 @@ export default function OutputPredictor({
   };
 
   const setupQuestion = (q: Question) => {
-    const opts = [...q.options].sort(() => 0.5 - Math.random());
+    const opts = fisherYatesShuffle([...q.options]);
     setCurrentOptions(opts);
   };
 
@@ -148,6 +148,7 @@ export default function OutputPredictor({
       setScore((prev) => prev + 1000); // 1000 pontos por acerto
     } else {
       playSound("error");
+      if (perderVida) perderVida();
     }
 
     if (currentIndex < shuffledQuestions.length - 1) {

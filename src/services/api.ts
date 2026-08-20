@@ -221,12 +221,13 @@ export const apiAluno = {
     tipoJogo: string,
     score: number,
     duracaoPartida: number,
-    tempoInicio: number
+    tempoInicio: number,
+    vidasPerdidas: number = 0
   ) => {
     const res = await fetch("/api/alunos/jogos/salvar-pontuacao", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ matricula, tipoJogo, score, duracaoPartida, tempoInicio })
+      body: JSON.stringify({ matricula, tipoJogo, score, duracaoPartida, tempoInicio, vidasPerdidas })
     });
     return res.json();
   },

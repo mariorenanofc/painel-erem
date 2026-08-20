@@ -6,6 +6,7 @@ import { Sparkles, HelpCircle } from "lucide-react";
 interface LogicGatesSpeedrunProps {
   onGameOver: (score: number, durationSeconds: number) => void;
   playSound: (type: "click" | "success" | "error") => void;
+  perderVida?: () => void;
   soundEnabled: boolean;
 }
 
@@ -57,10 +58,7 @@ function generateLogicQuestion(): Question {
   return { statement, lang, correctAnswer };
 }
 
-export default function LogicGatesSpeedrun({
-  onGameOver,
-  playSound
-}: LogicGatesSpeedrunProps) {
+export default function LogicGatesSpeedrun({ onGameOver, playSound, perderVida }: LogicGatesSpeedrunProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [shuffledQuestions, setShuffledQuestions] = useState<Question[]>([]);
@@ -117,6 +115,7 @@ export default function LogicGatesSpeedrun({
       setScore((prev) => prev + 1000); // 1000 pontos por acerto
     } else {
       playSound("error");
+      if (perderVida) perderVida();
     }
 
     if (currentIndex < shuffledQuestions.length - 1) {

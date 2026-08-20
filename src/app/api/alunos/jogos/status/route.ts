@@ -20,17 +20,28 @@ export async function GET(request: Request) {
       .get();
 
     let xpGanhoHoje = 0;
+    let vidasGastasHoje = 0;
+
     entregasSnap.forEach(doc => {
       const data = doc.data();
-      if (data.idAtividade === "JOGOS-EDUCATIVOS" && Number(data.timestamp || 0) >= startOfDayTimestamp) {
-        xpGanhoHoje += Number(data.xpGanho) || 0;
+      if (Number(data.timestamp || 0) >= startOfDayTimestamp) {
+        if (data.idAtividade === "JOGOS-EDUCATIVOS") {
+          xpGanhoHoje += Number(data.xpGanho) || 0;
+        } else if (data.idAtividade === "JOGOS-VIDAS-GASTAS") {
+          vidasGastasHoje += Number(data.quantidade) || 0;
+        }
       }
     });
+
+    const LIMITE_VIDAS_DIARIAS = 12;
+    const vidasRestantes = Math.max(0, LIMITE_VIDAS_DIARIAS - vidasGastasHoje);
 
     return NextResponse.json({
       status: "sucesso",
       xpGanhoHoje,
-      limiteDiario: 25
+      limiteDiario: 25,
+      vidasRestantes,
+      vidasGastasHoje
     });
 
   } catch (error: unknown) {

@@ -1,4 +1,6 @@
 "use client";
+import { fisherYatesShuffle } from "@/src/lib/fisherYates";
+
 
 import React, { useState, useEffect, useRef } from "react";
 import { Play, Sparkles } from "lucide-react";
@@ -6,6 +8,7 @@ import { Play, Sparkles } from "lucide-react";
 interface CodingSpeedrunProps {
   onGameOver: (score: number, durationSeconds: number) => void;
   playSound: (type: "click" | "success" | "error") => void;
+  perderVida?: () => void;
   soundEnabled: boolean;
 }
 
@@ -22,10 +25,7 @@ const SNIPPETS = [
   { code: "const [x, setX] = useState(0);", lang: "JavaScript" }
 ];
 
-export default function CodingSpeedrun({
-  onGameOver,
-  playSound
-}: CodingSpeedrunProps) {
+export default function CodingSpeedrun({ onGameOver, playSound, perderVida }: CodingSpeedrunProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentSnippetIndex, setCurrentSnippetIndex] = useState(0);
   const [currentCodeList, setCurrentCodeList] = useState<typeof SNIPPETS>([]);
@@ -45,7 +45,7 @@ export default function CodingSpeedrun({
     playSound("click");
     
     // Embaralhar e selecionar 5
-    const shuffled = [...SNIPPETS].sort(() => 0.5 - Math.random()).slice(0, 5);
+    const shuffled = fisherYatesShuffle([...SNIPPETS]).slice(0, 5);
     setCurrentCodeList(shuffled);
     setCurrentSnippetIndex(0);
     setTypedText("");
@@ -101,6 +101,7 @@ export default function CodingSpeedrun({
     if (lastCharIndex >= 0 && inputVal[lastCharIndex] !== currentCode[lastCharIndex]) {
       setErrorsCount((prev) => prev + 1);
       playSound("error");
+      if (perderVida) perderVida();
     } else {
       playSound("click");
     }

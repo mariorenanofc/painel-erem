@@ -1,4 +1,6 @@
 "use client";
+import { fisherYatesShuffle } from "@/src/lib/fisherYates";
+
 
 import React, { useState, useRef } from "react";
 import { Sparkles, MoveRight, HelpCircle } from "lucide-react";
@@ -6,6 +8,7 @@ import { Sparkles, MoveRight, HelpCircle } from "lucide-react";
 interface AlgorithmStepBuilderProps {
   onGameOver: (score: number, durationSeconds: number) => void;
   playSound: (type: "click" | "success" | "error") => void;
+  perderVida?: () => void;
   soundEnabled: boolean;
 }
 
@@ -53,10 +56,7 @@ const QUESTIONS: AlgoQuestion[] = [
   }
 ];
 
-export default function AlgorithmStepBuilder({
-  onGameOver,
-  playSound
-}: AlgorithmStepBuilderProps) {
+export default function AlgorithmStepBuilder({ onGameOver, playSound, perderVida }: AlgorithmStepBuilderProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [shuffledQuestions, setShuffledQuestions] = useState<AlgoQuestion[]>([]);
@@ -73,7 +73,7 @@ export default function AlgorithmStepBuilder({
     if (isFinishedRef) isFinishedRef.current = false;
     playSound("click");
     // Selecionar 3 perguntas aleatórias
-    const questions = [...QUESTIONS].sort(() => 0.5 - Math.random()).slice(0, 3);
+    const questions = fisherYatesShuffle([...QUESTIONS]).slice(0, 3);
     setShuffledQuestions(questions);
     setCurrentIndex(0);
     setScore(0);
@@ -87,7 +87,7 @@ export default function AlgorithmStepBuilder({
 
   const setupQuestion = (q: AlgoQuestion) => {
     // Embaralhar os blocos
-    const shuf = [...q.steps].sort(() => 0.5 - Math.random());
+    const shuf = fisherYatesShuffle([...q.steps]);
     setAvailableSteps(shuf);
     setPlacedSteps([]);
     setValidated(false);
@@ -114,6 +114,7 @@ export default function AlgorithmStepBuilder({
     // Verificar se todos os blocos foram organizados
     if (placedSteps.length < currentQ.steps.length) {
       playSound("error");
+      if (perderVida) perderVida();
       setFeedback("Você precisa encaixar todos os blocos do fluxograma primeiro!");
       return;
     }
@@ -127,6 +128,7 @@ export default function AlgorithmStepBuilder({
       setFeedback("Excelente! A lógica está 100% correta.");
     } else {
       playSound("error");
+      if (perderVida) perderVida();
       setFeedback("Incorreto. A ordem correta das etapas foi restaurada.");
       setPlacedSteps(currentQ.steps); // Mostra a ordem correta como gabarito
     }

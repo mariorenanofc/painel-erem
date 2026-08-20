@@ -6,6 +6,7 @@ import { Sparkles, Bug } from "lucide-react";
 interface JSBugHunterProps {
   onGameOver: (score: number, durationSeconds: number) => void;
   playSound: (type: "click" | "success" | "error") => void;
+  perderVida?: () => void;
   soundEnabled: boolean;
 }
 
@@ -111,10 +112,7 @@ function generateBugQuestion(): BugQuestion {
   }
 }
 
-export default function JSBugHunter({
-  onGameOver,
-  playSound
-}: JSBugHunterProps) {
+export default function JSBugHunter({ onGameOver, playSound, perderVida }: JSBugHunterProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [shuffledQuestions, setShuffledQuestions] = useState<BugQuestion[]>([]);
@@ -156,6 +154,7 @@ export default function JSBugHunter({
       setFeedbackMsg("Correto! " + currentQ.explanation);
     } else {
       playSound("error");
+      if (perderVida) perderVida();
       setFeedbackMsg("Incorreto. A linha com erro era a " + (currentQ.errorLineIndex + 1) + ". " + currentQ.explanation);
     }
 

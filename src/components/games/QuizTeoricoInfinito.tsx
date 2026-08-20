@@ -3,11 +3,13 @@
 import React, { useState, useRef } from "react";
 import { HelpCircle, BrainCircuit } from "lucide-react";
 import perguntasBanco from "./perguntas-banco.json";
+import { fisherYatesShuffle } from "@/src/lib/fisherYates";
 
 interface QuizTeoricoProps {
   onGameOver: (score: number, durationSeconds: number) => void;
   playSound: (type: "click" | "success" | "error") => void;
   soundEnabled: boolean;
+  perderVida?: () => void;
 }
 
 interface Question {
@@ -20,7 +22,8 @@ interface Question {
 
 export default function QuizTeoricoInfinito({
   onGameOver,
-  playSound
+  playSound,
+  perderVida
 }: QuizTeoricoProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -34,9 +37,9 @@ export default function QuizTeoricoInfinito({
     if (isFinishedRef) isFinishedRef.current = false;
     playSound("click");
     
-    // Sortear 10 perguntas aleatórias do banco garantindo textos base únicos
+    // Sortear 10 perguntas aleatórias do banco usando Fisher-Yates
     const allQ = perguntasBanco.questions;
-    const shuffled = [...allQ].sort(() => 0.5 - Math.random());
+    const shuffled = fisherYatesShuffle(allQ);
     
     const uniqueQuestions: Question[] = [];
     const seenTexts = new Set<string>();
@@ -46,8 +49,12 @@ export default function QuizTeoricoInfinito({
       const baseText = q.question.replace(/\s*\(Var \d+\)/i, "").trim().toLowerCase();
       if (!seenTexts.has(baseText)) {
         seenTexts.add(baseText);
-        // Ocultar a variação no texto final exibido para o aluno
-        const cleanQuestion = { ...q, question: q.question.replace(/\s*\(Var \d+\)/i, "") };
+        // Ocultar a variação e embaralhar as alternativas com Fisher-Yates
+        const cleanQuestion = { 
+          ...q, 
+          question: q.question.replace(/\s*\(Var \d+\)/i, ""),
+          options: fisherYatesShuffle([...q.options])
+        };
         uniqueQuestions.push(cleanQuestion as Question);
       }
       if (uniqueQuestions.length === 10) break;
@@ -69,7 +76,7 @@ export default function QuizTeoricoInfinito({
       playSound("success");
       setScore((prev) => prev + 1000); // 1000 pontos por acerto
     } else {
-      playSound("error");
+      if (perderVida) perderVida();
     }
 
     if (currentIndex < shuffledQuestions.length - 1) {

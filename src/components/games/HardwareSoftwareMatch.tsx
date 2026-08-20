@@ -1,4 +1,6 @@
 "use client";
+import { fisherYatesShuffle } from "@/src/lib/fisherYates";
+
 
 import React, { useState, useRef } from "react";
 import { Sparkles, Cpu, HardDrive, Layout, Monitor } from "lucide-react";
@@ -6,6 +8,7 @@ import { Sparkles, Cpu, HardDrive, Layout, Monitor } from "lucide-react";
 interface HardwareSoftwareMatchProps {
   onGameOver: (score: number, durationSeconds: number) => void;
   playSound: (type: "click" | "success" | "error") => void;
+  perderVida?: () => void;
   soundEnabled: boolean;
 }
 
@@ -76,10 +79,7 @@ const ITEMS: Item[] = [
   { name: "Spotify", category: "software_app" }
 ];
 
-export default function HardwareSoftwareMatch({
-  onGameOver,
-  playSound
-}: HardwareSoftwareMatchProps) {
+export default function HardwareSoftwareMatch({ onGameOver, playSound, perderVida }: HardwareSoftwareMatchProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [shuffledItems, setShuffledItems] = useState<Item[]>([]);
@@ -92,7 +92,7 @@ export default function HardwareSoftwareMatch({
     if (isFinishedRef) isFinishedRef.current = false;
     playSound("click");
     // Embaralhar e selecionar 10 itens
-    const items = [...ITEMS].sort(() => 0.5 - Math.random()).slice(0, 10);
+    const items = fisherYatesShuffle([...ITEMS]).slice(0, 10);
     setShuffledItems(items);
     setCurrentIndex(0);
     setScore(0);
@@ -110,6 +110,7 @@ export default function HardwareSoftwareMatch({
       setScore((prev) => prev + 1000); // 1000 pontos por acerto
     } else {
       playSound("error");
+      if (perderVida) perderVida();
     }
 
     if (currentIndex < shuffledItems.length - 1) {

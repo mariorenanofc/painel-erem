@@ -13,6 +13,7 @@ export async function POST(request: Request) {
     const score = Number(body.score) || 0;
     const duracaoPartida = Number(body.duracaoPartida) || 0;
     const tempoInicio = Number(body.tempoInicio) || 0;
+    const vidasPerdidas = Number(body.vidasPerdidas) || 0;
 
     if (!matricula || !tipoJogo || score < 0 || duracaoPartida <= 0 || !tempoInicio) {
       return NextResponse.json({ status: "erro", mensagem: "Parâmetros inválidos." }, { status: 400 });
@@ -54,20 +55,37 @@ export async function POST(request: Request) {
       new Date().toLocaleDateString("en-US", { timeZone: "America/Sao_Paulo" })
     ).getTime();
 
-    // Consultar XP de jogos ganho hoje
+    // Consultar XP e Vidas Gastas hoje
     const entregasSnap = await dbAdmin.collection("entregas")
       .where("matricula", "==", matricula)
       .get();
 
     let xpGanhoHoje = 0;
+    let vidasGastasHoje = 0;
+
     entregasSnap.forEach(doc => {
       const data = doc.data();
-      if (data.idAtividade === "JOGOS-EDUCATIVOS" && Number(data.timestamp || 0) >= startOfDayTimestamp) {
-        xpGanhoHoje += Number(data.xpGanho) || 0;
+      if (Number(data.timestamp || 0) >= startOfDayTimestamp) {
+        if (data.idAtividade === "JOGOS-EDUCATIVOS") {
+          xpGanhoHoje += Number(data.xpGanho) || 0;
+        } else if (data.idAtividade === "JOGOS-VIDAS-GASTAS") {
+          vidasGastasHoje += Number(data.quantidade) || 0;
+        }
       }
     });
 
-    if (xpGanhoHoje >= 25) {
+    const LIMITE_VIDAS_DIARIAS = 12;
+    
+    // Se o limite de vidas for excedido, nega o ganho de XP mas ainda processa a dedução (se aplicável)
+    // Opcionalmente, podemos apenas zerar o xpCalculado
+    if (vidasGastasHoje >= LIMITE_VIDAS_DIARIAS && xpCalculado > 0) {
+      return NextResponse.json({ 
+        status: "erro", 
+        mensagem: "Suas 12 vidas diárias acabaram. Jogue amanhã para ganhar mais XP!" 
+      });
+    }
+
+    if (xpGanhoHoje >= 25 && xpCalculado > 0) {
       return NextResponse.json({ 
         status: "erro", 
         mensagem: "Você já atingiu o limite diário de 25 XP com jogos hoje!" 
@@ -105,15 +123,32 @@ export async function POST(request: Request) {
 
       // Registrar o log do jogo em "entregas" para que o sincronizador com o Google Sheets
       // pegue esse log e sincronize os pontos na planilha de notas automaticamente.
-      transaction.set(dbAdmin.collection("entregas").doc(idEntrega), {
-        id: idEntrega,
-        matricula,
-        idAtividade: "JOGOS-EDUCATIVOS",
-        resposta: `${tipoJogo} - Score: ${score}`,
-        status: "Avaliado",
-        xpGanho: xpAdicionar,
-        timestamp
-      });
+      // Registrar o log do jogo em "entregas"
+      if (xpAdicionar > 0) {
+        transaction.set(dbAdmin.collection("entregas").doc(idEntrega), {
+          id: idEntrega,
+          matricula,
+          idAtividade: "JOGOS-EDUCATIVOS",
+          resposta: `${tipoJogo} - Score: ${score}`,
+          status: "Avaliado",
+          xpGanho: xpAdicionar,
+          timestamp
+        });
+      }
+
+      // Registrar perda de vida, se houver
+      if (vidasPerdidas > 0) {
+        const idVida = `VIDA-${timestamp}-${matricula}`;
+        transaction.set(dbAdmin.collection("entregas").doc(idVida), {
+          id: idVida,
+          matricula,
+          idAtividade: "JOGOS-VIDAS-GASTAS",
+          resposta: `${tipoJogo} - Vidas perdidas: ${vidasPerdidas}`,
+          status: "Avaliado",
+          quantidade: vidasPerdidas,
+          timestamp
+        });
+      }
 
       // Atualizar o XP do aluno
       transaction.update(alunoRef, {

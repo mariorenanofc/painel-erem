@@ -36,6 +36,7 @@ interface GameDefinition {
     onGameOver: (score: number, durationSeconds: number) => void;
     playSound: (type: "click" | "success" | "error") => void;
     soundEnabled: boolean;
+    perderVida?: () => void;
   }>;
 }
 

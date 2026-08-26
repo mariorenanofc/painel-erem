@@ -39,29 +39,43 @@ export async function GET(request: Request) {
       ofensivaDias: 0
     };
 
-    // 2. Calcular entregas, badges, Pix
-    const entregasSnap = await dbAdmin.collection("entregas").where("matricula", "==", matriculaAlvo).get();
-    const missoesUnicas = new Set<string>();
-
-    entregasSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const idEntrega = doc.id;
-      const v = doc.data();
-
-      if (idEntrega.includes("PIX") && idEntrega.includes("-RECEBEU")) {
-        perfil.pixRecebido += Number(v.xpGanho) || 0;
+    // 2. Tentar buscar dados de interações na View Consolidada (O(1))
+    const portalViewDoc = await dbAdmin.collection("portal_views").doc(matriculaAlvo).get();
+    let checkinsAtuais: string[] = [];
+    
+    if (portalViewDoc.exists) {
+      const pData = portalViewDoc.data()!;
+      
+      // Missões
+      const entregasMap = pData.entregasMap || {};
+      const missoesUnicas = new Set<string>();
+      Object.keys(entregasMap).forEach(key => {
+         const e = entregasMap[key];
+         if (e && e.status !== "Pendente" && e.status !== "EXCLUIDA") {
+            missoesUnicas.add(key);
+         }
+      });
+      perfil.missoesConcluidas = missoesUnicas.size;
+      
+      // Badges
+      perfil.badges = Array.isArray(pData.badges) ? pData.badges : [];
+      
+      // Pix
+      if (Array.isArray(pData.extratoPix)) {
+        pData.extratoPix.forEach((p: Record<string, unknown>) => {
+          if (p.tipo === "RECEBEU") {
+            perfil.pixRecebido += Number(p.xp) || 0;
+          } else if (p.tipo === "ENVIOU") {
+            perfil.pixEnviado += Math.abs(Number(p.xp) || 0);
+          }
+        });
       }
-      if (idEntrega.includes("PIX") && idEntrega.includes("-ENVIOU")) {
-        perfil.pixEnviado += Math.abs(Number(v.xpGanho) || 0);
+      
+      // Frequência
+      if (Array.isArray(pData.frequencias)) {
+        checkinsAtuais = pData.frequencias;
       }
-      if (idEntrega.startsWith("BADGE-")) {
-        const nomeBadge = String(v.resposta || "").replace("Desbloqueou: ", "").trim();
-        perfil.badges.push(nomeBadge);
-      }
-      if (!idEntrega.startsWith("PIX") && !idEntrega.startsWith("BDAY") && !idEntrega.startsWith("BADGE") && !idEntrega.startsWith("BLOCK") && v.status !== "Pendente" && v.status !== "EXCLUIDA") {
-        missoesUnicas.add(String(v.idAtividade));
-      }
-    });
-    perfil.missoesConcluidas = missoesUnicas.size;
+    }
 
     // 3. Verificação de curtida (Like) de hoje
     if (matriculaVisualizador === matriculaAlvo) {
@@ -85,31 +99,23 @@ export async function GET(request: Request) {
       }
     }
 
-    // 4. Calcular Streak do Aluno Alvo
+    // 4. Calcular Streak do Aluno Alvo O(1) lendo do metadata unificado
     if (perfil.turma) {
       const diasComAulaSet = new Set<string>();
       const turmaDoAluno = perfil.turma;
-      const turmaFreqSnap = await dbAdmin.collection("frequencia").where("turma", "==", turmaDoAluno).get();
-      turmaFreqSnap.forEach((doc: QueryDocumentSnapshot) => {
-        const f = doc.data();
-        const idFreq = String(f.id || doc.id).trim();
-        if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
-        const dataFormatada = f.data || "";
-        if (dataFormatada) diasComAulaSet.add(dataFormatada);
-      });
+      
+      const metaDoc = await dbAdmin.collection("metadata").doc("dias_aula_turmas").get();
+      if (metaDoc.exists) {
+        const metaData = metaDoc.data() || {};
+        const diasOficiais = metaData[turmaDoAluno] || [];
+        diasOficiais.forEach((dia: string) => diasComAulaSet.add(dia));
+      }
 
       const checkinsMap: Record<string, boolean> = {};
-
-      const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "==", matriculaAlvo).get();
-      freqSnap.forEach((doc: QueryDocumentSnapshot) => {
-        const f = doc.data();
-        const idFreq = String(f.id || doc.id).trim();
-        if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
-        const dataFormatada = f.data || "";
-        if (!dataFormatada) return;
-
+      
+      // Adicionamos as presenças do aluno
+      checkinsAtuais.forEach((dataFormatada: string) => {
         diasComAulaSet.add(dataFormatada);
-
         checkinsMap[dataFormatada] = true;
       });
 

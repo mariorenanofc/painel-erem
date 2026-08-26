@@ -92,35 +92,33 @@ export async function GET(request: Request) {
 
     // 1ª Passagem: Buscar todos os registros e armazenar em memória
     const todosRegistros: Array<{ matricula: string, dataFormatada: string, id?: string, status?: string, xpGanho?: number, justificativa?: string, hora?: string, timestamp?: number }> = [];
-    for (let i = 0; i < matriculasAtivas.length; i += 30) {
-      const chunk = matriculasAtivas.slice(i, i + 30);
-      if (chunk.length === 0) continue;
+    
+    // Busca otimizada usando a turma diretamente (1 query ao invés de N chunks)
+    const freqSnap = await dbAdmin.collection("frequencia").where("turma", "==", turma).get();
+    
+    freqSnap.forEach((doc: QueryDocumentSnapshot) => {
+      const f = doc.data();
+      const idFreq = String(f.id || doc.id).trim();
+      if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
       
-      const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "in", chunk).get();
-      freqSnap.forEach((doc: QueryDocumentSnapshot) => {
-        const f = doc.data();
-        const idFreq = String(f.id || doc.id).trim();
-        if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
-        
-        let dataFormatada = f.data || "";
-        if (dataFormatada.includes("/") && dataFormatada.length > 10) {
-          dataFormatada = dataFormatada.slice(0, 10);
-        }
-        if (dataFormatada) {
-          todosRegistros.push({
-            matricula: f.matricula,
-            dataFormatada: dataFormatada,
-            id: idFreq,
-            status: f.status,
-            xpGanho: f.xpGanho,
-            justificativa: f.justificativa,
-            hora: f.hora,
-            timestamp: f.timestamp
-          });
-          diasSet.add(dataFormatada);
-        }
-      });
-    }
+      let dataFormatada = f.data || "";
+      if (dataFormatada.includes("/") && dataFormatada.length > 10) {
+        dataFormatada = dataFormatada.slice(0, 10);
+      }
+      if (dataFormatada) {
+        todosRegistros.push({
+          matricula: f.matricula,
+          dataFormatada: dataFormatada,
+          id: idFreq,
+          status: f.status,
+          xpGanho: f.xpGanho,
+          justificativa: f.justificativa,
+          hora: f.hora,
+          timestamp: f.timestamp
+        });
+        diasSet.add(dataFormatada);
+      }
+    });
 
     if (diasDaTurma.length === 0 && diasSet.size > 0) {
        diasDaTurma = Array.from(diasSet);

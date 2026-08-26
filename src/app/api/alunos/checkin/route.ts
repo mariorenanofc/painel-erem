@@ -1,8 +1,10 @@
 import { invalidatePortalCache,  } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
-import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { getAlunosAtivosSnapshot } from "@/src/lib/cache";
+import { dbAdmin, registrarLogSeguranca } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot, Transaction, FieldValue } from "firebase-admin/firestore";
 import { calcularGamificacao, GamificacaoStatus } from "@/src/lib/gamificacao";
+import { getRankingKeys } from "@/src/lib/dateUtils";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
@@ -85,15 +87,26 @@ export async function POST(request: Request) {
     if (diasDaTurma.length === 0) {
       // Fallback Avançado (Igual ao action-proxy)
       const tempDatesSet = new Set<string>();
-      const todosAlunosSnap = await dbAdmin.collection("alunos").get();
       const alunosDaTurma: string[] = [];
-      todosAlunosSnap.forEach(doc => {
-        const d = doc.data();
-        const t = String(d.turmaTrilha || d.turma || "").trim();
-        if (t === turmaDoAluno && String(d.statusTrilha || "").toLowerCase() === "ativo") {
-           alunosDaTurma.push(doc.id);
-        }
-      });
+      const snapAlunos = await getAlunosAtivosSnapshot(dbAdmin);
+      
+      if (snapAlunos && snapAlunos.length > 0) {
+        snapAlunos.forEach(d => {
+          const t = String(d.turmaTrilha || d.turma || "").trim();
+          if (t === turmaDoAluno && String(d.statusTrilha || "").toLowerCase() === "ativo") {
+             alunosDaTurma.push(String(d.matricula));
+          }
+        });
+      } else {
+        const todosAlunosSnap = await dbAdmin.collection("alunos").get();
+        todosAlunosSnap.forEach(doc => {
+          const d = doc.data();
+          const t = String(d.turmaTrilha || d.turma || "").trim();
+          if (t === turmaDoAluno && String(d.statusTrilha || "").toLowerCase() === "ativo") {
+             alunosDaTurma.push(doc.id);
+          }
+        });
+      }
 
       for (let i = 0; i < alunosDaTurma.length; i += 30) {
         const chunk = alunosDaTurma.slice(i, i + 30);
@@ -208,6 +221,39 @@ export async function POST(request: Request) {
       transaction.set(metadataRef, {
         [turmaDoAluno]: FieldValue.arrayUnion(dataHoje)
       }, { merge: true });
+
+      // CQRS: Atualizar portal_views
+      const portalViewRef = dbAdmin.collection("portal_views").doc(matricula);
+      transaction.set(portalViewRef, {
+        frequencias: FieldValue.arrayUnion(dataHoje)
+      }, { merge: true });
+
+      // CQRS: Atualizar Ranking Semanal e Mensal
+      if (xpGanho > 0) {
+        const { semanaKey, mesKey } = getRankingKeys(spDate);
+
+        const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+        transaction.set(rankSemanaRef, {
+          alunos: {
+            [matricula]: {
+              xpNormal: FieldValue.increment(xpGanho),
+              xpAtrasado: FieldValue.increment(0),
+              ultimoEnvio: spDate.getTime()
+            }
+          }
+        }, { merge: true });
+
+        const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+        transaction.set(rankMesRef, {
+          alunos: {
+            [matricula]: {
+              xpNormal: FieldValue.increment(xpGanho),
+              xpAtrasado: FieldValue.increment(0),
+              ultimoEnvio: spDate.getTime()
+            }
+          }
+        }, { merge: true });
+      }
 
       // Calcular gamificação com o novo XP
       finalGamificacao = calcularGamificacao(finalXp, xpGasto);

@@ -286,3 +286,32 @@ export function setCachedAnalyticsGeral(data: unknown) {
   };
 }
 
+// -----------------------------------------------------------------------------
+// FIRESTORE SINGLETON CACHE PARA ALUNOS (ADMIN/TUTOR)
+// Resolve as varreduras completas da coleção alunos.
+// -----------------------------------------------------------------------------
+export async function getAlunosAtivosSnapshot(dbAdmin: Firestore) {
+  try {
+    const indexDoc = await dbAdmin.collection("metadata").doc("cache_alunos_index").get();
+    if (!indexDoc.exists) {
+      console.warn("[Firestore Cache] Snapshot de alunos não encontrado, caindo para leitura completa.");
+      return null;
+    }
+
+    const { totalChunks } = indexDoc.data() as { totalChunks: number };
+    let todosAlunos: Record<string, unknown>[] = [];
+
+    for (let i = 0; i < totalChunks; i++) {
+      const chunkDoc = await dbAdmin.collection("metadata").doc(`cache_alunos_geral_${i}`).get();
+      if (chunkDoc.exists) {
+        todosAlunos = todosAlunos.concat(chunkDoc.data()?.alunos || []);
+      }
+    }
+
+    return todosAlunos;
+  } catch (err) {
+    console.error("[Firestore Cache] Erro ao buscar snapshot de alunos:", err);
+    return null;
+  }
+}
+

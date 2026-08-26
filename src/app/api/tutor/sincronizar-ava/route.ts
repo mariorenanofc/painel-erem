@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { invalidateRankingCache, clearAllPortalCaches } from "@/src/lib/cache";
+import { invalidateRankingCache, clearAllPortalCaches, getAlunosAtivosSnapshot } from "@/src/lib/cache";
 import { google } from "googleapis";
 import { FieldValue } from "firebase-admin/firestore";
 
@@ -62,9 +62,9 @@ export async function POST(req: Request) {
     const classroom = google.classroom({ version: 'v1', auth });
 
     // 2. Buscar Dados Estruturais do Firestore
-    const [atividadesSnap, alunosSnap, modulosSnap] = await Promise.all([
+    const [atividadesSnap, snapAlunos, modulosSnap] = await Promise.all([
       dbAdmin.collection("atividades").get(),
-      dbAdmin.collection("alunos").get(),
+      getAlunosAtivosSnapshot(dbAdmin),
       dbAdmin.collection("modulos").get()
     ]);
 
@@ -80,13 +80,26 @@ export async function POST(req: Request) {
 
     const listaAlunos: Array<{ idDoc: string; xpTotal: number; nomeNorm: string; email?: string; nome?: string; matricula?: string; turma?: string; turmaTrilha?: string }> = [];
     const mapaBuscaAluno: Record<string, { idDoc: string; xpTotal: number; nomeNorm: string; email?: string; nome?: string; matricula?: string; turma?: string; turmaTrilha?: string }> = {};
-    alunosSnap.forEach(doc => {
-      const a = doc.data();
-      const obj = { idDoc: doc.id, ...a, xpTotal: Number(a.xpTotal) || 0, nomeNorm: normalizar(a.nome) };
-      if (a.email) mapaBuscaAluno[a.email.toLowerCase()] = obj;
-      if (a.nome) mapaBuscaAluno[obj.nomeNorm] = obj;
-      listaAlunos.push(obj);
-    });
+    
+    if (snapAlunos && Array.isArray(snapAlunos)) {
+      snapAlunos.forEach(a => {
+        const obj = { idDoc: String(a.matricula), ...a, xpTotal: Number(a.xpTotal) || 0, nomeNorm: normalizar(String(a.nome)) };
+        if (a.email) mapaBuscaAluno[String(a.email).toLowerCase()] = obj;
+        if (a.nome) mapaBuscaAluno[normalizar(String(a.nome))] = obj;
+        if (a.matricula) mapaBuscaAluno[String(a.matricula).trim()] = obj;
+        listaAlunos.push(obj);
+      });
+    } else {
+      const fallbackSnap = await dbAdmin.collection("alunos").get();
+      fallbackSnap.forEach(doc => {
+        const a = doc.data();
+        const obj = { idDoc: doc.id, ...a, xpTotal: Number(a.xpTotal) || 0, nomeNorm: normalizar(a.nome) };
+        if (a.email) mapaBuscaAluno[a.email.toLowerCase()] = obj;
+        if (a.nome) mapaBuscaAluno[normalizar(a.nome)] = obj;
+        if (a.matricula) mapaBuscaAluno[a.matricula.trim()] = obj;
+        listaAlunos.push(obj);
+      });
+    }
 
     // Filtra Atividades do Classroom
     const atividadesParaSincronizar: Array<{ idDoc: string; linkClassroom?: string; turmaAlvo?: string; modulo?: string; xp?: number; dataLimite?: string; gabaritoLiberado?: string | boolean }> = [];

@@ -152,3 +152,29 @@ Para garantir que a gestão não perca a habilidade de manipular esses dados (qu
 
 > [!IMPORTANT]
 > **Dúvida sobre as Rubricas (Ouro, Prata, Bronze):** No arquivo `appscript.md` analisado (na rota `sincronizar_ava`), a lógica deduz o XP baseado no valor da atividade (`xpAtiv`) e aplica descontos (Atraso, Gabarito Liberado). Não encontrei menção a "Ouro, Prata, Bronze" ou "Rubricas" no código legado do AppScript. Devemos manter o cálculo legado de atraso/gabarito, ou devemos implementar uma lógica **nova** que leia as rubricas (`assignedGrade`) do Classroom?
+
+---
+
+# Fase 5: Fim das Varreduras no Ranking e Diário de Classe
+
+Após a conclusão das melhorias do Portal (Fase 2), precisamos otimizar duas lógicas que continuam varrendo as coleções `entregas` e `frequencia`: o Ranking Semanal e o Diário de Classe.
+
+## User Review Required
+
+> [!WARNING]
+> Para abandonarmos a varredura das entregas no Ranking Semanal e da frequência no Diário de Classe, precisaremos alterar a arquitetura do banco. Veja a proposta abaixo.
+
+## Proposed Changes
+
+### 1. Ranking Semanal / Mensal em Tempo Real
+**O Problema Atual:** O ranking varre TODAS as `entregas` de todos os alunos e filtra no backend os envios que caem dentro da semana ou mês para somar o XP.
+**A Solução (Contadores Parciais):**
+- Quando um aluno ganha XP (Missão, Quiz, Jogos, Frequência), salvaremos este XP também em um documento agredador chamado `ranking_semanal` (com a chave da semana/mês). 
+- Assim, a rota de Ranking fará APENAS UMA LEITURA do documento agregado `ranking_semana_X` ou `ranking_mes_Y`, resultando em 1 leitura contra 5.000 leituras antigas.
+
+### 2. Diário de Classe com Índice Composto
+**O Problema Atual:** A rota `/api/tutor/diario-classe` busca todos os alunos e depois roda chunks de leitura `.where("matricula", "in", chunk)` na coleção `frequencia`, varrendo toda a frequência histórica do aluno para filtrar o mês em memória.
+**A Solução:**
+- Alteraremos a query para usar o `.where("turma", "==", turma).where("timestamp", ">=", inicioMes).where("timestamp", "<=", fimMes)`.
+- Isso exigirá a criação de um **Índice Composto** no Firestore (Turma Ascendente + Timestamp Ascendente).
+- A API fará apenas 1 query direta, retornando estritamente os dias daquele mês sem baixar o histórico todo dos estudantes.

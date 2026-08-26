@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbAdmin, registrarLogSeguranca } from "@/src/lib/firebaseAdmin";
 import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
-import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades, getCachedAdminAlunos, setCachedAdminAlunos, invalidateAdminAlunosCache, getCachedAnalyticsGeral, setCachedAnalyticsGeral, getCachedClassDates } from "@/src/lib/cache";
+import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades, getCachedAdminAlunos, setCachedAdminAlunos, invalidateAdminAlunosCache, getCachedAnalyticsGeral, setCachedAnalyticsGeral, getCachedClassDates, getAlunosAtivosSnapshot } from "@/src/lib/cache";
 import { Transaction, FieldValue, FieldPath, QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { cookies } from "next/headers";
 
@@ -248,20 +248,34 @@ export async function POST(request: Request) {
       });
       result = { status: "sucesso", configuracoes };
     } else if (requestAction === "listar_alunos_godmode") {
-      const snapshot = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
-      const alunos = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          matricula: doc.id,
-          nome: data.nome || `Aluno ${doc.id}`,
-          turma: data.turmaTrilha || data.turma || ""
-        };
-      });
+      let alunos: Record<string, unknown>[] = [];
+      const snapAlunos = await getAlunosAtivosSnapshot(dbAdmin);
+      
+      if (snapAlunos && snapAlunos.length > 0) {
+        alunos = snapAlunos.map((a) => ({
+          matricula: a.matricula as string,
+          nome: (a.nome as string) || `Aluno ${a.matricula}`,
+          turma: (a.turmaTrilha as string) || (a.turma as string) || ""
+        }));
+      } else {
+        const snapshot = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
+        alunos = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            matricula: doc.id,
+            nome: data.nome || `Aluno ${doc.id}`,
+            turma: data.turmaTrilha || data.turma || ""
+          };
+        });
+      }
+      
       // Ordena por turma e depois alfabeticamente
       alunos.sort((a, b) => {
-        if (a.turma < b.turma) return -1;
-        if (a.turma > b.turma) return 1;
-        return a.nome.localeCompare(b.nome);
+        const turmaA = String(a.turma);
+        const turmaB = String(b.turma);
+        if (turmaA < turmaB) return -1;
+        if (turmaA > turmaB) return 1;
+        return String(a.nome).localeCompare(String(b.nome));
       });
       result = { status: "sucesso", alunos };
 
@@ -271,24 +285,43 @@ export async function POST(request: Request) {
       if (cachedAdmin) {
         result = { status: "sucesso", alunos: cachedAdmin };
       } else {
-        const snapshot = await dbAdmin.collection("alunos").get();
-        const alunos = snapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            matricula: doc.id,
-            nome: data.nome || `Aluno ${doc.id}`,
-            turma: data.turmaTrilha || data.turma || "",
-            statusTrilha: data.statusTrilha || "Inativo",
-            xp: Number(data.xp) || 0,
-            xpGasto: Number(data.xpGasto) || 0,
-            senha: data.pinPix || data.senha || ""
-          };
-        });
+        let alunos: Record<string, unknown>[] = [];
+        const snapAlunos = await getAlunosAtivosSnapshot(dbAdmin);
+        
+        if (snapAlunos && snapAlunos.length > 0) {
+          alunos = snapAlunos.map((a) => ({
+            matricula: a.matricula,
+            nome: a.nome || `Aluno ${a.matricula}`,
+            turma: a.turmaTrilha || a.turma || "",
+            statusTrilha: a.statusTrilha || "Inativo",
+            xp: Number(a.xp) || 0,
+            xpGasto: Number(a.xpGasto) || 0,
+            senha: a.pinPix || a.senha || ""
+          }));
+        } else {
+          const snapshot = await dbAdmin.collection("alunos").get();
+          alunos = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              matricula: doc.id,
+              nome: data.nome || `Aluno ${doc.id}`,
+              turma: data.turmaTrilha || data.turma || "",
+              statusTrilha: data.statusTrilha || "Inativo",
+              xp: Number(data.xp) || 0,
+              xpGasto: Number(data.xpGasto) || 0,
+              senha: data.pinPix || data.senha || ""
+            };
+          });
+        }
         
         alunos.sort((a, b) => {
-          if (a.turma < b.turma) return -1;
-          if (a.turma > b.turma) return 1;
-          return a.nome.localeCompare(b.nome);
+          const turmaA = String(a.turma);
+          const turmaB = String(b.turma);
+          const nomeA = String(a.nome);
+          const nomeB = String(b.nome);
+          if (turmaA < turmaB) return -1;
+          if (turmaA > turmaB) return 1;
+          return nomeA.localeCompare(nomeB);
         });
         
         setCachedAdminAlunos(alunos);
@@ -537,7 +570,7 @@ export async function POST(request: Request) {
           const snapshot = await dbAdmin.collection("alunos").get();
           alunosCache = snapshot.docs.map(doc => ({ matricula: doc.id, nome: String(doc.data().nome || "") }));
           // O setCachedAdminAlunos não tem a tipagem exata exportada aqui, mas garantimos que funciona
-          setCachedAdminAlunos(alunosCache as any);
+          setCachedAdminAlunos(alunosCache as Array<{ matricula: string, nome: string, turma: string, statusTrilha: string, xp: number, xpGasto: number, senha: string }>);
         }
         const alunosMap: Record<string, string> = {};
         alunosCache.forEach(a => { alunosMap[a.matricula] = a.nome || "Aluno"; });
@@ -1280,6 +1313,12 @@ export async function POST(request: Request) {
               justificativa: reason,
               turma: turmaDoAluno,
               timestamp: docTimestamp
+            }, { merge: true });
+
+            // CQRS: Atualizar portal_views
+            const portalViewRef = dbAdmin.collection("portal_views").doc(mat);
+            await portalViewRef.set({
+              frequencias: FieldValue.arrayUnion(dataBR)
             }, { merge: true });
 
             invalidatePortalCache(mat);

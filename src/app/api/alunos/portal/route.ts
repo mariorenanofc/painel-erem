@@ -198,88 +198,39 @@ export async function GET(request: Request) {
       dadosRetorno.aniversario.isAniversario = true;
     }
 
-    // 6. Entregas, Notificações, Pix, Badges
-    const entregasSnap = await dbAdmin.collection("entregas").where("matricula", "==", matricula).get();
-    const entregasMap: Record<string, {
-      resposta: string;
-      status: string;
-      xpGanho: number;
-      dataEnvio: number;
-      feedback: string;
-    }> = {};
+    // 6. Carregar Portal View
+    const portalViewDoc = await dbAdmin.collection("portal_views").doc(matricula).get();
+    const portalView: Record<string, unknown> = portalViewDoc.exists ? (portalViewDoc.data() as Record<string, unknown>) : {
+      entregasMap: {},
+      frequencias: [],
+      extratoPix: [],
+      notificacoes: [],
+      badges: [],
+      curtidasRecebidas: 0
+    };
 
-    entregasSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const idEntrega = doc.id;
-      const val = doc.data();
-      const idAtiv = String(val.idAtividade || "").trim();
+    const pvData = {
+      entregasMap: portalView.entregasMap || {},
+      frequencias: Array.isArray(portalView.frequencias) ? portalView.frequencias : [],
+      extratoPix: Array.isArray(portalView.extratoPix) ? (portalView.extratoPix as Array<{ id: string, mensagem: string, xp: number, tempo: number, tipo: string }>) : [],
+      notificacoes: Array.isArray(portalView.notificacoes) ? portalView.notificacoes : [],
+      badges: Array.isArray(portalView.badges) ? portalView.badges : [],
+      curtidasRecebidas: (portalView.curtidasRecebidas as number) || 0
+    };
 
-      if (idEntrega.startsWith("NOTIF-")) {
-        dadosRetorno.notificacoes.push({
-          id: idEntrega,
-          mensagem: val.resposta || "",
-          xp: val.xpGanho || 0,
-          tempo: val.timestamp || 0,
-          tipo: val.status || "Info"
-        });
-        return;
-      }
-      
-      if (!idEntrega.startsWith("BDAY") && !idEntrega.startsWith("PIX") && !idEntrega.startsWith("BADGE") && !idEntrega.startsWith("BLOCK")) {
-        if (val.status !== "EXCLUIDA") {
-          entregasMap[idAtiv] = {
-            resposta: val.resposta || "",
-            status: val.status || "Aguardando Correção",
-            xpGanho: val.xpGanho || 0,
-            dataEnvio: val.timestamp || 0,
-            feedback: val.feedback || ""
-          };
-        }
-      }
+    dadosRetorno.notificacoes = pvData.notificacoes as Array<{ id: string, mensagem: string, xp: number, tempo: number, tipo: string }>;
+    dadosRetorno.extratoPix = pvData.extratoPix;
 
-      if (idEntrega.includes("PIX") && idEntrega.includes("-RECEBEU")) {
-        dadosRetorno.stats.xpRecebido += val.xpGanho || 0;
-        dadosRetorno.extratoPix.push({
-          id: idEntrega,
-          mensagem: val.resposta || "",
-          xp: val.xpGanho || 0,
-          tempo: val.timestamp || 0,
-          tipo: "RECEBEU"
-        });
-      }
-      if (idEntrega.includes("PIX") && idEntrega.includes("-ENVIOU")) {
-        const xpD = Math.abs(val.xpGanho || 0);
-        dadosRetorno.stats.xpDoado += xpD;
-        dadosRetorno.extratoPix.push({
-          id: idEntrega,
-          mensagem: val.resposta || "",
-          xp: -xpD,
-          tempo: val.timestamp || 0,
-          tipo: "ENVIOU"
-        });
-      }
-
-      if (idEntrega === idNiver) {
-        dadosRetorno.aniversario.jaResgatado = true;
-      }
-
-      if (idEntrega.startsWith("BADGE-")) {
-        const badgeId = idEntrega.replace("BADGE-", "").replace(`-${matricula}`, "");
-        dadosRetorno.badgesResgatadas.push(badgeId);
-      }
+    dadosRetorno.extratoPix.forEach((p: {tipo: string, xp: number}) => {
+      if (p.tipo === "RECEBEU") dadosRetorno.stats.xpRecebido += p.xp;
+      if (p.tipo === "ENVIOU") dadosRetorno.stats.xpDoado += Math.abs(p.xp);
     });
 
-    // 7. Curtidas recebidas
-    const curtidasSnap = await dbAdmin.collection("curtidas").where("destinatario", "==", matricula).get();
-    curtidasSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const tempo = Number(doc.id.split("-")[1]) || hj.getTime();
-      dadosRetorno.notificacoes.push({
-        id: doc.id,
-        mensagem: "Alguém curtiu o seu perfil! ❤️",
-        xp: 0,
-        tempo: tempo,
-        tipo: "LIKE"
-      });
-    });
+    const entregasMap = pvData.entregasMap as Record<string, { status: string, resposta: string, xpGanho: number, dataEnvio: number, feedback: string }>;
+
+    dadosRetorno.aniversario.jaResgatado = (portalView.aniversarioResgatado as boolean) || false;
+    dadosRetorno.badgesResgatadas = pvData.badges as string[];
+    dadosRetorno.totalCurtidas = (aluno.likes || 0) + pvData.curtidasRecebidas;
 
     dadosRetorno.notificacoes.sort((a: { tempo: number }, b: { tempo: number }) => b.tempo - a.tempo);
     dadosRetorno.notificacoes = dadosRetorno.notificacoes.slice(0, 10);
@@ -299,11 +250,10 @@ export async function GET(request: Request) {
         const metadata = metadataDoc.exists ? metadataDoc.data() || {} : {};
         let datesArray = metadata[turmaDoAluno] as string[] | undefined;
 
-        // 2. Fallback Avançado: Puxa todos os alunos e filtra a turma atual para descobrir os dias letais dela
+        // 2. Fallback Avançado
         if (datesArray === undefined) {
           console.log(`[Firestore Query] Portal: Metadado vazio para ${turmaDoAluno}. Executando fallback avancado...`);
           const tempDatesSet = new Set<string>();
-          
           const todosAlunosSnap = await dbAdmin.collection("alunos").get();
           const alunosDaTurma: string[] = [];
           todosAlunosSnap.forEach(doc => {
@@ -317,16 +267,11 @@ export async function GET(request: Request) {
           for (let i = 0; i < alunosDaTurma.length; i += 30) {
             const chunk = alunosDaTurma.slice(i, i + 30);
             if (chunk.length === 0) continue;
-            const fallbackSnap = await dbAdmin.collection("frequencia").where("matricula", "in", chunk).get();
+            const fallbackSnap = await dbAdmin.collection("portal_views").where("__name__", "in", chunk).get();
             fallbackSnap.forEach(doc => {
-              const f = doc.data();
-              const idFreq = String(f.id || doc.id).trim();
-              if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
-              let dataFormatada = f.data || "";
-              if (dataFormatada.includes("/") && dataFormatada.length > 10) {
-                dataFormatada = dataFormatada.slice(0, 10);
-              }
-              if (dataFormatada) tempDatesSet.add(dataFormatada);
+              const pv = doc.data();
+              const freqs = pv.frequencias || [];
+              freqs.forEach((f: string) => tempDatesSet.add(f));
             });
           }
           datesArray = Array.from(tempDatesSet);
@@ -343,27 +288,13 @@ export async function GET(request: Request) {
     const checkinsMap: Record<string, boolean> = {};
     let presencasAluno = 0;
 
-    const freqSnap = await dbAdmin.collection("frequencia").where("matricula", "==", matricula).get();
-    freqSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const f = doc.data();
-      const idFreq = String(f.id || doc.id).trim();
-      if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
-      let dataFormatada = f.data || "";
-      if (dataFormatada.includes("/") && dataFormatada.length > 10) {
-        dataFormatada = dataFormatada.slice(0, 10);
-      }
+    const frequenciasArray = pvData.frequencias as string[];
+    frequenciasArray.forEach((dataFormatada: string) => {
       if (!dataFormatada) return;
-
       diasComAulaSet.add(dataFormatada);
-
       checkinsMap[dataFormatada] = true;
-
-      const st = String(f.status || "").toLowerCase().trim();
-      const isPresence = !idFreq.startsWith("FALTA-") && (st === "presente" || st === "p" || st === "justificada" || st === "j");
-      if (isPresence) {
-        presencasAluno++;
-        dadosRetorno.stats.totalCheckins++;
-      }
+      presencasAluno++;
+      dadosRetorno.stats.totalCheckins++;
     });
 
     dadosRetorno.taxaPresenca = diasComAulaSet.size === 0 ? 100 : Math.round((presencasAluno / diasComAulaSet.size) * 100);

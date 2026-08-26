@@ -2,6 +2,7 @@ import { invalidatePortalCache,  } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL;
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { FieldValue } from "firebase-admin/firestore";
 
 export async function POST(request: Request) {
   let matriculaRemetente = "";
@@ -67,6 +68,19 @@ export async function POST(request: Request) {
         likes: currentLikes + 1,
         lastUpdated: timestamp
       });
+
+      // CQRS: Atualizar portal_views
+      const portalViewRef = dbAdmin.collection("portal_views").doc(matriculaDestinatario);
+      transaction.set(portalViewRef, {
+        curtidasRecebidas: FieldValue.increment(1),
+        notificacoes: FieldValue.arrayUnion({
+          id: likeId,
+          mensagem: "Alguém curtiu o seu perfil! ❤️",
+          xp: 0,
+          tempo: timestamp,
+          tipo: "LIKE"
+        })
+      }, { merge: true });
     });
 
     invalidatePortalCache(matriculaRemetente);

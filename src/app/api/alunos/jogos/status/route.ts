@@ -10,28 +10,35 @@ export async function GET(request: Request) {
       return NextResponse.json({ status: "erro", mensagem: "Matrícula não informada." }, { status: 400 });
     }
 
-    // Obter início do dia no fuso horário de São Paulo
-    const startOfDayTimestamp = new Date(
-      new Date().toLocaleDateString("en-US", { timeZone: "America/Sao_Paulo" })
-    ).getTime();
+    const spDate = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const diaHoje = String(spDate.getDate()).padStart(2, "0");
+    const mesHoje = String(spDate.getMonth() + 1).padStart(2, "0");
+    const anoHoje = String(spDate.getFullYear());
+    const dataHojeStr = `${diaHoje}/${mesHoje}/${anoHoje}`;
 
-    const entregasSnap = await dbAdmin.collection("entregas")
-      .where("matricula", "==", matricula)
-      .get();
+    const portalViewRef = dbAdmin.collection("portal_views").doc(matricula);
+    const portalViewDoc = await portalViewRef.get();
+    
+    let jogosStatus = {
+      dataReferencia: "",
+      xpGanhoHoje: 0,
+      vidasGastasHoje: 0
+    };
+    
+    if (portalViewDoc.exists) {
+      jogosStatus = portalViewDoc.data()?.jogosStatus || jogosStatus;
+    }
 
-    let xpGanhoHoje = 0;
-    let vidasGastasHoje = 0;
+    if (jogosStatus.dataReferencia !== dataHojeStr) {
+      jogosStatus = {
+        dataReferencia: dataHojeStr,
+        xpGanhoHoje: 0,
+        vidasGastasHoje: 0
+      };
+    }
 
-    entregasSnap.forEach(doc => {
-      const data = doc.data();
-      if (Number(data.timestamp || 0) >= startOfDayTimestamp) {
-        if (data.idAtividade === "JOGOS-EDUCATIVOS") {
-          xpGanhoHoje += Number(data.xpGanho) || 0;
-        } else if (data.idAtividade === "JOGOS-VIDAS-GASTAS") {
-          vidasGastasHoje += Number(data.quantidade) || 0;
-        }
-      }
-    });
+    let xpGanhoHoje = jogosStatus.xpGanhoHoje;
+    let vidasGastasHoje = jogosStatus.vidasGastasHoje;
 
     const LIMITE_VIDAS_DIARIAS = 12;
     const vidasRestantes = Math.max(0, LIMITE_VIDAS_DIARIAS - vidasGastasHoje);

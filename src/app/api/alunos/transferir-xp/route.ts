@@ -1,6 +1,6 @@
-import { invalidatePortalCache,  } from "@/src/lib/cache";
+import { invalidatePortalCache } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
-import { QueryDocumentSnapshot, Transaction } from "firebase-admin/firestore";
+import { QueryDocumentSnapshot, Transaction, FieldValue } from "firebase-admin/firestore";
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
   : undefined;
@@ -195,6 +195,17 @@ export async function POST(request: Request) {
         feedback: "Transferência enviada"
       });
 
+      const portalViewOrigemRef = dbAdmin.collection("portal_views").doc(matriculaOrigem);
+      transaction.set(portalViewOrigemRef, {
+        extratoPix: FieldValue.arrayUnion({
+          id: idEnvio,
+          mensagem: `Enviou para ${matriculaDestino}: ${motivo}`,
+          xp: -quantidade,
+          tempo: tstamp,
+          tipo: "ENVIOU"
+        })
+      }, { merge: true });
+
       // 4. Registrar Log do Recebimento (Destino)
       const logRecRef = dbAdmin.collection("entregas").doc(idRecebeu);
       transaction.set(logRecRef, {
@@ -207,6 +218,24 @@ export async function POST(request: Request) {
         timestamp: tstamp,
         feedback: "Transferência recebida"
       });
+
+      const portalViewDestinoRef = dbAdmin.collection("portal_views").doc(matriculaDestino);
+      transaction.set(portalViewDestinoRef, {
+        extratoPix: FieldValue.arrayUnion({
+          id: idRecebeu,
+          mensagem: `Recebeu de ${matriculaOrigem}: ${motivo}`,
+          xp: quantidade,
+          tempo: tstamp,
+          tipo: "RECEBEU"
+        }),
+        notificacoes: FieldValue.arrayUnion({
+          id: idRecebeu,
+          mensagem: `Recebeu ${quantidade} XP de ${matriculaOrigem}: ${motivo}`,
+          xp: quantidade,
+          tempo: tstamp,
+          tipo: "PIX"
+        })
+      }, { merge: true });
 
       // 5. Aplicar Bloqueio se ultrapassar 100 XP por semana para o mesmo colega
       if (!ehMestre && xpEnviadoSemana + quantidade > 100) {

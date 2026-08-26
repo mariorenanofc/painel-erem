@@ -3,6 +3,7 @@ import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades } from "@/src/lib/cache";
 import { Transaction, FieldValue } from "firebase-admin/firestore";
 import { cookies } from "next/headers";
+import { getRankingKeys } from "@/src/lib/dateUtils";
 
 
 export async function POST(request: Request) {
@@ -73,10 +74,12 @@ export async function POST(request: Request) {
 
           let statusAnterior = "Aguardando Correção";
           let xpAnterior = 0;
+          let timestampEnvio = Date.now();
 
           if (entregaDoc.exists) {
             statusAnterior = entregaDoc.data()?.status || "Aguardando Correção";
             xpAnterior = Number(entregaDoc.data()?.xpGanho) || 0;
+            timestampEnvio = Number(entregaDoc.data()?.timestamp) || Date.now();
           }
 
           const xpDiff = Number(xpGanho) - xpAnterior;
@@ -87,7 +90,19 @@ export async function POST(request: Request) {
             status: novoStatus,
             xpGanho: Number(xpGanho),
             feedback: String(feedback || ""),
-            timestamp: Date.now()
+            timestamp: timestampEnvio
+          }, { merge: true });
+          
+          // CQRS: Atualizar portal_views
+          const portalViewRef = dbAdmin.collection("portal_views").doc(mat);
+          transaction.set(portalViewRef, {
+            entregasMap: {
+              [idEntrega.split("-")[0]]: {
+                status: novoStatus,
+                xpGanho: Number(xpGanho),
+                feedback: String(feedback || "")
+              }
+            }
           }, { merge: true });
 
           // Atualizar contadores estatísticos de agregação
@@ -122,6 +137,31 @@ export async function POST(request: Request) {
               xp: currentXp + xpDiff,
               lastUpdated: Date.now()
             });
+
+            // Atualizar contadores de ranking
+            if (xpDiff !== 0) {
+              const { semanaKey, mesKey } = getRankingKeys(new Date(timestampEnvio));
+              
+              const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+              transaction.set(rankSemanaRef, {
+                alunos: {
+                  [mat]: {
+                    xpNormal: FieldValue.increment(xpDiff),
+                    ultimoEnvio: Date.now()
+                  }
+                }
+              }, { merge: true });
+      
+              const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+              transaction.set(rankMesRef, {
+                alunos: {
+                  [mat]: {
+                    xpNormal: FieldValue.increment(xpDiff),
+                    ultimoEnvio: Date.now()
+                  }
+                }
+              }, { merge: true });
+            }
           }
         });
 
@@ -157,6 +197,41 @@ export async function POST(request: Request) {
               xpGanho: xp,
               timestamp
             });
+            
+            // CQRS: Atualizar portal_views
+            const portalViewRef = dbAdmin.collection("portal_views").doc(mat);
+            transaction.set(portalViewRef, {
+              notificacoes: FieldValue.arrayUnion({
+                id: idEntrega,
+                mensagem: String(motivo || "XP Injetado pelo Tutor"),
+                xp: xp,
+                tempo: timestamp,
+                tipo: xp > 0 ? "Bônus" : "Multa"
+              })
+            }, { merge: true });
+
+            // Atualizar contadores de ranking
+            const { semanaKey, mesKey } = getRankingKeys(new Date(timestamp));
+            
+            const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+            transaction.set(rankSemanaRef, {
+              alunos: {
+                [mat]: {
+                  xpNormal: FieldValue.increment(xp),
+                  ultimoEnvio: timestamp
+                }
+              }
+            }, { merge: true });
+    
+            const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+            transaction.set(rankMesRef, {
+              alunos: {
+                [mat]: {
+                  xpNormal: FieldValue.increment(xp),
+                  ultimoEnvio: timestamp
+                }
+              }
+            }, { merge: true });
           }
         });
 
@@ -259,6 +334,12 @@ export async function POST(request: Request) {
             justificativa: reason,
             turma: turmaDoAluno,
             timestamp: docTimestamp
+          }, { merge: true });
+
+          // CQRS: Atualizar portal_views
+          const portalViewRef = dbAdmin.collection("portal_views").doc(mat);
+          await portalViewRef.set({
+            frequencias: FieldValue.arrayUnion(dataBR)
           }, { merge: true });
 
           invalidatePortalCache(mat);

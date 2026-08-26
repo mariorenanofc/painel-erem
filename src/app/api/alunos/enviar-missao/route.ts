@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { Transaction, FieldValue } from "firebase-admin/firestore";
 import { calcularGamificacao, GamificacaoStatus } from "@/src/lib/gamificacao";
+import { getRankingKeys } from "@/src/lib/dateUtils";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
@@ -138,9 +139,8 @@ export async function POST(request: Request) {
             if (xpFinalPermitido > 0) {
               let descontoAtraso = 0;
               if (atrasoDias > 0) {
-                // Regra Percentual: 10% por dia de atraso, teto de 50%
-                const porcentagemDesconto = Math.min(atrasoDias * 0.10, 0.50);
-                descontoAtraso = Math.floor(xpFinalPermitido * porcentagemDesconto);
+                // Regra de Atraso: 30% de desconto fixo se entregue com atraso
+                descontoAtraso = Math.floor(xpFinalPermitido * 0.30);
               }
 
               const isGabaritoLiberado = ativ.gabaritoLiberado === true;
@@ -157,7 +157,7 @@ export async function POST(request: Request) {
 
               if (descontoTotal > 0) {
                 const msgs = [];
-                if (descontoAtraso > 0) msgs.push(`-${descontoAtraso} XP (${atrasoDias * 10}% por atraso)`);
+                if (descontoAtraso > 0) msgs.push(`-${descontoAtraso} XP (30% por atraso)`);
                 if (descontoGabarito > 0) msgs.push(`-30% por gabarito liberado`);
                 msgDesconto = ` (${msgs.join(", ")})`;
               }
@@ -234,6 +234,51 @@ export async function POST(request: Request) {
         updatePayload.xp = finalXp;
       }
       transaction.update(alunoRef, updatePayload);
+
+      // CQRS: Atualizar portal_views
+      const portalViewRef = dbAdmin.collection("portal_views").doc(matricula);
+      transaction.set(portalViewRef, {
+        entregasMap: {
+          [idAtividade]: {
+            resposta,
+            status: statusFinal,
+            xpGanho: xpGanhoFinal,
+            dataEnvio: timestampAtual,
+            feedback: feedbackFinal
+          }
+        }
+      }, { merge: true });
+
+      // CQRS: Atualizar Ranking Semanal e Mensal
+      if (xpGanhoFinal > 0) {
+        const { semanaKey, mesKey } = getRankingKeys(new Date(timestampAtual));
+        
+        const ehAtrasado = atrasoDias > 0;
+        const xpNormal = ehAtrasado ? 0 : xpGanhoFinal;
+        const xpAtrasado = ehAtrasado ? xpGanhoFinal : 0;
+
+        const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+        transaction.set(rankSemanaRef, {
+          alunos: {
+            [matricula]: {
+              xpNormal: FieldValue.increment(xpNormal),
+              xpAtrasado: FieldValue.increment(xpAtrasado),
+              ultimoEnvio: timestampAtual
+            }
+          }
+        }, { merge: true });
+
+        const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+        transaction.set(rankMesRef, {
+          alunos: {
+            [matricula]: {
+              xpNormal: FieldValue.increment(xpNormal),
+              xpAtrasado: FieldValue.increment(xpAtrasado),
+              ultimoEnvio: timestampAtual
+            }
+          }
+        }, { merge: true });
+      }
 
       // Calcular nível e saldo atualizado do gamificação
       finalGamificacao = calcularGamificacao(finalXp, xpGasto);

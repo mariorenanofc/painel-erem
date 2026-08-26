@@ -119,111 +119,29 @@ export async function GET(request: Request) {
 
     // Processar Entregas (Apenas no filtro de tempo ativo)
     if (filtroTempo !== "geral") {
-      // 1. Carregar atividades para verificar prazos e detectar atrasos
-      let atividadesMap = getCachedAtividades() as Record<string, { dataLimite?: string }> | null;
-      if (!atividadesMap) {
-        atividadesMap = {};
-        const atividadesSnap = await dbAdmin.collection("atividades").get();
-        atividadesSnap.forEach((doc: QueryDocumentSnapshot) => {
-          const d = doc.data();
-          atividadesMap![doc.id] = { dataLimite: d.dataLimite };
-        });
-        setCachedAtividades(atividadesMap);
-      }
+      const { getRankingKeys } = await import("@/src/lib/dateUtils");
+      const { semanaKey, mesKey } = getRankingKeys(dataAtual);
 
-      // 2. Mapear todas as faltas justificadas
-      let justificativasMap = getCachedJustificativas() as Record<string, Set<string>> | null;
-      if (!justificativasMap) {
-        justificativasMap = {};
-        const justificadasSnap = await dbAdmin.collection("frequencia")
-          .where("status", "in", ["Justificada", "justificada", "J", "j", "JUSTIFICADA"])
-          .get();
-        justificadasSnap.forEach((doc: QueryDocumentSnapshot) => {
-          const f = doc.data();
-          const mat = f.matricula;
-          const dataFormatada = normalizeToDateStr(f.data || "");
-          if (mat && dataFormatada) {
-            if (!justificativasMap![mat]) {
-              justificativasMap![mat] = new Set<string>();
-            }
-            justificativasMap![mat].add(dataFormatada);
-          }
-        });
-        setCachedJustificativas(justificativasMap);
-      }
+      const targetKey = filtroTempo === "semanal" ? `ranking_semanal_${semanaKey}` : `ranking_mensal_${mesKey}`;
+      const rankingRef = dbAdmin.collection("estatisticas").doc(targetKey);
+      const rankingDoc = await rankingRef.get();
 
-      const entregasSnap = await dbAdmin.collection("entregas")
-        .where("timestamp", ">=", timeInicio)
-        .where("timestamp", "<=", timeFim)
-        .get();
+      if (rankingDoc.exists) {
+        const rankingData = rankingDoc.data()?.alunos || {};
+        
+        for (const mat of Object.keys(alunosRankMap)) {
+          if (rankingData[mat]) {
+            const rData = rankingData[mat];
+            const xpNormal = Number(rData.xpNormal) || 0;
+            const xpAtrasado = Number(rData.xpAtrasado) || 0;
+            const ultimoEnvio = Number(rData.ultimoEnvio) || alunosRankMap[mat].ultimoEnvio;
 
-      entregasSnap.forEach((doc: QueryDocumentSnapshot) => {
-        const e = doc.data();
-        if (e.status !== "Avaliado") return;
-        const mat = e.matricula;
-        const xp = e.xpGanho || 0;
-        const timestampEnvio = e.timestamp || 0;
-        const idAtividade = e.idAtividade || doc.id.split("-")[0];
-
-        if (alunosRankMap[mat]) {
-          if (timestampEnvio <= timeFim) {
-            // Verificar se o envio foi com atraso
-            const ativ = atividadesMap[idAtividade];
-            let ehAtrasado = false;
-            if (ativ && ativ.dataLimite) {
-              const dataLimiteStr = String(ativ.dataLimite).trim();
-              let dataLimObj: Date | null = null;
-              if (dataLimiteStr.includes("-")) {
-                const p = dataLimiteStr.split("T")[0].split("-");
-                if (p.length === 3) dataLimObj = new Date(Number(p[0]), Number(p[1]) - 1, Number(p[2]), 23, 59, 59);
-              } else if (dataLimiteStr.includes("/")) {
-                const p = dataLimiteStr.split("/");
-                if (p.length === 3) dataLimObj = new Date(Number(p[2]), Number(p[1]) - 1, Number(p[0]), 23, 59, 59);
-              }
-              if (dataLimObj && timestampEnvio > dataLimObj.getTime()) {
-                ehAtrasado = true;
-              }
-            }
-
-            // Se for atrasado, verificar se existe justificativa de falta para aquela data limite
-            let temFaltaJustificada = false;
-            if (ehAtrasado && ativ && ativ.dataLimite) {
-              const dataLimiteStrNormalized = normalizeToDateStr(ativ.dataLimite);
-              if (dataLimiteStrNormalized && justificativasMap[mat]?.has(dataLimiteStrNormalized)) {
-                temFaltaJustificada = true;
-              }
-            }
-
-            if (ehAtrasado && !temFaltaJustificada) {
-              alunosRankMap[mat].xpAtrasadoAcumulado = (alunosRankMap[mat].xpAtrasadoAcumulado || 0) + xp;
-            } else {
-              alunosRankMap[mat].xpCalculado += xp;
-            }
-
-            if (timestampEnvio > 0 && timestampEnvio < alunosRankMap[mat].ultimoEnvio) {
-              alunosRankMap[mat].ultimoEnvio = timestampEnvio;
-            }
+            alunosRankMap[mat].xpCalculado = xpNormal;
+            alunosRankMap[mat].xpAtrasadoAcumulado = xpAtrasado;
+            alunosRankMap[mat].ultimoEnvio = ultimoEnvio;
           }
         }
-      });
-
-      // Também filtrar presenças/frequência no período (Filtrando status em memória)
-      const freqSnap = await dbAdmin.collection("frequencia")
-        .where("timestamp", ">=", timeInicio)
-        .get();
-
-      freqSnap.forEach((doc: QueryDocumentSnapshot) => {
-        const f = doc.data();
-        const statusVal = String(f.status || "").trim();
-        if (!["Presente", "P", "p", "presente"].includes(statusVal)) return;
-        const mat = f.matricula;
-        const xp = f.xpGanho || 10;
-        const timestampFreq = f.timestamp || 0;
-
-        if (alunosRankMap[mat] && timestampFreq <= timeFim) {
-          alunosRankMap[mat].xpCalculado += xp;
-        }
-      });
+      }
     }
 
     // Ordenar e Formatar o Ranking

@@ -1,8 +1,9 @@
 import { invalidatePortalCache,  } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { Transaction } from "firebase-admin/firestore";
+import { Transaction, FieldValue } from "firebase-admin/firestore";
 import { calcularGamificacao } from "@/src/lib/gamificacao";
+import { getRankingKeys } from "@/src/lib/dateUtils";
 
 export async function POST(request: Request) {
   let matricula = "";
@@ -44,31 +45,43 @@ export async function POST(request: Request) {
     const xpCalculado = Math.max(0, Math.floor(score / 1000));
 
     // 3. Obter início do dia no fuso horário de São Paulo para verificação do limite diário (25 XP)
-    const startOfDayTimestamp = new Date(
-      new Date().toLocaleDateString("en-US", { timeZone: "America/Sao_Paulo" })
-    ).getTime();
+    const spDate = new Date(new Date().toLocaleString("en-US", { timeZone: "America/Sao_Paulo" }));
+    const diaHoje = String(spDate.getDate()).padStart(2, "0");
+    const mesHoje = String(spDate.getMonth() + 1).padStart(2, "0");
+    const anoHoje = String(spDate.getFullYear());
+    const dataHojeStr = `${diaHoje}/${mesHoje}/${anoHoje}`;
 
-    // Consultar XP e Vidas Gastas hoje
-    const entregasSnap = await dbAdmin.collection("entregas")
-      .where("matricula", "==", matricula)
-      .get();
+    // Consultar XP e Vidas Gastas hoje do portal_views
+    const portalViewRef = dbAdmin.collection("portal_views").doc(matricula);
+    const portalViewDoc = await portalViewRef.get();
+    
+    let jogosStatus = {
+      dataReferencia: "",
+      xpGanhoHoje: 0,
+      vidasGastasHoje: 0
+    };
+    
+    if (portalViewDoc.exists) {
+      jogosStatus = portalViewDoc.data()?.jogosStatus || jogosStatus;
+    }
 
-    let xpGanhoHoje = 0;
-    let vidasGastasHoje = 0;
+    if (jogosStatus.dataReferencia !== dataHojeStr) {
+      jogosStatus = {
+        dataReferencia: dataHojeStr,
+        xpGanhoHoje: 0,
+        vidasGastasHoje: 0
+      };
+    }
 
-    entregasSnap.forEach(doc => {
-      const data = doc.data();
-      if (Number(data.timestamp || 0) >= startOfDayTimestamp) {
-        if (data.idAtividade === "JOGOS-EDUCATIVOS") {
-          xpGanhoHoje += Number(data.xpGanho) || 0;
-        } else if (data.idAtividade === "JOGOS-VIDAS-GASTAS") {
-          vidasGastasHoje += Number(data.quantidade) || 0;
-        }
-      }
-    });
+    let xpGanhoHoje = jogosStatus.xpGanhoHoje;
+    let vidasGastasHoje = jogosStatus.vidasGastasHoje;
 
     const LIMITE_VIDAS_DIARIAS = 12;
     
+    // Agora o custo por partida é fixo em 3 vidas (a não ser que o frontend envie outro valor, mas garantimos o mínimo do db)
+    // O texto diz "3 vidas por partida".
+    const vidasDescontar = Math.max(vidasPerdidas, 3); // Custo mínimo de 3 vidas por partida gravada
+
     if (vidasGastasHoje >= LIMITE_VIDAS_DIARIAS && xpCalculado > 0) {
       return NextResponse.json({ 
         status: "erro", 
@@ -89,7 +102,7 @@ export async function POST(request: Request) {
     }
 
     // Se não há XP a ganhar e nenhuma vida foi perdida, pode apenas retornar sucesso.
-    if (xpAdicionar <= 0 && vidasPerdidas <= 0) {
+    if (xpAdicionar <= 0 && vidasDescontar <= 0) {
       return NextResponse.json({ 
         status: "sucesso", 
         xpGanho: 0, 
@@ -118,8 +131,6 @@ export async function POST(request: Request) {
 
       finalXp = currentXp + xpAdicionar;
 
-      // Registrar o log do jogo em "entregas" para que o sincronizador com o Google Sheets
-      // pegue esse log e sincronize os pontos na planilha de notas automaticamente.
       // Registrar o log do jogo em "entregas"
       if (xpAdicionar > 0) {
         transaction.set(dbAdmin.collection("entregas").doc(idEntrega), {
@@ -133,16 +144,16 @@ export async function POST(request: Request) {
         });
       }
 
-      // Registrar perda de vida, se houver
-      if (vidasPerdidas > 0) {
+      // Registrar perda de vida
+      if (vidasDescontar > 0) {
         const idVida = `VIDA-${timestamp}-${matricula}`;
         transaction.set(dbAdmin.collection("entregas").doc(idVida), {
           id: idVida,
           matricula,
           idAtividade: "JOGOS-VIDAS-GASTAS",
-          resposta: `${tipoJogo} - Vidas perdidas: ${vidasPerdidas}`,
+          resposta: `${tipoJogo} - Vidas perdidas: ${vidasDescontar}`,
           status: "Avaliado",
-          quantidade: vidasPerdidas,
+          quantidade: vidasDescontar,
           timestamp
         });
       }
@@ -152,6 +163,42 @@ export async function POST(request: Request) {
         xp: finalXp,
         lastUpdated: timestamp
       });
+      
+      // CQRS: Atualizar portal_views com jogosStatus
+      transaction.set(portalViewRef, {
+        jogosStatus: {
+          dataReferencia: dataHojeStr,
+          xpGanhoHoje: xpGanhoHoje + xpAdicionar,
+          vidasGastasHoje: vidasGastasHoje + vidasDescontar
+        }
+      }, { merge: true });
+
+      // CQRS: Atualizar Ranking Semanal e Mensal
+      if (xpAdicionar > 0) {
+        const { semanaKey, mesKey } = getRankingKeys(new Date(timestamp));
+
+        const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+        transaction.set(rankSemanaRef, {
+          alunos: {
+            [matricula]: {
+              xpNormal: FieldValue.increment(xpAdicionar),
+              xpAtrasado: FieldValue.increment(0),
+              ultimoEnvio: timestamp
+            }
+          }
+        }, { merge: true });
+
+        const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+        transaction.set(rankMesRef, {
+          alunos: {
+            [matricula]: {
+              xpNormal: FieldValue.increment(xpAdicionar),
+              xpAtrasado: FieldValue.increment(0),
+              ultimoEnvio: timestamp
+            }
+          }
+        }, { merge: true });
+      }
 
       finalGamificacao = calcularGamificacao(finalXp, xpGasto);
     });

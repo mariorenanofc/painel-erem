@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { invalidatePortalCache, invalidateRankingCache, getCachedAdminAlunos, setCachedAdminAlunos } from "@/src/lib/cache";
-import { QueryDocumentSnapshot, Transaction } from "firebase-admin/firestore";
+import { getCachedAdminAlunos, setCachedAdminAlunos, getAlunosAtivosSnapshot, invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
+import { QueryDocumentSnapshot, Transaction, FieldValue } from "firebase-admin/firestore";
 import { cookies } from "next/headers";
+import { getRankingKeys } from "@/src/lib/dateUtils";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
@@ -56,19 +57,32 @@ export async function GET(request: Request) {
     // 1. Carregar mapa de estudantes para tradução de matrícula -> nome (Usando Cache)
     let alunosArray = getCachedAdminAlunos() as Array<{ matricula: string, nome: string, turma: string, statusTrilha: string, xp: number, xpGasto: number, senha: string }> | null;
     if (!alunosArray) {
-      const snapshot = await dbAdmin.collection("alunos").get();
-      alunosArray = snapshot.docs.map((doc: QueryDocumentSnapshot) => {
-        const data = doc.data();
-        return {
-          matricula: doc.id,
-          nome: data.nome || `Aluno ${doc.id}`,
-          turma: data.turmaTrilha || data.turma || "",
-          statusTrilha: data.statusTrilha || "Inativo",
-          xp: Number(data.xp) || 0,
-          xpGasto: Number(data.xpGasto) || 0,
-          senha: data.pinPix || data.senha || ""
-        };
-      });
+      const snapAlunos = await getAlunosAtivosSnapshot(dbAdmin);
+      if (snapAlunos && snapAlunos.length > 0) {
+        alunosArray = snapAlunos.map((a: Record<string, unknown>) => ({
+          matricula: String(a.matricula),
+          nome: String(a.nome || `Aluno ${a.matricula}`),
+          turma: String(a.turmaTrilha || a.turma || ""),
+          statusTrilha: String(a.statusTrilha || "Inativo"),
+          xp: Number(a.xp) || 0,
+          xpGasto: Number(a.xpGasto) || 0,
+          senha: String(a.pinPix || a.senha || "")
+        }));
+      } else {
+        const snapshot = await dbAdmin.collection("alunos").get();
+        alunosArray = snapshot.docs.map((doc: QueryDocumentSnapshot) => {
+          const data = doc.data();
+          return {
+            matricula: doc.id,
+            nome: data.nome || `Aluno ${doc.id}`,
+            turma: data.turmaTrilha || data.turma || "",
+            statusTrilha: data.statusTrilha || "Inativo",
+            xp: Number(data.xp) || 0,
+            xpGasto: Number(data.xpGasto) || 0,
+            senha: data.pinPix || data.senha || ""
+          };
+        });
+      }
       setCachedAdminAlunos(alunosArray);
     }
 
@@ -201,6 +215,8 @@ export async function GET(request: Request) {
   // Filtrar por Status
   if (status) {
     resultadosFiltrados = resultadosFiltrados.filter(t => t.status.toLowerCase() === status.toLowerCase());
+  } else {
+    resultadosFiltrados = resultadosFiltrados.filter(t => t.status.toUpperCase() !== "EXCLUIDA");
   }
 
   // Filtrar por busca (nome, matrícula ou texto da resposta)
@@ -288,7 +304,48 @@ export async function PUT(request: Request) {
             xp: Math.max(0, currentXp + diffXp),
             lastUpdated: Date.now()
           });
+          
+          if (diffXp !== 0) {
+            const timestampEnvio = Number(antigaEntrega.timestamp) || Date.now();
+            const { semanaKey, mesKey } = getRankingKeys(new Date(timestampEnvio));
+            
+            const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+            transaction.set(rankSemanaRef, {
+              alunos: {
+                [matricula]: {
+                  xpNormal: FieldValue.increment(diffXp),
+                  ultimoEnvio: Date.now()
+                }
+              }
+            }, { merge: true });
+    
+            const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+            transaction.set(rankMesRef, {
+              alunos: {
+                [matricula]: {
+                  xpNormal: FieldValue.increment(diffXp),
+                  ultimoEnvio: Date.now()
+                }
+              }
+            }, { merge: true });
+          }
         }
+      }
+
+      // CQRS: Atualizar portal_views
+      if (matricula !== "SISTEMA") {
+        const portalViewRef = dbAdmin.collection("portal_views").doc(matricula);
+        transaction.set(portalViewRef, {
+          entregasMap: {
+            [String(antigaEntrega.idAtividade || "").trim()]: {
+              resposta: novaResposta,
+              status: novoStatus,
+              xpGanho: novoXpGanho,
+              dataEnvio: Date.now(),
+              feedback: novoFeedback
+            }
+          }
+        }, { merge: true });
       }
     });
 
@@ -377,7 +434,46 @@ export async function DELETE(request: Request) {
             xp: Math.max(0, currentXp - antigoXpGanho), // Reverte o XP adicionado anteriormente
             lastUpdated: Date.now()
           });
+          
+          const timestampEnvio = Number(antigaEntrega.timestamp) || Date.now();
+          const { semanaKey, mesKey } = getRankingKeys(new Date(timestampEnvio));
+          
+          const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+          transaction.set(rankSemanaRef, {
+            alunos: {
+              [matricula]: {
+                xpNormal: FieldValue.increment(-antigoXpGanho),
+                ultimoEnvio: Date.now()
+              }
+            }
+          }, { merge: true });
+  
+          const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+          transaction.set(rankMesRef, {
+            alunos: {
+              [matricula]: {
+                xpNormal: FieldValue.increment(-antigoXpGanho),
+                ultimoEnvio: Date.now()
+              }
+            }
+          }, { merge: true });
         }
+      }
+
+      // CQRS: Atualizar portal_views
+      if (matricula !== "SISTEMA") {
+        const portalViewRef = dbAdmin.collection("portal_views").doc(matricula);
+        transaction.set(portalViewRef, {
+          entregasMap: {
+            [String(antigaEntrega.idAtividade || "").trim()]: {
+              resposta: `[EXCLUÍDA] ${antigaResposta}`,
+              status: "EXCLUIDA",
+              xpGanho: 0,
+              dataEnvio: Date.now(),
+              feedback: "Excluída"
+            }
+          }
+        }, { merge: true });
       }
     });
 

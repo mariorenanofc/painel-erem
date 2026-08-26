@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { getCachedRanking, setCachedRanking, getCachedAtividades, setCachedAtividades, getCachedJustificativas, setCachedJustificativas } from "@/src/lib/cache";

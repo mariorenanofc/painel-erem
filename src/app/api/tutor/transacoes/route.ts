@@ -284,6 +284,21 @@ export async function PUT(request: Request) {
     const diffXp = novoXpGanho - antigoXpGanho;
 
     await dbAdmin.runTransaction(async (transaction: Transaction) => {
+      // READS
+      let currentXp = 0;
+      let alunoDocRef = null;
+      if (diffXp !== 0 && matricula !== "SISTEMA") {
+        alunoDocRef = dbAdmin.collection("alunos").doc(matricula);
+        const freshAlunoDoc = await transaction.get(alunoDocRef);
+        if (freshAlunoDoc.exists) {
+          const freshAluno = freshAlunoDoc.data()!;
+          currentXp = Number(freshAluno.xp) || 0;
+        } else {
+          alunoDocRef = null;
+        }
+      }
+
+      // WRITES
       // 1. Atualizar Entrega
       transaction.update(entregaRef, {
         status: novoStatus,
@@ -294,16 +309,11 @@ export async function PUT(request: Request) {
       });
 
       // 2. Se mudou o XP e a transação afeta um aluno ativo
-      if (diffXp !== 0 && matricula !== "SISTEMA") {
-        const alunoRef = dbAdmin.collection("alunos").doc(matricula);
-        const freshAlunoDoc = await transaction.get(alunoRef);
-        if (freshAlunoDoc.exists) {
-          const freshAluno = freshAlunoDoc.data()!;
-          const currentXp = Number(freshAluno.xp) || 0;
-          transaction.update(alunoRef, {
-            xp: Math.max(0, currentXp + diffXp),
-            lastUpdated: Date.now()
-          });
+      if (alunoDocRef) {
+        transaction.update(alunoDocRef, {
+          xp: Math.max(0, currentXp + diffXp),
+          lastUpdated: Date.now()
+        });
           
           if (diffXp !== 0) {
             const timestampEnvio = Number(antigaEntrega.timestamp) || Date.now();
@@ -415,6 +425,21 @@ export async function DELETE(request: Request) {
     const antigaResposta = String(antigaEntrega.resposta || "");
 
     await dbAdmin.runTransaction(async (transaction: Transaction) => {
+      // READS
+      let currentXp = 0;
+      let alunoDocRef = null;
+      if (antigoXpGanho !== 0 && matricula !== "SISTEMA") {
+        alunoDocRef = dbAdmin.collection("alunos").doc(matricula);
+        const freshAlunoDoc = await transaction.get(alunoDocRef);
+        if (freshAlunoDoc.exists) {
+          const freshAluno = freshAlunoDoc.data()!;
+          currentXp = Number(freshAluno.xp) || 0;
+        } else {
+          alunoDocRef = null;
+        }
+      }
+
+      // WRITES
       // 1. Atualizar para status EXCLUIDA, zeras XP e renomear resposta
       transaction.update(entregaRef, {
         status: "EXCLUIDA",
@@ -424,16 +449,11 @@ export async function DELETE(request: Request) {
       });
 
       // 2. Estornar XP do saldo total do estudante
-      if (antigoXpGanho !== 0 && matricula !== "SISTEMA") {
-        const alunoRef = dbAdmin.collection("alunos").doc(matricula);
-        const freshAlunoDoc = await transaction.get(alunoRef);
-        if (freshAlunoDoc.exists) {
-          const freshAluno = freshAlunoDoc.data()!;
-          const currentXp = Number(freshAluno.xp) || 0;
-          transaction.update(alunoRef, {
-            xp: Math.max(0, currentXp - antigoXpGanho), // Reverte o XP adicionado anteriormente
-            lastUpdated: Date.now()
-          });
+      if (alunoDocRef) {
+        transaction.update(alunoDocRef, {
+          xp: Math.max(0, currentXp - antigoXpGanho), // Reverte o XP adicionado anteriormente
+          lastUpdated: Date.now()
+        });
           
           const timestampEnvio = Number(antigaEntrega.timestamp) || Date.now();
           const { semanaKey, mesKey } = getRankingKeys(new Date(timestampEnvio));

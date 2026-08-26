@@ -340,7 +340,6 @@ export async function PUT(request: Request) {
             }, { merge: true });
           }
         }
-      }
 
       // CQRS: Atualizar portal_views
       if (matricula !== "SISTEMA") {
@@ -478,7 +477,6 @@ export async function DELETE(request: Request) {
             }
           }, { merge: true });
         }
-      }
 
       // CQRS: Atualizar portal_views
       if (matricula !== "SISTEMA") {

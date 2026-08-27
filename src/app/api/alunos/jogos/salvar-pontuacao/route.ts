@@ -21,16 +21,8 @@ export async function POST(request: Request) {
     }
 
     // 1. Validação Anti-Cheat (Tempo e Densidade de Score)
-    const agora = Date.now();
-    const tempoDecorridoReal = agora - tempoInicio;
-    const tempoMinimoEsperado = (duracaoPartida * 1000) - 2000; // tolerância de 2s
-
-    if (tempoDecorridoReal < tempoMinimoEsperado) {
-      return NextResponse.json({ 
-        status: "erro", 
-        mensagem: "Partida inválida: Tempo decorrido inconsistente com a duração reportada." 
-      }, { status: 400 });
-    }
+    // Removida a validação de tempoDecorridoReal baseada no tempoInicio do cliente, 
+    // pois relógios desincronizados geram falso-positivos. O limite diário de XP já protege o sistema.
 
     // Máximo aceitável de 500 pontos por segundo
     const densidadeScore = score / duracaoPartida;

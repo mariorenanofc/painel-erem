@@ -3,6 +3,7 @@ import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { invalidateRankingCache, clearAllPortalCaches, getAlunosAtivosSnapshot } from "@/src/lib/cache";
 import { google } from "googleapis";
 import { FieldValue } from "firebase-admin/firestore";
+import { getRankingKeys } from "@/src/lib/dateUtils";
 
 // Normalização de nomes para busca
 const normalizar = (texto: string) => String(texto).normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
@@ -333,8 +334,6 @@ export async function POST(req: Request) {
                                 xpGanho: xpGanhoFinal,
                                 timestamp: timestampRealDaEntrega,
                             });
-                            // Seria ideal ler o feedback antigo aqui para anexar a string em vez de sobrescrever
-                            // Mas por otimização, faremos via transação ou assumiremos anexação
                          } else {
                             const idUnico = `SYNC-${Date.now()}-${Math.floor(Math.random()*1000)}`;
                             const docRef = dbAdmin.collection("entregas").doc(idUnico);
@@ -352,8 +351,49 @@ export async function POST(req: Request) {
                          // Atualizar XP do aluno
                          const alunoRef = dbAdmin.collection("alunos").doc(alunoDb.idDoc);
                          batch.update(alunoRef, {
-                             xpTotal: (alunoDb.xpTotal || 0) + xpGanhoFinal
+                             xpTotal: (alunoDb.xpTotal || 0) + xpGanhoFinal,
+                             xp: FieldValue.increment(xpGanhoFinal),
+                             lastUpdated: Date.now()
                          });
+
+                         // CQRS: Atualizar portal_views
+                         const portalViewRef = dbAdmin.collection("portal_views").doc(alunoDb.idDoc);
+                         batch.set(portalViewRef, {
+                             [`entregasMap.${idAtiv}`]: {
+                                 status: "Avaliado",
+                                 resposta: "Entrega validada pelo AVA.",
+                                 xpGanho: xpGanhoFinal,
+                                 dataEnvio: timestampRealDaEntrega,
+                                 feedback: "Sincronizado via Google Classroom" + notaAdicional + msgAviso
+                             }
+                         }, { merge: true });
+
+                         // CQRS: Atualizar Ranking Semanal e Mensal
+                         if (xpGanhoFinal > 0) {
+                             const { semanaKey, mesKey } = getRankingKeys(new Date(timestampRealDaEntrega));
+
+                             const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+                             batch.set(rankSemanaRef, {
+                                 alunos: {
+                                     [alunoDb.idDoc]: {
+                                         xpNormal: FieldValue.increment(xpGanhoFinal),
+                                         xpAtrasado: FieldValue.increment(0),
+                                         ultimoEnvio: timestampRealDaEntrega
+                                     }
+                                 }
+                             }, { merge: true });
+
+                             const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+                             batch.set(rankMesRef, {
+                                 alunos: {
+                                     [alunoDb.idDoc]: {
+                                         xpNormal: FieldValue.increment(xpGanhoFinal),
+                                         xpAtrasado: FieldValue.increment(0),
+                                         ultimoEnvio: timestampRealDaEntrega
+                                     }
+                                 }
+                             }, { merge: true });
+                         }
 
                          const statsRef = dbAdmin.collection("estatisticas_atividades").doc(idAtiv);
                          const statsUpdates: Record<string, FieldValue> = { validadasAVA: FieldValue.increment(1) };

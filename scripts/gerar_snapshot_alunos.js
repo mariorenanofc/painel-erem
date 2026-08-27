@@ -40,7 +40,8 @@ async function gerarSnapshot() {
                 avatarId: data.avatarId || "avatar-padrao",
                 statusTrilha: data.statusTrilha || "ativo",
                 xpGasto: data.xpGasto || 0,
-                pinPix: data.pinPix || data.senha || ""
+                pinPix: data.pinPix || data.senha || "",
+                email: data.email || ""
             });
         });
         

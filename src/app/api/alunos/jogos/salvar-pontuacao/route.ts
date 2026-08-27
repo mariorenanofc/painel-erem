@@ -1,4 +1,4 @@
-import { invalidatePortalCache,  } from "@/src/lib/cache";
+import { invalidatePortalCache } from "@/src/lib/cache";
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { Transaction, FieldValue } from "firebase-admin/firestore";
@@ -65,15 +65,14 @@ export async function POST(request: Request) {
       };
     }
 
-    let xpGanhoHoje = jogosStatus.xpGanhoHoje;
-    let vidasGastasHoje = jogosStatus.vidasGastasHoje;
+    const xpGanhoHoje = jogosStatus.xpGanhoHoje;
+    const vidasGastasHoje = jogosStatus.vidasGastasHoje;
 
     const LIMITE_VIDAS_DIARIAS = 12;
     
-    // Agora o custo por partida é fixo em 3 vidas (a não ser que o frontend envie outro valor, mas garantimos o mínimo do db)
-    // O texto diz "3 vidas por partida".
-    const vidasDescontar = Math.max(vidasPerdidas, 3); // Custo mínimo de 3 vidas por partida gravada
-
+    // A regra é: se o aluno não perder nenhuma vida, não desconta nada das vidas diárias.
+    // Se perder 1, desconta 1, etc. Até o máximo de 3 (pois a partida só tem 3 corações).
+    const vidasDescontar = Math.min(vidasPerdidas, 3);
     if (vidasGastasHoje >= LIMITE_VIDAS_DIARIAS && xpCalculado > 0) {
       return NextResponse.json({ 
         status: "erro", 

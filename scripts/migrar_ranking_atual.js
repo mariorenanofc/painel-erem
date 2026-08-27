@@ -17,23 +17,32 @@ if (!getApps().length) {
 
 const db = getFirestore();
 
-// Funções utilitárias
 function getRankingKeys(dateAtual) {
   const d = new Date(dateAtual);
-  d.setHours(0, 0, 0, 0);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(d.setDate(diff));
   
-  const dStr = String(monday.getDate()).padStart(2, "0");
-  const mStr = String(monday.getMonth() + 1).padStart(2, "0");
-  const yStr = monday.getFullYear();
-  const semanaKey = `${dStr}_${mStr}_${yStr}`;
-  
-  const mMes = String(dateAtual.getMonth() + 1).padStart(2, "0");
-  const yMes = dateAtual.getFullYear();
-  const mesKey = `${mMes}_${yMes}`;
-  
+  // Mês
+  const ano = d.getFullYear();
+  const mes = String(d.getMonth() + 1).padStart(2, "0");
+  const mesKey = `${ano}_${mes}`;
+
+  // Semana
+  const diaSemana = d.getDay();
+  const diffParaSegunda = diaSemana === 0 ? 6 : diaSemana - 1;
+  const inicioSemana = new Date(d);
+  inicioSemana.setDate(d.getDate() - diffParaSegunda);
+  inicioSemana.setHours(0, 0, 0, 0);
+
+  const target = new Date(inicioSemana.valueOf());
+  const dayNr = (inicioSemana.getDay() + 6) % 7;
+  target.setDate(target.getDate() - dayNr + 3);
+  const firstThursday = target.valueOf();
+  target.setMonth(0, 1);
+  if (target.getDay() !== 4) {
+    target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+  }
+  const weekNumber = 1 + Math.ceil((firstThursday - target.valueOf()) / 604800000);
+  const semanaKey = `${ano}_W${String(weekNumber).padStart(2, "0")}`;
+
   return { semanaKey, mesKey };
 }
 

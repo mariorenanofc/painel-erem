@@ -231,7 +231,7 @@ export async function GET(request: Request) {
 
     dadosRetorno.aniversario.jaResgatado = (portalView.aniversarioResgatado as boolean) || false;
     dadosRetorno.badgesResgatadas = pvData.badges as string[];
-    dadosRetorno.totalCurtidas = (aluno.likes || 0) + pvData.curtidasRecebidas;
+    dadosRetorno.totalCurtidas = (aluno.likes || 0);
 
     dadosRetorno.notificacoes.sort((a: { tempo: number }, b: { tempo: number }) => b.tempo - a.tempo);
     dadosRetorno.notificacoes = dadosRetorno.notificacoes.slice(0, 10);

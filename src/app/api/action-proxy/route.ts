@@ -1351,6 +1351,11 @@ export async function POST(request: Request) {
                 xpGanho: xp,
                 timestamp: Date.now()
               });
+
+              const portalViewRef = dbAdmin.collection("portal_views").doc(mat);
+              transaction.set(portalViewRef, {
+                badges: FieldValue.arrayUnion(badgeId)
+              }, { merge: true });
             }
           });
           invalidatePortalCache(mat);

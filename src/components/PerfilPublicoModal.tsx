@@ -133,15 +133,16 @@ export default function PerfilPublicoModal({
         !nome.includes("Elite Prata") &&
         !nome.includes("Elite Bronze"),
     )
+    .filter((nome: string) => !nome.startsWith("VIP-") && !nome.startsWith("BADGE-VIP-"))
     .map((nomeBadge: string) => {
       const nomeLimpo = nomeBadge.replace(/["']/g, "").trim();
       const encontrada = catalogoBadges.find((b) => b.id === nomeLimpo);
       return (
         encontrada || {
           id: nomeLimpo,
-          nome: nomeLimpo,
-          icone: "🏆",
-          descricao: "Conquista especial do Trilha Tech!",
+          nome: "✨ Conquista Especial",
+          icone: "🌟",
+          descricao: "Prêmio Exclusivo da Trilha Tech!",
         }
       );
     });

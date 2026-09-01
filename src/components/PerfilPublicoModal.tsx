@@ -135,7 +135,7 @@ export default function PerfilPublicoModal({
     )
     .map((nomeBadge: string) => {
       const nomeLimpo = nomeBadge.replace(/["']/g, "").trim();
-      const encontrada = catalogoBadges.find((b) => b.nome === nomeLimpo);
+      const encontrada = catalogoBadges.find((b) => b.id === nomeLimpo);
       return (
         encontrada || {
           id: nomeLimpo,

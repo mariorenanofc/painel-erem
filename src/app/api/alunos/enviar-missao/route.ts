@@ -139,8 +139,8 @@ export async function POST(request: Request) {
             if (xpFinalPermitido > 0) {
               let descontoAtraso = 0;
               if (atrasoDias > 0) {
-                // Regra de Atraso: 30% de desconto fixo se entregue com atraso
-                descontoAtraso = Math.floor(xpFinalPermitido * 0.30);
+                // Regra de Atraso: 1 XP por dia de atraso
+                descontoAtraso = atrasoDias;
               }
 
               const isGabaritoLiberado = ativ.gabaritoLiberado === true;
@@ -153,11 +153,11 @@ export async function POST(request: Request) {
               xpGanhoFinal = xpFinalPermitido - descontoTotal;
 
               const piso = Math.ceil((ativ.xp || 0) * 0.1);
-              if (xpGanhoFinal < piso) xpGanhoFinal = piso;
+              if (xpGanhoFinal < piso && xpFinalPermitido > 0) xpGanhoFinal = piso;
 
               if (descontoTotal > 0) {
                 const msgs = [];
-                if (descontoAtraso > 0) msgs.push(`-${descontoAtraso} XP (30% por atraso)`);
+                if (descontoAtraso > 0) msgs.push(`-${descontoAtraso} XP por atraso`);
                 if (descontoGabarito > 0) msgs.push(`-30% por gabarito liberado`);
                 msgDesconto = ` (${msgs.join(", ")})`;
               }

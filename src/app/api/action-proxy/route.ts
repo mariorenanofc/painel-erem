@@ -968,6 +968,11 @@ export async function POST(request: Request) {
         feedback: `token-${newId}`
       });
 
+      const portalRef = dbAdmin.collection("portal_views").doc(matriculaNova);
+      batch.set(portalRef, {
+        badges: FieldValue.arrayUnion(tipoPlaca)
+      }, { merge: true });
+
       await batch.commit();
       result = { status: "sucesso", mensagem: `${tipoPlaca} transferida com sucesso para o novo Campeão!` };
 

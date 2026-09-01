@@ -284,8 +284,7 @@ export async function POST(req: Request) {
 
                              let descontoAtraso = 0;
                              if (atrasoDias > 0 && xpAtiv > 0) {
-                                 const teto = Math.floor(xpAtiv / 2);
-                                 descontoAtraso = atrasoDias > teto ? teto : atrasoDias;
+                                 descontoAtraso = atrasoDias;
                              }
 
                              const isGabaritoLiberado = ativ.gabaritoLiberado === true || String(ativ.gabaritoLiberado).toLowerCase() === "true";
@@ -351,7 +350,7 @@ export async function POST(req: Request) {
                          // Atualizar XP do aluno
                          const alunoRef = dbAdmin.collection("alunos").doc(alunoDb.idDoc);
                          batch.update(alunoRef, {
-                             xpTotal: (alunoDb.xpTotal || 0) + xpGanhoFinal,
+                             xpTotal: FieldValue.increment(xpGanhoFinal),
                              xp: FieldValue.increment(xpGanhoFinal),
                              lastUpdated: Date.now()
                          });
@@ -359,25 +358,29 @@ export async function POST(req: Request) {
                          // CQRS: Atualizar portal_views
                          const portalViewRef = dbAdmin.collection("portal_views").doc(alunoDb.idDoc);
                          batch.set(portalViewRef, {
-                             [`entregasMap.${idAtiv}`]: {
-                                 status: "Avaliado",
-                                 resposta: "Entrega validada pelo AVA.",
-                                 xpGanho: xpGanhoFinal,
-                                 dataEnvio: timestampRealDaEntrega,
-                                 feedback: "Sincronizado via Google Classroom" + notaAdicional + msgAviso
+                             entregasMap: {
+                                 [idAtiv]: {
+                                     status: "Avaliado",
+                                     resposta: "Entrega validada pelo AVA.",
+                                     xpGanho: xpGanhoFinal,
+                                     dataEnvio: timestampRealDaEntrega,
+                                     feedback: "Sincronizado via Google Classroom" + notaAdicional + msgAviso
+                                 }
                              }
                          }, { merge: true });
 
-                         // CQRS: Atualizar Ranking Semanal e Mensal
-                         if (xpGanhoFinal > 0) {
+                             const ehAtrasado = atrasoDias > 0 || (descontoTotal > 0 && descontoAtraso > 0);
+                             const xpNormalIncr = ehAtrasado ? 0 : xpGanhoFinal;
+                             const xpAtrasadoIncr = ehAtrasado ? xpGanhoFinal : 0;
+
                              const { semanaKey, mesKey } = getRankingKeys(new Date(timestampRealDaEntrega));
 
                              const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
                              batch.set(rankSemanaRef, {
                                  alunos: {
                                      [alunoDb.idDoc]: {
-                                         xpNormal: FieldValue.increment(xpGanhoFinal),
-                                         xpAtrasado: FieldValue.increment(0),
+                                         xpNormal: FieldValue.increment(xpNormalIncr),
+                                         xpAtrasado: FieldValue.increment(xpAtrasadoIncr),
                                          ultimoEnvio: timestampRealDaEntrega
                                      }
                                  }
@@ -387,8 +390,8 @@ export async function POST(req: Request) {
                              batch.set(rankMesRef, {
                                  alunos: {
                                      [alunoDb.idDoc]: {
-                                         xpNormal: FieldValue.increment(xpGanhoFinal),
-                                         xpAtrasado: FieldValue.increment(0),
+                                         xpNormal: FieldValue.increment(xpNormalIncr),
+                                         xpAtrasado: FieldValue.increment(xpAtrasadoIncr),
                                          ultimoEnvio: timestampRealDaEntrega
                                      }
                                  }

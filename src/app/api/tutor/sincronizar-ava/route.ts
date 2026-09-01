@@ -268,11 +268,14 @@ export async function POST(req: Request) {
                          let xpGanhoFinal = xpAtiv;
                          let notaAdicional = "";
 
+                         let atrasoDias = 0;
+                         let descontoAtraso = 0;
+                         let descontoTotal = 0;
+
                          if (statusModulo === "encerrado") {
                              xpGanhoFinal = 0;
                              notaAdicional = " (Módulo Encerrado: 0 XP)";
                          } else {
-                             let atrasoDias = 0;
                              if (dataLimObj) {
                                  const dataEnvioZero = new Date(dataEntregaAVA);
                                  dataEnvioZero.setHours(0,0,0,0);
@@ -282,7 +285,6 @@ export async function POST(req: Request) {
                                  }
                              }
 
-                             let descontoAtraso = 0;
                              if (atrasoDias > 0 && xpAtiv > 0) {
                                  descontoAtraso = atrasoDias;
                              }
@@ -293,7 +295,7 @@ export async function POST(req: Request) {
                                  descontoGabarito = Math.floor(xpAtiv * 0.3);
                              }
 
-                             const descontoTotal = descontoAtraso + descontoGabarito;
+                             descontoTotal = descontoAtraso + descontoGabarito;
                              xpGanhoFinal = xpAtiv - Math.min(descontoTotal, xpAtiv);
 
                              // Para digitação
@@ -396,7 +398,6 @@ export async function POST(req: Request) {
                                      }
                                  }
                              }, { merge: true });
-                         }
 
                          const statsRef = dbAdmin.collection("estatisticas_atividades").doc(idAtiv);
                          const statsUpdates: Record<string, FieldValue> = { validadasAVA: FieldValue.increment(1) };

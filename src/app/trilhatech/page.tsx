@@ -69,9 +69,7 @@ export default function TrilhaTechPage() {
       return [];
     }
 
-    return listaAlunos.filter(
-      (aluno: Aluno) => aluno.statusTrilha && aluno.statusTrilha !== "Inativo",
-    );
+    return listaAlunos;
   }, [dadosBrutos]);
 
   // Aplica a barra de pesquisa e os filtros suspensos
@@ -254,7 +252,7 @@ export default function TrilhaTechPage() {
         isOpen={modalAberto}
         onClose={() => setModalAberto(false)}
         formData={alunoSelecionado}
-        isEditing={false}
+        isEditing={true}
         handleChange={() => {}}
         salvarAluno={() => {}}
         salvando={false}

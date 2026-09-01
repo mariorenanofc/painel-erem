@@ -78,7 +78,7 @@ export default function TrilhaStatsCards({
           <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden shadow-inner">
             <div
               className={`h-1.5 rounded-full transition-all duration-700 ${
-                percentTurma1 >= 90 ? "bg-rose-500" : percentTurma1 >= 75 ? "bg-amber-500" : "bg-emerald-555"
+                percentTurma1 >= 90 ? "bg-rose-500" : percentTurma1 >= 75 ? "bg-amber-500" : "bg-emerald-500"
               }`}
               style={{ width: `${percentTurma1}%` }}
             />
@@ -113,7 +113,7 @@ export default function TrilhaStatsCards({
           <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden shadow-inner">
             <div
               className={`h-1.5 rounded-full transition-all duration-700 ${
-                percentTurma2 >= 90 ? "bg-rose-500" : percentTurma2 >= 75 ? "bg-amber-500" : "bg-emerald-555"
+                percentTurma2 >= 90 ? "bg-rose-500" : percentTurma2 >= 75 ? "bg-amber-500" : "bg-emerald-500"
               }`}
               style={{ width: `${percentTurma2}%` }}
             />

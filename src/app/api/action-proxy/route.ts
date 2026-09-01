@@ -285,46 +285,25 @@ export async function POST(request: Request) {
       if (cachedAdmin) {
         result = { status: "sucesso", alunos: cachedAdmin };
       } else {
-        let alunos: Record<string, unknown>[] = [];
-        const snapAlunos = await getAlunosAtivosSnapshot(dbAdmin);
-        
-        if (snapAlunos && snapAlunos.length > 0) {
-          alunos = snapAlunos.map((a) => ({
-            matricula: a.matricula,
-            nome: a.nome || `Aluno ${a.matricula}`,
-            turma: a.turma || "",
-            turmaTrilha: a.turmaTrilha || "",
-            statusTrilha: a.statusTrilha || "Inativo",
-            xp: Number(a.xp) || 0,
-            xpGasto: Number(a.xpGasto) || 0,
-            senha: a.pinPix || a.senha || "",
-            email: a.email || "",
-            dataNasc: a.dataNasc || "",
-            telefoneAluno: a.telefoneAluno || "",
-            telefoneResponsavel: a.telefoneResponsavel || "",
-            obs: a.obs || ""
-          }));
-        } else {
-          const snapshot = await dbAdmin.collection("alunos").get();
-          alunos = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return {
-              matricula: doc.id,
-              nome: data.nome || `Aluno ${doc.id}`,
-              turma: data.turma || "",
-              turmaTrilha: data.turmaTrilha || "",
-              statusTrilha: data.statusTrilha || "Inativo",
-              xp: Number(data.xp) || 0,
-              xpGasto: Number(data.xpGasto) || 0,
-              senha: data.pinPix || data.senha || "",
-              email: data.email || "",
-              dataNasc: data.dataNasc || "",
-              telefoneAluno: data.telefoneAluno || "",
-              telefoneResponsavel: data.telefoneResponsavel || "",
-              obs: data.obs || ""
-            };
-          });
-        }
+        const snapshot = await dbAdmin.collection("alunos").get();
+        let alunos: Record<string, unknown>[] = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            matricula: doc.id,
+            nome: data.nome || `Aluno ${doc.id}`,
+            turma: data.turma || "",
+            turmaTrilha: data.turmaTrilha || "",
+            statusTrilha: data.statusTrilha || "Inativo",
+            xp: Number(data.xp) || 0,
+            xpGasto: Number(data.xpGasto) || 0,
+            senha: data.pinPix || data.senha || "",
+            email: data.email || "",
+            dataNasc: data.dataNasc || data.dataNascimento || "",
+            telefoneAluno: data.telefoneAluno || data.telefone || "",
+            telefoneResponsavel: data.telefoneResponsavel || data.responsavel || "",
+            obs: data.obs || data.observacoes || ""
+          };
+        });
         
         alunos.sort((a, b) => {
           const turmaA = String(a.turma);

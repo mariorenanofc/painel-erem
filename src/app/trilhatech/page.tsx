@@ -70,7 +70,7 @@ export default function TrilhaTechPage() {
     }
 
     return listaAlunos.filter(
-      (aluno: Aluno) => aluno.statusTrilha && aluno.statusTrilha.trim() !== "",
+      (aluno: Aluno) => aluno.statusTrilha && aluno.statusTrilha !== "Inativo",
     );
   }, [dadosBrutos]);
 

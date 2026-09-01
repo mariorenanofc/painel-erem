@@ -292,11 +292,17 @@ export async function POST(request: Request) {
           alunos = snapAlunos.map((a) => ({
             matricula: a.matricula,
             nome: a.nome || `Aluno ${a.matricula}`,
-            turma: a.turmaTrilha || a.turma || "",
+            turma: a.turma || "",
+            turmaTrilha: a.turmaTrilha || "",
             statusTrilha: a.statusTrilha || "Inativo",
             xp: Number(a.xp) || 0,
             xpGasto: Number(a.xpGasto) || 0,
-            senha: a.pinPix || a.senha || ""
+            senha: a.pinPix || a.senha || "",
+            email: a.email || "",
+            dataNasc: a.dataNasc || "",
+            telefoneAluno: a.telefoneAluno || "",
+            telefoneResponsavel: a.telefoneResponsavel || "",
+            obs: a.obs || ""
           }));
         } else {
           const snapshot = await dbAdmin.collection("alunos").get();
@@ -305,11 +311,17 @@ export async function POST(request: Request) {
             return {
               matricula: doc.id,
               nome: data.nome || `Aluno ${doc.id}`,
-              turma: data.turmaTrilha || data.turma || "",
+              turma: data.turma || "",
+              turmaTrilha: data.turmaTrilha || "",
               statusTrilha: data.statusTrilha || "Inativo",
               xp: Number(data.xp) || 0,
               xpGasto: Number(data.xpGasto) || 0,
-              senha: data.pinPix || data.senha || ""
+              senha: data.pinPix || data.senha || "",
+              email: data.email || "",
+              dataNasc: data.dataNasc || "",
+              telefoneAluno: data.telefoneAluno || "",
+              telefoneResponsavel: data.telefoneResponsavel || "",
+              obs: data.obs || ""
             };
           });
         }

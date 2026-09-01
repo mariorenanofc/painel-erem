@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     }
 
     const ROTAS_PROTEGIDAS = [
-      "salvar_atividade", "excluir_atividade", "avaliar_entrega", 
+      "salvar_atividade", "excluir_atividade", "avaliar_entrega",
       "injetar_xp_manual", "cadastrar_aluno", "inscrever_trilhatech", "salvar_aluno",
       "mudar_status_trilhatech", "atualizar_senha_checkin", "toggle_modo_reposicao",
       "salvar_configuracoes", "sincronizar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "sincronizar_ava",
@@ -52,11 +52,11 @@ export async function POST(request: Request) {
       payload.token = TUTOR_TOKEN_SECRET;
     }
     // ---------------------------------
-    
+
     if (requestAction === "sincronizar_configuracoes") {
       const sheetsResponse = await fetchSheetsQueued(GOOGLE_API_URL, { action: "buscar_configuracoes" });
       const resultSync = await sheetsResponse.json();
-      
+
       if (resultSync.status === "sucesso" && resultSync.configuracoes) {
         const configs = resultSync.configuracoes;
         const promises = Object.keys(configs).map(key => {
@@ -69,33 +69,33 @@ export async function POST(request: Request) {
         return NextResponse.json({ status: "erro", mensagem: "Falha ao obter da planilha." }, { status: 500 });
       }
     }
-    
+
     if (requestAction === "sincronizar_alunos") {
       const sheetsResponse = await fetchSheetsQueued(GOOGLE_API_URL, { action: "listar_alunos_godmode" });
       const resultSyncText = await sheetsResponse.text();
-      let resultSync: { status?: string, alunos?: Array<{matricula: string | number, nome: string, turma: string}> } = {};
+      let resultSync: { status?: string, alunos?: Array<{ matricula: string | number, nome: string, turma: string }> } = {};
       try {
         resultSync = JSON.parse(resultSyncText);
       } catch (error: unknown) {
         console.error("Erro ao parsear listar_alunos_godmode:", resultSyncText.substring(0, 100));
       }
-      
+
       const rankingResponse = await fetchSheetsQueued(GOOGLE_API_URL, { action: "buscar_ranking" });
       const rankingSyncText = await rankingResponse.text();
-      let rankingSync: { status?: string, ranking?: Array<{matricula: string | number, xp: number | string, nivel: string}>, listaAlunos?: Array<{matricula: string | number, xpTotal: number | string, nivel: string}> } = {};
+      let rankingSync: { status?: string, ranking?: Array<{ matricula: string | number, xp: number | string, nivel: string }>, listaAlunos?: Array<{ matricula: string | number, xpTotal: number | string, nivel: string }> } = {};
       try {
         rankingSync = JSON.parse(rankingSyncText);
       } catch (error: unknown) {
         console.error("Erro ao parsear ranking:", rankingSyncText.substring(0, 100));
       }
-      
+
       if (resultSync.status === "sucesso" && resultSync.alunos) {
         const batch = dbAdmin.batch();
         const alunosList = resultSync.alunos;
-        
+
         // Map de XP vindo do Ranking ou Analytics
-        const xpMap: Record<string, {xp: number, nivel: string}> = {};
-        
+        const xpMap: Record<string, { xp: number, nivel: string }> = {};
+
         if (rankingSync.status === "sucesso") {
           // O Google Script pode retornar como ranking ou listaAlunos dependendo da versão
           const arrayRanking = rankingSync.ranking || rankingSync.listaAlunos;
@@ -117,10 +117,10 @@ export async function POST(request: Request) {
         for (const aluno of alunosList) {
           const mat = String(aluno.matricula).trim();
           if (!mat) continue;
-          
+
           const extra = xpMap[mat] || { xp: 0, nivel: "Iniciante" };
           const existing = currentData[mat] || {};
-          
+
           const updatePayload: Record<string, unknown> = {
             matricula: mat,
             nome: aluno.nome || existing.nome || "",
@@ -155,15 +155,15 @@ export async function POST(request: Request) {
     if (requestAction === "login") {
       const usuarioDigitado = String(payload.usuario || "").trim().toLowerCase();
       const senhaDigitada = String(payload.senha || "").trim();
-      
+
       const userSnap = await dbAdmin.collection("usuarios").doc(usuarioDigitado).get();
       if (userSnap.exists) {
         const userData = userSnap.data();
         if (userData?.senha === senhaDigitada) {
           const response = NextResponse.json({ status: "sucesso", nome: userData.nome });
-          response.cookies.set("tutor_session", "active", { 
-            httpOnly: true, secure: process.env.NODE_ENV === "production", 
-            sameSite: "strict", maxAge: 60 * 60 * 12 
+          response.cookies.set("tutor_session", "active", {
+            httpOnly: true, secure: process.env.NODE_ENV === "production",
+            sameSite: "strict", maxAge: 60 * 60 * 12
           });
           return response;
         }
@@ -174,15 +174,15 @@ export async function POST(request: Request) {
     else if (requestAction === "login_aluno") {
       const matriculaDigitada = String(payload.matricula || "").trim();
       const dataNascDigitada = String(payload.dataNasc || "").trim();
-      
+
       const alunoSnap = await dbAdmin.collection("alunos").doc(matriculaDigitada).get();
       if (alunoSnap.exists) {
         const alunoData = alunoSnap.data();
         if (alunoData?.dataNasc === dataNascDigitada) {
           if (alunoData.statusTrilha === "Ativo" || alunoData.statusTrilha === "ativo") {
-             return NextResponse.json({ status: "sucesso", nome: alunoData.nome, mensagem: "Login aprovado!" });
+            return NextResponse.json({ status: "sucesso", nome: alunoData.nome, mensagem: "Login aprovado!" });
           } else {
-             return NextResponse.json({ status: "erro", mensagem: "Aluno não está ativo no Trilha Tech." });
+            return NextResponse.json({ status: "erro", mensagem: "Aluno não está ativo no Trilha Tech." });
           }
         }
       }
@@ -192,18 +192,18 @@ export async function POST(request: Request) {
     else if (requestAction === "recuperar_matricula") {
       const nomeDigitado = String(payload.nome || "").trim().toLowerCase();
       const dataNascDigitada = String(payload.dataNasc || "").trim();
-      
+
       const alunosSnap = await dbAdmin.collection("alunos").where("dataNasc", "==", dataNascDigitada).get();
       let matriculaEncontrada = null;
       alunosSnap.forEach(doc => {
-         const data = doc.data();
-         if (data.nome.toLowerCase().includes(nomeDigitado)) {
-             matriculaEncontrada = data.matricula;
-         }
+        const data = doc.data();
+        if (data.nome.toLowerCase().includes(nomeDigitado)) {
+          matriculaEncontrada = data.matricula;
+        }
       });
-      
+
       if (matriculaEncontrada) {
-         return NextResponse.json({ status: "sucesso", matricula: matriculaEncontrada });
+        return NextResponse.json({ status: "sucesso", matricula: matriculaEncontrada });
       }
       return NextResponse.json({ status: "erro", mensagem: "Nenhum aluno encontrado com esses dados." });
     }
@@ -211,21 +211,21 @@ export async function POST(request: Request) {
     else if (requestAction === "salvar_atividade") {
       // Interceptação: Gravar e gerar ID diretamente no Firestore, ignorando o Sheets
       let idAtiv = payload.idAtividadeEdit || payload.id || payload.idAtividade;
-      
+
       if (!idAtiv) {
-         const snapshot = await dbAdmin.collection("atividades").get();
-         let maiorId = 0;
-         snapshot.forEach(doc => {
-           const docId = doc.id;
-           if (docId.startsWith("ATIV-")) {
-             const numId = parseInt(docId.replace("ATIV-", ""), 10);
-             if (!isNaN(numId) && numId > maiorId) {
-               maiorId = numId;
-             }
-           }
-         });
-         const proximoNumero = maiorId + 1;
-         idAtiv = "ATIV-" + proximoNumero.toString().padStart(3, '0');
+        const snapshot = await dbAdmin.collection("atividades").get();
+        let maiorId = 0;
+        snapshot.forEach(doc => {
+          const docId = doc.id;
+          if (docId.startsWith("ATIV-")) {
+            const numId = parseInt(docId.replace("ATIV-", ""), 10);
+            if (!isNaN(numId) && numId > maiorId) {
+              maiorId = numId;
+            }
+          }
+        });
+        const proximoNumero = maiorId + 1;
+        idAtiv = "ATIV-" + proximoNumero.toString().padStart(3, '0');
       }
 
       result = {
@@ -250,7 +250,7 @@ export async function POST(request: Request) {
     } else if (requestAction === "listar_alunos_godmode") {
       let alunos: Record<string, unknown>[] = [];
       const snapAlunos = await getAlunosAtivosSnapshot(dbAdmin);
-      
+
       if (snapAlunos && snapAlunos.length > 0) {
         alunos = snapAlunos.map((a) => ({
           matricula: a.matricula as string,
@@ -268,7 +268,7 @@ export async function POST(request: Request) {
           };
         });
       }
-      
+
       // Ordena por turma e depois alfabeticamente
       alunos.sort((a, b) => {
         const turmaA = String(a.turma);
@@ -286,7 +286,7 @@ export async function POST(request: Request) {
         result = { status: "sucesso", alunos: cachedAdmin };
       } else {
         const snapshot = await dbAdmin.collection("alunos").get();
-        let alunos: Record<string, unknown>[] = snapshot.docs.map(doc => {
+        const alunos: Record<string, unknown>[] = snapshot.docs.map(doc => {
           const data = doc.data();
           return {
             matricula: doc.id,
@@ -304,7 +304,7 @@ export async function POST(request: Request) {
             obs: data.obs || data.observacoes || ""
           };
         });
-        
+
         alunos.sort((a, b) => {
           const turmaA = String(a.turma);
           const turmaB = String(b.turma);
@@ -314,7 +314,7 @@ export async function POST(request: Request) {
           if (turmaA > turmaB) return 1;
           return nomeA.localeCompare(nomeB);
         });
-        
+
         setCachedAdminAlunos(alunos);
         result = { status: "sucesso", alunos };
       }
@@ -353,87 +353,87 @@ export async function POST(request: Request) {
         const freqSnap = await dbAdmin.collection("frequencia").get();
         const ativsSnap = await dbAdmin.collection("atividades").get();
 
-      const missoesFeitasMap: Record<string, number> = {};
-      const presencasMap: Record<string, number> = {};
-      const totalAulasTurmaMap: Record<string, Set<string>> = {};
+        const missoesFeitasMap: Record<string, number> = {};
+        const presencasMap: Record<string, number> = {};
+        const totalAulasTurmaMap: Record<string, Set<string>> = {};
 
-      const ativsLimites: Record<string, string> = {};
-      ativsSnap.forEach(doc => { ativsLimites[doc.id] = doc.data().dataLimite; });
+        const ativsLimites: Record<string, string> = {};
+        ativsSnap.forEach(doc => { ativsLimites[doc.id] = doc.data().dataLimite; });
 
-      entregasSnap.forEach(doc => {
-        const e = doc.data();
-        if (e.status === "Avaliado") {
-          missoesFeitasMap[e.matricula] = (missoesFeitasMap[e.matricula] || 0) + 1;
-        }
-      });
-
-      freqSnap.forEach(doc => {
-        const f = doc.data();
-        const turma = String(f.turma || "").trim();
-        const mat = f.matricula;
-        const dataFreq = f.data;
-        if (turma && dataFreq) {
-          if (!totalAulasTurmaMap[turma]) totalAulasTurmaMap[turma] = new Set();
-          totalAulasTurmaMap[turma].add(dataFreq);
-        }
-        if (mat) {
-          const isPresent = f.hora && f.hora !== "00:00:00" && f.hora !== "00:00" && f.hora !== "";
-          if (isPresent || f.status?.toLowerCase() === "justificada" || f.status?.toLowerCase() === "j") {
-            presencasMap[mat] = (presencasMap[mat] || 0) + 1;
+        entregasSnap.forEach(doc => {
+          const e = doc.data();
+          if (e.status === "Avaliado") {
+            missoesFeitasMap[e.matricula] = (missoesFeitasMap[e.matricula] || 0) + 1;
           }
-        }
-      });
-
-      let totalXpEscola = 0;
-      const totalAlunos = alunosSnap.size;
-      const listaAlunos: Array<{ matricula: string, nome: string, turma: string, xpTotal: number, nivel: string, avatar: string, missoesFeitas: number, presencas: number, fichasEstrela: number }> = [];
-      const radarRisco: Array<{ matricula: string, nome: string, turma: string, telefone: string, taxaPresenca: number, missoesAtrasadas: number }> = [];
-
-      alunosSnap.forEach(doc => {
-        const data = doc.data();
-        const mat = doc.id;
-        const turma = data.turmaTrilha || data.turma || "";
-        totalXpEscola += (Number(data.xp) || 0);
-        
-        const mf = missoesFeitasMap[mat] || 0;
-        const pr = presencasMap[mat] || 0;
-        const totalAulas = totalAulasTurmaMap[turma] ? totalAulasTurmaMap[turma].size : 0;
-        const taxaPresenca = totalAulas === 0 ? 100 : Math.round((pr / totalAulas) * 100);
-
-        listaAlunos.push({
-          matricula: mat,
-          nome: data.nome || `Aluno ${mat}`,
-          turma: turma,
-          xpTotal: Number(data.xp) || 0,
-          nivel: data.nivel || "Iniciante",
-          avatar: data.avatarId || "avatar-padrao",
-          missoesFeitas: mf,
-          presencas: pr,
-          fichasEstrela: 0
         });
 
-        if (taxaPresenca < 70) {
-          radarRisco.push({
+        freqSnap.forEach(doc => {
+          const f = doc.data();
+          const turma = String(f.turma || "").trim();
+          const mat = f.matricula;
+          const dataFreq = f.data;
+          if (turma && dataFreq) {
+            if (!totalAulasTurmaMap[turma]) totalAulasTurmaMap[turma] = new Set();
+            totalAulasTurmaMap[turma].add(dataFreq);
+          }
+          if (mat) {
+            const isPresent = f.hora && f.hora !== "00:00:00" && f.hora !== "00:00" && f.hora !== "";
+            if (isPresent || f.status?.toLowerCase() === "justificada" || f.status?.toLowerCase() === "j") {
+              presencasMap[mat] = (presencasMap[mat] || 0) + 1;
+            }
+          }
+        });
+
+        let totalXpEscola = 0;
+        const totalAlunos = alunosSnap.size;
+        const listaAlunos: Array<{ matricula: string, nome: string, turma: string, xpTotal: number, nivel: string, avatar: string, missoesFeitas: number, presencas: number, fichasEstrela: number }> = [];
+        const radarRisco: Array<{ matricula: string, nome: string, turma: string, telefone: string, taxaPresenca: number, missoesAtrasadas: number }> = [];
+
+        alunosSnap.forEach(doc => {
+          const data = doc.data();
+          const mat = doc.id;
+          const turma = data.turmaTrilha || data.turma || "";
+          totalXpEscola += (Number(data.xp) || 0);
+
+          const mf = missoesFeitasMap[mat] || 0;
+          const pr = presencasMap[mat] || 0;
+          const totalAulas = totalAulasTurmaMap[turma] ? totalAulasTurmaMap[turma].size : 0;
+          const taxaPresenca = totalAulas === 0 ? 100 : Math.round((pr / totalAulas) * 100);
+
+          listaAlunos.push({
             matricula: mat,
             nome: data.nome || `Aluno ${mat}`,
             turma: turma,
-            telefone: data.telefone || "",
-            taxaPresenca,
-            missoesAtrasadas: 0 // Mock simples pois precisaria calcular cruzado
+            xpTotal: Number(data.xp) || 0,
+            nivel: data.nivel || "Iniciante",
+            avatar: data.avatarId || "avatar-padrao",
+            missoesFeitas: mf,
+            presencas: pr,
+            fichasEstrela: 0
           });
-        }
-      });
 
-      listaAlunos.sort((a, b) => b.xpTotal - a.xpTotal);
-      radarRisco.sort((a, b) => a.taxaPresenca - b.taxaPresenca);
-      result = { status: "sucesso", totalAlunos, totalXpEscola, volumePix: 0, alunos: listaAlunos, radarRisco };
-      setCachedAnalyticsGeral(result);
-      
-      // Salva no Firestore cache (sem esperar para não travar a resposta)
-      dbAdmin.collection("cache").doc("analytics_geral").set({
-        timestamp: Date.now(),
-        result
-      }).catch(err => console.error("Erro ao salvar cache analytics", err));
+          if (taxaPresenca < 70) {
+            radarRisco.push({
+              matricula: mat,
+              nome: data.nome || `Aluno ${mat}`,
+              turma: turma,
+              telefone: data.telefone || "",
+              taxaPresenca,
+              missoesAtrasadas: 0 // Mock simples pois precisaria calcular cruzado
+            });
+          }
+        });
+
+        listaAlunos.sort((a, b) => b.xpTotal - a.xpTotal);
+        radarRisco.sort((a, b) => a.taxaPresenca - b.taxaPresenca);
+        result = { status: "sucesso", totalAlunos, totalXpEscola, volumePix: 0, alunos: listaAlunos, radarRisco };
+        setCachedAnalyticsGeral(result);
+
+        // Salva no Firestore cache (sem esperar para não travar a resposta)
+        dbAdmin.collection("cache").doc("analytics_geral").set({
+          timestamp: Date.now(),
+          result
+        }).catch(err => console.error("Erro ao salvar cache analytics", err));
       }
     } else if (requestAction === "buscar_ficha_360") {
       const mat = String(payload.matricula || "").trim();
@@ -443,17 +443,17 @@ export async function POST(request: Request) {
       } else {
         const data = doc.data() || {};
         const turma = data.turmaTrilha || data.turma || "";
-        
+
         let cachedDates = getCachedClassDates(turma) as string[] | null;
         if (!cachedDates) {
           const metadataDoc = await dbAdmin.collection("metadata").doc("dias_aula_turmas").get();
           const metadata = metadataDoc.exists ? metadataDoc.data() || {} : {};
           if (Array.isArray(metadata[turma])) {
-             cachedDates = metadata[turma];
+            cachedDates = metadata[turma];
           } else if (metadata.turmas && metadata.turmas[turma] && metadata.turmas[turma].dias_aula) {
-             cachedDates = metadata.turmas[turma].dias_aula;
+            cachedDates = metadata.turmas[turma].dias_aula;
           } else {
-             cachedDates = [];
+            cachedDates = [];
           }
         }
         const totalAulas = (cachedDates as string[]).length;
@@ -466,30 +466,30 @@ export async function POST(request: Request) {
           const f = fDoc.data();
           const isPresent = f.hora && f.hora !== "00:00:00" && f.hora !== "00:00" && f.hora !== "";
           if (isPresent || f.status?.toLowerCase() === "justificada" || f.status?.toLowerCase() === "j") {
-             totalPresencas++;
+            totalPresencas++;
           }
         });
-        
+
         totalFaltas = Math.max(0, totalAulas - totalPresencas);
         const taxaFreq = totalAulas === 0 ? 100 : Math.round((totalPresencas / totalAulas) * 100);
 
         const entregasSnap = await dbAdmin.collection("entregas").where("matricula", "==", mat).get();
         const historicoXP: Array<{ data: string, xp: number, descricao: string }> = [];
         entregasSnap.forEach(eDoc => {
-           const e = eDoc.data();
-           if (e.status === "Avaliado") {
-              historicoXP.push({
-                 data: e.timestamp ? new Date(e.timestamp).toLocaleDateString("pt-BR") : "",
-                 xp: Number(e.xpGanho) || 0,
-                 descricao: e.idAtividade || "Atividade"
-              });
-           }
+          const e = eDoc.data();
+          if (e.status === "Avaliado") {
+            historicoXP.push({
+              data: e.timestamp ? new Date(e.timestamp).toLocaleDateString("pt-BR") : "",
+              xp: Number(e.xpGanho) || 0,
+              descricao: e.idAtividade || "Atividade"
+            });
+          }
         });
         historicoXP.sort((a, b) => b.data.localeCompare(a.data)); // Simplificado
 
         const ficha = {
           dadosPessoais: { nome: data.nome, nascimento: data.dataNasc, email: data.email, turmaEscola: data.turma, telefone: data.telefone, responsavel: data.responsavel, obs: data.obs },
-          xpTotal: Number(data.xp) || 0, nivel: data.nivel || "Iniciante", turmaProjeto: turma, statusProjeto: data.statusTrilha || "Ativo", 
+          xpTotal: Number(data.xp) || 0, nivel: data.nivel || "Iniciante", turmaProjeto: turma, statusProjeto: data.statusTrilha || "Ativo",
           historicoXP,
           frequencia: { taxa: taxaFreq, totalAulas, totalPresencas, totalFaltas }
         };
@@ -534,9 +534,9 @@ export async function POST(request: Request) {
             const hasCustomPwd = !!data.senha;
             let isValid = false;
             if (hasCustomPwd) {
-               isValid = data.senha === pwd;
+              isValid = data.senha === pwd;
             } else {
-               isValid = data.dataNasc === pwd;
+              isValid = data.dataNasc === pwd;
             }
             if (isValid) {
               result = { status: "sucesso", aluno: { matricula: mat, ...data } };
@@ -612,9 +612,9 @@ export async function POST(request: Request) {
           const metaData = metaSnap.data() || {};
           // Tenta a estrutura antiga (metaData.turmas[turma].dias_aula) e a nova estrutura (metaData[turma]) usada no checkin
           if (metaData.turmas && metaData.turmas[turma] && metaData.turmas[turma].dias_aula) {
-             diasAula = metaData.turmas[turma].dias_aula;
+            diasAula = metaData.turmas[turma].dias_aula;
           } else if (Array.isArray(metaData[turma])) {
-             diasAula = metaData[turma];
+            diasAula = metaData[turma];
           }
         }
       }
@@ -648,8 +648,8 @@ export async function POST(request: Request) {
         for (const d of alunosCache) {
           const t = String(d.turmaTrilha || d.turma || "").trim();
           if (t === turma && String(d.statusTrilha || "").toLowerCase() === "ativo") {
-             alunosDaTurma.push(d.matricula);
-             if (alunosDaTurma.length >= 5) break; // 5 alunos já dão uma margem excelente para achar todos os dias
+            alunosDaTurma.push(d.matricula);
+            if (alunosDaTurma.length >= 5) break; // 5 alunos já dão uma margem excelente para achar todos os dias
           }
         }
 
@@ -683,11 +683,11 @@ export async function POST(request: Request) {
           const st = String(f.status || "").toLowerCase().trim();
           let status = "P";
           if ((f.xp === 0 && f.justificativa) || String(f.id || "").startsWith("FALTA-") || st === "justificada" || st === "j") {
-             status = "J";
+            status = "J";
           } else if (st === "falta" || st === "f") {
-             status = "F";
+            status = "F";
           }
-          
+
           if (status === "P" || status === "J") totalPresencas++;
           historico.push({
             data,
@@ -740,7 +740,7 @@ export async function POST(request: Request) {
       let temSenhaPix = false;
       let meuXpTotal = 0;
       const colegas: Array<{ matricula: string; nome: string }> = [];
-      
+
       alunosSnap.forEach(doc => {
         const a = doc.data();
         const matriculaCorrente = doc.id;
@@ -827,8 +827,8 @@ export async function POST(request: Request) {
         let limiteDiario = 50;
         const configSnap = await dbAdmin.collection("configuracoes").get();
         configSnap.forEach(doc => {
-           const c = doc.data();
-           if (c.chave === "LIMITE_PIX_DIARIO") limiteDiario = Number(c.valor) || 50;
+          const c = doc.data();
+          if (c.chave === "LIMITE_PIX_DIARIO") limiteDiario = Number(c.valor) || 50;
         });
 
         const alunosSnap = await dbAdmin.collection("alunos").where("__name__", "in", [matOrigem, matDestino]).get();
@@ -882,7 +882,7 @@ export async function POST(request: Request) {
                 temBloqueio = true;
                 const d = new Date(tstamp);
                 d.setHours(d.getHours() - 3);
-                dataBloqueio = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+                dataBloqueio = `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
               }
               if (e.matricula === matDestino && id.startsWith(prefixoHoje) && id.includes("-RECEBEU")) {
                 xpRecebidoHojeDestino += Math.abs(xpLido);
@@ -916,7 +916,7 @@ export async function POST(request: Request) {
                   batch.update((origemDoc as QueryDocumentSnapshot).ref, { xpRanking: (Number(oData.xpRanking) || 0) - quantidade });
                 }
                 batch.update((destinoDoc as QueryDocumentSnapshot).ref, { xpRanking: (Number(dData.xpRanking) || 0) + quantidade });
-                
+
                 const idBase = `${prefixoHoje}-${agoraTime}`;
                 batch.set(dbAdmin.collection("entregas").doc(`${idBase}-ENVIOU`), {
                   id: `${idBase}-ENVIOU`, matricula: matOrigem, idAtividade: "PIX-XP", resposta: `Enviou para ${matDestino}: ${motivo}`, status: "Avaliado", xpGanho: -quantidade, timestamp: agoraTime
@@ -941,7 +941,7 @@ export async function POST(request: Request) {
 
       const batch = dbAdmin.batch();
       const entregasSnap = await dbAdmin.collection("entregas").where("idAtividade", "==", "CONQUISTA-BADGE").where("resposta", "==", `Desbloqueou: ${tipoPlaca}`).get();
-      
+
       entregasSnap.forEach(doc => {
         batch.update(doc.ref, { resposta: tituloLegado });
       });
@@ -974,13 +974,13 @@ export async function POST(request: Request) {
       } else {
         const turmaSorteio = String(payload.turma || "").trim();
         let query: FirebaseFirestore.Query = dbAdmin.collection("rifa_bilhetes").where("status", "==", "ATIVO");
-        
+
         if (turmaSorteio && turmaSorteio !== "Todas" && turmaSorteio !== "Todas as Turmas") {
           query = query.where("turma", "==", turmaSorteio);
         }
-        
+
         const rifasSnap = await query.get();
-        
+
         const bilhetesValidos: Array<{ id: string, nomeAluno?: string, nome?: string, matricula: string }> = [];
         rifasSnap.forEach(doc => bilhetesValidos.push({ id: doc.id, ...(doc.data() as { nomeAluno?: string, nome?: string, matricula: string }) }));
 
@@ -1010,9 +1010,9 @@ export async function POST(request: Request) {
     // Se for login e teve sucesso, cria a sessão!
     if (requestAction === "login" && result.status === "sucesso") {
       const response = NextResponse.json(result);
-      response.cookies.set("tutor_session", "active", { 
-        httpOnly: true, 
-        secure: process.env.NODE_ENV === "production", 
+      response.cookies.set("tutor_session", "active", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
         path: "/",
         maxAge: 60 * 60 * 24 * 7 // 7 dias
       });
@@ -1021,7 +1021,7 @@ export async function POST(request: Request) {
 
     // 2. Se for sucesso, e for uma ação de escrita/sincronização do tutor, rodar a escrita local no Firestore
     const ACTIONS_TO_SYNC = [
-      "salvar_atividade", "excluir_atividade", "avaliar_entrega", 
+      "salvar_atividade", "excluir_atividade", "avaliar_entrega",
       "injetar_xp_manual", "atualizar_senha_checkin", "toggle_modo_reposicao",
       "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote",
       "justificar_falta",
@@ -1031,7 +1031,7 @@ export async function POST(request: Request) {
 
     if (result.status === "sucesso" && ACTIONS_TO_SYNC.includes(String(payload.action))) {
       invalidateAdminAlunosCache(); // Limpa o cache das tabelas administrativas do Painel
-      
+
       let idAtiv = (result.idAtividade || payload.idAtividadeEdit || payload.id) as string | undefined;
       if (!idAtiv && result.mensagem) {
         const match = String(result.mensagem).match(/ATIV-\d+/);
@@ -1075,28 +1075,28 @@ export async function POST(request: Request) {
       else if (action === "excluir_dia_letivo") {
         const turma = String(payload.turma || "").trim();
         const dataStr = String(payload.data || "").trim();
-        
+
         if (turma && dataStr) {
           const metaRef = dbAdmin.collection("metadata").doc("dias_aula_turmas");
-          
+
           // Tenta remover a data do array da turma usando FieldValue
           // OBS: Pode ser que dê erro se não tiver importado FieldValue, mas aqui estamos importando 'FieldValue' do firebase-admin/firestore.
           // Se não estiver importado no arquivo, precisaremos ajustar. 
           // O arquivo tem: import { QueryDocumentSnapshot, FieldValue, Timestamp } from "firebase-admin/firestore";
           await metaRef.update({
             [turma]: FieldValue.arrayRemove(dataStr)
-          }).catch(() => {}); // catch caso o doc/campo não exista
-          
+          }).catch(() => { }); // catch caso o doc/campo não exista
+
           // Opcional: deletar todas as frequencias da turma neste dia
           const snap = await dbAdmin.collection("frequencia")
             .where("turma", "==", turma)
             .where("data", "==", dataStr)
             .get();
-          
+
           const batchFreq = dbAdmin.batch();
           snap.forEach(doc => batchFreq.delete(doc.ref));
           await batchFreq.commit();
-          
+
           clearAllPortalCaches();
         }
       }
@@ -1141,8 +1141,8 @@ export async function POST(request: Request) {
               timestamp: Date.now()
             }, { merge: true });
 
-            const idAtividade = entregaDoc.exists 
-              ? (entregaDoc.data()?.idAtividade || idEntrega.split("-")[0]) 
+            const idAtividade = entregaDoc.exists
+              ? (entregaDoc.data()?.idAtividade || idEntrega.split("-")[0])
               : idEntrega.split("-")[0];
 
             const getStatusCategory = (status: string, fb: string = "") => {
@@ -1444,7 +1444,7 @@ export async function POST(request: Request) {
           if (payload.turma) updateData.turmaTrilha = String(payload.turma).trim();
           if (payload.novoStatus) updateData.statusTrilha = String(payload.novoStatus).trim();
           if (action === "inscrever_trilhatech") updateData.statusTrilha = "Ativo";
-          
+
           await dbAdmin.collection("alunos").doc(mat).set(updateData, { merge: true });
           invalidatePortalCache(mat);
           invalidateAdminAlunosCache();

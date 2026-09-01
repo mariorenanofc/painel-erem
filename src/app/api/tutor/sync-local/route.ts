@@ -27,7 +27,7 @@ export async function POST(request: Request) {
           id,
           titulo: String(ativ.titulo || ""),
           descricao: String(ativ.descricao || ""),
-          dataLimite: String(ativ.dataLimite || ""),
+          dataLimite: ativ.dataLimite ? String(ativ.dataLimite) : Intl.DateTimeFormat("en-CA", { timeZone: "America/Sao_Paulo" }).format(new Date()),
           xp: Number(ativ.xp) || 0,
           turmaAlvo: String(ativ.turmaAlvo || "Todas").trim(),
           tipo: String(ativ.tipo || "Projeto").trim(),

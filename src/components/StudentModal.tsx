@@ -29,9 +29,8 @@ const DataDisplay = ({
       </a>
     ) : (
       <span
-        className={`font-bold text-slate-800 dark:text-slate-200 text-sm md:text-base break-all ${
-          !value || value === "Sem email" ? "text-slate-400 italic font-normal" : ""
-        }`}
+        className={`font-bold text-slate-800 dark:text-slate-200 text-sm md:text-base break-all ${!value || value === "Sem email" ? "text-slate-400 italic font-normal" : ""
+          }`}
       >
         {value || `Não informado`}
       </span>
@@ -140,7 +139,7 @@ export default function StudentModal({
                       label="Data de Nascimento"
                       value={(() => {
                         if (!formData.dataNasc) return "";
-                        let d = formData.dataNasc.replace(/T\d{2}:\d{2}:\d{2}\.\d{3}Z/, "");
+                        const d = formData.dataNasc.replace(/T\d{2}:\d{2}:\d{2}\.\d{3}Z/, "");
                         if (d.match(/^\d{4}-\d{2}-\d{2}$/)) {
                           const [y, m, day] = d.split("-");
                           return `${day}/${m}/${y}`;
@@ -183,13 +182,12 @@ export default function StudentModal({
                         </p>
                         <p className="text-sm font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
                           <span className="text-slate-400 dark:text-slate-500 font-normal">Status Atual:</span>{" "}
-                          <span className={`px-2.5 py-0.5 rounded-lg text-xs font-black uppercase tracking-wider ${
-                            formData.statusTrilha === "Ativo"
+                          <span className={`px-2.5 py-0.5 rounded-lg text-xs font-black uppercase tracking-wider ${formData.statusTrilha === "Ativo"
                               ? "bg-emerald-100 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-400"
                               : formData.statusTrilha === "Inscrito"
                                 ? "bg-amber-100 dark:bg-amber-955/35 text-amber-700 dark:text-amber-400"
                                 : "bg-red-100 dark:bg-red-955/35 text-red-700 dark:text-red-400"
-                          }`}>
+                            }`}>
                             {formData.statusTrilha}
                           </span>
                         </p>
@@ -258,11 +256,10 @@ export default function StudentModal({
                             whileTap={{ scale: 0.98 }}
                             onClick={handleInscricao}
                             disabled={!turmaCursoSelecionada || inscrevendo}
-                            className={`w-full sm:w-auto px-6 py-3.5 rounded-2xl text-white font-black text-xs uppercase tracking-wider transition-all shadow-md select-none ${
-                              !turmaCursoSelecionada || inscrevendo
+                            className={`w-full sm:w-auto px-6 py-3.5 rounded-2xl text-white font-black text-xs uppercase tracking-wider transition-all shadow-md select-none ${!turmaCursoSelecionada || inscrevendo
                                 ? "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-600 cursor-not-allowed shadow-none"
                                 : "bg-blue-600 hover:brightness-110 shadow-blue-500/10"
-                            }`}
+                              }`}
                           >
                             {inscrevendo ? "⏳ Processando..." : "✅ Confirmar Inscrição"}
                           </motion.button>
@@ -293,11 +290,10 @@ export default function StudentModal({
                         value={formData.matricula}
                         onChange={handleChange}
                         readOnly={isEditing}
-                        className={`border border-slate-200 dark:border-slate-800 p-3.5 rounded-2xl outline-none font-bold text-sm shadow-sm transition-all ${
-                          isEditing
+                        className={`border border-slate-200 dark:border-slate-800 p-3.5 rounded-2xl outline-none font-bold text-sm shadow-sm transition-all ${isEditing
                             ? "bg-slate-100 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-605 cursor-not-allowed shadow-none font-mono"
                             : "bg-white dark:bg-slate-950 focus:border-blue-500 text-slate-800 dark:text-slate-100"
-                        }`}
+                          }`}
                         placeholder="Ex: 1234567"
                       />
                     </div>
@@ -325,7 +321,7 @@ export default function StudentModal({
                         name="dataNasc"
                         value={(() => {
                           if (!formData.dataNasc) return "";
-                          let d = formData.dataNasc.replace(/T\d{2}:\d{2}:\d{2}\.\d{3}Z/, "");
+                          const d = formData.dataNasc.replace(/T\d{2}:\d{2}:\d{2}\.\d{3}Z/, "");
                           if (d.includes("/")) {
                             const parts = d.split("/");
                             if (parts.length === 3) {

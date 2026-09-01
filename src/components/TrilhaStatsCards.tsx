@@ -76,11 +76,13 @@ export default function TrilhaStatsCards({
         </div>
         <div className="mt-5">
           <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden shadow-inner">
-            <div
-              className={`h-1.5 rounded-full transition-all duration-700 ${
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${percentTurma1}%` }}
+              transition={{ duration: 1.2, delay: 0.4, ease: "easeOut" }}
+              className={`h-1.5 rounded-full ${
                 percentTurma1 >= 90 ? "bg-rose-500" : percentTurma1 >= 75 ? "bg-amber-500" : "bg-emerald-500"
               }`}
-              style={{ width: `${percentTurma1}%` }}
             />
           </div>
           <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 mt-2 uppercase tracking-wider">
@@ -111,11 +113,13 @@ export default function TrilhaStatsCards({
         </div>
         <div className="mt-5">
           <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden shadow-inner">
-            <div
-              className={`h-1.5 rounded-full transition-all duration-700 ${
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${percentTurma2}%` }}
+              transition={{ duration: 1.2, delay: 0.5, ease: "easeOut" }}
+              className={`h-1.5 rounded-full ${
                 percentTurma2 >= 90 ? "bg-rose-500" : percentTurma2 >= 75 ? "bg-amber-500" : "bg-emerald-500"
               }`}
-              style={{ width: `${percentTurma2}%` }}
             />
           </div>
           <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 mt-2 uppercase tracking-wider">

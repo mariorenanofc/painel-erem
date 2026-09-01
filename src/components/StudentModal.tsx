@@ -138,11 +138,15 @@ export default function StudentModal({
                     <DataDisplay label="Matrícula" value={formData.matricula} />
                     <DataDisplay
                       label="Data de Nascimento"
-                      value={
-                        formData.dataNasc
-                          ? formData.dataNasc.split("-").reverse().join("/")
-                          : ""
-                      }
+                      value={(() => {
+                        if (!formData.dataNasc) return "";
+                        let d = formData.dataNasc.replace(/T\d{2}:\d{2}:\d{2}\.\d{3}Z/, "");
+                        if (d.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                          const [y, m, day] = d.split("-");
+                          return `${day}/${m}/${y}`;
+                        }
+                        return d;
+                      })()}
                     />
                     <DataDisplay label="Turma" value={formData.turma} />
                     <DataDisplay
@@ -167,7 +171,7 @@ export default function StudentModal({
                   </div>
 
                   {/* Lógica Trilha Tech */}
-                  {formData.statusTrilha ? (
+                  {formData.statusTrilha && formData.statusTrilha !== "Inativo" ? (
                     <div className="bg-slate-50/70 dark:bg-slate-950/30 p-5 rounded-3xl border border-slate-200/60 dark:border-slate-800 mt-2 shadow-inner">
                       <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-3">
                         🚀 Participação no Projeto Trilha Tech
@@ -319,7 +323,17 @@ export default function StudentModal({
                       <input
                         type="date"
                         name="dataNasc"
-                        value={formData.dataNasc}
+                        value={(() => {
+                          if (!formData.dataNasc) return "";
+                          let d = formData.dataNasc.replace(/T\d{2}:\d{2}:\d{2}\.\d{3}Z/, "");
+                          if (d.includes("/")) {
+                            const parts = d.split("/");
+                            if (parts.length === 3) {
+                              return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                            }
+                          }
+                          return d;
+                        })()}
                         onChange={handleChange}
                         className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-3.5 focus:border-blue-500 outline-none text-slate-800 dark:text-slate-100 rounded-2xl text-sm font-bold shadow-sm transition-all cursor-pointer"
                       />

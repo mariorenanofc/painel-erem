@@ -69,7 +69,9 @@ export default function TrilhaTechPage() {
       return [];
     }
 
-    return listaAlunos;
+    return listaAlunos.filter(
+      (aluno: Aluno) => aluno.statusTrilha && aluno.statusTrilha !== "Inativo",
+    );
   }, [dadosBrutos]);
 
   // Aplica a barra de pesquisa e os filtros suspensos

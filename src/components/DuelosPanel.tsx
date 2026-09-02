@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import DueloModal from "./DueloModal";
-
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/src/contexts/ToastContext";
 
 interface OnlinePlayer {
   matricula: string;
@@ -24,9 +24,20 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
   const [onlinePlayers, setOnlinePlayers] = useState<OnlinePlayer[]>([]);
   const [duelos, setDuelos] = useState<Duelo[]>([]);
   const [loading, setLoading] = useState(true);
+  const { toast } = useToast();
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  const [confirmDialog, setConfirmDialog] = useState<{
+    id: string; type: "desafiar" | "aceitar"; nome?: string; extraInfo?: string;
+  } | null>(null);
   
   // Controle de Duelo
   const [dueloAtivo, setDueloAtivo] = useState<{ id: string, codigo: string, isDesafiante: boolean } | null>(null);
+  const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
+
+  const formatTempo = (ms?: number) => {
+    if (ms === undefined || ms === 0) return "--";
+    return `${(ms / 1000).toFixed(1)}s`;
+  };
 
   const carregarDados = async () => {
     try {
@@ -63,7 +74,7 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
   }, [isOpen]);
 
   const handleDesafiar = async (matricula: string, nome: string, turma: string) => {
-    if (!confirm(`Deseja desafiar ${nome} por 50 XP?`)) return;
+    setActionLoadingId(matricula);
     try {
       const usrStr = localStorage.getItem("alunoLogado");
       if (!usrStr) throw new Error("Usuário não encontrado");
@@ -81,12 +92,14 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
       onXpUpdate?.();
     } catch (error: unknown) {
       const e = error as Error;
-      alert(e.message);
+      toast(e.message, "error", "Falha no Duelo");
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
   const handleAceitar = async (idDuelo: string) => {
-    if (!confirm("Aceitar desafio por 50 XP?")) return;
+    setActionLoadingId(idDuelo);
     try {
       const usrStr = localStorage.getItem("alunoLogado");
       if (!usrStr) throw new Error("Usuário não encontrado");
@@ -104,7 +117,9 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
       onXpUpdate?.();
     } catch (error: unknown) {
       const e = error as Error;
-      alert(e.message);
+      toast(e.message, "error", "Falha no Duelo");
+    } finally {
+      setActionLoadingId(null);
     }
   };
 
@@ -130,6 +145,41 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
             className="relative w-full max-w-5xl max-h-[90vh] flex flex-col bg-slate-900 border border-slate-800 rounded-2xl p-6 overflow-hidden shadow-2xl"
           >
+            {confirmDialog && (
+              <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
+                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-2xl max-w-sm w-full text-center">
+                  <div className="text-4xl mb-4">⚠️</div>
+                  <h3 className="text-xl font-bold text-white mb-2">Atenção!</h3>
+                  <p className="text-slate-300 mb-6 text-sm">
+                    {confirmDialog.type === "desafiar" 
+                      ? `Deseja desafiar ${confirmDialog.nome} apostando 50 XP da sua carteira?` 
+                      : "Aceitar este desafio descontará 50 XP da sua carteira. Você está pronto?"}
+                  </p>
+                  <div className="flex gap-4 justify-center">
+                    <button 
+                      onClick={() => setConfirmDialog(null)}
+                      className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold transition-colors text-sm"
+                    >
+                      Cancelar
+                    </button>
+                    <button 
+                      onClick={() => {
+                        if (confirmDialog.type === "desafiar") {
+                          handleDesafiar(confirmDialog.id, confirmDialog.nome!, confirmDialog.extraInfo!);
+                        } else {
+                          handleAceitar(confirmDialog.id);
+                        }
+                        setConfirmDialog(null);
+                      }}
+                      className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-colors text-sm"
+                    >
+                      Confirmar Apostar
+                    </button>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+
             <div className="flex items-center justify-between mb-6 shrink-0">
               <h2 className="text-2xl font-black text-white flex items-center gap-2">
                 ⚔️ Arena 1v1
@@ -161,10 +211,11 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
                    <p className="text-xs text-slate-400">Turma {p.turma}</p>
                  </div>
                  <button 
-                   onClick={() => handleDesafiar(p.matricula, p.nome, p.turma)}
-                   className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md transition-colors"
+                   onClick={() => setConfirmDialog({ id: p.matricula, type: "desafiar", nome: p.nome, extraInfo: p.turma })}
+                   disabled={actionLoadingId === p.matricula}
+                   className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                  >
-                   Desafiar (50 XP)
+                   {actionLoadingId === p.matricula ? "Aguarde..." : "Desafiar (50 XP)"}
                  </button>
                </div>
              ))
@@ -188,10 +239,11 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
                   <p className="text-xs text-amber-400/70">Valendo {((d.apostaXP as number) || 50) * 2} XP</p>
                 </div>
                 <button 
-                  onClick={() => handleAceitar(d.id)}
-                  className="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md transition-colors"
+                  onClick={() => setConfirmDialog({ id: d.id, type: "aceitar" })}
+                  disabled={actionLoadingId === d.id}
+                  className="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Aceitar (-50 XP)
+                  {actionLoadingId === d.id ? "Aguarde..." : "Aceitar (-50 XP)"}
                 </button>
               </div>
             ))}
@@ -211,15 +263,17 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
           <h3 className="text-lg font-bold text-slate-400 mb-4">
             📜 Histórico de Hoje
           </h3>
-          <div className="flex flex-col gap-2 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+          <div className="flex flex-col gap-2 max-h-72 overflow-y-auto pr-2 custom-scrollbar">
             {historico.length === 0 && <p className="text-slate-600 text-sm">Nenhum duelo finalizado hoje.</p>}
             {historico.map(d => {
               let resultadoTexto = "";
               let corTexto = "text-slate-400";
+              let podeClicar = true;
               
               if (d.status.includes("Expirado")) {
                  resultadoTexto = "Cancelado / W.O.";
                  corTexto = "text-red-400/80";
+                 podeClicar = false;
               } else if (d.vencedor === matriculaMinha) {
                  resultadoTexto = "👑 VITÓRIA (+100 XP)";
                  corTexto = "text-green-400 font-bold";
@@ -234,9 +288,36 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
               const adv = d.desafiante.matricula === matriculaMinha ? d.desafiado.nome : d.desafiante.nome;
 
               return (
-                <div key={d.id} className="bg-slate-900/80 border border-slate-800 p-2.5 rounded-lg flex justify-between items-center text-sm">
-                  <span className="text-slate-300">vs {adv}</span>
-                  <span className={corTexto}>{resultadoTexto}</span>
+                <div key={d.id} className="flex flex-col gap-1 bg-slate-900/80 border border-slate-800 rounded-lg overflow-hidden">
+                  <div 
+                    onClick={() => podeClicar && setExpandedHistoryId(expandedHistoryId === d.id ? null : d.id)}
+                    className={`p-2.5 flex justify-between items-center text-sm ${podeClicar ? 'cursor-pointer hover:bg-slate-800 transition-colors' : ''}`}
+                  >
+                    <span className="text-slate-300">vs {adv}</span>
+                    <span className={corTexto}>{resultadoTexto}</span>
+                  </div>
+                  
+                  <AnimatePresence>
+                    {expandedHistoryId === d.id && (
+                      <motion.div 
+                        initial={{ height: 0, opacity: 0 }} 
+                        animate={{ height: "auto", opacity: 1 }} 
+                        exit={{ height: 0, opacity: 0 }}
+                        className="px-3 pb-3 pt-1 border-t border-slate-800/50 text-xs flex flex-col overflow-hidden"
+                      >
+                         <div className="grid grid-cols-2 gap-2 text-center mt-2">
+                           <div className={`p-2 rounded border border-slate-700/50 bg-slate-950/50 ${d.vencedor === d.desafiante.matricula ? 'text-green-400 font-bold' : 'text-red-400/80'}`}>
+                             <p className="truncate text-[11px] text-slate-300 mb-1" title={d.desafiante.nome}>{d.desafiante.nome.split(" ")[0]}</p>
+                             <p>{formatTempo(Number(d.desafiante.tempo))} • {Number(d.desafiante.precisao || 0).toFixed(1)}% acerto</p>
+                           </div>
+                           <div className={`p-2 rounded border border-slate-700/50 bg-slate-950/50 ${d.vencedor === d.desafiado.matricula ? 'text-green-400 font-bold' : 'text-red-400/80'}`}>
+                             <p className="truncate text-[11px] text-slate-300 mb-1" title={d.desafiado.nome}>{d.desafiado.nome.split(" ")[0]}</p>
+                             <p>{formatTempo(Number(d.desafiado.tempo))} • {Number(d.desafiado.precisao || 0).toFixed(1)}% acerto</p>
+                           </div>
+                         </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
               );
             })}
@@ -250,7 +331,13 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
           codigoDesafio={dueloAtivo.codigo}
           isDesafiante={dueloAtivo.isDesafiante}
           onClose={() => { setDueloAtivo(null); carregarDados(); }}
-          onSuccess={() => { setDueloAtivo(null); carregarDados(); onXpUpdate?.(); }}
+          onSuccess={(resData?: unknown) => { 
+            const completedId = dueloAtivo.id;
+            setDueloAtivo(null); 
+            carregarDados(); 
+            onXpUpdate?.();
+            if (resData) setExpandedHistoryId(completedId); 
+          }}
         />
       )}
           </motion.div>

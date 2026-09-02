@@ -3,13 +3,14 @@
 import React, { useState } from "react";
 import CodingPractice from "./CodingPractice";
 import { Atividade } from "@/src/types";
+import { useToast } from "@/src/contexts/ToastContext";
 
 interface DueloModalProps {
   idDuelo: string;
   codigoDesafio: string;
   isDesafiante: boolean;
   onClose: () => void;
-  onSuccess: (vencedor?: string) => void;
+  onSuccess: (resultado?: unknown) => void;
 }
 
 export default function DueloModal({
@@ -20,6 +21,7 @@ export default function DueloModal({
   onSuccess
 }: DueloModalProps) {
   const [enviando, setEnviando] = useState(false);
+  const { toast } = useToast();
 
   const fakeMissao: Atividade = {
     id: `duelo_${idDuelo}`,
@@ -60,24 +62,35 @@ export default function DueloModal({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Erro ao salvar duelo");
 
-      alert(isDesafiante ? "Desafio enviado! Aguarde o oponente jogar." : `Duelo Finalizado! O vencedor foi: ${data.vencedor}`);
-      onSuccess(data.vencedor);
+      toast(isDesafiante ? "Desafio enviado! Aguarde o oponente jogar." : `Duelo Finalizado! O vencedor foi: ${data.vencedor}`, "success", "Duelo");
+      onSuccess(isDesafiante ? undefined : data.dueloAtualizado);
     } catch (error: unknown) {
       const e = error as Error;
-      alert(e.message);
+      toast(e.message, "error", "Falha");
     } finally {
       setEnviando(false);
     }
   };
 
-  // Bloqueio de paste
+  // Bloqueio de paste e Proteção contra F5 / Fechar aba
   React.useEffect(() => {
     const preventPaste = (e: ClipboardEvent) => {
       e.preventDefault();
-      alert("Colar é proibido na Arena de Duelos!");
+      toast("Colar é proibido na Arena de Duelos!", "warning", "Trapaça Detectada");
     };
     document.addEventListener("paste", preventPaste);
-    return () => document.removeEventListener("paste", preventPaste);
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault();
+      e.returnValue = "Se você sair agora, poderá perder por W.O. Tem certeza?";
+      return e.returnValue;
+    };
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      document.removeEventListener("paste", preventPaste);
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
   }, []);
 
   return (

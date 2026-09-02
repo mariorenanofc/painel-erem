@@ -115,7 +115,27 @@ export async function POST(request: Request) {
 
     await batch.commit();
 
-    return NextResponse.json({ status: "sucesso", vencedor: isEmpate ? "Empate" : vencedorMatricula, xpGanhador: 100 });
+    return NextResponse.json({ 
+      status: "sucesso", 
+      vencedor: isEmpate ? "Empate" : vencedorMatricula, 
+      xpGanhador: 100,
+      dueloAtualizado: {
+        desafiante: {
+          nome: d.desafiante.nome,
+          matricula: d.desafiante.matricula,
+          tempo: tempoDesafiante,
+          precisao: precisaoDesafiante
+        },
+        desafiado: {
+          nome: d.desafiado.nome,
+          matricula: d.desafiado.matricula,
+          tempo: tempoDesafiado,
+          precisao: precisaoDesafiado
+        },
+        vencedor: isEmpate ? "Empate" : vencedorMatricula,
+        status: "Finalizado"
+      }
+    });
   } catch (error: unknown) {
     const err = error as Error;
     console.error("[Duelos Finalizar Error]:", err);

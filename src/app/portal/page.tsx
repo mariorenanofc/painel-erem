@@ -33,6 +33,7 @@ import LojaRifaModal from "@/src/components/LojaRifaModal";
 import MeusBilhetesModal from "@/src/components/MeusBilhetesModal";
 import RegulamentoModal from "@/src/components/RegulamentoModal";
 import JogosModal from "@/src/components/JogosModal";
+import DuelosPanel from "@/src/components/DuelosPanel";
 import { apiAluno, apiGeral } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
 import ThreeInteractiveBg from "@/src/components/ThreeInteractiveBg";
@@ -138,6 +139,7 @@ export default function PortalDashboard() {
   const [alvoPix, setAlvoPix] = useState<string | null>(null);
   const [rankingAberto, setRankingAberto] = useState(false);
   const [jogosAberto, setJogosAberto] = useState(false);
+  const [arenaAberta, setArenaAberta] = useState(false);
 
   const [versaoAtualizacao, setVersaoAtualizacao] = useState("");
   const [markdownAtualizacao, setMarkdownAtualizacao] = useState("");
@@ -434,14 +436,7 @@ export default function PortalDashboard() {
         setModalSenhaAberto(false);
         setSenhaDigitada("");
         
-        if (data.perfilAtualizado) {
-          setXpTotalSistema(data.perfilAtualizado.xpTotal);
-          setNivelSistema(data.perfilAtualizado.nivel);
-          setSaldoCarteira(data.perfilAtualizado.saldoCarteira);
-          if (data.perfilAtualizado.progressoNivel) {
-            setProgressoNivel(data.perfilAtualizado.progressoNivel);
-          }
-        }
+        carregarPortal(true);
       } else {
         toast(data.mensagem, "warning", "Não foi possível");
         if (data.mensagem.includes("já garantiu")) {
@@ -809,6 +804,12 @@ export default function PortalDashboard() {
         />
       )}
 
+      <DuelosPanel 
+        isOpen={arenaAberta} 
+        onClose={() => setArenaAberta(false)} 
+        onXpUpdate={() => carregarPortal(true)}
+      />
+
       <RegulamentoModal
         isOpen={modalRegulamentoAberto}
         onClose={() => setModalRegulamentoAberto(false)}
@@ -895,7 +896,7 @@ export default function PortalDashboard() {
 
             {/* Container Principal dos Botões */}
             <div className="mt-8 space-y-4">
-              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
                 <motion.a
                   whileHover={{ scale: 1.03 }}
                   whileTap={{ scale: 0.97 }}
@@ -954,6 +955,16 @@ export default function PortalDashboard() {
                 >
                   <span className="text-lg">🎮</span>{" "}
                   <span className="text-xs uppercase tracking-wider">Jogos</span>
+                </motion.button>
+
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  onClick={() => setArenaAberta(true)}
+                  className="cursor-pointer flex items-center justify-center gap-2 bg-gradient-to-r from-red-600 to-orange-500 hover:brightness-110 text-white font-bold py-3.5 px-4 rounded-xl shadow-md border border-red-500/20"
+                >
+                  <span className="text-lg">⚔️</span>{" "}
+                  <span className="text-xs uppercase tracking-wider">Arena 1v1</span>
                 </motion.button>
               </div>
 

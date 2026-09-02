@@ -8,8 +8,9 @@ import { Atividade } from "@/src/types";
 interface CodingPracticeProps {
   missaoAberta: Atividade;
   onClose: () => void;
-  onEnviar: (respostaFinal: string, xpCalculado: number) => Promise<void>;
+  onEnviar: (respostaFinal: string, xpCalculado: number, timeMs?: number, accuracyPct?: number) => Promise<void>;
   enviando: boolean;
+  isDuelMode?: boolean;
 }
 
 interface LineChar {
@@ -254,9 +255,10 @@ export default function CodingPractice({
   onClose,
   onEnviar,
   enviando,
+  isDuelMode = false,
 }: CodingPracticeProps) {
   const targetCode = missaoAberta.resolucaoTyping || "";
-  const timeLimitMinutes = Number(missaoAberta.limiteTempoTyping) || 15;
+  const timeLimitMinutes = Number(missaoAberta.limiteTempoTyping) || (isDuelMode ? 5 : 15); // Duelos têm 5 min por padrão
   const maxXP = Number(missaoAberta.xp) || 200;
   const totalSecondsAllowed = timeLimitMinutes * 60;
 
@@ -723,7 +725,11 @@ export default function CodingPractice({
   const handleFinalizar = async () => {
     const saveKey = `coding_practice_${missaoAberta.id}`;
     localStorage.removeItem(saveKey);
-    await onEnviar(targetCode, currentXP);
+    const timeTakenSeconds = secondsRemaining > 0
+      ? totalSecondsAllowed - secondsRemaining
+      : totalSecondsAllowed + extraSecondsUsed;
+    const accuracy = Math.max(0, 100 - (errorsCount / (targetCode.length || 1)) * 100);
+    await onEnviar(targetCode, currentXP, timeTakenSeconds * 1000, accuracy);
   };
 
   // CONFIGURAÇÕES VISUAIS PREMIUM COM BASE NOS TEMAS E IDENTIDADE TRILHATECH
@@ -777,6 +783,14 @@ export default function CodingPractice({
   const codeAreaPadding = microMode ? "p-3 min-h-[120px]" : compactMode ? "p-4 min-h-[150px]" : "p-6 min-h-[250px]";
   const codeAreaMargin = microMode ? "mx-2 my-1.5" : compactMode ? "mx-3 my-2" : "mx-4 my-3.5";
 
+  // UseEffect para auto-submeter em modo duelo
+  useEffect(() => {
+    if (completed && isDuelMode) {
+      handleFinalizar();
+    }
+  }, [completed, isDuelMode]);
+
+  // Tempo correndo apenas se não estiver pausado e não estiver concluído virtual
   // Dimensões responsivas dos botões do teclado virtual
   let keySizeClass = "w-8 h-8 md:w-9 md:h-9";
   let tabWidthClass = "w-12 h-8 md:w-14 md:h-9 text-[9px]";
@@ -921,7 +935,9 @@ export default function CodingPractice({
                           if (parsed.errorsCount !== undefined) {
                             accumulatedErrors = parsed.errorsCount;
                           }
-                        } catch (e) { }
+                        } catch (error: unknown) {
+                          void error;
+                        }
                       }
 
                       localStorage.setItem(
@@ -1352,6 +1368,21 @@ export default function CodingPractice({
         <div className="bg-slate-950 p-3.5 border-t border-slate-900 text-center shrink-0 select-none animate-in slide-in-from-bottom duration-250">
           <button
             onClick={() => {
+              if (isDuelMode) {
+                if (confirm("Desistir do Duelo? Você perderá os 50 XP apostados por Abandono!")) {
+                  onClose();
+                }
+              } else {
+                onClose();
+              }
+            }}
+            className="text-slate-400 hover:text-red-400 transition-colors"
+            title={isDuelMode ? "Desistir e Perder 50 XP" : "Sair"}
+          >
+            <span className="text-xl">✖</span>
+          </button>
+          <button
+            onClick={() => {
               setTecladoMinimizado(false);
               resetFoco();
             }}
@@ -1409,7 +1440,7 @@ export default function CodingPractice({
 
       {/* ═══ TELA DE VITÓRIA (CONCLUÍDO COM SUCESSO) ═══ */}
       <AnimatePresence>
-        {completed && (
+        {completed && !isDuelMode && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

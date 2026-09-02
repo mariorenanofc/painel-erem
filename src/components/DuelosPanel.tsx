@@ -33,6 +33,11 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
   // Controle de Duelo
   const [dueloAtivo, setDueloAtivo] = useState<{ id: string, codigo: string, isDesafiante: boolean } | null>(null);
   const [expandedHistoryId, setExpandedHistoryId] = useState<string | null>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const formatTempo = (ms?: number) => {
     if (ms === undefined || ms === 0) return "--";
@@ -128,6 +133,9 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
 
   const duelosPendentes = duelos.filter(d => d.status === "Aguardando Oponente");
   const historico = duelos.filter(d => ["Finalizado", "Cancelado", "Expirado_TempoEsgotado", "Expirado_ChallengerWO", "Expirado_ChallengedWO"].includes(d.status));
+  
+  // Evita erro de Hydration (inconsistência entre servidor e cliente)
+  if (!mounted) return null;
 
   const matriculaMinha = typeof window !== "undefined" ? JSON.parse(localStorage.getItem("alunoLogado") || "{}").matricula : "";
 
@@ -291,7 +299,7 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
               const adv = d.desafiante.matricula === matriculaMinha ? d.desafiado.nome : d.desafiante.nome;
 
               return (
-                <div key={d.id} className="flex flex-col gap-1 bg-slate-900/80 border border-slate-800 rounded-lg overflow-hidden">
+                <div key={d.id} className="flex flex-col gap-1 bg-slate-900/80 border border-slate-800 rounded-lg overflow-hidden shrink-0">
                   <div 
                     onClick={() => podeClicar && setExpandedHistoryId(expandedHistoryId === d.id ? null : d.id)}
                     className={`p-2.5 flex justify-between items-center text-sm ${podeClicar ? 'cursor-pointer hover:bg-slate-800 transition-colors' : ''}`}
@@ -300,27 +308,30 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
                     <span className={corTexto}>{resultadoTexto}</span>
                   </div>
                   
-                  <AnimatePresence>
-                    {expandedHistoryId === d.id && (
-                      <motion.div 
-                        initial={{ height: 0, opacity: 0 }} 
-                        animate={{ height: "auto", opacity: 1 }} 
-                        exit={{ height: 0, opacity: 0 }}
-                        className="px-3 pb-3 pt-1 border-t border-slate-800/50 text-xs flex flex-col overflow-hidden"
-                      >
-                         <div className="grid grid-cols-2 gap-2 text-center mt-2">
-                           <div className={`p-2 rounded border border-slate-700/50 bg-slate-950/50 ${d.vencedor === d.desafiante.matricula ? 'text-green-400 font-bold' : 'text-red-400/80'}`}>
-                             <p className="truncate text-[11px] text-slate-300 mb-1" title={d.desafiante.nome}>{d.desafiante.nome.split(" ")[0]}</p>
-                             <p>{formatTempo(Number(d.desafiante.tempo))} • {Number(d.desafiante.precisao || 0).toFixed(1)}% acerto</p>
-                           </div>
-                           <div className={`p-2 rounded border border-slate-700/50 bg-slate-950/50 ${d.vencedor === d.desafiado.matricula ? 'text-green-400 font-bold' : 'text-red-400/80'}`}>
-                             <p className="truncate text-[11px] text-slate-300 mb-1" title={d.desafiado.nome}>{d.desafiado.nome.split(" ")[0]}</p>
-                             <p>{formatTempo(Number(d.desafiado.tempo))} • {Number(d.desafiado.precisao || 0).toFixed(1)}% acerto</p>
+                  {expandedHistoryId === d.id && (
+                    <div className="px-4 pt-3 pb-5 border-t border-slate-800/50 bg-slate-900">
+                       <div className="grid grid-cols-2 gap-4 text-center">
+                         <div className={`p-3 rounded-lg border bg-slate-950 shadow-inner flex flex-col justify-center items-center ${d.vencedor === d.desafiante.matricula ? 'border-green-500/30' : 'border-red-500/20'}`}>
+                           <p className={`font-bold mb-1.5 ${d.vencedor === d.desafiante.matricula ? 'text-green-400' : 'text-slate-300'}`} title={d.desafiante.nome}>
+                             {d.desafiante.nome.split(" ")[0]}
+                           </p>
+                           <div className="flex flex-col gap-0.5 text-xs text-slate-400">
+                             <span>Tempo: {formatTempo(Number(d.desafiante.tempo))}</span>
+                             <span>Acerto: {Number(d.desafiante.precisao || 0).toFixed(1)}%</span>
                            </div>
                          </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                         <div className={`p-3 rounded-lg border bg-slate-950 shadow-inner flex flex-col justify-center items-center ${d.vencedor === d.desafiado.matricula ? 'border-green-500/30' : 'border-red-500/20'}`}>
+                           <p className={`font-bold mb-1.5 ${d.vencedor === d.desafiado.matricula ? 'text-green-400' : 'text-slate-300'}`} title={d.desafiado.nome}>
+                             {d.desafiado.nome.split(" ")[0]}
+                           </p>
+                           <div className="flex flex-col gap-0.5 text-xs text-slate-400">
+                             <span>Tempo: {formatTempo(Number(d.desafiado.tempo))}</span>
+                             <span>Acerto: {Number(d.desafiado.precisao || 0).toFixed(1)}%</span>
+                           </div>
+                         </div>
+                       </div>
+                    </div>
+                  )}
                 </div>
               );
             })}

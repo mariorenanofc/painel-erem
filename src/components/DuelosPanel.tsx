@@ -14,8 +14,8 @@ interface OnlinePlayer {
 interface Duelo {
   id: string;
   status: string;
-  desafiante: { matricula: string; nome: string };
-  desafiado: { matricula: string; nome: string };
+  desafiante: { matricula: string; nome: string; tempo?: number; precisao?: number };
+  desafiado: { matricula: string; nome: string; tempo?: number; precisao?: number };
   vencedor?: string;
   [key: string]: unknown;
 }

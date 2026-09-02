@@ -91,7 +91,7 @@ export default function DueloModal({
       document.removeEventListener("paste", preventPaste);
       window.removeEventListener("beforeunload", handleBeforeUnload);
     };
-  }, []);
+  }, [toast]);
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center">

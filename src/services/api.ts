@@ -93,7 +93,8 @@ export const apiAluno = {
   },
 
   carregarPortal: async (matricula: string, nocache?: boolean) => {
-    const res = await fetch(`/api/alunos/portal?matricula=${matricula}${nocache ? "&nocache=true" : ""}`);
+    const ts = nocache ? `&nocache=true&t=${Date.now()}` : "";
+    const res = await fetch(`/api/alunos/portal?matricula=${matricula}${ts}`);
     return res.json();
   },
 

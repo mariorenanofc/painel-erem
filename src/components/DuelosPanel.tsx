@@ -57,9 +57,12 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
       // Buscar duelos
       const resDuelos = await fetch(`/api/alunos/duelos/listar?matricula=${matricula}`);
       const dataDuelos = await resDuelos.json();
-      if (dataDuelos.duelos) setDuelos(dataDuelos.duelos);
-    } catch (e) {
-      console.error(e);
+      setDuelos(dataDuelos.duelos || []);
+      
+      // Sempre que recarregar os duelos, garante que a interface externa de XP também seja sincronizada
+      onXpUpdate?.();
+    } catch (error) {
+      console.error(error);
     } finally {
       setLoading(false);
     }

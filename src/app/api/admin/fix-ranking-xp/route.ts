@@ -39,7 +39,7 @@ export async function GET(req: Request) {
             if (!ativDoc.exists) continue;
             
             const ativ = ativDoc.data();
-            if (!ativ.modulo || !ativ.modulo.toLowerCase().includes('javascript')) continue;
+            if (!ativ?.modulo || !String(ativ.modulo).toLowerCase().includes('javascript')) continue;
 
             // É do Módulo 2.2 Javascript!
             batch.update(doc.ref, { 

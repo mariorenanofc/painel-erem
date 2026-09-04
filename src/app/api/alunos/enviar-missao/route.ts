@@ -253,7 +253,8 @@ export async function POST(request: Request) {
       if (xpGanhoFinal > 0) {
         const { semanaKey, mesKey } = getRankingKeys(new Date(timestampAtual));
         
-        const ehAtrasado = atrasoDias > 0;
+        const isGabaritoLiberado = ativ.gabaritoLiberado === true;
+        const ehAtrasado = atrasoDias > 0 || isGabaritoLiberado;
         const xpNormal = ehAtrasado ? 0 : xpGanhoFinal;
         const xpAtrasado = ehAtrasado ? xpGanhoFinal : 0;
 

@@ -17,11 +17,11 @@ export async function GET(req: Request) {
         const { semanaKey, mesKey } = getRankingKeys(dataAtual);
         const batch = dbAdmin.batch();
         let cont = 0;
-        let diffs = [];
+        const diffs: string[] = [];
 
         for (const doc of entregasSnap.docs) {
             const e = doc.data();
-            const xpParaRemover = e.xpGanho;
+            const xpParaRemover = e.xpGanho || 0;
             const matricula = e.matricula;
             const idAtiv = e.idAtividade;
             const status = e.status;
@@ -31,8 +31,8 @@ export async function GET(req: Request) {
             const dataEntrega = new Date(e.timestamp || 0);
             const diffHoras = (dataAtual.getTime() - dataEntrega.getTime()) / (1000 * 60 * 60);
 
-            // Apenas entregas de hoje/ontem
-            if (diffHoras > 24) continue;
+            // Apenas entregas dos ultimos 10 dias
+            if (diffHoras > 240) continue;
 
             // Checar módulo da atividade
             const ativDoc = await dbAdmin.collection('atividades').doc(idAtiv).get();
@@ -75,7 +75,8 @@ export async function GET(req: Request) {
             modificados: cont,
             detalhes: diffs
         });
-    } catch (e: any) {
-        return NextResponse.json({ erro: e.message }, { status: 500 });
+    } catch (e: unknown) {
+        const err = e as Error;
+        return NextResponse.json({ erro: err.message }, { status: 500 });
     }
 }

@@ -2,6 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { getCachedRanking, setCachedRanking, getCachedAtividades, setCachedAtividades, getCachedJustificativas, setCachedJustificativas } from "@/src/lib/cache";
+import { getRankingKeys } from "@/src/lib/dateUtils";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
@@ -79,10 +80,12 @@ export async function GET(request: Request) {
   }
 
   try {
+    const { getFirestore } = await import("firebase-admin/firestore");
+    const db = getFirestore();
     console.log(`[Firestore Query] Ranking: ${filtroTempo}`);
 
     // Carregar Alunos ativos
-    const alunosSnap = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
+    const alunosSnap = await db.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
     const alunosRankMap: Record<string, RankedAluno> = {};
 
     alunosSnap.forEach((doc: QueryDocumentSnapshot) => {
@@ -120,15 +123,14 @@ export async function GET(request: Request) {
 
     // Processar Entregas (Apenas no filtro de tempo ativo)
     if (filtroTempo !== "geral") {
-      const { getRankingKeys } = await import("@/src/lib/dateUtils");
       const { semanaKey, mesKey } = getRankingKeys(dataAtual);
 
       const targetKey = filtroTempo === "semanal" ? `ranking_semanal_${semanaKey}` : `ranking_mensal_${mesKey}`;
-      const rankingRef = dbAdmin.collection("estatisticas").doc(targetKey);
+      const rankingRef = db.collection("estatisticas").doc(targetKey);
       const rankingDoc = await rankingRef.get();
 
       if (rankingDoc.exists) {
-        const rankingData = rankingDoc.data()?.alunos || {};
+        const rankingData = (rankingDoc.data()?.alunos as Record<string, { xpNormal?: number, xpAtrasado?: number, ultimoEnvio?: number }>) || {};
         
         for (const mat of Object.keys(alunosRankMap)) {
           if (rankingData[mat]) {
@@ -183,25 +185,8 @@ export async function GET(request: Request) {
       }
     });
   } catch (error: unknown) {
-    const err = error as Error;
-    // 🛡️ FAILOVER PARA GOOGLE SHEETS
-    console.warn(`[Failover] Erro ao carregar ranking do Firestore: ${err.message}. Redirecionando para Google Sheets...`);
-
-    if (GOOGLE_API_URL) {
-      try {
-        const response = await fetch(GOOGLE_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
-          body: JSON.stringify({ action: "buscar_ranking", filtroTempo, token: TUTOR_TOKEN_SECRET }),
-        });
-        const data = await response.json();
-        return NextResponse.json(data);
-      } catch (sheetsErr: unknown) {
-        const sErr = sheetsErr as Error;
-        return NextResponse.json({ error: "Erro crítico em ambos os bancos: " + sErr.message }, { status: 500 });
-      }
-    }
-
-    return NextResponse.json({ error: "Erro ao carregar o ranking: " + err.message }, { status: 500 });
+    const err = error as Error & { stack?: string };
+    console.error("ERRO NO RANKING ROUTE:", err);
+    return NextResponse.json({ status: "erro", mensagem: err.message, stack: err.stack });
   }
 }

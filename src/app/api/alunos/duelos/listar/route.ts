@@ -71,6 +71,20 @@ export async function GET(request: Request) {
           
           const alunoRef = dbAdmin.collection("alunos").doc(d.desafiante.matricula);
           batch.update(alunoRef, { xp: FieldValue.increment(50) });
+          
+          // Extrato de reembolso
+          const extratoRef = dbAdmin.collection("entregas").doc(`DUELO-EXP-${d.id}`);
+          batch.set(extratoRef, {
+            id: `DUELO-EXP-${d.id}`,
+            matricula: d.desafiante.matricula,
+            idAtividade: "DUELO-1V1",
+            resposta: "Duelo Cancelado (Tempo Esgotado)",
+            status: "Avaliado",
+            xpGanho: 50,
+            timestamp: now,
+            feedback: "Oponente não aceitou a tempo. Aposta Devolvida."
+          });
+          
           hasUpdates = true;
         }
         else if (d.status === "Iniciado_Desafiado") {
@@ -83,6 +97,19 @@ export async function GET(request: Request) {
           batch.update(alunoRef, { 
             xp: FieldValue.increment(100),
             xpTotal: FieldValue.increment(50) // Ganho real
+          });
+          
+          // Extrato de vitória por W.O.
+          const extratoRef = dbAdmin.collection("entregas").doc(`DUELO-WIN-WO-${d.id}`);
+          batch.set(extratoRef, {
+            id: `DUELO-WIN-WO-${d.id}`,
+            matricula: d.desafiante.matricula,
+            idAtividade: "DUELO-1V1",
+            resposta: "Vitória na Arena 1v1 (W.O.)",
+            status: "Avaliado",
+            xpGanho: 100,
+            timestamp: now,
+            feedback: "Oponente abandonou a partida. Prêmio do Duelo."
           });
           
           // Adicionar no rank semanal/mensal do desafiante

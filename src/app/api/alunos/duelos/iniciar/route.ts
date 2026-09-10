@@ -60,6 +60,7 @@ export async function POST(request: Request) {
 
     let totalDuelosHoje = 0;
     let duelosComEsteOponente = 0;
+    let temDueloAtivoComOponente = false;
 
     duelosDeHoje.forEach((d) => {
       // Ignoramos duelos cancelados
@@ -70,8 +71,15 @@ export async function POST(request: Request) {
       const op = d.desafiante.matricula === desafianteMatricula ? d.desafiado.matricula : d.desafiante.matricula;
       if (op === desafiadoMatricula) {
         duelosComEsteOponente++;
+        if (d.status === "Aguardando Oponente" || d.status === "Iniciado_Desafiante" || d.status === "Iniciado_Desafiado") {
+          temDueloAtivoComOponente = true;
+        }
       }
     });
+
+    if (temDueloAtivoComOponente) {
+      return NextResponse.json({ error: "Já existe um duelo em andamento ou pendente entre vocês. Conclua-o primeiro!" }, { status: 403 });
+    }
 
     if (totalDuelosHoje >= 3) {
       return NextResponse.json({ error: "Você já atingiu o limite de 3 duelos por dia." }, { status: 403 });
@@ -82,7 +90,7 @@ export async function POST(request: Request) {
       let vitoriasMinhas = 0;
       let vitoriasDele = 0;
       duelosDeHoje.forEach((d) => {
-        if (d.status !== "Finalizado") return;
+        if (!d.vencedor || d.vencedor === "Empate") return;
         const op = d.desafiante.matricula === desafianteMatricula ? d.desafiado.matricula : d.desafiante.matricula;
         if (op === desafiadoMatricula) {
           if (d.vencedor === desafianteMatricula) vitoriasMinhas++;

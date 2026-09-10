@@ -301,19 +301,29 @@ export async function GET(request: Request) {
     dadosRetorno.taxaPresenca = diasComAulaSet.size === 0 ? 100 : Math.round((presencasAluno / diasComAulaSet.size) * 100);
 
     // Streak / Ofensiva baseada nas aulas aplicadas na turma dele
-    const diasOrdenados = Array.from(diasComAulaSet).sort((a, b) => {
+    // Filtramos datas inválidas para não quebrar o .sort() com NaN
+    const diasValidos = Array.from(diasComAulaSet).filter(d => d && d.includes("/") && d.length >= 8);
+    
+    const diasOrdenados = diasValidos.sort((a, b) => {
       const pA = a.split("/");
       const pB = b.split("/");
-      return new Date(Number(pB[2]), Number(pB[1]) - 1, Number(pB[0])).getTime() - new Date(Number(pA[2]), Number(pA[1]) - 1, Number(pA[0])).getTime();
+      const timeA = new Date(Number(pA[2] || new Date().getFullYear()), Number(pA[1] || 1) - 1, Number(pA[0] || 1)).getTime();
+      const timeB = new Date(Number(pB[2] || new Date().getFullYear()), Number(pB[1] || 1) - 1, Number(pB[0] || 1)).getTime();
+      return timeB - timeA;
     });
 
     let streak = 0;
     const dataHojeStr = `${diaHoje}/${mesHoje}/${anoHoje}`;
+    
     for (const dia of diasOrdenados) {
-      if (dia === dataHojeStr && !checkinsMap[dia]) continue;
-      if (checkinsMap[dia]) streak++;
-      else break;
+      if (dia === dataHojeStr && !checkinsMap[dia]) continue; // Se hoje tem aula e ele ainda não fez check-in, ignora para não quebrar a ofensiva
+      if (checkinsMap[dia]) {
+        streak++;
+      } else {
+        break; // Faltou em um dia oficial da turma (sem justificativa registrada)
+      }
     }
+    
     dadosRetorno.ofensivaDias = streak;
 
     // 9. Atividades (com cache global de 12 horas + SINGLETON FIRESTORE)

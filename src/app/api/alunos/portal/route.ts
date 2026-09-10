@@ -115,18 +115,33 @@ export async function GET(request: Request) {
     // 3. Carregar Controle de Módulos (com cache global de 12 horas)
     let statusModulosMap = getCachedModulos() as Record<string, string> | null;
     if (!statusModulosMap) {
-      console.log(`[Firestore Query] Portal: Carregando modulos (sem cache)`);
-      const modulosSnap = await dbAdmin.collection("controle_modulos").get();
+      console.log(`[Firestore Query] Portal: Carregando modulos (Singleton)`);
       const tempMap: Record<string, string> = {};
-      modulosSnap.forEach((doc: QueryDocumentSnapshot) => {
-        const data = doc.data();
-        const nomeMod = String(data.nomeMod || data.nome || "").trim();
-        const statusMod = String(data.statusMod || data.status || "Aberto").trim();
-        const turmaMod = String(data.turmaMod || data.turma || "Todas").trim();
-        if (nomeMod) {
-          tempMap[`${nomeMod}|${turmaMod}`] = statusMod;
-        }
-      });
+      
+      const modulosCacheDoc = await dbAdmin.collection("cache").doc("modulos_gerais").get();
+      if (modulosCacheDoc.exists) {
+        const modulosList = modulosCacheDoc.data()?.modulos || [];
+        modulosList.forEach((data: { nomeMod?: string, nome?: string, statusMod?: string, status?: string, turmaMod?: string, turma?: string }) => {
+          const nomeMod = String(data.nomeMod || data.nome || "").trim();
+          const statusMod = String(data.statusMod || data.status || "Aberto").trim();
+          const turmaMod = String(data.turmaMod || data.turma || "Todas").trim();
+          if (nomeMod) {
+            tempMap[`${nomeMod}|${turmaMod}`] = statusMod;
+          }
+        });
+      } else {
+        console.warn(`[Firestore Query] Singleton de modulos não encontrado, caindo para fallback temporário`);
+        const modulosSnap = await dbAdmin.collection("controle_modulos").get();
+        modulosSnap.forEach((doc: QueryDocumentSnapshot) => {
+          const data = doc.data();
+          const nomeMod = String(data.nomeMod || data.nome || "").trim();
+          const statusMod = String(data.statusMod || data.status || "Aberto").trim();
+          const turmaMod = String(data.turmaMod || data.turma || "Todas").trim();
+          if (nomeMod) {
+            tempMap[`${nomeMod}|${turmaMod}`] = statusMod;
+          }
+        });
+      }
       statusModulosMap = tempMap;
       setCachedModulos(statusModulosMap);
     }
@@ -162,12 +177,23 @@ export async function GET(request: Request) {
     // 4. WhatsApp link da turma (com cache de 10 minutos)
     let configMap = getCachedConfigs() as Record<string, string> | null;
     if (!configMap) {
-      console.log(`[Firestore Query] Portal: Carregando configuracoes (sem cache)`);
-      const configSnap = await dbAdmin.collection("configuracoes").get();
+      console.log(`[Firestore Query] Portal: Carregando configuracoes (Singleton)`);
       const tempMap: Record<string, string> = {};
-      configSnap.forEach((doc: QueryDocumentSnapshot) => {
-        tempMap[doc.id] = doc.data().valor;
-      });
+      
+      const configCacheDoc = await dbAdmin.collection("cache").doc("configuracoes_gerais").get();
+      if (configCacheDoc.exists) {
+        const data = configCacheDoc.data() || {};
+        for (const k of Object.keys(data)) {
+          if (k !== 'updatedAt') tempMap[k] = String(data[k]);
+        }
+      } else {
+        console.warn(`[Firestore Query] Singleton de configuracoes não encontrado, caindo para fallback`);
+        const configSnap = await dbAdmin.collection("configuracoes").get();
+        configSnap.forEach((doc: QueryDocumentSnapshot) => {
+          tempMap[doc.id] = doc.data().valor;
+        });
+      }
+      
       configMap = tempMap;
       setCachedConfigs(configMap);
     }
@@ -251,31 +277,10 @@ export async function GET(request: Request) {
         const metadata = metadataDoc.exists ? metadataDoc.data() || {} : {};
         let datesArray = metadata[turmaDoAluno] as string[] | undefined;
 
-        // 2. Fallback Avançado
+        // 2. Fallback Desativado para economizar leituras (O Tutor DEVE gravar os metadados)
         if (datesArray === undefined) {
-          console.log(`[Firestore Query] Portal: Metadado vazio para ${turmaDoAluno}. Executando fallback avancado...`);
-          const tempDatesSet = new Set<string>();
-          const todosAlunosSnap = await dbAdmin.collection("alunos").get();
-          const alunosDaTurma: string[] = [];
-          todosAlunosSnap.forEach(doc => {
-            const d = doc.data();
-            const t = String(d.turmaTrilha || d.turma || "").trim();
-            if (t === turmaDoAluno && String(d.statusTrilha || "").toLowerCase() === "ativo") {
-               alunosDaTurma.push(doc.id);
-            }
-          });
-
-          for (let i = 0; i < alunosDaTurma.length; i += 30) {
-            const chunk = alunosDaTurma.slice(i, i + 30);
-            if (chunk.length === 0) continue;
-            const fallbackSnap = await dbAdmin.collection("portal_views").where("__name__", "in", chunk).get();
-            fallbackSnap.forEach(doc => {
-              const pv = doc.data();
-              const freqs = pv.frequencias || [];
-              freqs.forEach((f: string) => tempDatesSet.add(f));
-            });
-          }
-          datesArray = Array.from(tempDatesSet);
+          console.log(`[Firestore Query] Portal: Metadado vazio para ${turmaDoAluno}. Retornando array vazio para economizar leituras.`);
+          datesArray = [];
         }
 
         cachedDates = datesArray;

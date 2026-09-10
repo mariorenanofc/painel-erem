@@ -181,7 +181,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(finalResponse, {
       headers: {
-        "Cache-Control": "no-store, max-age=0, must-revalidate"
+        "Cache-Control": "s-maxage=60, stale-while-revalidate"
       }
     });
   } catch (error: unknown) {

@@ -42,7 +42,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ status: "sucesso", perfil }, {
       headers: {
-        "Cache-Control": "no-store, max-age=0, must-revalidate"
+        "Cache-Control": "s-maxage=30, stale-while-revalidate"
       }
     });
   } catch (error: unknown) {
@@ -60,7 +60,7 @@ export async function GET(request: Request) {
         const data = await response.json();
         return NextResponse.json(data, {
           headers: {
-            "Cache-Control": "no-store, max-age=0, must-revalidate"
+            "Cache-Control": "s-maxage=30, stale-while-revalidate"
           }
         });
       } catch (sheetsErr: unknown) {

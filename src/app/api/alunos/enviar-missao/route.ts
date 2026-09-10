@@ -80,12 +80,33 @@ export async function POST(request: Request) {
     const modKey = `${moduloDaAtividade}_${turmaAlvo}`.replace(/\s+/g, '_').toLowerCase();
     const modKeyTodas = `${moduloDaAtividade}_Todas`.replace(/\s+/g, '_').toLowerCase();
     
-    const modDoc = await dbAdmin.collection("controle_modulos").doc(modKey).get();
-    const modDocTodas = await dbAdmin.collection("controle_modulos").doc(modKeyTodas).get();
-
     let statusMod = "aberto";
-    if (modDoc.exists) statusMod = String(modDoc.data()?.statusMod || "aberto").toLowerCase().trim();
-    else if (modDocTodas.exists) statusMod = String(modDocTodas.data()?.statusMod || "aberto").toLowerCase().trim();
+    let moduloEncontradoNoCache = false;
+
+    // Tentar ler do Singleton primeiro
+    const modulosCacheDoc = await dbAdmin.collection("cache").doc("modulos_gerais").get();
+    if (modulosCacheDoc.exists) {
+      const modulosList = modulosCacheDoc.data()?.modulos || [];
+      const moduloTurma = modulosList.find((m: { id?: string }) => m.id === modKey);
+      const moduloTodas = modulosList.find((m: { id?: string }) => m.id === modKeyTodas);
+      
+      if (moduloTurma) {
+        statusMod = String(moduloTurma.statusMod || moduloTurma.status || "aberto").toLowerCase().trim();
+        moduloEncontradoNoCache = true;
+      } else if (moduloTodas) {
+        statusMod = String(moduloTodas.statusMod || moduloTodas.status || "aberto").toLowerCase().trim();
+        moduloEncontradoNoCache = true;
+      }
+    }
+
+    // Fallback se não estiver no Singleton
+    if (!moduloEncontradoNoCache) {
+      const modDoc = await dbAdmin.collection("controle_modulos").doc(modKey).get();
+      const modDocTodas = await dbAdmin.collection("controle_modulos").doc(modKeyTodas).get();
+      
+      if (modDoc.exists) statusMod = String(modDoc.data()?.statusMod || "aberto").toLowerCase().trim();
+      else if (modDocTodas.exists) statusMod = String(modDocTodas.data()?.statusMod || "aberto").toLowerCase().trim();
+    }
 
     if (statusMod === "encerrado") {
       xpFinalPermitido = 0;

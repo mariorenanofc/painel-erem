@@ -63,6 +63,13 @@ export async function POST(request: Request) {
           return dbAdmin.collection("configuracoes").doc(key).set({ valor: configs[key] });
         });
         await Promise.all(promises);
+        
+        // Atualiza o Singleton
+        await dbAdmin.collection("cache").doc("configuracoes_gerais").set({
+          ...configs,
+          updatedAt: new Date().toISOString()
+        });
+        
         invalidateConfigCache();
         return NextResponse.json({ status: "sucesso", mensagem: "Configurações sincronizadas com a planilha." });
       } else {

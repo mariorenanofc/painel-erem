@@ -48,7 +48,7 @@ export async function GET(request: Request) {
     if (cached) {
       return NextResponse.json(cached, {
         headers: {
-          "Cache-Control": "no-store, max-age=0, must-revalidate"
+          "Cache-Control": "s-maxage=30, stale-while-revalidate"
         }
       });
     }
@@ -149,7 +149,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(result, {
       headers: {
-        "Cache-Control": "no-store, max-age=0, must-revalidate"
+        "Cache-Control": "s-maxage=30, stale-while-revalidate"
       }
     });
   } catch (error: unknown) {

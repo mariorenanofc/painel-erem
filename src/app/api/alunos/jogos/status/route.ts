@@ -49,6 +49,10 @@ export async function GET(request: Request) {
       limiteDiario: 25,
       vidasRestantes,
       vidasGastasHoje
+    }, {
+      headers: {
+        "Cache-Control": "s-maxage=15, stale-while-revalidate"
+      }
     });
 
   } catch (error: unknown) {

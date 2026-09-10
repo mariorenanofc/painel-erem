@@ -8,10 +8,23 @@ export async function GET() {
     const modulos = snap.docs.map(doc => ({ id: doc.id, ...(doc.data() as { nomeMod?: string, statusMod?: string, turmaMod?: string }) }));
     // Sort by name
     modulos.sort((a, b) => String(a.nomeMod).localeCompare(String(b.nomeMod)));
-    return NextResponse.json({ status: "sucesso", modulos });
+    return NextResponse.json({ status: "sucesso", modulos }, {
+      headers: {
+        "Cache-Control": "s-maxage=15, stale-while-revalidate"
+      }
+    });
   } catch (error: unknown) {
     return NextResponse.json({ status: "erro", mensagem: (error as Error).message }, { status: 500 });
   }
+}
+
+async function rebuildModulosSingleton() {
+  const snap = await dbAdmin.collection("controle_modulos").get();
+  const modulos = snap.docs.map(doc => doc.data());
+  await dbAdmin.collection("cache").doc("modulos_gerais").set({
+    modulos,
+    updatedAt: new Date().toISOString()
+  });
 }
 
 export async function POST(request: Request) {
@@ -27,16 +40,19 @@ export async function POST(request: Request) {
         statusMod,
         turmaMod
       });
+      await rebuildModulosSingleton();
       clearAllPortalCaches();
       return NextResponse.json({ status: "sucesso", mensagem: "Módulo adicionado." });
     }
     else if (action === "atualizar_status") {
       await dbAdmin.collection("controle_modulos").doc(id).update({ statusMod });
+      await rebuildModulosSingleton();
       clearAllPortalCaches();
       return NextResponse.json({ status: "sucesso", mensagem: "Status atualizado." });
     }
     else if (action === "remover") {
       await dbAdmin.collection("controle_modulos").doc(id).delete();
+      await rebuildModulosSingleton();
       clearAllPortalCaches();
       return NextResponse.json({ status: "sucesso", mensagem: "Módulo removido." });
     }

@@ -162,6 +162,10 @@ export async function GET(request: Request) {
       status: "sucesso",
       registros: listaFinal,
       totalAulas: totalAulasTurma
+    }, {
+      headers: {
+        "Cache-Control": "s-maxage=15, stale-while-revalidate"
+      }
     });
 
   } catch (error: unknown) {

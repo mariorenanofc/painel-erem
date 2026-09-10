@@ -176,6 +176,10 @@ export async function GET(request: Request) {
       status: "sucesso",
       diasComAula,
       alunos: Object.values(alunosMap)
+    }, {
+      headers: {
+        "Cache-Control": "s-maxage=60, stale-while-revalidate"
+      }
     });
 
   } catch (error: unknown) {

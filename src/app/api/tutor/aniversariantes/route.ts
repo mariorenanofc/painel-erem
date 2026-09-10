@@ -54,7 +54,11 @@ export async function GET() {
     const result = { status: "sucesso", aniversariantes: list };
     setCachedAniversariantes(dateKey, result);
 
-    return NextResponse.json(result);
+    return NextResponse.json(result, {
+      headers: {
+        "Cache-Control": "s-maxage=60, stale-while-revalidate"
+      }
+    });
   } catch (error: unknown) {
     const err = error as Error;
     console.error(`[API Error] Erro ao buscar aniversariantes no Firestore: ${err.message}`);

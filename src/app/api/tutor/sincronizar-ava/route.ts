@@ -46,7 +46,13 @@ export async function POST(req: Request) {
     const body = await req.json();
     const filtroTurma = body.filtroTurma || "Todas";
     const filtroModulo = body.filtroModulo || "Todos";
-    const filtroAtividadesIds: string[] = body.filtroAtividadesIds || [];
+    let filtroAtividadesIds: string[] = [];
+    if (body.filtroAtividadesIds) {
+      filtroAtividadesIds = Array.isArray(body.filtroAtividadesIds) ? body.filtroAtividadesIds : [body.filtroAtividadesIds];
+    }
+    if (body.filtroAtividade) {
+      filtroAtividadesIds.push(String(body.filtroAtividade));
+    }
 
     // 1. Setup Google API (Usando as credenciais OAuth do Tutor)
     const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -124,27 +130,8 @@ export async function POST(req: Request) {
       atividadesParaSincronizar.push(ativ);
     });
 
-    // 3. Buscar Entregas APENAS das atividades mapeadas (Chunks de 30)
-    const mapaEntregas: Record<string, { idDoc?: string, status?: string }> = {};
-
-    if (atividadesParaSincronizar.length > 0) {
-      const idsAtividades = atividadesParaSincronizar.map(a => a.idDoc);
-      const chunks = [];
-      for (let i = 0; i < idsAtividades.length; i += 30) {
-        chunks.push(idsAtividades.slice(i, i + 30));
-      }
-
-      const entregasSnaps = await Promise.all(
-        chunks.map(chunk => dbAdmin.collection("entregas").where("idAtividade", "in", chunk).get())
-      );
-
-      entregasSnaps.forEach(snap => {
-        snap.forEach(doc => {
-          const e = doc.data();
-          mapaEntregas[`${e.matricula}_${e.idAtividade}`] = { idDoc: doc.id, status: e.status };
-        });
-      });
-    }
+    // 3. Cache sob demanda (CQRS) das portal_views (Substitui busca massiva O(N))
+    const cachePortalViews: Record<string, Record<string, { status?: string, feedback?: string }>> = {};
 
     if (atividadesParaSincronizar.length === 0) {
       return NextResponse.json({ status: "sucesso", mensagem: "Nenhuma atividade correspondente com link do Classroom encontrada." });
@@ -215,7 +202,8 @@ export async function POST(req: Request) {
                       });
                       stPageToken = stRes.data.nextPageToken;
                     } while (stPageToken);
-                  } catch (e) {
+                  } catch (error: unknown) {
+                    const e = error as Error;
                     console.error("Erro listando alunos do curso", courseId, e);
                   }
                 }
@@ -253,8 +241,27 @@ export async function POST(req: Request) {
                 }
 
                 if (alunoDb) {
-                  const chaveEntrega = `${alunoDb.matricula}_${idAtiv}`;
-                  const entregaExistente = mapaEntregas[chaveEntrega];
+                  // CQRS: Carregar portal_view do aluno sob demanda (apenas se ele teve atividade)
+                  if (!cachePortalViews[alunoDb.idDoc]) {
+                    const viewSnap = await dbAdmin.collection("portal_views").doc(alunoDb.idDoc).get();
+                    if (viewSnap.exists) {
+                      cachePortalViews[alunoDb.idDoc] = viewSnap.data()?.entregasMap || {};
+                    } else {
+                      cachePortalViews[alunoDb.idDoc] = {};
+                    }
+                  }
+                  
+                  const entregasDoAluno = cachePortalViews[alunoDb.idDoc];
+                  const pViewEntrega = entregasDoAluno[idAtiv];
+                  
+                  let entregaExistente = null;
+                  if (pViewEntrega) {
+                    entregaExistente = { 
+                      idDoc: `${idAtiv}-${alunoDb.matricula}`, 
+                      status: pViewEntrega.status,
+                      feedback: pViewEntrega.feedback || "" 
+                    };
+                  }
 
                   if (!entregaExistente ||
                     entregaExistente.status === "Aguardando Correção" ||
@@ -300,12 +307,10 @@ export async function POST(req: Request) {
                       xpGanhoFinal = xpAtiv - Math.min(descontoTotal, xpAtiv);
 
 
-                      // Para digitação
+                      // Para digitação (resolvido sem get() extra usando portal_views)
                       let matchDig = null;
-                      if (entregaExistente && entregaExistente.idDoc) {
-                        const docSnap = await dbAdmin.collection("entregas").doc(String(entregaExistente.idDoc)).get();
-                        const feedbackExistente = docSnap.exists ? String(docSnap.data()?.feedback || "") : "";
-                        matchDig = feedbackExistente.match(/\[XP_DIGITACAO:\s*(\d+)\]/);
+                      if (entregaExistente && entregaExistente.feedback) {
+                        matchDig = String(entregaExistente.feedback).match(/\[XP_DIGITACAO:\s*(\d+)\]/);
                       }
 
                       if (matchDig) {
@@ -338,7 +343,7 @@ export async function POST(req: Request) {
                         timestamp: timestampRealDaEntrega,
                       });
                     } else {
-                      const idUnico = `SYNC-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+                      const idUnico = `${idAtiv}-${alunoDb.matricula}`;
                       const docRef = dbAdmin.collection("entregas").doc(idUnico);
                       batch.set(docRef, {
                         matricula: alunoDb.matricula,
@@ -409,7 +414,7 @@ export async function POST(req: Request) {
                     await batch.commit();
 
                     // Atualizar cache em memória para próximas iterações n resincronizarem errado
-                    mapaEntregas[chaveEntrega] = { status: "Avaliado" };
+                    cachePortalViews[alunoDb.idDoc][idAtiv] = { status: "Avaliado" };
                     alunoDb.xpTotal += xpGanhoFinal;
                     entregasNovas++;
                   } else {

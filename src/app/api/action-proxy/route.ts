@@ -4,6 +4,7 @@ import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
 import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades, getCachedAdminAlunos, setCachedAdminAlunos, invalidateAdminAlunosCache, getCachedAnalyticsGeral, setCachedAnalyticsGeral, getCachedClassDates, getAlunosAtivosSnapshot } from "@/src/lib/cache";
 import { Transaction, FieldValue, FieldPath, QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { cookies } from "next/headers";
+import { getRankingKeys } from "@/src/lib/dateUtils";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
   ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
@@ -1215,6 +1216,29 @@ export async function POST(request: Request) {
                 xpGanho: xp,
                 timestamp
               });
+
+              // Atualizar Ranking Semanal e Mensal
+              const { semanaKey, mesKey } = getRankingKeys(new Date(timestamp));
+              
+              const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+              transaction.set(rankSemanaRef, {
+                alunos: {
+                  [mat]: {
+                    xpNormal: FieldValue.increment(xp),
+                    ultimoEnvio: timestamp
+                  }
+                }
+              }, { merge: true });
+
+              const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+              transaction.set(rankMesRef, {
+                alunos: {
+                  [mat]: {
+                    xpNormal: FieldValue.increment(xp),
+                    ultimoEnvio: timestamp
+                  }
+                }
+              }, { merge: true });
             }
           });
 
@@ -1341,9 +1365,10 @@ export async function POST(request: Request) {
             const alunoDoc = await transaction.get(alunoRef);
             if (alunoDoc.exists) {
               const currentXp = Number(alunoDoc.data()?.xp) || 0;
+              const timestamp = Date.now();
               transaction.update(alunoRef, {
                 xp: currentXp + xp,
-                lastUpdated: Date.now()
+                lastUpdated: timestamp
               });
               transaction.set(dbAdmin.collection("entregas").doc(idEntrega), {
                 id: idEntrega,
@@ -1352,12 +1377,35 @@ export async function POST(request: Request) {
                 resposta: `Badge Resgatada: ${nomeBadge}`,
                 status: "Badge",
                 xpGanho: xp,
-                timestamp: Date.now()
+                timestamp: timestamp
               });
 
               const portalViewRef = dbAdmin.collection("portal_views").doc(mat);
               transaction.set(portalViewRef, {
                 badges: FieldValue.arrayUnion(badgeId)
+              }, { merge: true });
+
+              // Atualizar Ranking Semanal e Mensal
+              const { semanaKey, mesKey } = getRankingKeys(new Date(timestamp));
+              
+              const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+              transaction.set(rankSemanaRef, {
+                alunos: {
+                  [mat]: {
+                    xpNormal: FieldValue.increment(xp),
+                    ultimoEnvio: timestamp
+                  }
+                }
+              }, { merge: true });
+
+              const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+              transaction.set(rankMesRef, {
+                alunos: {
+                  [mat]: {
+                    xpNormal: FieldValue.increment(xp),
+                    ultimoEnvio: timestamp
+                  }
+                }
               }, { merge: true });
             }
           });

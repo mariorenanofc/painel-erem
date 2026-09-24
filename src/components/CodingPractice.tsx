@@ -303,13 +303,28 @@ export default function CodingPractice({
 
   // Monitor de Altura da Janela para Layouts Responsivos Integrados
   const [windowHeight, setWindowHeight] = useState(800);
+  const [windowWidth, setWindowWidth] = useState(1200);
+  
   useEffect(() => {
     if (typeof window !== "undefined") {
       setWindowHeight(window.innerHeight);
-      const handleResize = () => setWindowHeight(window.innerHeight);
+      setWindowWidth(window.innerWidth);
+
+      // Se for desktop (telas maiores que 1024px), o teclado virtual já inicia minimizado por padrão
+      // pois o aluno muito provavelmente vai utilizar seu teclado físico real.
+      if (window.innerWidth >= 1024) {
+        setTecladoMinimizado(true);
+      }
+
+      const handleResize = () => {
+        setWindowHeight(window.innerHeight);
+        setWindowWidth(window.innerWidth);
+      };
+      
       window.addEventListener("resize", handleResize);
       return () => window.removeEventListener("resize", handleResize);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const formatTime = (secs: number): string => {
@@ -874,7 +889,7 @@ export default function CodingPractice({
       gutterText: "text-slate-650",
       statusBar: "bg-[#0d1424] border-slate-800/80 shadow-md",
       keyboardBg: "bg-[#0a0d16] border-slate-900/60 shadow-[0_0_20px_rgba(99,102,241,0.06)]",
-      keyboardKeyBg: "bg-slate-900/85 border-slate-800 hover:text-white text-slate-400 hover:bg-slate-800 transition-all",
+      keyboardKeyBg: "bg-slate-900/85 border-slate-800 hover:text-white text-slate-400 hover:bg-slate-800 active:scale-95 active:brightness-90 transition-all",
       cursorClass: "bg-indigo-550/45 text-white border-b-2 border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.3)]",
       highlightClass: "bg-gradient-to-r from-indigo-500 to-pink-500 text-white border-indigo-400 scale-105 shadow-md shadow-indigo-500/30 animate-pulse font-black",
       mainBorderGlow: "border-slate-850 shadow-[0_0_30px_rgba(99,102,241,0.04)]"
@@ -886,7 +901,7 @@ export default function CodingPractice({
       gutterText: "text-green-800",
       statusBar: "bg-black border-green-950/40 shadow-[0_0_15px_rgba(34,197,94,0.05)]",
       keyboardBg: "bg-[#020502] border-green-950/40 shadow-[0_0_25px_rgba(34,197,94,0.08)]",
-      keyboardKeyBg: "bg-black border-green-950/40 hover:text-green-400 text-green-600 hover:bg-green-950/10 transition-all",
+      keyboardKeyBg: "bg-black border-green-950/40 hover:text-green-400 text-green-600 hover:bg-green-950/10 active:scale-95 active:brightness-90 transition-all",
       cursorClass: "bg-green-500/30 text-green-300 border-b-2 border-green-500 shadow-[0_0_8px_#22c55e]",
       highlightClass: "bg-gradient-to-r from-green-500 to-emerald-600 text-black border-green-400 scale-105 shadow-[0_0_15px_rgba(34,197,94,0.6)] font-black",
       mainBorderGlow: "border-green-955 shadow-[0_0_35px_rgba(34,197,94,0.05)]"
@@ -898,7 +913,7 @@ export default function CodingPractice({
       gutterText: "text-purple-900",
       statusBar: "bg-black border-fuchsia-950/30 shadow-[0_0_15px_rgba(217,70,239,0.05)]",
       keyboardBg: "bg-[#0f0719] border-fuchsia-950/35 shadow-[0_0_25px_rgba(217,70,239,0.08)]",
-      keyboardKeyBg: "bg-zinc-950 border-fuchsia-950/20 hover:text-fuchsia-400 text-fuchsia-500 hover:bg-fuchsia-950/10 transition-all",
+      keyboardKeyBg: "bg-zinc-950 border-fuchsia-950/20 hover:text-fuchsia-400 text-fuchsia-500 hover:bg-fuchsia-950/10 active:scale-95 active:brightness-90 transition-all",
       cursorClass: "bg-fuchsia-500/30 text-fuchsia-300 border-b-2 border-fuchsia-500 shadow-[0_0_8px_#d946ef]",
       highlightClass: "bg-gradient-to-r from-fuchsia-500 to-cyan-500 text-white border-fuchsia-400 scale-105 shadow-[0_0_15px_rgba(217,70,239,0.6)] font-black",
       mainBorderGlow: "border-fuchsia-950/50 shadow-[0_0_35px_rgba(217,70,239,0.05)]"
@@ -1414,9 +1429,10 @@ export default function CodingPractice({
 
                 <button
                   onClick={() => setTecladoMinimizado(true)}
-                  className="text-[9px] font-bold text-slate-500 hover:text-white bg-slate-900/60 hover:bg-slate-850 border border-slate-800/80 px-2 py-0.5 rounded-lg flex items-center gap-1 cursor-pointer transition-colors font-sans border-none"
+                  className="text-[12px] text-slate-500 hover:text-white bg-slate-900/60 hover:bg-slate-800 border border-slate-800/80 px-2 py-1 rounded-lg flex items-center justify-center cursor-pointer transition-colors shadow-sm active:scale-95 border-none"
+                  title="Minimizar Teclado Virtual"
                 >
-                  Ocultar Teclado ⬇️
+                  ⌨️ ⬇️
                 </button>
               </div>
 

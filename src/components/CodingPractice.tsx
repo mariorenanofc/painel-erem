@@ -284,6 +284,23 @@ export default function CodingPractice({
   const [classroomAberto, setClassroomAberto] = useState(false);
   const [fixedXP, setFixedXP] = useState<number | null>(null);
 
+  // Calcular métricas adicionais (Acurácia & WPM)
+  const accuracy = currentIndex === 0
+    ? 100
+    : Math.max(0, Math.round(((currentIndex - errorsCount) / currentIndex) * 100));
+
+  const elapsedSeconds = totalSecondsAllowed - secondsRemaining + extraSecondsUsed;
+  const elapsedMinutes = elapsedSeconds / 60;
+  const wpm = elapsedMinutes > 0.05 ? Math.round((currentIndex / 5) / elapsedMinutes) : 0;
+
+  // Calcular XP Atual
+  const extraMinutes = Math.floor(extraSecondsUsed / 60);
+  const xpDescontoErros = errorsCount;
+  const xpDescontoTempo = extraMinutes * 5;
+  const floorXP = Math.ceil(maxXP * 0.1); // Piso mínimo de 10%
+  const calculatedXP = Math.max(floorXP, maxXP - xpDescontoErros - xpDescontoTempo);
+  const currentXP = fixedXP !== null ? fixedXP : calculatedXP;
+
   // Monitor de Altura da Janela para Layouts Responsivos Integrados
   const [windowHeight, setWindowHeight] = useState(800);
   useEffect(() => {
@@ -335,7 +352,7 @@ export default function CodingPractice({
 
   const [isLockedByAutoSubmit, setIsLockedByAutoSubmit] = useState(false);
 
-  // Efeito para checar progresso salvo no localStorage no mount
+  // Efeito para checar progresso salvo no localStorage e na nuvem no mount
   useEffect(() => {
     // 1. Checa se o aluno JÁ termino na nuvem
     const statusBD = missaoAberta.status?.toLowerCase().trim() || "";
@@ -349,21 +366,85 @@ export default function CodingPractice({
       return; // Já terminou, ignora localStorage
     }
 
-    const saveKey = `coding_practice_${missaoAberta.id}`;
-    const saved = localStorage.getItem(saveKey);
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.autoSubmitted) {
+    interface TypingProgressState {
+      currentIndex?: number;
+      errorsCount?: number;
+      secondsRemaining?: number;
+      extraSecondsUsed?: number;
+      iniciado?: boolean;
+      codeLength?: number;
+      autoSubmitted?: boolean;
+      finalXP?: number;
+    }
+
+    const checkProgress = async () => {
+      const saveKey = `coding_practice_${missaoAberta.id}`;
+      const saved = localStorage.getItem(saveKey);
+      let localParsed: TypingProgressState | null = null;
+
+      if (saved) {
+        try {
+          localParsed = JSON.parse(saved) as TypingProgressState;
+        } catch (error: unknown) {
+          console.error(error);
+        }
+      }
+
+      const usr = JSON.parse(localStorage.getItem("alunoLogado") || "{}");
+      let cloudParsed: TypingProgressState | null = null;
+
+      if (usr.matricula) {
+        try {
+          const res = await fetch(`/api/alunos/typing-progress?matricula=${usr.matricula}&idAtividade=${missaoAberta.id}`);
+          const data = await res.json();
+          if (data.status === "sucesso" && data.state) {
+            cloudParsed = data.state as TypingProgressState;
+          }
+        } catch (err) {
+          console.error("Erro ao buscar progresso na nuvem", err);
+        }
+      }
+
+      let bestState: TypingProgressState | null = localParsed;
+      if (cloudParsed) {
+         if (cloudParsed.autoSubmitted) {
+            bestState = cloudParsed;
+         } else if (localParsed && localParsed.autoSubmitted) {
+            bestState = localParsed;
+         } else if (!localParsed || (cloudParsed.currentIndex || 0) > (localParsed.currentIndex || 0)) {
+            bestState = cloudParsed;
+         }
+      }
+
+      if (bestState) {
+        // Salva o bestState no localStorage para que o botão "Continuar" leia dali
+        localStorage.setItem(saveKey, JSON.stringify(bestState));
+
+        if (bestState.autoSubmitted) {
+          if (statusBD !== "aguardando validação" && statusBD !== "aguardando validacao" && statusBD !== "avaliado" && statusBD !== "avaliada") {
+            // O progresso diz que enviou, mas o banco de dados principal não tem. Fallback!
+            if (usr.matricula) {
+              fetch("/api/alunos/enviar-missao", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  matricula: usr.matricula,
+                  idAtividade: missaoAberta.id,
+                  resposta: targetCode,
+                  xpGanho: bestState.finalXP || Number(missaoAberta.xp) || 200 // Fallback inteligente
+                })
+              }).catch(console.error);
+            }
+          }
           setIsLockedByAutoSubmit(true);
-        } else if (parsed.iniciado && parsed.codeLength === targetCode.length && parsed.currentIndex > 0) {
+        } else if (bestState.iniciado && bestState.codeLength === targetCode.length && (bestState.currentIndex ?? 0) > 0) {
           setHasSavedProgress(true);
         }
-      } catch (error: unknown) {
-        const e = error as Error;
-        console.error(e);
       }
-    }
+    };
+
+    checkProgress();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [missaoAberta, targetCode.length]);
 
   // Efeito para salvar progresso dinamicamente
@@ -381,13 +462,82 @@ export default function CodingPractice({
     localStorage.setItem(saveKey, JSON.stringify(state));
   }, [currentIndex, errorsCount, secondsRemaining, extraSecondsUsed, iniciado, completed, pausado, missaoAberta.id, targetCode.length]);
 
+  // Efeito para sincronizar progresso com a nuvem em eventos de saída (fechar aba, trocar aba)
+  useEffect(() => {
+    if (!iniciado || completed) return;
+    
+    const syncToCloud = () => {
+      const usr = JSON.parse(localStorage.getItem("alunoLogado") || "{}");
+      if (usr.matricula) {
+        const state = {
+          currentIndex,
+          errorsCount,
+          secondsRemaining,
+          extraSecondsUsed,
+          iniciado: true,
+          codeLength: targetCode.length
+        };
+        fetch("/api/alunos/typing-progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          keepalive: true, // Garante que a requisição seja concluída mesmo se a aba for fechada
+          body: JSON.stringify({
+            matricula: usr.matricula,
+            idAtividade: missaoAberta.id,
+            state
+          })
+        }).catch(() => {});
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        syncToCloud();
+      }
+    };
+
+    window.addEventListener("beforeunload", syncToCloud);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener("beforeunload", syncToCloud);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [iniciado, completed, currentIndex, errorsCount, secondsRemaining, extraSecondsUsed, missaoAberta.id, targetCode.length]);
+
+  // Efeito para sincronizar quando o usuário pausa intencionalmente
+  useEffect(() => {
+    if (pausado && iniciado && !completed) {
+      const usr = JSON.parse(localStorage.getItem("alunoLogado") || "{}");
+      if (usr.matricula) {
+        const state = {
+          currentIndex,
+          errorsCount,
+          secondsRemaining,
+          extraSecondsUsed,
+          iniciado: true,
+          codeLength: targetCode.length
+        };
+        fetch("/api/alunos/typing-progress", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            matricula: usr.matricula,
+            idAtividade: missaoAberta.id,
+            state
+          })
+        }).catch(() => {});
+      }
+    }
+  }, [pausado, iniciado, completed, missaoAberta.id, currentIndex, errorsCount, secondsRemaining, extraSecondsUsed, targetCode.length]);
+
   // Efeito para registrar auto-envio no localStorage na conclusão
   useEffect(() => {
     if (completed) {
       const saveKey = `coding_practice_${missaoAberta.id}`;
-      localStorage.setItem(saveKey, JSON.stringify({ autoSubmitted: true }));
+      localStorage.setItem(saveKey, JSON.stringify({ autoSubmitted: true, finalXP: fixedXP !== null ? fixedXP : currentXP }));
     }
-  }, [completed, missaoAberta.id]);
+  }, [completed, missaoAberta.id, fixedXP, currentXP]);
 
   // Efeito do Cronômetro
   useEffect(() => {
@@ -433,29 +583,12 @@ export default function CodingPractice({
     }
   };
 
-  // Calcular métricas adicionais (Acurácia & WPM)
-  const accuracy = currentIndex === 0
-    ? 100
-    : Math.max(0, Math.round(((currentIndex - errorsCount) / currentIndex) * 100));
-
-  const elapsedSeconds = totalSecondsAllowed - secondsRemaining + extraSecondsUsed;
-  const elapsedMinutes = elapsedSeconds / 60;
-  const wpm = elapsedMinutes > 0.05 ? Math.round((currentIndex / 5) / elapsedMinutes) : 0;
-
-  // Calcular XP Atual
-  const extraMinutes = Math.floor(extraSecondsUsed / 60);
-  const xpDescontoErros = errorsCount;
-  const xpDescontoTempo = extraMinutes * 5;
-  const floorXP = Math.ceil(maxXP * 0.1); // Piso mínimo de 10%
-  const calculatedXP = Math.max(floorXP, maxXP - xpDescontoErros - xpDescontoTempo);
-  const currentXP = fixedXP !== null ? fixedXP : calculatedXP;
-
   // ⚡ AUTO-SAVE DE FUNDO PARA EVITAR ABANDONO SEM XP
   const hasAutoSaved = useRef(false);
   useEffect(() => {
     if (completed && !hasAutoSaved.current) {
       hasAutoSaved.current = true;
-      const usr = JSON.parse(localStorage.getItem("usuario") || "{}");
+      const usr = JSON.parse(localStorage.getItem("alunoLogado") || "{}");
       if (usr.matricula) {
         // Envia silenciosamente para o backend. 
         // O backend foi ajustado para aceitar atualizações de Typing se estiver "aguardando validação".
@@ -788,6 +921,7 @@ export default function CodingPractice({
     if (completed && isDuelMode) {
       handleFinalizar();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [completed, isDuelMode]);
 
   // Tempo correndo apenas se não estiver pausado e não estiver concluído virtual

@@ -948,12 +948,38 @@ export async function POST(request: Request) {
       const tituloLegado = `Desbloqueou: 🏅 Legado ${tipoPlaca.replace("Elite ", "")} (${nomeMes})`;
 
       const batch = dbAdmin.batch();
+      
+      // 1. Remover a placa do dono anterior
       const entregasSnap = await dbAdmin.collection("entregas").where("idAtividade", "==", "CONQUISTA-BADGE").where("resposta", "==", `Desbloqueou: ${tipoPlaca}`).get();
 
       entregasSnap.forEach(doc => {
         batch.update(doc.ref, { resposta: tituloLegado });
+        const oldMat = doc.data().matricula;
+        if (oldMat && oldMat !== matriculaNova) {
+          batch.set(dbAdmin.collection("portal_views").doc(oldMat), {
+            badges: FieldValue.arrayRemove(tipoPlaca)
+          }, { merge: true });
+        }
       });
 
+      // 2. Transformar placas ativas antigas DO NOVO DONO em Legado
+      const entregasAntigasSnap = await dbAdmin.collection("entregas")
+        .where("matricula", "==", matriculaNova)
+        .where("idAtividade", "==", "CONQUISTA-BADGE")
+        .get();
+        
+      entregasAntigasSnap.forEach(doc => {
+        const resp = String(doc.data().resposta || "");
+        if (resp === "Desbloqueou: Elite Ouro" && tipoPlaca !== "Elite Ouro") {
+          batch.update(doc.ref, { resposta: `Desbloqueou: 🏅 Legado Ouro (${nomeMes})` });
+        } else if (resp === "Desbloqueou: Elite Prata" && tipoPlaca !== "Elite Prata") {
+          batch.update(doc.ref, { resposta: `Desbloqueou: 🏅 Legado Prata (${nomeMes})` });
+        } else if (resp === "Desbloqueou: Elite Bronze" && tipoPlaca !== "Elite Bronze") {
+          batch.update(doc.ref, { resposta: `Desbloqueou: 🏅 Legado Bronze (${nomeMes})` });
+        }
+      });
+
+      // 3. Dar a nova placa no histórico
       const newId = `BADGE-VIP-${dataHoje.getTime()}`;
       const novaRef = dbAdmin.collection("entregas").doc(newId);
       batch.set(novaRef, {
@@ -967,9 +993,22 @@ export async function POST(request: Request) {
         feedback: `token-${newId}`
       });
 
+      // 4. Limpar outras placas VIP do portal_views do novo dono e adicionar a nova
       const portalRef = dbAdmin.collection("portal_views").doc(matriculaNova);
+      const portalDoc = await portalRef.get();
+      let badgesAtuais: string[] = [];
+      if (portalDoc.exists) {
+        badgesAtuais = portalDoc.data()?.badges || [];
+      }
+      
+      badgesAtuais = badgesAtuais.filter((b: string) => !["Elite Ouro", "Elite Prata", "Elite Bronze"].includes(b));
+      
+      if (!badgesAtuais.includes(tipoPlaca)) {
+        badgesAtuais.push(tipoPlaca);
+      }
+
       batch.set(portalRef, {
-        badges: FieldValue.arrayUnion(tipoPlaca)
+        badges: badgesAtuais
       }, { merge: true });
 
       await batch.commit();

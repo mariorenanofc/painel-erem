@@ -393,7 +393,7 @@ export default function GodModeModal({
                       )}
                     </motion.button>
                   </motion.form>
-                ) : (
+                ) : abaAtiva === "coroa" ? (
                   <motion.form
                     key="abaCoroa"
                     initial={{ opacity: 0, y: 10 }}

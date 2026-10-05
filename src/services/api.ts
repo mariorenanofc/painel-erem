@@ -432,4 +432,18 @@ export const apiTutor = {
     const res = await fetch("/api/tutor/atividades?filtroTurma=Todas&filtroTipo=Todos");
     return res.json();
   },
+
+  // --- FECHAMENTO DE CICLO LETIVO ---
+  verificarRegrasFechamento: () => fetchApi({ action: "verificar_regras_fechamento" }),
+  
+  encerrarCiclo: (
+    senhaSeguranca: string,
+    formandos: string[],
+    continuantes: string[]
+  ) => fetchApi({
+    action: "encerrar_ciclo",
+    senhaSeguranca,
+    formandos,
+    continuantes
+  }),
 };

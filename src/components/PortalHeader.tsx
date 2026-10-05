@@ -260,6 +260,14 @@ export default function PortalHeader({
                     >
                       <span>📊</span> Frequência
                     </button>
+                    <button
+                      onClick={() => {
+                        window.location.href = "/hall-da-fama";
+                      }}
+                      className="cursor-pointer w-full text-left px-3 py-2.5 text-xs text-amber-600 dark:text-amber-400 font-black uppercase tracking-wider hover:bg-amber-50 dark:hover:bg-amber-500/10 hover:text-amber-700 dark:hover:text-amber-300 rounded-xl transition-colors flex items-center gap-2.5"
+                    >
+                      <span>🏛️</span> Hall da Fama
+                    </button>
                   </div>
                   <div className="border-t border-slate-100 dark:border-slate-800 p-2">
                     <button

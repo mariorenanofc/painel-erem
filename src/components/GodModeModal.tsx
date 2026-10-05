@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from "framer-motion";
 import { apiTutor } from "@/src/services/api";
-import { AlunoGodMode, GodModeModalProps } from "../types";
+import { AlunoGodMode, GodModeModalProps, FechamentoCheckResult } from "../types";
 import { useToast } from "@/src/contexts/ToastContext";
 
 export default function GodModeModal({
@@ -17,7 +17,13 @@ export default function GodModeModal({
   const [carregando, setCarregando] = useState(true);
 
   // Abas do God Mode
-  const [abaAtiva, setAbaAtiva] = useState<"xp" | "coroa">("xp");
+  const [abaAtiva, setAbaAtiva] = useState<"xp" | "coroa" | "encerrar">("xp");
+
+  // Estado Fechamento de Ciclo
+  const [regrasFechamento, setRegrasFechamento] = useState<FechamentoCheckResult | null>(null);
+  const [verificandoRegras, setVerificandoRegras] = useState(false);
+  const [senhaFechamento, setSenhaFechamento] = useState("");
+  const [fechandoCiclo, setFechandoCiclo] = useState(false);
 
   // Estado Injetar XP
   const [matriculaSelecionada, setMatriculaSelecionada] = useState("");
@@ -45,6 +51,25 @@ export default function GodModeModal({
     };
     buscarAlunos();
   }, [toast]);
+
+  useEffect(() => {
+    if (abaAtiva === "encerrar") {
+      const checarRegras = async () => {
+        setVerificandoRegras(true);
+        try {
+          const res = await apiTutor.verificarRegrasFechamento();
+          if (res.status === "sucesso") {
+            setRegrasFechamento(res.regras);
+          }
+        } catch (error: unknown) {
+          toast("Erro ao verificar regras.", "error");
+        } finally {
+          setVerificandoRegras(false);
+        }
+      };
+      checarRegras();
+    }
+  }, [abaAtiva, toast]);
 
   const handleInjetar = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -128,6 +153,46 @@ export default function GodModeModal({
     }
   };
 
+  const handleEncerrarCiclo = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!regrasFechamento) return;
+    
+    const tudoOk = regrasFechamento.mesDezembro && regrasFechamento.sorteioRealizado && regrasFechamento.modulosEncerrados;
+    if (!tudoOk) {
+      toast("Todas as regras precisam estar verdes para encerrar o ano.", "error", "Bloqueado");
+      return;
+    }
+    
+    if (!senhaFechamento) {
+      toast("Digite sua senha de segurança.", "warning");
+      return;
+    }
+
+    if (!confirm("CUIDADO: Você está prestes a encerrar o ano letivo. O XP de todos os alunos será zerado e os alunos do 3º ano virarão veteranos. Tem certeza absoluta?")) return;
+    
+    setFechandoCiclo(true);
+    try {
+      // Como a escolha de formandos vs continuantes pode ser mais complexa na vida real,
+      // para esse endpoint, vamos pegar alunos que a turma contenha "3º" ou "3" para formar.
+      const formandos = alunos.filter(a => a.turma.includes("3º") || a.turma.includes("3") || a.turma.toLowerCase().includes("terceiro")).map(a => a.matricula);
+      const continuantes = alunos.filter(a => !formandos.includes(a.matricula)).map(a => a.matricula);
+      
+      const res = await apiTutor.encerrarCiclo(senhaFechamento, formandos, continuantes);
+      if (res.status === "sucesso") {
+        confetti({ particleCount: 300, spread: 120, colors: ["#ef4444", "#ffffff"] });
+        toast(res.mensagem, "success", "Ano Encerrado");
+        onSuccess();
+        onClose();
+      } else {
+        toast(res.mensagem, "error", "Falha de Segurança");
+      }
+    } catch (error: unknown) {
+      toast("Erro ao fechar o ciclo.", "error");
+    } finally {
+      setFechandoCiclo(false);
+    }
+  };
+
   return (
     <AnimatePresence>
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -200,6 +265,16 @@ export default function GodModeModal({
               }`}
             >
               👑 Coroar Elite
+            </button>
+            <button
+              onClick={() => setAbaAtiva("encerrar")}
+              className={`cursor-pointer flex-1 py-3.5 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all select-none ${
+                abaAtiva === "encerrar"
+                  ? "bg-red-600 text-white shadow-md shadow-red-500/20"
+                  : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
+              }`}
+            >
+              ⛔ Fim de Ano
             </button>
           </div>
 
@@ -396,6 +471,75 @@ export default function GodModeModal({
                         </>
                       ) : (
                         "👑 Coroar Novo Campeão"
+                      )}
+                    </motion.button>
+                  </motion.form>
+                ) : (
+                  <motion.form
+                    key="abaEncerrar"
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    transition={{ duration: 0.2 }}
+                    onSubmit={handleEncerrarCiclo}
+                    className="space-y-4"
+                  >
+                    <div className="bg-red-50/50 dark:bg-red-950/20 p-4 rounded-2xl border border-red-200/50 dark:border-red-900/30">
+                      <p className="text-xs text-red-800 dark:text-red-300 leading-relaxed font-semibold">
+                        <strong>Zerar XP & Fim de Ano:</strong> Esta ação é IRREVERSÍVEL. O XP de todos os alunos será zerado para iniciar o novo ano. O histórico será preservado e os alunos do 3º ano virarão "Veteranos" oficiais no Hall da Fama.
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Checklist de Segurança</h3>
+                      
+                      {verificandoRegras || !regrasFechamento ? (
+                        <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl flex justify-center"><div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 animate-spin rounded-full"/></div>
+                      ) : (
+                        <div className="space-y-2">
+                          <div className={`p-3 rounded-xl flex items-center gap-3 text-sm font-bold ${regrasFechamento.mesDezembro ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400' : 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400'}`}>
+                            <span>{regrasFechamento.mesDezembro ? '✅' : '❌'}</span>
+                            <span>Mês Atual é Dezembro</span>
+                          </div>
+                          <div className={`p-3 rounded-xl flex items-center gap-3 text-sm font-bold ${regrasFechamento.sorteioRealizado ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400' : 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400'}`}>
+                            <span>{regrasFechamento.sorteioRealizado ? '✅' : '❌'}</span>
+                            <span>Sorteio Anual da Rifa Realizado</span>
+                          </div>
+                          <div className={`p-3 rounded-xl flex items-center gap-3 text-sm font-bold ${regrasFechamento.modulosEncerrados ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400' : 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400'}`}>
+                            <span>{regrasFechamento.modulosEncerrados ? '✅' : '❌'}</span>
+                            <span>Módulos Encerrados ({regrasFechamento.missaoPendenteCount} missões abertas)</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-2 mt-4">
+                      <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        Senha de Segurança (Tutor)
+                      </label>
+                      <input
+                        type="password"
+                        value={senhaFechamento}
+                        onChange={(e) => setSenhaFechamento(e.target.value)}
+                        placeholder="Digite a sua senha de acesso"
+                        className="w-full border border-slate-200 dark:border-slate-800 rounded-2xl p-4 text-sm text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-950 outline-none focus:border-red-500 shadow-sm transition-all text-center tracking-widest font-mono"
+                      />
+                    </div>
+
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      type="submit"
+                      disabled={fechandoCiclo || !regrasFechamento || !(regrasFechamento.mesDezembro && regrasFechamento.sorteioRealizado && regrasFechamento.modulosEncerrados)}
+                      className={`cursor-pointer w-full text-white font-black py-4 rounded-2xl shadow-lg transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2 mt-4 select-none ${(!regrasFechamento || !(regrasFechamento.mesDezembro && regrasFechamento.sorteioRealizado && regrasFechamento.modulosEncerrados)) ? 'bg-slate-300 dark:bg-slate-800 opacity-50 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 shadow-red-500/20'}`}
+                    >
+                      {fechandoCiclo ? (
+                        <>
+                          <div className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
+                          Executando...
+                        </>
+                      ) : (
+                        "⛔ Encerrar Ciclo Letivo"
                       )}
                     </motion.button>
                   </motion.form>

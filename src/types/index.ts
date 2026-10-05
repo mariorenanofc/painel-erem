@@ -452,3 +452,14 @@ export interface PortalHeaderProps {
   onAbrirPerfil: () => void;
   onLogout: () => void;
 }
+
+// ==========================================
+// 5. FECHAMENTO DE CICLO (NOVO)
+// ==========================================
+export interface FechamentoCheckResult {
+  mesDezembro: boolean;
+  sorteioRealizado: boolean;
+  modulosEncerrados: boolean;
+  missaoPendenteCount: number;
+}
+

@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       "mudar_status_trilhatech", "atualizar_senha_checkin", "toggle_modo_reposicao",
       "salvar_configuracoes", "sincronizar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "sincronizar_ava",
       "justificar_falta", "buscar_analytics_geral", "buscar_ficha_360", "listar_alunos_godmode", "buscar_alunos_admin",
-      "coroar_elite", "sortear_rifa", "atualizar_senha_aluno"
+      "coroar_elite", "sortear_rifa", "atualizar_senha_aluno", "verificar_regras_fechamento", "encerrar_ciclo"
     ];
 
     if (ROTAS_PROTEGIDAS.includes(requestAction)) {
@@ -1038,6 +1038,89 @@ export async function POST(request: Request) {
           await dbAdmin.collection("rifa_bilhetes").doc(vencedor.id).update({ status: "SORTEADO_GANHADOR" });
           result = { status: "sucesso", ganhador: { nome: vencedor.nomeAluno || vencedor.nome, matricula: vencedor.matricula, bilhete: vencedor.id } };
         }
+      }
+    } else if (requestAction === "verificar_regras_fechamento") {
+      const dataAtual = new Date();
+      dataAtual.setHours(dataAtual.getHours() - 3); // BRT
+      const mesAtual = dataAtual.getMonth();
+      const mesDezembro = mesAtual === 11;
+
+      // 2. Check Sorteio no ano atual
+      const anoAtualStr = String(dataAtual.getFullYear());
+      const rifasSnap = await dbAdmin.collection("rifa_bilhetes")
+        .where("status", "==", "SORTEADO_GANHADOR")
+        .get();
+      
+      let sorteioRealizado = false;
+      rifasSnap.forEach((doc: QueryDocumentSnapshot) => {
+        const d = doc.data();
+        if (d.timestamp) {
+           const dSorteio = new Date(Number(d.timestamp));
+           if (String(dSorteio.getFullYear()) === anoAtualStr) {
+             sorteioRealizado = true;
+           }
+        }
+      });
+
+      // 3. Check Missões (Não pode haver statusPublicacao == "Publicada")
+      const ativSnap = await dbAdmin.collection("atividades").where("statusPublicacao", "==", "Publicada").get();
+      const missaoPendenteCount = ativSnap.size;
+      const modulosEncerrados = missaoPendenteCount === 0;
+
+      result = {
+        status: "sucesso",
+        regras: {
+          mesDezembro,
+          sorteioRealizado,
+          modulosEncerrados,
+          missaoPendenteCount
+        }
+      };
+
+    } else if (requestAction === "encerrar_ciclo") {
+      const senhaFornecida = String(payload.senhaSeguranca || "").trim();
+      const TUTOR_PASS = process.env.TUTOR_TOKEN_SECRET || "123456";
+      
+      if (senhaFornecida !== TUTOR_PASS && payload.token !== TUTOR_PASS) {
+        result = { status: "erro", mensagem: "Senha de segurança incorreta." };
+      } else {
+         const formandos = Array.isArray(payload.formandos) ? payload.formandos : [];
+         const continuantes = Array.isArray(payload.continuantes) ? payload.continuantes : [];
+         
+         const anoAtual = new Date().getFullYear();
+         const batch = dbAdmin.batch();
+         
+         // Busca apenas os ativos
+         const snapAlunos = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
+         
+         snapAlunos.forEach((doc: QueryDocumentSnapshot) => {
+            const data = doc.data();
+            const mat = doc.id;
+            
+            // Snapshot do XP do ano
+            const historicoItem = {
+               ano: anoAtual,
+               xp: Number(data.xp) || 0,
+               nivel: data.nivel || "Iniciante"
+            };
+            
+            const isFormando = formandos.includes(mat);
+            
+            batch.update(doc.ref, {
+               historicoAnual: FieldValue.arrayUnion(historicoItem),
+               xp: 0,
+               xpGasto: 0, // Opcional, mas geralmente zera pra recomeçar a economia
+               nivel: "Iniciante",
+               statusTrilha: isFormando ? "Veterano" : "Ativo"
+            });
+         });
+         
+         await batch.commit();
+         clearAllPortalCaches();
+         invalidateRankingCache();
+         invalidateAdminAlunosCache();
+         
+         result = { status: "sucesso", mensagem: "Ciclo Letivo encerrado com sucesso! XP zerado e veteranos formados." };
       }
     } else if (["avaliar_entrega", "injetar_xp_manual", "atualizar_senha_checkin", "toggle_modo_reposicao", "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "justificar_falta", "resgatar_badge", "resgatar_aniversario", "confirmar_whatsapp", "cadastrar_aluno", "salvar_aluno", "inscrever_trilhatech", "mudar_status_trilhatech", "atualizar_contatos_aluno", "excluir_dia_letivo"].includes(requestAction)) {
       // FASE 4: Bypass total da planilha para escritas lentas. 

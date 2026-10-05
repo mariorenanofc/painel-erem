@@ -560,6 +560,7 @@ export default function AbaAtividades() {
                       >
                         <option value="Publicada">Publicada</option>
                         <option value="Rascunho">Rascunho</option>
+                        <option value="Encerrada">Encerrada</option>
                       </select>
                     </div>
                   </h3>

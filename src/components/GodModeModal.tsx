@@ -172,9 +172,11 @@ export default function GodModeModal({
     
     setFechandoCiclo(true);
     try {
-      // Como a escolha de formandos vs continuantes pode ser mais complexa na vida real,
-      // para esse endpoint, vamos pegar alunos que a turma contenha "3º" ou "3" para formar.
-      const formandos = alunos.filter(a => a.turma.includes("3º") || a.turma.includes("3") || a.turma.toLowerCase().includes("terceiro")).map(a => a.matricula);
+      // Os formandos são apenas os alunos do 2º Ano que terminaram como Ativos no TrilhaTech
+      const formandos = alunos.filter(a => 
+        (a.turma.includes("2º") || a.turma.includes("2") || a.turma.toLowerCase().includes("segundo"))
+      ).map(a => a.matricula);
+      
       const continuantes = alunos.filter(a => !formandos.includes(a.matricula)).map(a => a.matricula);
       
       const res = await apiTutor.encerrarCiclo(senhaFechamento, formandos, continuantes);
@@ -486,7 +488,7 @@ export default function GodModeModal({
                   >
                     <div className="bg-red-50/50 dark:bg-red-950/20 p-4 rounded-2xl border border-red-200/50 dark:border-red-900/30">
                       <p className="text-xs text-red-800 dark:text-red-300 leading-relaxed font-semibold">
-                        <strong>Zerar XP & Fim de Ano:</strong> Esta ação é IRREVERSÍVEL. O XP de todos os alunos será zerado para iniciar o novo ano. O histórico será preservado e os alunos do 3º ano virarão "Veteranos" oficiais no Hall da Fama.
+                        <strong>Zerar XP & Fim de Ano:</strong> Esta ação é IRREVERSÍVEL. O XP de todos os alunos será zerado para iniciar o novo ano. O histórico será preservado e os alunos do 2º ano concluirão o curso e virarão "Veteranos" oficiais no Hall da Fama. (Alunos desistentes/inativos não se formam).
                       </p>
                     </div>
 

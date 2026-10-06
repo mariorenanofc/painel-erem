@@ -156,29 +156,29 @@ export default function GodModeModal({
   const handleEncerrarCiclo = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!regrasFechamento) return;
-    
+
     const tudoOk = regrasFechamento.mesDezembro && regrasFechamento.sorteioRealizado && regrasFechamento.modulosEncerrados;
     if (!tudoOk) {
       toast("Todas as regras precisam estar verdes para encerrar o ano.", "error", "Bloqueado");
       return;
     }
-    
+
     if (!senhaFechamento) {
       toast("Digite sua senha de segurança.", "warning");
       return;
     }
 
     if (!confirm("CUIDADO: Você está prestes a encerrar o ano letivo. O XP de todos os alunos será zerado e os alunos do 3º ano virarão veteranos. Tem certeza absoluta?")) return;
-    
+
     setFechandoCiclo(true);
     try {
       // Os formandos são apenas os alunos do 2º Ano que terminaram como Ativos no TrilhaTech
-      const formandos = alunos.filter(a => 
+      const formandos = alunos.filter(a =>
         (a.turma.includes("2º") || a.turma.includes("2") || a.turma.toLowerCase().includes("segundo"))
       ).map(a => a.matricula);
-      
+
       const continuantes = alunos.filter(a => !formandos.includes(a.matricula)).map(a => a.matricula);
-      
+
       const res = await apiTutor.encerrarCiclo(senhaFechamento, formandos, continuantes);
       if (res.status === "sucesso") {
         confetti({ particleCount: 300, spread: 120, colors: ["#ef4444", "#ffffff"] });
@@ -250,31 +250,28 @@ export default function GodModeModal({
           <div className="flex bg-slate-100/50 dark:bg-slate-950/40 p-1.5 rounded-2xl border-b border-slate-200/50 dark:border-slate-800 shrink-0 m-4 mb-2">
             <button
               onClick={() => setAbaAtiva("xp")}
-              className={`cursor-pointer flex-1 py-3.5 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all select-none ${
-                abaAtiva === "xp"
+              className={`cursor-pointer flex-1 py-3.5 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all select-none ${abaAtiva === "xp"
                   ? "bg-purple-650 text-white shadow-md"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-              }`}
+                }`}
             >
               ⚖️ Injetar/Punir XP
             </button>
             <button
               onClick={() => setAbaAtiva("coroa")}
-              className={`cursor-pointer flex-1 py-3.5 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all select-none ${
-                abaAtiva === "coroa"
+              className={`cursor-pointer flex-1 py-3.5 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all select-none ${abaAtiva === "coroa"
                   ? "bg-amber-500 text-white shadow-md"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-              }`}
+                }`}
             >
               👑 Coroar Elite
             </button>
             <button
               onClick={() => setAbaAtiva("encerrar")}
-              className={`cursor-pointer flex-1 py-3.5 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all select-none ${
-                abaAtiva === "encerrar"
+              className={`cursor-pointer flex-1 py-3.5 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all select-none ${abaAtiva === "encerrar"
                   ? "bg-red-600 text-white shadow-md shadow-red-500/20"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
-              }`}
+                }`}
             >
               ⛔ Fim de Ano
             </button>
@@ -340,11 +337,10 @@ export default function GodModeModal({
                           value={quantidadeXP}
                           onChange={(e) => setQuantidadeXP(Number(e.target.value))}
                           placeholder="Ex: 50 ou -100"
-                          className={`w-full border rounded-2xl p-4 text-xl font-black outline-none shadow-inner text-center bg-white dark:bg-slate-950 transition-all ${
-                            Number(quantidadeXP) < 0
+                          className={`w-full border rounded-2xl p-4 text-xl font-black outline-none shadow-inner text-center bg-white dark:bg-slate-950 transition-all ${Number(quantidadeXP) < 0
                               ? "border-red-300 dark:border-red-900/50 text-red-600 dark:text-red-400 focus:border-red-500"
                               : "border-emerald-300 dark:border-emerald-900/50 text-emerald-600 dark:text-emerald-400 focus:border-emerald-500"
-                          }`}
+                            }`}
                           required
                         />
                       </div>
@@ -377,11 +373,10 @@ export default function GodModeModal({
                       whileTap={{ scale: 0.99 }}
                       type="submit"
                       disabled={injetando}
-                      className={`cursor-pointer w-full text-white font-black py-4 rounded-2xl shadow-lg transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2 select-none ${
-                        Number(quantidadeXP) < 0
+                      className={`cursor-pointer w-full text-white font-black py-4 rounded-2xl shadow-lg transition-all text-sm uppercase tracking-wider flex items-center justify-center gap-2 select-none ${Number(quantidadeXP) < 0
                           ? "bg-red-650 hover:brightness-110 shadow-red-500/10"
                           : "bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 hover:brightness-110 shadow-amber-500/10"
-                      }`}
+                        }`}
                     >
                       {injetando ? (
                         <>
@@ -488,15 +483,15 @@ export default function GodModeModal({
                   >
                     <div className="bg-red-50/50 dark:bg-red-950/20 p-4 rounded-2xl border border-red-200/50 dark:border-red-900/30">
                       <p className="text-xs text-red-800 dark:text-red-300 leading-relaxed font-semibold">
-                        <strong>Zerar XP & Fim de Ano:</strong> Esta ação é IRREVERSÍVEL. O XP de todos os alunos será zerado para iniciar o novo ano. O histórico será preservado e os alunos do 2º ano concluirão o curso e virarão "Veteranos" oficiais no Hall da Fama. (Alunos desistentes/inativos não se formam).
+                        <strong>Zerar XP & Fim de Ano:</strong> Esta ação é IRREVERSÍVEL. O XP de todos os alunos será zerado para iniciar o novo ano. O histórico será preservado e os alunos do 2º ano concluirão o curso e virarão &quot;Veteranos&ldquo; oficiais no Hall da Fama. (Alunos desistentes/inativos não se formam).
                       </p>
                     </div>
 
                     <div className="space-y-2">
                       <h3 className="text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2">Checklist de Segurança</h3>
-                      
+
                       {verificandoRegras || !regrasFechamento ? (
-                        <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl flex justify-center"><div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 animate-spin rounded-full"/></div>
+                        <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl flex justify-center"><div className="w-4 h-4 border-2 border-slate-300 border-t-slate-600 animate-spin rounded-full" /></div>
                       ) : (
                         <div className="space-y-2">
                           <div className={`p-3 rounded-xl flex items-center gap-3 text-sm font-bold ${regrasFechamento.mesDezembro ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400' : 'bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-400'}`}>

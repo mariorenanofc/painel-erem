@@ -11,6 +11,7 @@ import SearchFilter from "../components/SearchFilter";
 import StudentModal from "../components/StudentModal";
 import StudentTable from "../components/StudentTable";
 import LoginScreen from "../components/LoginScreen";
+import LandingPage from "../components/LandingPage";
 import { formatarDataInput } from "../utils/formatters";
 import { Aluno } from "../types";
 import { useToast } from "@/src/contexts/ToastContext"; // <-- IMPORTAÇÃO DO CONTEXTO
@@ -26,6 +27,7 @@ export default function DashboardAlunos() {
 
   const [usuarioLogado, setUsuarioLogado] = useState<string | null>(null);
   const [verificandoSessao, setVerificandoSessao] = useState(true);
+  const [showLoginTutor, setShowLoginTutor] = useState(false);
 
   const [turmaSelecionada, setTurmaSelecionada] = useState("");
   const [busca, setBusca] = useState("");
@@ -377,12 +379,16 @@ export default function DashboardAlunos() {
     return <TrilhaTechLoader />;
 
   if (!usuarioLogado) {
-    return (
-      <LoginScreen
-        onLoginSuccess={(nome) => setUsuarioLogado(nome)}
-        apiUrl={GOOGLE_API_URL}
-      />
-    );
+    if (showLoginTutor) {
+      return (
+        <LoginScreen
+          onLoginSuccess={(nome) => setUsuarioLogado(nome)}
+          apiUrl={GOOGLE_API_URL}
+          onBack={() => setShowLoginTutor(false)}
+        />
+      );
+    }
+    return <LandingPage onLoginTutor={() => setShowLoginTutor(true)} />;
   }
 
   return (

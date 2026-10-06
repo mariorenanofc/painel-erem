@@ -8,9 +8,10 @@ import ThreeParticleBg from "@/src/components/ThreeParticleBg";
 interface LoginScreenProps {
   onLoginSuccess: (nomeUsuario: string) => void;
   apiUrl?: string;
+  onBack?: () => void;
 }
 
-export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
+export default function LoginScreen({ onLoginSuccess, onBack }: LoginScreenProps) {
   const [usuario, setUsuario] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -85,6 +86,15 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
       <div className="absolute top-[-10%] right-[-10%] w-[35vw] h-[35vw] rounded-full aurora-bg-blob-1 animate-float-slow pointer-events-none" />
       <div className="absolute bottom-[-15%] left-[-15%] w-[40vw] h-[40vw] rounded-full aurora-bg-blob-2 animate-float-medium pointer-events-none" />
       <div className="absolute top-[30%] left-[20%] w-[25vw] h-[25vw] rounded-full aurora-bg-blob-3 animate-glow-pulse pointer-events-none" />
+
+      {onBack && (
+        <button
+          onClick={onBack}
+          className="absolute top-6 left-6 z-20 cursor-pointer flex items-center gap-2 text-xs font-black uppercase tracking-wider text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors"
+        >
+          <span>←</span> Voltar
+        </button>
+      )}
 
       <motion.div
         initial={{ opacity: 0, y: 30 }}

@@ -21,10 +21,6 @@ const nextConfig: NextConfig = {
   /* config options here */
   allowedDevOrigins: ["localhost:3000", "192.168.1.106"],
   reactStrictMode: true,
-  // @ts-expect-error - NextConfig eslint property type mismatch
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
 };
 
 export default nextConfig;

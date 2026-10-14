@@ -85,7 +85,7 @@ export async function POST(request: Request) {
       try {
         resultSync = JSON.parse(resultSyncText);
       } catch (error: unknown) {
-        console.error("Erro ao parsear listar_alunos_godmode:", resultSyncText.substring(0, 100));
+        console.error("Erro ao parsear listar_alunos_godmode:", (error as Error).message, resultSyncText.substring(0, 100));
       }
 
       const rankingResponse = await fetchSheetsQueued(GOOGLE_API_URL, { action: "buscar_ranking" });
@@ -94,7 +94,7 @@ export async function POST(request: Request) {
       try {
         rankingSync = JSON.parse(rankingSyncText);
       } catch (error: unknown) {
-        console.error("Erro ao parsear ranking:", rankingSyncText.substring(0, 100));
+        console.error("Erro ao parsear ranking:", (error as Error).message, rankingSyncText.substring(0, 100));
       }
 
       if (resultSync.status === "sucesso" && resultSync.alunos) {
@@ -1085,7 +1085,6 @@ export async function POST(request: Request) {
         result = { status: "erro", mensagem: "Senha de segurança incorreta." };
       } else {
          const formandos = Array.isArray(payload.formandos) ? payload.formandos : [];
-         const continuantes = Array.isArray(payload.continuantes) ? payload.continuantes : [];
          
          const anoAtual = new Date().getFullYear();
          const batch = dbAdmin.batch();
@@ -1483,7 +1482,17 @@ export async function POST(request: Request) {
         if (mat && badgeId) {
           const alunoRef = dbAdmin.collection("alunos").doc(mat);
           const idEntrega = `BADGE-${badgeId}-${mat}`;
+          const entregaRef = dbAdmin.collection("entregas").doc(idEntrega);
+          const portalViewRef = dbAdmin.collection("portal_views").doc(mat);
+
+          let jaResgatou = false;
           await dbAdmin.runTransaction(async (transaction: Transaction) => {
+            const entregaDoc = await transaction.get(entregaRef);
+            if (entregaDoc.exists) {
+              jaResgatou = true;
+              return;
+            }
+
             const alunoDoc = await transaction.get(alunoRef);
             if (alunoDoc.exists) {
               const currentXp = Number(alunoDoc.data()?.xp) || 0;
@@ -1492,7 +1501,7 @@ export async function POST(request: Request) {
                 xp: currentXp + xp,
                 lastUpdated: timestamp
               });
-              transaction.set(dbAdmin.collection("entregas").doc(idEntrega), {
+              transaction.set(entregaRef, {
                 id: idEntrega,
                 matricula: mat,
                 idAtividade: "RECOMPENSA",
@@ -1502,7 +1511,6 @@ export async function POST(request: Request) {
                 timestamp: timestamp
               });
 
-              const portalViewRef = dbAdmin.collection("portal_views").doc(mat);
               transaction.set(portalViewRef, {
                 badges: FieldValue.arrayUnion(badgeId)
               }, { merge: true });
@@ -1531,6 +1539,12 @@ export async function POST(request: Request) {
               }, { merge: true });
             }
           });
+
+          if (jaResgatou) {
+            result = { status: "aviso", mensagem: "Esta conquista já foi resgatada anteriormente!" };
+          } else {
+            result = { status: "sucesso", mensagem: `+${xp} XP de conquista resgatado!` };
+          }
           invalidatePortalCache(mat);
           invalidateRankingCache();
         }
@@ -1543,25 +1557,82 @@ export async function POST(request: Request) {
           const alunoRef = dbAdmin.collection("alunos").doc(mat);
           const ano = new Date().getFullYear();
           const idEntrega = `BDAY-${ano}-${mat}`;
+          const entregaRef = dbAdmin.collection("entregas").doc(idEntrega);
+          const portalViewRef = dbAdmin.collection("portal_views").doc(mat);
+
+          let jaResgatou = false;
+          const xpAniversario = 100;
+
           await dbAdmin.runTransaction(async (transaction: Transaction) => {
+            const entregaDoc = await transaction.get(entregaRef);
+            if (entregaDoc.exists) {
+              jaResgatou = true;
+              return;
+            }
+
             const alunoDoc = await transaction.get(alunoRef);
             if (alunoDoc.exists) {
               const currentXp = Number(alunoDoc.data()?.xp) || 0;
+              const timestamp = Date.now();
               transaction.update(alunoRef, {
-                xp: currentXp + 500,
-                lastUpdated: Date.now()
+                xp: currentXp + xpAniversario,
+                ultimoAniversarioResgatado: ano,
+                lastUpdated: timestamp
               });
-              transaction.set(dbAdmin.collection("entregas").doc(idEntrega), {
+              transaction.set(entregaRef, {
                 id: idEntrega,
                 matricula: mat,
                 idAtividade: "RECOMPENSA",
                 resposta: "Presente de Aniversário! 🎉",
                 status: "Aniversário",
-                xpGanho: 500,
-                timestamp: Date.now()
+                xpGanho: xpAniversario,
+                timestamp: timestamp
               });
+
+              transaction.set(portalViewRef, {
+                aniversarioResgatado: true,
+                ultimoAniversarioAno: ano,
+                entregasMap: {
+                  [idEntrega]: {
+                    status: "Aniversário",
+                    resposta: "Presente de Aniversário! 🎉",
+                    xpGanho: xpAniversario,
+                    dataEnvio: timestamp,
+                    feedback: "Presente de Aniversário resgatado com sucesso!"
+                  }
+                }
+              }, { merge: true });
+
+              // Atualizar Ranking Semanal e Mensal
+              const { semanaKey, mesKey } = getRankingKeys(new Date(timestamp));
+              const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+              transaction.set(rankSemanaRef, {
+                alunos: {
+                  [mat]: {
+                    xpNormal: FieldValue.increment(xpAniversario),
+                    ultimoEnvio: timestamp
+                  }
+                }
+              }, { merge: true });
+
+              const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+              transaction.set(rankMesRef, {
+                alunos: {
+                  [mat]: {
+                    xpNormal: FieldValue.increment(xpAniversario),
+                    ultimoEnvio: timestamp
+                  }
+                }
+              }, { merge: true });
             }
           });
+
+          if (jaResgatou) {
+            result = { status: "aviso", mensagem: "Você já resgatou o presente de aniversário deste ano! 🎉" };
+          } else {
+            result = { status: "sucesso", mensagem: "Presente de aniversário resgatado com sucesso! 🎉" };
+          }
+
           invalidatePortalCache(mat);
           invalidateRankingCache();
         }

@@ -255,7 +255,27 @@ export async function GET(request: Request) {
 
     const entregasMap = pvData.entregasMap as Record<string, { status: string, resposta: string, xpGanho: number, dataEnvio: number, feedback: string }>;
 
-    dadosRetorno.aniversario.jaResgatado = (portalView.aniversarioResgatado as boolean) || false;
+    let jaResgatouAniversario = Boolean(portalView.aniversarioResgatado) || Boolean(entregasMap[idNiver]) || (aluno.ultimoAniversarioResgatado === Number(anoHoje) || String(aluno.ultimoAniversarioResgatado) === anoHoje);
+
+    // Se for aniversário hoje e os dados consolidados ainda não marcam como resgatado,
+    // verifica de forma segura se a entrega BDAY já existe no Firestore e auto-cura o portal_views
+    if (!jaResgatouAniversario && dadosRetorno.aniversario.isAniversario) {
+      try {
+        const entregaNiverDoc = await dbAdmin.collection("entregas").doc(idNiver).get();
+        if (entregaNiverDoc.exists) {
+          jaResgatouAniversario = true;
+          // Cura automática persistida para economizar consultas futuras
+          await dbAdmin.collection("portal_views").doc(matricula).set({
+            aniversarioResgatado: true,
+            ultimoAniversarioAno: Number(anoHoje)
+          }, { merge: true });
+        }
+      } catch (error: unknown) {
+        console.warn("[Portal Route] Falha ao checar entrega de aniversário:", error);
+      }
+    }
+
+    dadosRetorno.aniversario.jaResgatado = jaResgatouAniversario;
     dadosRetorno.badgesResgatadas = pvData.badges as string[];
     dadosRetorno.totalCurtidas = (aluno.likes || 0);
 

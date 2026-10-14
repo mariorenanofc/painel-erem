@@ -89,7 +89,6 @@ export default function PortalDashboard() {
   const [curtidasSistema, setCurtidasSistema] = useState(0);
   const [ofensivaDias, setOfensivaDias] = useState(0);
   const [notificacoes, setNotificacoes] = useState<Notificacao[]>([]);
-  const [taxaPresenca, setTaxaPresenca] = useState(100);
   const [estatisticas, setEstatisticas] = useState({
     xpDoado: 0,
     xpRecebido: 0,
@@ -110,10 +109,8 @@ export default function PortalDashboard() {
   const [buscaAtividade, setBuscaAtividade] = useState("");
   const [ordemAulasPortal, setOrdemAulasPortal] = useState<"asc" | "desc">("asc");
 
-  const [fazendoCheckin, setFazendoCheckin] = useState(false);
   const [checkinRealizado, setCheckinRealizado] = useState(false);
   const [modalSenhaAberto, setModalSenhaAberto] = useState(false);
-  const [senhaDigitada, setSenhaDigitada] = useState("");
 
   const [missaoAberta, setMissaoAberta] = useState<Atividade | null>(null);
   const [enviando, setEnviando] = useState(false);
@@ -134,6 +131,7 @@ export default function PortalDashboard() {
 
   const [modalPresenteAberto, setModalPresenteAberto] = useState(false);
   const [resgatandoPresente, setResgatandoPresente] = useState(false);
+  const [aniversarioJaResgatado, setAniversarioJaResgatado] = useState(false);
 
   const [modalPixAberto, setModalPixAberto] = useState(false);
   const [alvoPix, setAlvoPix] = useState<string | null>(null);
@@ -180,15 +178,21 @@ export default function PortalDashboard() {
         setAtividades(data.atividades);
         setNotificacoes(data.notificacoes || []);
         setBadgesResgatadas(data.badgesResgatadas || []);
-        if (data.taxaPresenca !== undefined) setTaxaPresenca(data.taxaPresenca);
         if (data.stats) setEstatisticas(data.stats);
-        if (data.aniversario.isAniversario && !data.aniversario.jaResgatado)
-          setModalPresenteAberto(true);
+        if (data.aniversario) {
+          const resgatado = Boolean(data.aniversario.jaResgatado);
+          setAniversarioJaResgatado(resgatado);
+          if (data.aniversario.isAniversario && !resgatado) {
+            setModalPresenteAberto(true);
+          } else {
+            setModalPresenteAberto(false);
+          }
+        }
         // 🔥 ATUALIZE O SALDO AQUI
         setSaldoCarteira(data.saldoCarteira || 0);
       }
-    } catch (e) {
-      console.error("Erro ao carregar o portal.");
+    } catch (e: unknown) {
+      console.error("Erro ao carregar o portal:", (e as Error).message);
     } finally {
       setCarregandoPortal(false);
     }
@@ -210,7 +214,9 @@ export default function PortalDashboard() {
             setMarkdownAtualizacao(String(data.configuracoes.NOVIDADES_MARKDOWN));
           }
         }
-      } catch (e) {}
+      } catch (e: unknown) {
+        console.warn("Erro ao buscar configurações:", (e as Error).message);
+      }
     };
     buscarConfiguracoes();
   }, []);
@@ -266,7 +272,7 @@ export default function PortalDashboard() {
       xpRecebido: estatisticas.xpRecebido,
       totalCheckins: estatisticas.totalCheckins,
       whatsappConfirmado: zapConfirmado,
-      aniversarioResgatado: false,
+      aniversarioResgatado: aniversarioJaResgatado,
       totalCurtidas: curtidasSistema,
     };
     const badgesAtuais = calcularBadges(dadosBadges);
@@ -280,7 +286,9 @@ export default function PortalDashboard() {
       setNovasConquistas((prev) => {
         const filaReal = [...prev];
         novas.forEach((n) => {
-          if (!filaReal.some((p) => p.id === n.id)) filaReal.push(n);
+          if (!filaReal.some((p) => p.id === n.id) && !badgesResgatadas.includes(n.id)) {
+            filaReal.push(n);
+          }
         });
         return filaReal;
       });
@@ -295,12 +303,17 @@ export default function PortalDashboard() {
     zapConfirmado,
     badgesResgatadas,
     curtidasSistema,
+    aniversarioJaResgatado,
   ]);
 
   // ================= FUNÇÕES DE AÇÃO =================
   const resgatarRecompensaBadge = async (badge: Badge) => {
-    if (!aluno) return;
+    if (!aluno || resgatandoBadge) return;
     setResgatandoBadge(true);
+    // Atualização otimista imediata para não reaparecer a mesma badge na tela
+    setBadgesResgatadas((prev) => (prev.includes(badge.id) ? prev : [...prev, badge.id]));
+    setNovasConquistas((prev) => prev.filter((b) => b.id !== badge.id));
+
     try {
       const data = await apiAluno.resgatarBadge(
         aluno.matricula,
@@ -315,11 +328,9 @@ export default function PortalDashboard() {
           "reward",
           "Conquista Épica!",
         );
-        setNovasConquistas((prev) => prev.slice(1));
         carregarPortal(true);
       } else {
-        toast(data.mensagem, "warning", "Ops!");
-        setNovasConquistas((prev) => prev.slice(1));
+        toast(data.mensagem || "Ops!", "warning", "Atenção");
       }
     } catch {
       toast("Erro de conexão ao resgatar conquista.", "error", "Erro");
@@ -410,47 +421,6 @@ export default function PortalDashboard() {
     }
   };
 
-  const confirmarCheckin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!aluno) return;
-    if (!senhaDigitada.trim()) {
-      toast("Digite a senha da lousa!", "warning", "Senha Inválida");
-      return;
-    }
-    setFazendoCheckin(true);
-    try {
-      const data = await apiAluno.fazerCheckin(aluno.matricula, senhaDigitada);
-      const dataHoje = new Date().toLocaleDateString("pt-BR");
-
-      if (data.status === "sucesso") {
-        confetti({
-          particleCount: 100,
-          spread: 60,
-          origin: { y: 0.7 },
-          zIndex: 99999,
-          colors: ["#10b981", "#34d399", "#ffffff"],
-        });
-        toast(data.mensagem, "success", "Presença Garantida!");
-        localStorage.setItem(`checkin_${aluno.matricula}`, dataHoje);
-        setCheckinRealizado(true);
-        setModalSenhaAberto(false);
-        setSenhaDigitada("");
-        
-        carregarPortal(true);
-      } else {
-        toast(data.mensagem, "warning", "Não foi possível");
-        if (data.mensagem.includes("já garantiu")) {
-          localStorage.setItem(`checkin_${aluno.matricula}`, dataHoje);
-          setCheckinRealizado(true);
-          setModalSenhaAberto(false);
-        }
-      }
-    } catch {
-      toast("Erro ao tentar registar a presença.", "error", "Falha de Conexão");
-    } finally {
-      setFazendoCheckin(false);
-    }
-  };
 
   const abrirPerfil = async () => {
     if (!aluno) return;
@@ -512,20 +482,29 @@ export default function PortalDashboard() {
   };
 
   const resgatarPresente = async () => {
-    if (!aluno) return;
+    if (!aluno || resgatandoPresente) return;
     setResgatandoPresente(true);
+    // Trava imediata de estado no cliente para impedir novas execuções
+    setModalPresenteAberto(false);
+    setAniversarioJaResgatado(true);
+
     try {
       const data = await apiAluno.resgatarAniversario(aluno.matricula);
       if (data.status === "sucesso") {
+        confetti({
+          particleCount: 150,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ["#f59e0b", "#fbbf24", "#10b981"],
+        });
         toast(
           "Presente resgatado! Parabéns pelo seu dia!",
           "reward",
           "Feliz Aniversário!",
         );
-        setModalPresenteAberto(false);
         carregarPortal(true);
       } else {
-        toast(data.mensagem, "warning", "Ops!");
+        toast(data.mensagem || "Presente já resgatado!", "warning", "Atenção");
       }
     } catch {
       toast("Erro ao tentar resgatar o presente.", "error", "Falha");
@@ -1725,7 +1704,7 @@ export default function PortalDashboard() {
             xpRecebido: estatisticas.xpRecebido,
             totalCheckins: estatisticas.totalCheckins,
             whatsappConfirmado: zapConfirmado,
-            aniversarioResgatado: false,
+            aniversarioResgatado: aniversarioJaResgatado,
             totalCurtidas: curtidasSistema,
           }}
         />
@@ -1736,12 +1715,10 @@ export default function PortalDashboard() {
           <OTPCheckIn
             onCancel={() => {
               setModalSenhaAberto(false);
-              setFazendoCheckin(false);
             }}
             onComplete={async (otp) => {
               if (!aluno) return false;
               
-              setSenhaDigitada(otp);
               try {
                 const minLoadingTime = new Promise(resolve => setTimeout(resolve, 2500));
                 
@@ -1783,7 +1760,8 @@ export default function PortalDashboard() {
                   }
                   return false;
                 }
-              } catch (err) {
+              } catch (err: unknown) {
+                console.error("Falha ao registrar presença:", (err as Error).message);
                 toast("Erro ao tentar registar a presença.", "error", "Falha de Conexão");
                 return false;
               }

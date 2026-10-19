@@ -4,6 +4,7 @@ import { FieldValue } from "firebase-admin/firestore";
 import { invalidatePortalCache } from "@/src/lib/cache";
 
 export const maxDuration = 10;
+export const dynamic = "force-dynamic";
 
 export async function POST(request: Request) {
   let matriculaRemetente = "";
@@ -94,10 +95,12 @@ export async function POST(request: Request) {
       });
 
       // Incrementar contador no memorial do aluno
-      transaction.update(destRef, {
-        "memorialFormatura.totalAplausos": novoTotalAplausos,
+      transaction.set(destRef, {
+        memorialFormatura: {
+          totalAplausos: novoTotalAplausos
+        },
         lastUpdated: timestamp
-      });
+      }, { merge: true });
 
       // Notificar o formando no portal_views
       const portalViewRef = dbAdmin.collection("portal_views").doc(matriculaDestinatario);

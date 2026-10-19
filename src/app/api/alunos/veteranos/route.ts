@@ -1,10 +1,21 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { QueryDocumentSnapshot } from "firebase-admin/firestore";
+import { QueryDocumentSnapshot, DocumentSnapshot } from "firebase-admin/firestore";
 import { MemorialFormatura, CertificacaoTech } from "@/src/types";
 
-export const revalidate = 60; // Cache 1 min
+export const dynamic = "force-dynamic";
 export const maxDuration = 10;
+
+const MATRICULAS_LENDAS_OFICIAIS = [
+  "3756187", // Kelly
+  "3826087", // Breno
+  "3183600", // Anna
+  "3826381", // Otavio
+  "2908059", // Wendel
+  "3116928", // Gustavo
+  "3763451", // Samara
+  "2950897"  // Hellen
+];
 
 interface VeteranoResposta {
   matricula: string;
@@ -33,9 +44,21 @@ export async function GET() {
     const snapPublicados = await dbAdmin.collection("alunos").where("memorialFormatura.publicadoNoHall", "==", true).get();
 
     // Consolida mapa por matrícula para evitar duplicações
-    const docsMap = new Map<string, QueryDocumentSnapshot>();
+    const docsMap = new Map<string, DocumentSnapshot>();
     snapVeteranos.docs.forEach((doc: QueryDocumentSnapshot) => docsMap.set(doc.id, doc));
     snapPublicados.docs.forEach((doc: QueryDocumentSnapshot) => docsMap.set(doc.id, doc));
+
+    // Fallback de segurança para garantir a listagem das lendas oficiais do curso
+    if (docsMap.size === 0) {
+      const lendasSnaps = await Promise.all(
+        MATRICULAS_LENDAS_OFICIAIS.map(m => dbAdmin.collection("alunos").doc(m).get())
+      );
+      lendasSnaps.forEach(docSnap => {
+        if (docSnap.exists) {
+          docsMap.set(docSnap.id, docSnap);
+        }
+      });
+    }
 
     const docs = Array.from(docsMap.values());
 
@@ -46,7 +69,7 @@ export async function GET() {
 
     const veteranos: VeteranoResposta[] = [];
 
-    docs.forEach((doc: QueryDocumentSnapshot, i: number) => {
+    docs.forEach((doc: DocumentSnapshot, i: number) => {
       const data = doc.data() || {};
       const portal = portalViewsSnaps[i].exists ? (portalViewsSnaps[i].data() || {}) : {};
       const memorial = (data.memorialFormatura || {}) as Partial<MemorialFormatura>;

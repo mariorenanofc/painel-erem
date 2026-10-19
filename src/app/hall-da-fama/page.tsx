@@ -25,7 +25,6 @@ interface Veterano {
   techStack?: string[];
   destaque?: string;
   projetosConcluidos?: number;
-  aplausosIniciais?: number;
   totalAplausos?: number;
 }
 
@@ -84,7 +83,7 @@ const VETERANOS_MOCK: Veterano[] = [
     nivelFinal: "Dev Supremo",
     destaque: "1º Lugar Geral • Maior XP da História",
     projetosConcluidos: 14,
-    aplausosIniciais: 142
+    totalAplausos: 0
   },
   {
     matricula: "3826087",
@@ -100,7 +99,7 @@ const VETERANOS_MOCK: Veterano[] = [
     nivelFinal: "Dev Supremo",
     destaque: "2º Lugar Geral • Campeão Invencível de Duelos",
     projetosConcluidos: 12,
-    aplausosIniciais: 98
+    totalAplausos: 0
   },
   {
     matricula: "3183600",
@@ -116,7 +115,7 @@ const VETERANOS_MOCK: Veterano[] = [
     nivelFinal: "Dev Supremo",
     destaque: "3º Lugar Geral • 100% de Presença e Pontualidade",
     projetosConcluidos: 11,
-    aplausosIniciais: 115
+    totalAplausos: 0
   },
   {
     matricula: "3826381",
@@ -132,7 +131,7 @@ const VETERANOS_MOCK: Veterano[] = [
     nivelFinal: "Dev Supremo",
     destaque: "Top Honra • Destaque em Superação e Gamificação",
     projetosConcluidos: 9,
-    aplausosIniciais: 87
+    totalAplausos: 0
   },
   {
     matricula: "2908059",
@@ -148,7 +147,7 @@ const VETERANOS_MOCK: Veterano[] = [
     nivelFinal: "Dev Supremo",
     destaque: "Top Honra • Especialista em Performance Web",
     projetosConcluidos: 10,
-    aplausosIniciais: 76
+    totalAplausos: 0
   },
   {
     matricula: "3116928",
@@ -164,7 +163,7 @@ const VETERANOS_MOCK: Veterano[] = [
     nivelFinal: "Dev Supremo",
     destaque: "Top Honra • Guardião da Estabilidade dos Sistemas",
     projetosConcluidos: 10,
-    aplausosIniciais: 69
+    totalAplausos: 0
   },
   {
     matricula: "3763451",
@@ -180,7 +179,7 @@ const VETERANOS_MOCK: Veterano[] = [
     nivelFinal: "Dev Supremo",
     destaque: "Top Honra • Destaque em Criatividade e Estética",
     projetosConcluidos: 8,
-    aplausosIniciais: 82
+    totalAplausos: 0
   },
   {
     matricula: "2950897",
@@ -196,17 +195,16 @@ const VETERANOS_MOCK: Veterano[] = [
     nivelFinal: "Dev Supremo",
     destaque: "Top Honra • Destaque em Clareza e Arquitetura",
     projetosConcluidos: 9,
-    aplausosIniciais: 91
+    totalAplausos: 0
   }
 ];
 
 export default function HallDaFamaPage() {
-  const { data, isLoading } = useSWR<{ status: string; veteranos: Veterano[] }>("/api/alunos/veteranos", fetcher, {
-    revalidateOnFocus: false,
+  const { data, isLoading, mutate } = useSWR<{ status: string; veteranos: Veterano[] }>("/api/alunos/veteranos", fetcher, {
+    revalidateOnFocus: true,
   });
 
   const [perfilAberto, setPerfilAberto] = useState<string | null>(null);
-  const [modoMockup, setModoMockup] = useState(true);
   const [busca, setBusca] = useState("");
   const [filtroAba, setFiltroAba] = useState<"TODOS" | "OURO" | "FULLSTACK">("TODOS");
   const [aplausosMap, setAplausosMap] = useState<Record<string, number>>({});
@@ -234,7 +232,7 @@ export default function HallDaFamaPage() {
   };
 
   const veteranosReais: Veterano[] = data?.status === "sucesso" && Array.isArray(data.veteranos) ? data.veteranos : [];
-  const baseVeteranos = modoMockup || veteranosReais.length === 0 ? VETERANOS_MOCK : veteranosReais;
+  const baseVeteranos = veteranosReais.length > 0 ? veteranosReais : VETERANOS_MOCK;
 
   // Filtragem e busca
   const veteranosFiltrados = baseVeteranos.filter((vet) => {
@@ -257,7 +255,7 @@ export default function HallDaFamaPage() {
 
   const veteranosOrdenados = [...veteranosFiltrados].sort((a, b) => b.xpFinal - a.xpFinal);
 
-  // Ação de aplauso/parabenização com confetes e validação diária
+  // Ação de aplauso/parabenização com confetes e validação diária no banco
   const handleAplaudir = async (matricula: string, e: React.MouseEvent) => {
     e.stopPropagation();
 
@@ -282,31 +280,15 @@ export default function HallDaFamaPage() {
       return;
     }
 
-    // Se estiver no modo mockup apenas para exibição rápida:
-    if (modoMockup) {
-      setAplausosMap((prev) => ({
-        ...prev,
-        [matricula]: (prev[matricula] || 0) + 1
-      }));
-
-      confetti({
-        particleCount: 50,
-        spread: 75,
-        origin: { y: 0.65 },
-        colors: ["#fbbf24", "#f59e0b", "#ec4899", "#8b5cf6", "#ffffff"]
-      });
-      mostrarToast("Aplauso computado com sucesso! 👏", "sucesso");
-      return;
-    }
-
     try {
       setAplaudindoMatricula(matricula);
       const res = await apiAluno.aplaudirHallDaFama(matricula, matriculaRemetente);
 
       if (res.status === "sucesso") {
+        const totalAtualizado = typeof res.totalAplausos === "number" ? res.totalAplausos : ((aplausosMap[matricula] || 0) + 1);
         setAplausosMap((prev) => ({
           ...prev,
-          [matricula]: (prev[matricula] || 0) + 1
+          [matricula]: totalAtualizado
         }));
 
         confetti({
@@ -316,6 +298,7 @@ export default function HallDaFamaPage() {
           colors: ["#fbbf24", "#f59e0b", "#ec4899", "#8b5cf6", "#ffffff"]
         });
         mostrarToast("Aplauso diário computado com sucesso! 👏", "sucesso");
+        mutate();
       } else if (res.status === "ja_aplaudiu") {
         mostrarToast(res.mensagem || "Você já aplaudiu esta Lenda hoje! Volte amanhã.", "info");
       } else if (res.requerLogin) {
@@ -386,12 +369,10 @@ export default function HallDaFamaPage() {
               </Link>
             )}
 
-            <button
-              onClick={() => setModoMockup(!modoMockup)}
-              className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg text-amber-300 font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5"
-            >
-              <span>{modoMockup ? "✨ Modo Mockup Ativo" : "🎓 Dados Oficiais"}</span>
-            </button>
+            <div className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-300 font-bold text-xs flex items-center gap-1.5 shadow-[0_0_15px_rgba(251,191,36,0.15)]">
+              <span>🎓</span>
+              <span>Dados Oficiais</span>
+            </div>
           </div>
         </div>
       </nav>
@@ -530,7 +511,9 @@ export default function HallDaFamaPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <AnimatePresence>
               {veteranosOrdenados.map((vet, idx) => {
-                const totalAplausos = (vet.totalAplausos !== undefined ? vet.totalAplausos : (vet.aplausosIniciais || 50)) + (aplausosMap[vet.matricula] || 0);
+                const totalAplausos = aplausosMap[vet.matricula] !== undefined
+                  ? aplausosMap[vet.matricula]
+                  : (vet.totalAplausos ?? 0);
 
                 return (
                   <motion.div

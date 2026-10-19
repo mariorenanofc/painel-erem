@@ -1,7 +1,7 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useSWR from "swr";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,6 +27,45 @@ interface Veterano {
   projetosConcluidos?: number;
   aplausosIniciais?: number;
   totalAplausos?: number;
+}
+
+interface DadosSessaoAluno {
+  matricula: string;
+  nome: string;
+}
+
+function obterDadosAlunoConectado(): DadosSessaoAluno {
+  if (typeof window === "undefined") return { matricula: "", nome: "" };
+  try {
+    const salvo = localStorage.getItem("alunoLogado");
+    if (salvo) {
+      const parsed = JSON.parse(salvo);
+      if (parsed && typeof parsed === "object") {
+        const mat = String(parsed.matricula || "").trim();
+        const nome = String(parsed.nome || "").trim();
+        if (mat) {
+          return { matricula: mat, nome };
+        }
+      }
+    }
+  } catch {}
+
+  const matFallback = (
+    localStorage.getItem("matriculaAluno") ||
+    localStorage.getItem("matricula") ||
+    ""
+  ).trim();
+
+  const nomeFallback = (
+    localStorage.getItem("usuarioLogado") ||
+    localStorage.getItem("nomeAluno") ||
+    ""
+  ).trim();
+
+  return {
+    matricula: matFallback,
+    nome: nomeFallback,
+  };
 }
 
 // Mockup de Alta Fidelidade: As Lendas Formadas da Trilha Tech
@@ -175,7 +214,14 @@ export default function HallDaFamaPage() {
   const [modalLoginAberto, setModalLoginAberto] = useState(false);
   const [toast, setToast] = useState<{ mensagem: string; tipo: "sucesso" | "aviso" | "info" } | null>(null);
 
-  const matriculaVisualizador = typeof window !== "undefined" ? localStorage.getItem("matriculaAluno") || "00000" : "00000";
+  const [alunoConectado, setAlunoConectado] = useState<DadosSessaoAluno>({ matricula: "", nome: "" });
+
+  useEffect(() => {
+    const sessao = obterDadosAlunoConectado();
+    setAlunoConectado(sessao);
+  }, []);
+
+  const matriculaVisualizador = alunoConectado.matricula;
   const estaConectado = Boolean(
     matriculaVisualizador &&
     matriculaVisualizador !== "00000" &&
@@ -215,14 +261,23 @@ export default function HallDaFamaPage() {
   const handleAplaudir = async (matricula: string, e: React.MouseEvent) => {
     e.stopPropagation();
 
+    // Re-checar dados da sessão diretamente do localStorage para garantir valor atualizado
+    const sessaoAtual = obterDadosAlunoConectado();
+    const matriculaRemetente = sessaoAtual.matricula || matriculaVisualizador;
+    const logado = Boolean(
+      matriculaRemetente &&
+      matriculaRemetente !== "00000" &&
+      matriculaRemetente !== "visitante"
+    );
+
     // 1. Visitante deslogado -> Abrir convite amigável para login
-    if (!estaConectado) {
+    if (!logado) {
       setModalLoginAberto(true);
       return;
     }
 
     // 2. Não pode aplaudir a si mesmo
-    if (matriculaVisualizador === matricula) {
+    if (matriculaRemetente === matricula) {
       mostrarToast("Você não pode aplaudir seu próprio memorial!", "aviso");
       return;
     }
@@ -246,7 +301,7 @@ export default function HallDaFamaPage() {
 
     try {
       setAplaudindoMatricula(matricula);
-      const res = await apiAluno.aplaudirHallDaFama(matricula, matriculaVisualizador);
+      const res = await apiAluno.aplaudirHallDaFama(matricula, matriculaRemetente);
 
       if (res.status === "sucesso") {
         setAplausosMap((prev) => ({
@@ -319,7 +374,7 @@ export default function HallDaFamaPage() {
             {estaConectado ? (
               <span className="text-xs font-bold text-amber-300 bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/30 hidden sm:flex items-center gap-1.5">
                 <span>👤</span>
-                <span>Matrícula: {matriculaVisualizador}</span>
+                <span className="max-w-[180px] truncate">{alunoConectado.nome || `Matrícula: ${matriculaVisualizador}`}</span>
               </span>
             ) : (
               <Link

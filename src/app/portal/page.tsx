@@ -329,6 +329,10 @@ export default function PortalDashboard() {
           "Conquista Épica!",
         );
         carregarPortal(true);
+      } else if (data.status === "aviso") {
+        setBadgesResgatadas((prev) => (prev.includes(badge.id) ? prev : [...prev, badge.id]));
+        setNovasConquistas((prev) => prev.filter((b) => b.id !== badge.id));
+        toast(data.mensagem || "Conquista já resgatada anteriormente!", "info", "Já Conquistada");
       } else {
         toast(data.mensagem || "Ops!", "warning", "Atenção");
       }
@@ -1044,6 +1048,55 @@ export default function PortalDashboard() {
                   </>
                 )}
               </p>
+            </div>
+          </div>
+        </motion.div>
+      </div>
+
+      {/* BANNER ÉPICO: HALL DA FAMA */}
+      <div className="max-w-[1536px] w-full mx-auto px-4 md:px-8 mt-6 relative z-10">
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative overflow-hidden glass-panel bg-gradient-to-r from-amber-500/15 via-purple-950/30 to-amber-900/15 border border-amber-500/30 hover:border-amber-400/60 rounded-3xl p-6 md:p-8 shadow-2xl transition-all duration-300 group"
+        >
+          {/* Efeitos de brilho no fundo */}
+          <div className="absolute top-0 right-0 w-96 h-96 bg-amber-500/10 blur-[100px] rounded-full pointer-events-none group-hover:bg-amber-500/20 transition-all" />
+          <div className="absolute bottom-0 left-1/3 w-64 h-64 bg-purple-600/10 blur-[80px] rounded-full pointer-events-none" />
+
+          <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-6">
+            <div className="flex items-start md:items-center gap-4">
+              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-400 to-yellow-600 flex items-center justify-center text-3xl shadow-[0_0_25px_rgba(251,191,36,0.4)] shrink-0 border-2 border-amber-200">
+                🏛️
+              </div>
+              <div>
+                <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                  <span className="text-[10px] font-black uppercase tracking-widest bg-amber-500/20 text-amber-300 px-2.5 py-0.5 rounded-full border border-amber-500/30">
+                    O Santuário dos Campeões
+                  </span>
+                  <span className="text-[10px] font-bold text-slate-400">
+                    • Ciclo Letivo 2026
+                  </span>
+                </div>
+                <h3 className="text-xl md:text-2xl font-display font-black text-white group-hover:text-amber-200 transition-colors">
+                  Hall da Fama • As Lendas do Trilha Tech
+                </h3>
+                <p className="text-xs md:text-sm text-slate-300 dark:text-slate-400 mt-1 max-w-2xl leading-relaxed">
+                  Os maiores programadores que concluíram a jornada e deixaram sua marca gravada na história. Veja o pódio dos mestres e a pontuação lendária dos formandos!
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 w-full lg:w-auto shrink-0">
+              <motion.button
+                whileHover={{ scale: 1.04 }}
+                whileTap={{ scale: 0.96 }}
+                onClick={() => router.push("/hall-da-fama")}
+                className="cursor-pointer w-full sm:w-auto px-6 py-3.5 bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-600 hover:brightness-110 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-[0_0_25px_rgba(245,158,11,0.35)] flex items-center justify-center gap-2 transition-all border border-yellow-200"
+              >
+                <span>Explorar Hall da Fama</span>
+                <span className="text-base">🏆 &rarr;</span>
+              </motion.button>
             </div>
           </div>
         </motion.div>

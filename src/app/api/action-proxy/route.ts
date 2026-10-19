@@ -1541,6 +1541,12 @@ export async function POST(request: Request) {
           });
 
           if (jaResgatou) {
+            // Auto-cura: O documento de entrega já existia no banco, mas pode não estar sincronizado no portal_views.
+            // Registramos a badge no portal_views para que o modal de nova conquista não fique reabrindo infinitamente!
+            await portalViewRef.set({
+              badges: FieldValue.arrayUnion(badgeId),
+              badgesResgatadas: FieldValue.arrayUnion(badgeId),
+            }, { merge: true });
             result = { status: "aviso", mensagem: "Esta conquista já foi resgatada anteriormente!" };
           } else {
             result = { status: "sucesso", mensagem: `+${xp} XP de conquista resgatado!` };

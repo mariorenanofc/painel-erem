@@ -276,7 +276,40 @@ export async function GET(request: Request) {
     }
 
     dadosRetorno.aniversario.jaResgatado = jaResgatouAniversario;
-    dadosRetorno.badgesResgatadas = pvData.badges as string[];
+
+    // Unifica todas as fontes de badges resgatadas (badges, badgesResgatadas e entregasMap)
+    const badgesSet = new Set<string>();
+    if (Array.isArray(portalView.badges)) {
+      portalView.badges.forEach((b: unknown) => { if (typeof b === "string" && b.trim()) badgesSet.add(b.trim()); });
+    }
+    if (Array.isArray(portalView.badgesResgatadas)) {
+      portalView.badgesResgatadas.forEach((b: unknown) => { if (typeof b === "string" && b.trim()) badgesSet.add(b.trim()); });
+    }
+    // Auto-recuperação: extrai identificadores de badges já resgatadas em entregasMap
+    Object.keys(entregasMap).forEach((idKey) => {
+      if (idKey.startsWith("BADGE-")) {
+        const parts = idKey.split("-");
+        if (parts.length >= 3 && parts[parts.length - 1] === matricula) {
+          const extractedId = parts.slice(1, parts.length - 1).join("-");
+          if (extractedId) badgesSet.add(extractedId);
+        }
+      }
+    });
+
+    const listaFinalBadges = Array.from(badgesSet);
+    dadosRetorno.badgesResgatadas = listaFinalBadges;
+
+    // Se encontramos badges resgatadas em entregasMap que não estavam gravadas no array 'badges', auto-cura
+    const arrayOriginalBadges = Array.isArray(portalView.badges) ? (portalView.badges as string[]) : [];
+    if (listaFinalBadges.length > arrayOriginalBadges.length) {
+      dbAdmin.collection("portal_views").doc(matricula).set({
+        badges: listaFinalBadges,
+        badgesResgatadas: listaFinalBadges
+      }, { merge: true }).catch((err: unknown) => {
+        console.warn("[Portal Route] Falha na auto-cura de badges no portal_views:", err);
+      });
+    }
+
     dadosRetorno.totalCurtidas = (aluno.likes || 0);
 
     dadosRetorno.notificacoes.sort((a: { tempo: number }, b: { tempo: number }) => b.tempo - a.tempo);

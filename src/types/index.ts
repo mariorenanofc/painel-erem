@@ -463,3 +463,31 @@ export interface FechamentoCheckResult {
   missaoPendenteCount: number;
 }
 
+// ==========================================
+// 6. HALL DA FAMA & MEMORIAL DE FORMATURA
+// ==========================================
+export interface ProjetoConclusao {
+  titulo: string;
+  descricao: string;
+  linkDeploy?: string;
+  linkGithub?: string;
+  aprovadoPeloTutor: boolean;
+}
+
+export interface MemorialFormatura {
+  fraseFormatura: string;
+  techStack: string[];
+  projetoDestaque: ProjetoConclusao;
+  linkedinUrl?: string;
+  githubUrl?: string;
+  especialidadeOficial: string;
+  seloHonorifico?: string;
+  parecerTutor?: string;
+  publicadoNoHall: boolean;
+  anoFormacao: number;
+  xpFinal: number;
+  nivelFinal: string;
+  totalAplausos: number;
+  dataGraduacao?: number;
+}
+

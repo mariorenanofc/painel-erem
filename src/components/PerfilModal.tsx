@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { PerfilAluno } from "@/src/types";
 import { DadosParaBadges } from "@/src/utils/badges";
 import BadgesGallery from "./BadgesGallery";
+import MemorialTab from "./MemorialTab";
 
 interface PerfilModalProps {
   dadosPerfil: PerfilAluno | null;
@@ -47,7 +48,7 @@ export default function PerfilModal({
   onSalvarAvatar,
   ofensivaDias,
 }: PerfilModalProps) {
-  const [abaAtiva, setAbaAtiva] = useState<"dados" | "avatar" | "badges" | "aparencia">("dados");
+  const [abaAtiva, setAbaAtiva] = useState<"dados" | "avatar" | "badges" | "aparencia" | "memorial">("dados");
   const [selectedBg, setSelectedBg] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("interactiveBg") || "constellation";
@@ -113,17 +114,18 @@ export default function PerfilModal({
         </div>
 
         {/* NAVEGAÇÃO DE ABAS */}
-        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-950/40 shrink-0 transition-colors duration-300 font-sans">
+        <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-950/40 shrink-0 transition-colors duration-300 font-sans overflow-x-auto">
           {[
             { id: "dados", label: "👤 Meus Dados" },
             { id: "avatar", label: "🎭 Avatar" },
             { id: "badges", label: "🏆 Conquistas" },
+            { id: "memorial", label: "🎓 Memorial & Formatura" },
             { id: "aparencia", label: "🎨 Aparência" }
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setAbaAtiva(tab.id as "dados" | "avatar" | "badges" | "aparencia")}
-              className={`cursor-pointer flex-1 py-3.5 text-xs md:text-sm font-bold border-b-2 transition-all duration-200 ${
+              onClick={() => setAbaAtiva(tab.id as "dados" | "avatar" | "badges" | "aparencia" | "memorial")}
+              className={`cursor-pointer whitespace-nowrap px-4 py-3.5 text-xs md:text-sm font-bold border-b-2 transition-all duration-200 ${
                 abaAtiva === tab.id
                   ? "border-brand-primary text-brand-primary dark:text-brand-secondary bg-white/70 dark:bg-slate-900/60"
                   : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/20"
@@ -353,6 +355,15 @@ export default function PerfilModal({
                     ))}
                   </div>
                 </div>
+              )}
+
+              {/* TAB 5: MEMORIAL DE FORMATURA & QUESTIONÁRIOS DE LINGUAGEM */}
+              {abaAtiva === "memorial" && dadosPerfil && (
+                <MemorialTab
+                  matricula={dadosPerfil.matricula}
+                  nomeAluno={dadosPerfil.nome}
+                  turma={dadosPerfil.turma}
+                />
               )}
             </>
           ) : (

@@ -156,6 +156,55 @@ export const apiAluno = {
     return res.json();
   },
 
+  buscarMemorial: async (matricula: string) => {
+    const res = await fetch(`/api/alunos/memorial?matricula=${encodeURIComponent(matricula)}`);
+    return res.json();
+  },
+
+  salvarMemorial: async (dados: {
+    matricula: string;
+    fraseFormatura?: string;
+    fotoUrl?: string;
+    linkedinUrl?: string;
+    githubUrl?: string;
+    projetoDestaque?: {
+      titulo: string;
+      descricao: string;
+      linkDeploy?: string;
+      linkGithub?: string;
+    };
+  }) => {
+    const res = await fetch("/api/alunos/memorial", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "salvar_memorial", ...dados })
+    });
+    return res.json();
+  },
+
+  buscarPerguntasTech: async (tech: string) => {
+    const res = await fetch(`/api/alunos/memorial?action=perguntas&tech=${encodeURIComponent(tech)}`);
+    return res.json();
+  },
+
+  submeterTesteTech: async (matricula: string, tech: string, respostas: Record<number, number>) => {
+    const res = await fetch("/api/alunos/memorial", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "submeter_teste", matricula, tech, respostas })
+    });
+    return res.json();
+  },
+
+  aplaudirHallDaFama: async (matriculaDestinatario: string, matriculaRemetente: string) => {
+    const res = await fetch("/api/hall-da-fama/aplaudir", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ matriculaDestinatario, matriculaRemetente })
+    });
+    return res.json();
+  },
+
   resgatarAniversario: (matricula: string) =>
     fetchApi({ action: "resgatar_aniversario", matricula }),
 

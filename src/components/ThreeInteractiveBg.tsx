@@ -38,7 +38,7 @@ export default function ThreeInteractiveBg() {
     // Color Configs based on theme
     let isDark = document.documentElement.classList.contains("dark");
     let baseHex = isDark ? 0x818cf8 : 0x6366f1; // Indigo colors
-    let baseColor = new THREE.Color(baseHex);
+    const baseColor = new THREE.Color(baseHex);
 
     // Mouse coordinates
     let mouseX = 0;

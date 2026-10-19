@@ -17,12 +17,13 @@ Ele serve como o guia definitivo para saber:
 | **Frontend** | Página Pública do Hall da Fama (`/hall-da-fama`) | ✅ Concluído | `src/app/hall-da-fama/page.tsx` |
 | **Frontend** | Pódio 3D, Collector Cards, Filtros e Botão de Aplausos | ✅ Concluído | `src/app/hall-da-fama/page.tsx` |
 | **Frontend** | Hero Banner de Destaque no Dashboard do Aluno | ✅ Concluído | `src/app/portal/page.tsx` |
-| **Etapa 1** | Modelagem de Dados no Firestore (`memorialFormatura`) | ⏳ **A Iniciar** | `src/types/index.ts` |
-| **Etapa 1** | Aba/Modal "Memorial de Formatura" no Perfil do Aluno | ⏳ **A Iniciar** | `src/components/PerfilModal.tsx` |
-| **Etapa 1** | Rotas de API para Aluno salvar frase, projeto e stack | ⏳ **A Iniciar** | `src/app/api/alunos/memorial/route.ts` |
+| **Etapa 1** | Modelagem de Dados no Firestore (`memorialFormatura` & `certificacoesTech`) | ✅ Concluído | `src/types/index.ts` |
+| **Etapa 1** | Aba "Memorial de Formatura" no Perfil do Aluno | ✅ Concluído | `src/components/MemorialTab.tsx` & `PerfilModal.tsx` |
+| **Etapa 1** | Rotas de API do Memorial (Foto, Frase, TCC & Quiz) | ✅ Concluído | `src/app/api/alunos/memorial/route.ts` |
+| **Etapa 1** | Banco de Questionários Técnicos (10 Questões • Nota $\ge 7$) | ✅ Concluído | `src/lib/questionariosTech.ts` |
+| **Etapa 1** | Persistência Real de Aplausos Diários Autenticados (1/dia) | ✅ Concluído | `src/app/api/hall-da-fama/aplaudir/route.ts` |
 | **Etapa 2** | Aba "Curadoria do Hall da Fama" no Painel do Tutor | ⏳ Pendente | `src/app/trilhatech/page.tsx` |
-| **Etapa 2** | API do Tutor para aprovação, selos de honra e parecer | ⏳ Pendente | `src/app/api/tutor/memorial/route.ts` |
-| **Etapa 3** | Persistência real de aplausos no Firestore | ⏳ Pendente | `src/app/api/hall-da-fama/aplaudir/route.ts` |
+| **Etapa 2** | API do Tutor para aprovação, selos de honra e parecer | ⏳ Pendente | `src/app/api/tutor/memorial/curadoria/route.ts` |
 | **Etapa 3** | Modal de Certificado Digital Verificável | ⏳ Pendente | `src/components/CertificadoModal.tsx` |
 | **Etapa 3** | Gerador de Card para Story (Instagram/WhatsApp) | ⏳ Pendente | `src/components/CardCompartilharModal.tsx` |
 
@@ -78,10 +79,21 @@ export interface ProjetoConclusao {
   aprovadoPeloTutor: boolean;
 }
 
+export interface CertificacaoTech {
+  tech: string;             // ex: "React", "TypeScript", "Python"
+  nota: number;             // 0 a 10 (calculada pelo backend)
+  aprovado: boolean;        // nota >= 7.0
+  dataTeste: number;        // timestamp
+  tentativas: number;
+  badgeConcedida: string;   // ex: "⚛️ React Specialist"
+}
+
 export interface MemorialFormatura {
   // === 1. Preenchido pelo Aluno ===
   fraseFormatura: string;
-  techStack: string[];              // ex: ["React", "Python", "Tailwind"]
+  techStack: string[];              // apenas tecnologias com certificação nota >= 7
+  fotoUrl?: string;                 // foto de formatura ou avatar temático
+  certificacoesTech?: CertificacaoTech[];
   projetoDestaque: ProjetoConclusao;
   linkedinUrl?: string;
   githubUrl?: string;
@@ -107,16 +119,17 @@ export interface MemorialFormatura {
 
 ### 1. Rota do Aluno: `GET /api/alunos/memorial`
 * **Query:** `?matricula=XXXXX`
-* **Função:** Retorna o rascunho do memorial do aluno e o status de aprovação.
-* **Segurança:** Apenas o próprio aluno logado ou tutor.
+* **Query alternativa (Quiz):** `?action=perguntas&tech=React` (retorna as 10 perguntas sem gabarito)
+* **Função:** Retorna os dados do memorial, foto, status de curadoria e histórico de certificações teóricas.
 
 ### 2. Rota do Aluno: `POST /api/alunos/memorial`
-* **Body:**
+* **Ação 1: Salvar Memorial / Foto**
   ```json
   {
+    "action": "salvar_memorial",
     "matricula": "3826381",
+    "fotoUrl": "https://api.dicebear.com/9.x/bottts/svg?seed=GraduationGold",
     "fraseFormatura": "A persistência no código é a ponte entre o bug e a inovação.",
-    "techStack": ["JavaScript", "React", "Firebase"],
     "projetoDestaque": {
       "titulo": "Portal Educacional Gamificado",
       "descricao": "Sistema completo para gestão de frequência e gamificação.",
@@ -127,9 +140,32 @@ export interface MemorialFormatura {
     "githubUrl": "https://github.com/aluno"
   }
   ```
-* **Regra de Negócio:** Aluno só pode submeter se estiver no 2º ano ou for `Veterano`. O status `publicadoNoHall` permanece `false` até aprovação do tutor.
+* **Ação 2: Submeter Questionário Técnico de Linguagem**
+  ```json
+  {
+    "action": "submeter_teste",
+    "matricula": "3826381",
+    "tech": "React",
+    "respostas": { "1": 1, "2": 2, "3": 0, "4": 2, ... }
+  }
+  ```
+* **Regra de Negócio:** Se a nota for $\ge 7/10$ ($\ge 70\%$), a tecnologia é aprovada pelo backend, incluída em `techStack` e a badge correspondente é concedida no card do Hall da Fama!
 
-### 3. Rota do Tutor: `POST /api/tutor/memorial/curadoria`
+### 3. Rota de Aplauso Autenticado: `POST /api/hall-da-fama/aplaudir`
+* **Body:**
+  ```json
+  {
+    "matriculaDestinatario": "3826381",
+    "matriculaRemetente": "3756187"
+  }
+  ```
+* **Regras de Negócio:**
+  1. Apenas usuários conectados/logados podem aplaudir (visitantes recebem convite de login).
+  2. Limite estrito de 1 aplauso por dia por formando (auditoria em `aplausos_memorial`).
+  3. Não é permitido aplaudir a si mesmo.
+  4. Incremento atômico no Firestore via `FieldValue.increment(1)`.
+
+### 4. Rota do Tutor: `POST /api/tutor/memorial/curadoria`
 * **Body:**
   ```json
   {
@@ -141,11 +177,6 @@ export interface MemorialFormatura {
     "publicadoNoHall": true
   }
   ```
-* **Regra de Negócio:** Atualiza os campos de curadoria e seta `statusTrilha: "Veterano"` quando o ciclo é encerrado.
-
-### 4. Rota Pública: `POST /api/hall-da-fama/aplaudir`
-* **Body:** `{ "matricula": "3826381" }`
-* **Função:** Incrementa atomicamente `memorialFormatura.totalAplausos` via `FieldValue.increment(1)`.
 
 ---
 

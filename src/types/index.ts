@@ -474,9 +474,26 @@ export interface ProjetoConclusao {
   aprovadoPeloTutor: boolean;
 }
 
+export interface CertificacaoTech {
+  tech: string;
+  nota: number; // 0 a 10
+  aprovado: boolean; // nota >= 7
+  dataTeste: number; // timestamp
+  tentativas: number;
+  badgeConcedida: string;
+}
+
+export interface QuestaoTechPublica {
+  id: number;
+  pergunta: string;
+  opcoes: string[];
+}
+
 export interface MemorialFormatura {
   fraseFormatura: string;
   techStack: string[];
+  fotoUrl?: string;
+  certificacoesTech?: CertificacaoTech[];
   projetoDestaque: ProjetoConclusao;
   linkedinUrl?: string;
   githubUrl?: string;
@@ -490,4 +507,5 @@ export interface MemorialFormatura {
   totalAplausos: number;
   dataGraduacao?: number;
 }
+
 

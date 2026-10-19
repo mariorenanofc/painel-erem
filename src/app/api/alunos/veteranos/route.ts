@@ -1,46 +1,97 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
+import { MemorialFormatura, CertificacaoTech } from "@/src/types";
 
 export const revalidate = 60; // Cache 1 min
 export const maxDuration = 10;
 
+interface VeteranoResposta {
+  matricula: string;
+  nome: string;
+  avatar: string;
+  badges: string[];
+  anoFormacao: number;
+  xpFinal: number;
+  nivelFinal: string;
+  apelido?: string;
+  especialidade?: string;
+  fraseFormatura?: string;
+  techStack?: string[];
+  destaque?: string;
+  projetosConcluidos?: number;
+  totalAplausos?: number;
+  publicadoNoHall?: boolean;
+}
+
 export async function GET() {
   try {
-    const snap = await dbAdmin.collection("alunos").where("statusTrilha", "==", "Veterano").get();
-    
-    // Precisamos buscar as infos de portal_views para badges e avatar
-    const matriculas = snap.docs.map(d => d.id);
-    const veteranos: Array<{ matricula: string; nome: string; avatar: string; badges: string[]; anoFormacao: number; xpFinal: number; nivelFinal: string }> = [];
-    
-    // Buscar em chunks de 10 se fosse maior, mas assumimos menos veteranos ou usamos promise all
-    const portalViewsPromises = snap.docs.map(doc => 
-       dbAdmin.collection("portal_views").doc(doc.id).get()
+    // Busca alunos com status Veterano
+    const snapVeteranos = await dbAdmin.collection("alunos").where("statusTrilha", "==", "Veterano").get();
+
+    // Também busca alunos que já foram marcados com publicadoNoHall no memorial
+    const snapPublicados = await dbAdmin.collection("alunos").where("memorialFormatura.publicadoNoHall", "==", true).get();
+
+    // Consolida mapa por matrícula para evitar duplicações
+    const docsMap = new Map<string, QueryDocumentSnapshot>();
+    snapVeteranos.docs.forEach((doc: QueryDocumentSnapshot) => docsMap.set(doc.id, doc));
+    snapPublicados.docs.forEach((doc: QueryDocumentSnapshot) => docsMap.set(doc.id, doc));
+
+    const docs = Array.from(docsMap.values());
+
+    // Buscar portal_views para sincronizar badges e fotos
+    const portalViewsSnaps = await Promise.all(
+      docs.map(doc => dbAdmin.collection("portal_views").doc(doc.id).get())
     );
-    
-    const portalViewsSnaps = await Promise.all(portalViewsPromises);
-    
-    snap.docs.forEach((doc: QueryDocumentSnapshot, i: number) => {
-       const data = doc.data();
-       const portal = portalViewsSnaps[i].exists ? portalViewsSnaps[i].data() : {};
-       
-       const historico = Array.isArray(data.historicoAnual) ? data.historicoAnual : [];
-       const ultimoHistorico = historico.length > 0 ? historico[historico.length - 1] : null;
-       
-       veteranos.push({
-         matricula: doc.id,
-         nome: data.nome || "Veterano",
-         avatar: portal?.avatar || "default-avatar.png",
-         badges: portal?.badges || [],
-         anoFormacao: ultimoHistorico?.ano || new Date().getFullYear(),
-         xpFinal: ultimoHistorico?.xp || 0,
-         nivelFinal: ultimoHistorico?.nivel || "Formado"
-       });
+
+    const veteranos: VeteranoResposta[] = [];
+
+    docs.forEach((doc: QueryDocumentSnapshot, i: number) => {
+      const data = doc.data() || {};
+      const portal = portalViewsSnaps[i].exists ? (portalViewsSnaps[i].data() || {}) : {};
+      const memorial = (data.memorialFormatura || {}) as Partial<MemorialFormatura>;
+
+      const historico = Array.isArray(data.historicoAnual) ? data.historicoAnual : [];
+      const ultimoHistorico = historico.length > 0 ? historico[historico.length - 1] : null;
+
+      const anoFormacao = memorial.anoFormacao || ultimoHistorico?.ano || new Date().getFullYear();
+      const xpFinal = memorial.xpFinal || ultimoHistorico?.xp || Number(portal.xpTotal) || Number(data.xp) || 0;
+      const nivelFinal = memorial.nivelFinal || ultimoHistorico?.nivel || (portal.nivel as string) || "Dev Supremo";
+
+      // Badges: junta badges do portal com as badges conquistadas nos questionários do memorial
+      const badgesBase: string[] = Array.isArray(portal.badges) ? [...portal.badges] : [];
+      const certificacoes: CertificacaoTech[] = Array.isArray(memorial.certificacoesTech) ? memorial.certificacoesTech : [];
+      certificacoes.filter(c => c.aprovado && c.badgeConcedida).forEach(c => {
+        if (!badgesBase.includes(c.badgeConcedida)) {
+          badgesBase.unshift(c.badgeConcedida);
+        }
+      });
+
+      // Foto prioritária: fotoUrl do memorial -> avatar do portal -> dicebear
+      const avatarFinal = memorial.fotoUrl || (portal.avatar as string) || `https://api.dicebear.com/9.x/bottts/svg?seed=${doc.id}`;
+
+      veteranos.push({
+        matricula: doc.id,
+        nome: data.nome || "Formando Tech",
+        avatar: avatarFinal,
+        badges: badgesBase,
+        anoFormacao,
+        xpFinal,
+        nivelFinal,
+        especialidade: memorial.especialidadeOficial || "Desenvolvedor de Software",
+        fraseFormatura: memorial.fraseFormatura || "",
+        techStack: Array.isArray(memorial.techStack) ? memorial.techStack : [],
+        destaque: memorial.seloHonorifico || "Lenda da Trilha Tech",
+        projetosConcluidos: memorial.projetoDestaque?.titulo ? 1 : 0,
+        totalAplausos: memorial.totalAplausos || 0,
+        publicadoNoHall: memorial.publicadoNoHall ?? true
+      });
     });
 
     return NextResponse.json({ status: "sucesso", veteranos });
   } catch (error: unknown) {
     const err = error as Error;
+    console.error("[Veteranos API] Erro ao buscar formandos:", err.message);
     return NextResponse.json({ status: "erro", mensagem: err.message }, { status: 500 });
   }
 }

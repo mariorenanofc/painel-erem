@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { useState } from "react";
@@ -6,6 +7,7 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import PerfilPublicoModal from "@/src/components/PerfilPublicoModal";
+import { apiAluno } from "@/src/services/api";
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -24,6 +26,7 @@ interface Veterano {
   destaque?: string;
   projetosConcluidos?: number;
   aplausosIniciais?: number;
+  totalAplausos?: number;
 }
 
 // Mockup de Alta Fidelidade: As Lendas Formadas da Trilha Tech
@@ -168,8 +171,21 @@ export default function HallDaFamaPage() {
   const [busca, setBusca] = useState("");
   const [filtroAba, setFiltroAba] = useState<"TODOS" | "OURO" | "FULLSTACK">("TODOS");
   const [aplausosMap, setAplausosMap] = useState<Record<string, number>>({});
+  const [aplaudindoMatricula, setAplaudindoMatricula] = useState<string | null>(null);
+  const [modalLoginAberto, setModalLoginAberto] = useState(false);
+  const [toast, setToast] = useState<{ mensagem: string; tipo: "sucesso" | "aviso" | "info" } | null>(null);
 
   const matriculaVisualizador = typeof window !== "undefined" ? localStorage.getItem("matriculaAluno") || "00000" : "00000";
+  const estaConectado = Boolean(
+    matriculaVisualizador &&
+    matriculaVisualizador !== "00000" &&
+    matriculaVisualizador !== "visitante"
+  );
+
+  const mostrarToast = (mensagem: string, tipo: "sucesso" | "aviso" | "info" = "sucesso") => {
+    setToast({ mensagem, tipo });
+    setTimeout(() => setToast(null), 4000);
+  };
 
   const veteranosReais: Veterano[] = data?.status === "sucesso" && Array.isArray(data.veteranos) ? data.veteranos : [];
   const baseVeteranos = modoMockup || veteranosReais.length === 0 ? VETERANOS_MOCK : veteranosReais;
@@ -195,20 +211,69 @@ export default function HallDaFamaPage() {
 
   const veteranosOrdenados = [...veteranosFiltrados].sort((a, b) => b.xpFinal - a.xpFinal);
 
-  // Ação de aplauso/parabenização com confetes
-  const handleAplaudir = (matricula: string, e: React.MouseEvent) => {
+  // Ação de aplauso/parabenização com confetes e validação diária
+  const handleAplaudir = async (matricula: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    setAplausosMap((prev) => ({
-      ...prev,
-      [matricula]: (prev[matricula] || 0) + 1
-    }));
 
-    confetti({
-      particleCount: 45,
-      spread: 70,
-      origin: { y: 0.65 },
-      colors: ["#fbbf24", "#f59e0b", "#ec4899", "#8b5cf6", "#ffffff"]
-    });
+    // 1. Visitante deslogado -> Abrir convite amigável para login
+    if (!estaConectado) {
+      setModalLoginAberto(true);
+      return;
+    }
+
+    // 2. Não pode aplaudir a si mesmo
+    if (matriculaVisualizador === matricula) {
+      mostrarToast("Você não pode aplaudir seu próprio memorial!", "aviso");
+      return;
+    }
+
+    // Se estiver no modo mockup apenas para exibição rápida:
+    if (modoMockup) {
+      setAplausosMap((prev) => ({
+        ...prev,
+        [matricula]: (prev[matricula] || 0) + 1
+      }));
+
+      confetti({
+        particleCount: 50,
+        spread: 75,
+        origin: { y: 0.65 },
+        colors: ["#fbbf24", "#f59e0b", "#ec4899", "#8b5cf6", "#ffffff"]
+      });
+      mostrarToast("Aplauso computado com sucesso! 👏", "sucesso");
+      return;
+    }
+
+    try {
+      setAplaudindoMatricula(matricula);
+      const res = await apiAluno.aplaudirHallDaFama(matricula, matriculaVisualizador);
+
+      if (res.status === "sucesso") {
+        setAplausosMap((prev) => ({
+          ...prev,
+          [matricula]: (prev[matricula] || 0) + 1
+        }));
+
+        confetti({
+          particleCount: 55,
+          spread: 80,
+          origin: { y: 0.65 },
+          colors: ["#fbbf24", "#f59e0b", "#ec4899", "#8b5cf6", "#ffffff"]
+        });
+        mostrarToast("Aplauso diário computado com sucesso! 👏", "sucesso");
+      } else if (res.status === "ja_aplaudiu") {
+        mostrarToast(res.mensagem || "Você já aplaudiu esta Lenda hoje! Volte amanhã.", "info");
+      } else if (res.requerLogin) {
+        setModalLoginAberto(true);
+      } else {
+        mostrarToast(res.mensagem || "Não foi possível registrar o aplauso.", "aviso");
+      }
+    } catch (err: unknown) {
+      const error = err as Error;
+      mostrarToast("Erro ao aplaudir: " + error.message, "aviso");
+    } finally {
+      setAplaudindoMatricula(null);
+    }
   };
 
   return (
@@ -217,6 +282,27 @@ export default function HallDaFamaPage() {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-gradient-to-b from-amber-500/15 via-purple-600/10 to-transparent blur-[150px] rounded-full pointer-events-none" />
       <div className="absolute top-1/4 right-0 w-[550px] h-[550px] bg-indigo-600/15 blur-[140px] rounded-full pointer-events-none" />
       <div className="absolute bottom-1/4 left-0 w-[600px] h-[600px] bg-amber-600/10 blur-[130px] rounded-full pointer-events-none" />
+
+      {/* Toast Flutuante de Notificação */}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className={`fixed top-5 left-1/2 -translate-x-1/2 z-50 px-5 py-3 rounded-2xl shadow-2xl border text-xs font-black uppercase tracking-wider flex items-center gap-2 backdrop-blur-xl ${
+              toast.tipo === "sucesso"
+                ? "bg-emerald-500/90 text-white border-emerald-400"
+                : toast.tipo === "info"
+                ? "bg-amber-500/90 text-slate-950 border-amber-300"
+                : "bg-red-500/90 text-white border-red-400"
+            }`}
+          >
+            <span>{toast.tipo === "sucesso" ? "👏" : toast.tipo === "info" ? "⏳" : "⚠️"}</span>
+            <span>{toast.mensagem}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Navegação Superior */}
       <nav className="border-b border-white/10 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-40">
@@ -230,9 +316,21 @@ export default function HallDaFamaPage() {
           </Link>
 
           <div className="flex items-center gap-3">
-            <span className="text-xs font-bold text-slate-400 hidden sm:inline">
-              Trilha Tech • Academia de Tecnologia
-            </span>
+            {estaConectado ? (
+              <span className="text-xs font-bold text-amber-300 bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/30 hidden sm:flex items-center gap-1.5">
+                <span>👤</span>
+                <span>Matrícula: {matriculaVisualizador}</span>
+              </span>
+            ) : (
+              <Link
+                href="/portal/login"
+                className="text-xs font-bold text-amber-300 bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 hover:border-amber-400/50 hidden sm:flex items-center gap-1.5 transition-colors"
+              >
+                <span>🔑</span>
+                <span>Conectar para Aplaudir</span>
+              </Link>
+            )}
+
             <button
               onClick={() => setModoMockup(!modoMockup)}
               className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 rounded-lg text-amber-300 font-bold text-xs transition-all cursor-pointer flex items-center gap-1.5"
@@ -377,7 +475,7 @@ export default function HallDaFamaPage() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <AnimatePresence>
               {veteranosOrdenados.map((vet, idx) => {
-                const totalAplausos = (vet.aplausosIniciais || 50) + (aplausosMap[vet.matricula] || 0);
+                const totalAplausos = (vet.totalAplausos !== undefined ? vet.totalAplausos : (vet.aplausosIniciais || 50)) + (aplausosMap[vet.matricula] || 0);
 
                 return (
                   <motion.div
@@ -498,9 +596,10 @@ export default function HallDaFamaPage() {
                       <motion.button
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
+                        disabled={aplaudindoMatricula === vet.matricula}
                         onClick={(e) => handleAplaudir(vet.matricula, e)}
-                        className="cursor-pointer px-3.5 py-2 bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-slate-950 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-[0_0_15px_rgba(251,191,36,0.3)] transition-all"
-                        title="Aplaudir a conquista deste formando"
+                        className="cursor-pointer px-3.5 py-2 bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-slate-950 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-[0_0_15px_rgba(251,191,36,0.3)] transition-all disabled:opacity-50"
+                        title={estaConectado ? "Aplaudir a conquista deste formando (1 por dia)" : "Conecte-se com sua matrícula para aplaudir"}
                       >
                         <span>👏</span>
                         <span>{totalAplausos}</span>
@@ -558,6 +657,49 @@ export default function HallDaFamaPage() {
           onClose={() => setPerfilAberto(null)}
         />
       )}
+
+      {/* Modal Amigável para Visitantes Deslogados */}
+      <AnimatePresence>
+        {modalLoginAberto && (
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="glass-panel-heavy bg-slate-900 border border-amber-400/40 rounded-3xl p-6 md:p-8 max-w-md w-full text-center shadow-2xl relative"
+            >
+              <div className="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-3xl mx-auto mb-4">
+                👏
+              </div>
+
+              <h3 className="text-xl font-black text-white">
+                Deseja Aplaudir Nossas Lendas?
+              </h3>
+
+              <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+                A visualização do Hall da Fama é <strong className="text-amber-300">100% pública e aberta a todos</strong>! Porém, para computar seu aplauso diário com sua assinatura oficial de aluno, você precisa estar conectado ao portal.
+              </p>
+
+              <div className="pt-6 flex flex-col gap-2.5">
+                <Link
+                  href="/portal/login"
+                  className="w-full py-3 bg-gradient-to-r from-amber-500 to-yellow-400 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-lg shadow-amber-500/25 hover:brightness-105"
+                >
+                  🔑 Entrar no Portal com Minha Matrícula
+                </Link>
+
+                <button
+                  type="button"
+                  onClick={() => setModalLoginAberto(false)}
+                  className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                >
+                  Continuar Apenas Visualizando
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

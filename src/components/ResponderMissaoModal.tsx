@@ -142,7 +142,7 @@ export default function ResponderMissaoModal({
   const statusAtual = missaoAberta.status?.toLowerCase().trim() || "pendente";
 
   let bloqueioClassroom = false;
-  if (missaoAberta.linkClassroom && !checkboxHonestidade) {
+  if (missaoAberta.linkClassroom && !checkboxHonestidade && statusAtual !== "devolvida") {
     bloqueioClassroom = true;
   }
 
@@ -571,7 +571,7 @@ export default function ResponderMissaoModal({
 
               {/* ─── BARRA DE AÇÕES ─── */}
               <div className="mt-8 flex justify-end gap-3 border-t border-slate-200/60 dark:border-slate-700/40 pt-5 transition-colors pb-2">
-                {statusAtual !== "pendente" && !missaoAberta.linkClassroom && (
+                {statusAtual !== "pendente" && (
                   <motion.button
                     type="button"
                     whileHover={!atualizandoStatus ? { scale: 1.02 } : {}}
@@ -608,7 +608,7 @@ export default function ResponderMissaoModal({
                   Cancelar
                 </motion.button>
                 
-                {missaoAberta.linkClassroom && missaoAberta.tipo !== "Projeto" ? (
+                {missaoAberta.linkClassroom && missaoAberta.tipo !== "Projeto" && statusAtual !== "devolvida" ? (
                   <div
                     className={`px-8 py-3 rounded-xl font-black text-sm shadow-md transition-all uppercase tracking-wider text-white ${
                       statusAtual === "pendente" 
@@ -627,25 +627,30 @@ export default function ResponderMissaoModal({
                     className={`cursor-pointer text-white px-8 py-3 rounded-xl font-black text-sm shadow-md transition-all uppercase tracking-wider ${
                       inputDesabilitado
                         ? "bg-slate-400 dark:bg-slate-700 shadow-none"
-                        : prazoEncerrado
-                          ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/20 active:scale-95"
-                          : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/20 active:scale-95"
+                        : statusAtual === "devolvida"
+                          ? "bg-gradient-to-r from-red-500 via-rose-500 to-amber-500 hover:from-red-600 hover:to-amber-600 shadow-red-500/20 active:scale-95"
+                          : prazoEncerrado
+                            ? "bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 shadow-amber-500/20 active:scale-95"
+                            : "bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 shadow-emerald-500/20 active:scale-95"
                     }`}
                   >
                     {enviando
                       ? "Processando..."
-                      : statusAtual === "aguardando correção" ||
-                          statusAtual === "avaliador" ||
-                          statusAtual === "avaliado" ||
-                          statusAtual === "avaliada"
-                        ? "Já Concluído"
-                        : statusAtual === "devolvida"
-                          ? "Reenviar Missão"
-                          : missaoAberta.tipo === "Material"
-                            ? "Resgatar XP do Material"
-                            : prazoEncerrado
-                              ? "Enviar Atrasado"
-                              : "Enviar Resposta"}
+                      : statusAtual === "aguardando correção"
+                        ? "Aguardando Correção do Tutor"
+                        : statusAtual === "aguardando validação" || statusAtual === "aguardando validacao"
+                          ? "Aguardando Validação no AVA"
+                          : statusAtual === "avaliador" ||
+                            statusAtual === "avaliado" ||
+                            statusAtual === "avaliada"
+                          ? "Já Concluído"
+                          : statusAtual === "devolvida"
+                            ? "Reenviar Missão 🚀"
+                            : missaoAberta.tipo === "Material"
+                              ? "Resgatar XP do Material"
+                              : prazoEncerrado
+                                ? "Enviar Atrasado"
+                                : "Enviar Resposta"}
                   </motion.button>
                 )}
               </div>

@@ -81,7 +81,7 @@ export async function GET(request: Request) {
       }
     }, {
       headers: {
-        "Cache-Control": "s-maxage=30, stale-while-revalidate"
+        "Cache-Control": "no-store, max-age=0, must-revalidate"
       }
     });
 

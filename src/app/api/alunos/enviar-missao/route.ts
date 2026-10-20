@@ -61,10 +61,12 @@ export async function POST(request: Request) {
       }
     }
 
-    if (ehEntregaClassroom) {
+    const isDevolvida = statusAtualBD === "devolvida";
+
+    if (ehEntregaClassroom && !isDevolvida) {
       return NextResponse.json({ status: "erro", mensagem: "Você não precisa entregar por aqui! O sistema já avaliou automaticamente pelo Classroom. 🤖" });
     }
-    if (linhaExistente && statusAtualBD !== "devolvida") {
+    if (linhaExistente && !isDevolvida) {
       const isTyping = ativ.resolucaoTyping && String(ativ.resolucaoTyping).trim() !== "";
       if (isTyping && statusAtualBD === "aguardando validação") {
         // PERMITIR RE-ENVIO SILENCIOSO PARA O JOGO DE DIGITAÇÃO (Permite Auto-Save + Resgate Manual)
@@ -148,10 +150,27 @@ export async function POST(request: Request) {
       statusFinal = "Aguardando Validação";
       xpGanhoFinal = 0;
       feedbackFinal = xpGanhoBody !== undefined ? `[XP_DIGITACAO: ${xpGanhoBody}]` : "";
+    } else if (isDevolvida) {
+      // 🔥 REENVIO DE MISSÃO DEVOLVIDA PELO TUTOR:
+      // O tutor solicitou correção manual! A missão vai diretamente para "Aguardando Correção"
+      // para o tutor avaliar na Central de Correções, sem cair no limbo de validação automática.
+      if (ativ.tipo === "Quiz" && isCorreto) {
+        statusFinal = "Avaliado";
+        xpGanhoFinal = xpFinalPermitido;
+        feedbackFinal = "Resposta correta após reenvio!";
+      } else {
+        statusFinal = "Aguardando Correção";
+        xpGanhoFinal = 0;
+        feedbackFinal = "Reenviado pelo aluno para reavaliação";
+      }
     } else {
       const linkClassroom = String(ativ.linkClassroom || "").trim();
-      if (linkClassroom && linkClassroom.includes("classroom.google.com")) {
+      if (linkClassroom && linkClassroom.includes("classroom.google.com") && ativ.tipo !== "Projeto") {
         statusFinal = "Aguardando Validação";
+        xpGanhoFinal = 0;
+      } else if (linkClassroom && linkClassroom.includes("classroom.google.com") && ativ.tipo === "Projeto") {
+        // Projetos submetidos pelo portal requerem avaliação do tutor
+        statusFinal = "Aguardando Correção";
         xpGanhoFinal = 0;
       } else {
         if (ativ.tipo === "Quiz" || ativ.tipo === "Material") {
@@ -308,13 +327,15 @@ export async function POST(request: Request) {
 
     const msgRetorno = isTyping
       ? `Código completado! Agora você deve entregar a atividade correspondente lá no Google Classroom para validarmos seus ${xpGanhoBody || ativ.xp || 200} XP calculados! 🚀`
-      : (ativ.tipo === "Quiz" && xpGanhoFinal > 0)
-        ? "Resposta correta! XP adicionado." + msgDesconto
-        : (ativ.tipo === "Quiz" && xpGanhoFinal === 0 && isCorreto)
-          ? "Você acertou o Quiz, mas não ganhou XP." + msgDesconto
-          : (ativ.tipo === "Quiz" && xpGanhoFinal === 0 && !isCorreto)
-            ? "Resposta errada. Mas o Tutor pode rever depois!"
-            : "Missão enviada com sucesso!";
+      : isDevolvida
+        ? "Missão reenviada com sucesso! O tutor foi notificado e irá avaliar sua nova entrega. 🚀"
+        : (ativ.tipo === "Quiz" && xpGanhoFinal > 0)
+          ? "Resposta correta! XP adicionado." + msgDesconto
+          : (ativ.tipo === "Quiz" && xpGanhoFinal === 0 && isCorreto)
+            ? "Você acertou o Quiz, mas não ganhou XP." + msgDesconto
+            : (ativ.tipo === "Quiz" && xpGanhoFinal === 0 && !isCorreto)
+              ? "Resposta errada. Mas o Tutor pode rever depois!"
+              : "Missão enviada com sucesso!";
 
     invalidatePortalCache(matricula);
 

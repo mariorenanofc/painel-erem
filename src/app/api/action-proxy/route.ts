@@ -577,7 +577,7 @@ export async function POST(request: Request) {
         const entregas: Array<{ idEntrega: string, matricula: string, nomeAluno: string, resposta: string, status: string, xpGanho: number, feedback: string, dataEnvio: number }> = [];
         entregasSnap.forEach(doc => {
           const e = doc.data();
-          const mat = e.matricula || doc.id.split("-")[1] || "";
+          const mat = e.matricula || doc.id.replace(new RegExp(`^${idAtiv}-`), "") || "";
           entregas.push({
             idEntrega: doc.id,
             matricula: mat,

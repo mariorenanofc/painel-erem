@@ -104,7 +104,7 @@ export default function PortalDashboard() {
   const [modalRegulamentoAberto, setModalRegulamentoAberto] = useState(false);
 
   const [abaAtividade, setAbaAtividade] = useState<
-    "Pendentes" | "Atrasadas" | "Concluidas"
+    "Pendentes" | "Atrasadas" | "Devolvidas" | "Concluidas"
   >("Pendentes");
   const [buscaAtividade, setBuscaAtividade] = useState("");
   const [ordemAulasPortal, setOrdemAulasPortal] = useState<"asc" | "desc">("asc");
@@ -535,6 +535,11 @@ export default function PortalDashboard() {
     return st === "aguardando validação" || st === "aguardando validacao";
   });
 
+  const atividadesDevolvidas = atividades.filter((a) => {
+    const st = a.status?.toLowerCase().trim() || "";
+    return st === "devolvida";
+  });
+
   const missoesPendentes = atividades.filter((a) => {
     const st = a.status?.toLowerCase().trim() || "pendente";
     const stMod = a.statusModulo?.toLowerCase() || "aberto";
@@ -577,6 +582,9 @@ export default function PortalDashboard() {
     const st = a.status?.toLowerCase().trim() || "pendente";
     const stMod = a.statusModulo?.toLowerCase() || "aberto";
 
+    if (abaAtividade === "Devolvidas") {
+      return st === "devolvida";
+    }
     if (abaAtividade === "Pendentes") {
       if (stMod === "encerrado" || stMod === "em breve") return false;
       return (
@@ -1102,6 +1110,55 @@ export default function PortalDashboard() {
         </motion.div>
       </div>
 
+      {/* SEÇÃO: ATIVIDADES DEVOLVIDAS PELO TUTOR */}
+      {atividadesDevolvidas.length > 0 && (
+        <div className="max-w-[1536px] w-full mx-auto px-4 md:px-8 mt-6 relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="glass-panel p-6 rounded-3xl border border-rose-500/30 bg-rose-500/10 shadow-xl shadow-rose-500/5">
+            <h3 className="text-lg font-display font-black text-rose-500 dark:text-rose-400 flex items-center gap-2 mb-2">
+              <span className="animate-pulse">⚠️</span> Missões Devolvidas pelo Tutor ({atividadesDevolvidas.length})
+            </h3>
+            <p className="text-xs text-slate-600 dark:text-slate-300 mb-4">
+              O tutor solicitou correções nas seguintes missões. Clique no card abaixo para ler o feedback e reenviar sua atividade:
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {atividadesDevolvidas.map((ativ) => (
+                <div 
+                  key={ativ.id} 
+                  onClick={() => abrirMissaoEspecial(ativ, trilhasDeEstudo[ativ.modulo || ""]?.status || "Aberto")}
+                  className="cursor-pointer bg-white dark:bg-slate-900/80 rounded-2xl p-4 border border-rose-500/40 hover:border-rose-500 flex flex-col justify-between shadow-sm relative overflow-hidden group hover:scale-[1.01] transition-all duration-300"
+                >
+                  <div className="absolute top-0 right-0 w-24 h-24 bg-rose-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-rose-500/15 transition-all"></div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-rose-600 dark:text-rose-400 px-2 py-0.5 bg-rose-500/10 rounded-md border border-rose-500/20">
+                        {!!ativ.resolucaoTyping ? "Digitação" : ativ.tipo}
+                      </span>
+                      <span className="text-[9px] font-black uppercase tracking-wider text-rose-600 dark:text-rose-300 bg-rose-500/20 px-2 py-0.5 rounded-full animate-pulse border border-rose-500/30">
+                        Ajuste Necessário
+                      </span>
+                    </div>
+                    <h4 className="font-display font-bold text-sm text-slate-800 dark:text-white mt-1 leading-tight">
+                      {ativ.titulo}
+                    </h4>
+                    {ativ.feedback && (
+                      <p className="text-xs text-rose-600 dark:text-rose-300 mt-2 bg-rose-50 dark:bg-rose-950/40 p-2.5 rounded-xl border border-rose-200 dark:border-rose-900/40 font-medium leading-relaxed">
+                        💬 <strong>Feedback:</strong> {ativ.feedback}
+                      </p>
+                    )}
+                  </div>
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs">
+                    <span className="text-slate-400">Valendo: <strong className="text-slate-200">{ativ.xp} XP</strong></span>
+                    <span className="text-rose-500 font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                      <span>Refazer Missão</span> ➔
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* SEÇÃO: ATIVIDADES AGUARDANDO VALIDAÇÃO */}
       {atividadesAguardandoValidacao.length > 0 && (
         <div className="max-w-[1536px] w-full mx-auto px-4 md:px-8 mt-6 relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -1118,7 +1175,8 @@ export default function PortalDashboard() {
               {atividadesAguardandoValidacao.map((ativ) => (
                 <div 
                   key={ativ.id} 
-                  className="bg-white dark:bg-slate-900/60 rounded-2xl p-4 border border-amber-500/30 flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-amber-500 transition-all duration-300"
+                  onClick={() => abrirMissaoEspecial(ativ, trilhasDeEstudo[ativ.modulo || ""]?.status || "Aberto")}
+                  className="cursor-pointer bg-white dark:bg-slate-900/60 rounded-2xl p-4 border border-amber-500/30 flex flex-col justify-between shadow-sm relative overflow-hidden group hover:border-amber-500 hover:scale-[1.01] transition-all duration-300"
                 >
                   <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl pointer-events-none group-hover:bg-amber-500/10 transition-all"></div>
                   <div>
@@ -1134,8 +1192,8 @@ export default function PortalDashboard() {
                   </div>
                   <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800/60 flex items-center justify-between text-xs">
                     <span className="text-slate-400">XP Estimado: <strong className="text-slate-300">{ativ.xp}</strong></span>
-                    <span className="text-amber-500 font-bold animate-pulse flex items-center gap-1">
-                      <span>⚠️</span> Pendente no AVA
+                    <span className="text-amber-500 font-bold animate-pulse flex items-center gap-1 group-hover:translate-x-1 transition-transform">
+                      <span>⚠️ Pendente AVA</span> ➔
                     </span>
                   </div>
                 </div>
@@ -1165,6 +1223,14 @@ export default function PortalDashboard() {
           </div>
 
           <div className="flex gap-2 overflow-x-auto pb-2 mb-6 no-scrollbar">
+            {atividadesDevolvidas.length > 0 && (
+              <button
+                onClick={() => setAbaAtividade("Devolvidas")}
+                className={`cursor-pointer whitespace-nowrap px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold transition-all border ${abaAtividade === "Devolvidas" ? "bg-rose-500/20 text-rose-500 dark:text-rose-300 border-rose-500/50 shadow-lg shadow-rose-500/10 scale-102 animate-pulse" : "bg-rose-500/10 text-rose-400 border-rose-500/20 hover:bg-rose-500/20"}`}
+              >
+                ⚠️ Devolvidas ({atividadesDevolvidas.length})
+              </button>
+            )}
             <button
               onClick={() => setAbaAtividade("Pendentes")}
               className={`cursor-pointer whitespace-nowrap px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold transition-all border ${abaAtividade === "Pendentes" ? "bg-amber-500/20 text-amber-600 dark:text-amber-300 border-amber-500/40 shadow-lg shadow-amber-500/10 scale-102" : "bg-slate-100 dark:bg-slate-950/30 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/5 hover:bg-slate-200 dark:hover:bg-slate-900/40 hover:text-slate-800 dark:hover:text-white"}`}
@@ -1177,12 +1243,12 @@ export default function PortalDashboard() {
             >
               🚨 Atrasadas ({qtdAtrasadas})
             </button>
-                          <button
-                onClick={() => setAbaAtividade("Concluidas")}
-                className={`cursor-pointer whitespace-nowrap px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold transition-all border ${abaAtividade === "Concluidas" ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-500/40 shadow-lg shadow-emerald-500/10 scale-102" : "bg-slate-100 dark:bg-slate-950/30 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/5 hover:bg-slate-200 dark:hover:bg-slate-900/40 hover:text-slate-800 dark:hover:text-white"}`}
-              >
-                ✅ Concluídas ({qtdConcluidas})
-              </button>
+            <button
+              onClick={() => setAbaAtividade("Concluidas")}
+              className={`cursor-pointer whitespace-nowrap px-5 py-2.5 rounded-xl text-xs uppercase tracking-wider font-bold transition-all border ${abaAtividade === "Concluidas" ? "bg-emerald-500/20 text-emerald-600 dark:text-emerald-300 border-emerald-500/40 shadow-lg shadow-emerald-500/10 scale-102" : "bg-slate-100 dark:bg-slate-950/30 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-white/5 hover:bg-slate-200 dark:hover:bg-slate-900/40 hover:text-slate-800 dark:hover:text-white"}`}
+            >
+              ✅ Concluídas ({qtdConcluidas})
+            </button>
 
               <div className="flex-1" />
 
@@ -1569,11 +1635,15 @@ export default function PortalDashboard() {
                                                     ].status,
                                                   )
                                                 }
-                                                className={`cursor-pointer w-full text-white text-sm font-black py-3 px-4 rounded-xl transition-all active:scale-95 shadow-md ${isConcluida ? "bg-slate-800 hover:bg-slate-700" : isAguardandoValidacao ? "bg-amber-600/20 text-amber-300 hover:bg-amber-600/30 border border-amber-500/30" : isDevolvida ? "bg-red-500 hover:bg-red-600" : "bg-brand-primary hover:bg-indigo-600"}`}
+                                                className={`cursor-pointer w-full text-white text-sm font-black py-3 px-4 rounded-xl transition-all active:scale-95 shadow-md ${isConcluida ? "bg-slate-800 hover:bg-slate-700" : isAguardandoValidacao ? "bg-amber-600/20 text-amber-300 hover:bg-amber-600/30 border border-amber-500/30" : isDevolvida ? "bg-red-500 hover:bg-red-600 shadow-red-500/20" : "bg-brand-primary hover:bg-indigo-600"}`}
                                               >
-                                                {isConcluida || isAguardandoValidacao
+                                                {isConcluida
                                                   ? "Ver Detalhes"
-                                                  : "Abrir Atividade"}
+                                                  : isAguardandoValidacao
+                                                    ? "Em Validação"
+                                                    : isDevolvida
+                                                      ? "Refazer Missão 🔄"
+                                                      : "Abrir Atividade"}
                                               </button>
                                             </div>
                                           </div>
@@ -1708,13 +1778,17 @@ export default function PortalDashboard() {
                                                       : isAguardandoValidacao
                                                         ? "bg-amber-600/20 text-amber-300 hover:bg-amber-600/30 border border-amber-500/30"
                                                         : isDevolvida
-                                                          ? "bg-red-500 hover:bg-red-600"
+                                                          ? "bg-red-500 hover:bg-red-600 shadow-red-500/20"
                                                           : "bg-brand-primary hover:bg-indigo-650"
                                                   }`}
                                                 >
-                                                  {isConcluida || isAguardandoValidacao
+                                                  {isConcluida
                                                     ? "Ver Detalhes"
-                                                    : "Abrir Atividade"}
+                                                    : isAguardandoValidacao
+                                                      ? "Em Validação"
+                                                      : isDevolvida
+                                                        ? "Refazer Missão 🔄"
+                                                        : "Abrir Atividade"}
                                                 </button>
                                               </div>
                                             </div>

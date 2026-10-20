@@ -334,6 +334,8 @@ export interface CorrecaoMissoesModalProps {
     statusAvaliacao: "Avaliado" | "Devolvida",
     feedbackTutor: string,
   ) => void;
+  onReverter?: (entrega: Entrega) => Promise<void> | void;
+  onExcluirEntrega?: (entrega: Entrega) => Promise<void> | void;
 }
 
 export interface GestaoFrequenciaModalProps {

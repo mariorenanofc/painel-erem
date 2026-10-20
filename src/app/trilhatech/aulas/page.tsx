@@ -635,9 +635,10 @@ export default function GestaoAulasPage() {
         nota,
         statusAvaliacao,
         feedbackTutor,
+        missaoAberta?.id,
       );
       if (data.status === "sucesso") {
-        toast(data.mensagem, "success");
+        toast(data.mensagem || "Avaliação salva com sucesso!", "success");
         setEntregas(
           entregas.map((e) =>
             e.idEntrega === entrega.idEntrega
@@ -650,9 +651,62 @@ export default function GestaoAulasPage() {
               : e,
           ),
         );
+        mutate();
       }
     } catch {
       toast("Erro ao avaliar.", "error");
+    }
+  };
+
+  const reverterAluno = async (entrega: Entrega) => {
+    if (!confirm(`Deseja realmente reverter a correção desta atividade para ${entrega.nomeAluno}?\n\nO status voltará para "Aguardando Correção" e eventuais pontos concedidos serão estornados.`)) return;
+    try {
+      const data = await apiTutor.reverterEntrega(
+        entrega.idEntrega,
+        entrega.matricula,
+        missaoAberta?.id,
+      );
+      if (data.status === "sucesso") {
+        toast(data.mensagem || "Entrega revertida para pendente com sucesso!", "success");
+        setEntregas((prev) =>
+          prev.map((e) =>
+            e.idEntrega === entrega.idEntrega
+              ? {
+                  ...e,
+                  status: "Aguardando Correção",
+                  xpGanho: 0,
+                  feedback: "",
+                }
+              : e,
+          ),
+        );
+        setNotasTemp((prev) => ({ ...prev, [entrega.idEntrega]: 0 }));
+        mutate();
+      } else {
+        toast(data.mensagem || "Erro ao reverter entrega.", "error");
+      }
+    } catch {
+      toast("Erro de conexão ao reverter entrega.", "error");
+    }
+  };
+
+  const excluirEntregaAluno = async (entrega: Entrega) => {
+    if (!confirm(`TEM CERTEZA ABSOLUTA que deseja EXCLUIR a entrega de ${entrega.nomeAluno}?\n\nA resposta será apagada e o aluno poderá enviar a atividade novamente do zero.`)) return;
+    try {
+      const data = await apiTutor.excluirEntrega(
+        entrega.idEntrega,
+        entrega.matricula,
+        missaoAberta?.id,
+      );
+      if (data.status === "sucesso") {
+        toast(data.mensagem || "Entrega excluída com sucesso! Aluno liberado para nova submissão.", "success");
+        setEntregas((prev) => prev.filter((e) => e.idEntrega !== entrega.idEntrega));
+        mutate();
+      } else {
+        toast(data.mensagem || "Erro ao excluir entrega.", "error");
+      }
+    } catch {
+      toast("Erro de conexão ao excluir entrega.", "error");
     }
   };
 
@@ -785,6 +839,8 @@ export default function GestaoAulasPage() {
         onClose={() => setMissaoAberta(null)}
         onSetNotasTemp={setNotasTemp}
         onAvaliar={avaliarAluno}
+        onReverter={reverterAluno}
+        onExcluirEntrega={excluirEntregaAluno}
       />
 
       <GestaoFrequenciaModal

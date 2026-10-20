@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { CorrecaoMissoesModalProps } from "../types";
+import { CorrecaoMissoesModalProps, Entrega } from "../types";
 
 export default function CorrecaoMissoesModal({
   missaoAberta,
@@ -12,8 +12,11 @@ export default function CorrecaoMissoesModal({
   onClose,
   onSetNotasTemp,
   onAvaliar,
+  onReverter,
+  onExcluirEntrega,
 }: CorrecaoMissoesModalProps) {
   const [feedbacksTemp, setFeedbacksTemp] = useState<Record<string, string>>({});
+  const [processandoAcao, setProcessandoAcao] = useState<Record<string, boolean>>({});
 
   if (!missaoAberta) return null;
 
@@ -23,6 +26,26 @@ export default function CorrecaoMissoesModal({
 
   const handleFeedbackChange = (idEntrega: string, val: string) => {
     setFeedbacksTemp({ ...feedbacksTemp, [idEntrega]: val });
+  };
+
+  const handleReverter = async (entrega: Entrega) => {
+    if (!onReverter) return;
+    setProcessandoAcao((prev) => ({ ...prev, [entrega.idEntrega]: true }));
+    try {
+      await onReverter(entrega);
+    } finally {
+      setProcessandoAcao((prev) => ({ ...prev, [entrega.idEntrega]: false }));
+    }
+  };
+
+  const handleExcluir = async (entrega: Entrega) => {
+    if (!onExcluirEntrega) return;
+    setProcessandoAcao((prev) => ({ ...prev, [entrega.idEntrega]: true }));
+    try {
+      await onExcluirEntrega(entrega);
+    } finally {
+      setProcessandoAcao((prev) => ({ ...prev, [entrega.idEntrega]: false }));
+    }
   };
 
   const isQuiz = missaoAberta.tipo === "Quiz";
@@ -97,6 +120,8 @@ export default function CorrecaoMissoesModal({
                   const isDevolvida = entrega.status === "Devolvida";
                   const isAprovada = entrega.status === "Avaliado";
                   const aguardando = entrega.status === "Aguardando Correção";
+                  const aguardandoValidacao = entrega.status === "Aguardando Validação" || entrega.status === "Aguardando Validacao";
+                  const emProcessamento = !!processandoAcao[entrega.idEntrega];
 
                   // Formatação de data
                   const rawDataEnvio = entrega.dataEnvio;
@@ -137,6 +162,11 @@ export default function CorrecaoMissoesModal({
                                 Novo
                               </span>
                             )}
+                            {aguardandoValidacao && (
+                              <span className="bg-blue-100/90 dark:bg-blue-955/35 text-blue-700 dark:text-blue-400 text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-lg border border-blue-200/40 dark:border-blue-900/20">
+                                Validação AVA
+                              </span>
+                            )}
                           </div>
 
                           {dataFormatada && (
@@ -163,7 +193,7 @@ export default function CorrecaoMissoesModal({
                               </motion.a>
                             ) : (
                               <p className="text-slate-700 dark:text-slate-300 font-mono text-xs whitespace-pre-wrap font-semibold leading-relaxed break-all select-all">
-                                {entrega.resposta}
+                                {entrega.resposta || "(Resposta vazia)"}
                               </p>
                             )}
                           </div>
@@ -185,84 +215,136 @@ export default function CorrecaoMissoesModal({
                           )}
                         </div>
 
-                        {/* Painel de Ação de Notas */}
-                        <div className="md:w-60 shrink-0 flex flex-col justify-end border-t md:border-t-0 md:border-l border-slate-200/80 dark:border-slate-800 pt-4 md:pt-0 md:pl-5">
+                        {/* Painel de Ação de Notas e Gestão */}
+                        <div className="md:w-64 shrink-0 flex flex-col justify-between border-t md:border-t-0 md:border-l border-slate-200/80 dark:border-slate-800 pt-4 md:pt-0 md:pl-5">
                           {isQuiz ? (
-                            <div className="text-center flex flex-col h-full justify-center py-2.5">
-                              <div className="text-4xl mb-2 select-none">
-                                {entrega.xpGanho > 0 ? "🎉" : "❌"}
+                            <div className="text-center flex flex-col h-full justify-between py-2.5">
+                              <div>
+                                <div className="text-4xl mb-2 select-none">
+                                  {entrega.xpGanho > 0 ? "🎉" : "❌"}
+                                </div>
+                                <span className="text-slate-400 dark:text-slate-500 font-black text-[9px] uppercase tracking-widest mb-1.5 block">
+                                  Auto-Corrigido
+                                </span>
+                                <span
+                                  className={`font-display font-black text-xl ${
+                                    entrega.xpGanho > 0 ? "text-emerald-600 dark:text-emerald-450" : "text-red-500 dark:text-red-400"
+                                  }`}
+                                >
+                                  {entrega.xpGanho} XP
+                                </span>
                               </div>
-                              <span className="text-slate-400 dark:text-slate-500 font-black text-[9px] uppercase tracking-widest mb-1.5">
-                                Auto-Corrigido
-                              </span>
-                              <span
-                                className={`font-display font-black text-xl ${
-                                  entrega.xpGanho > 0 ? "text-emerald-600 dark:text-emerald-450" : "text-red-500 dark:text-red-400"
-                                }`}
-                              >
-                                {entrega.xpGanho} XP
-                              </span>
+
+                              {/* Ações de Reversão e Exclusão para Quiz */}
+                              <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-col gap-2">
+                                {onReverter && (
+                                  <button
+                                    disabled={emProcessamento}
+                                    onClick={() => handleReverter(entrega)}
+                                    className="cursor-pointer w-full py-1.5 px-2 rounded-xl text-[10px] font-bold text-slate-600 dark:text-slate-400 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors"
+                                  >
+                                    ↩️ Reverter p/ Pendente
+                                  </button>
+                                )}
+                                {onExcluirEntrega && (
+                                  <button
+                                    disabled={emProcessamento}
+                                    onClick={() => handleExcluir(entrega)}
+                                    className="cursor-pointer w-full py-1.5 px-2 rounded-xl text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-955/20 dark:hover:bg-rose-955/35 transition-colors"
+                                  >
+                                    🗑️ Excluir Entrega
+                                  </button>
+                                )}
+                              </div>
                             </div>
                           ) : (
                             <>
-                              <div className="mb-4">
-                                <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase text-center mb-1.5 tracking-wider">
-                                  Nota (XP)
-                                </label>
-                                <div className="relative max-w-[140px] mx-auto">
-                                  <input
-                                    type="number"
-                                    value={notasTemp[entrega.idEntrega] ?? 0}
-                                    onChange={(e) => handleNotaChange(entrega.idEntrega, e.target.value)}
-                                    className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl p-3 text-center font-black text-lg outline-none focus:border-emerald-500 transition-all font-mono"
-                                  />
-                                  <span className="absolute right-3.5 top-3.5 text-slate-400 dark:text-slate-500 font-black text-[10px] uppercase font-mono tracking-wide pointer-events-none">
-                                    XP
-                                  </span>
+                              <div>
+                                <div className="mb-4">
+                                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase text-center mb-1.5 tracking-wider">
+                                    Nota (XP)
+                                  </label>
+                                  <div className="relative max-w-[140px] mx-auto">
+                                    <input
+                                      type="number"
+                                      value={notasTemp[entrega.idEntrega] ?? 0}
+                                      onChange={(e) => handleNotaChange(entrega.idEntrega, e.target.value)}
+                                      className="w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-100 rounded-2xl p-3 text-center font-black text-lg outline-none focus:border-emerald-500 transition-all font-mono"
+                                    />
+                                    <span className="absolute right-3.5 top-3.5 text-slate-400 dark:text-slate-500 font-black text-[10px] uppercase font-mono tracking-wide pointer-events-none">
+                                      XP
+                                    </span>
+                                  </div>
+                                </div>
+
+                                <div className="flex gap-2">
+                                  <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    disabled={emProcessamento}
+                                    onClick={() =>
+                                      onAvaliar(
+                                        entrega,
+                                        "Devolvida",
+                                        feedbacksTemp[entrega.idEntrega] || entrega.feedback || "",
+                                      )
+                                    }
+                                    className="cursor-pointer flex-1 py-2.5 px-2 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all border border-red-200 dark:border-red-900/30 bg-red-50/50 dark:bg-red-955/20 text-red-600 dark:text-red-400 disabled:opacity-50"
+                                  >
+                                    🔄 Devolver
+                                  </motion.button>
+                                  <motion.button
+                                    whileHover={{ scale: 1.02 }}
+                                    whileTap={{ scale: 0.98 }}
+                                    disabled={emProcessamento}
+                                    onClick={() =>
+                                      onAvaliar(
+                                        entrega,
+                                        "Avaliado",
+                                        feedbacksTemp[entrega.idEntrega] || entrega.feedback || "",
+                                      )
+                                    }
+                                    className="cursor-pointer flex-1 py-2.5 px-2 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all border border-emerald-650 dark:border-emerald-500 bg-emerald-600 dark:bg-emerald-600 text-white shadow-md shadow-emerald-500/10 disabled:opacity-50"
+                                  >
+                                    ✅ Aprovar
+                                  </motion.button>
+                                </div>
+
+                                <div className="mt-3 text-center">
+                                  {isDevolvida && (
+                                    <span className="text-red-500 dark:text-red-400 font-black text-[10px] uppercase tracking-wider">
+                                      ⚠️ Devolvida ao Aluno
+                                    </span>
+                                  )}
+                                  {isAprovada && (
+                                    <span className="text-emerald-600 dark:text-emerald-450 font-black text-[10px] uppercase tracking-wider">
+                                      ✅ Avaliada ({entrega.xpGanho} XP)
+                                    </span>
+                                  )}
                                 </div>
                               </div>
 
-                              <div className="flex gap-2.5">
-                                <motion.button
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                  onClick={() =>
-                                    onAvaliar(
-                                      entrega,
-                                      "Devolvida",
-                                      feedbacksTemp[entrega.idEntrega] || entrega.feedback || "",
-                                    )
-                                  }
-                                  className="cursor-pointer flex-1 py-3 px-2 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all border border-red-200 dark:border-red-900/30 bg-red-50/50 dark:bg-red-955/20 text-red-600 dark:text-red-400"
-                                >
-                                  🔄 Devolver
-                                </motion.button>
-                                <motion.button
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                  onClick={() =>
-                                    onAvaliar(
-                                      entrega,
-                                      "Avaliado",
-                                      feedbacksTemp[entrega.idEntrega] || entrega.feedback || "",
-                                    )
-                                  }
-                                  className="cursor-pointer flex-1 py-3 px-2 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all border border-emerald-650 dark:border-emerald-500 bg-emerald-600 dark:bg-emerald-600 text-white shadow-md shadow-emerald-500/10"
-                                >
-                                  ✅ Aprovar
-                                </motion.button>
-                              </div>
-
-                              <div className="mt-3.5 text-center">
-                                {isDevolvida && (
-                                  <span className="text-red-500 dark:text-red-400 font-black text-[10px] uppercase tracking-wider">
-                                    ⚠️ Devolvida
-                                  </span>
+                              {/* Ações Avançadas: Reverter e Excluir */}
+                              <div className="mt-4 pt-3 border-t border-slate-200/60 dark:border-slate-800/60 flex flex-col gap-1.5">
+                                {(isAprovada || isDevolvida) && onReverter && (
+                                  <button
+                                    disabled={emProcessamento}
+                                    onClick={() => handleReverter(entrega)}
+                                    className="cursor-pointer w-full py-1.5 px-2 rounded-xl text-[10px] font-bold text-slate-600 dark:text-slate-400 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                                    title="Voltar status para Aguardando Correção e estornar nota"
+                                  >
+                                    ↩️ Reverter p/ Pendente
+                                  </button>
                                 )}
-                                {isAprovada && (
-                                  <span className="text-emerald-600 dark:text-emerald-450 font-black text-[10px] uppercase tracking-wider">
-                                    ✅ Avaliada ({entrega.xpGanho} XP)
-                                  </span>
+                                {onExcluirEntrega && (
+                                  <button
+                                    disabled={emProcessamento}
+                                    onClick={() => handleExcluir(entrega)}
+                                    className="cursor-pointer w-full py-1.5 px-2 rounded-xl text-[10px] font-bold text-rose-600 dark:text-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-955/20 dark:hover:bg-rose-955/35 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+                                    title="Excluir entrega definitivamente para o aluno refazer do zero"
+                                  >
+                                    🗑️ Excluir Entrega
+                                  </button>
                                 )}
                               </div>
                             </>

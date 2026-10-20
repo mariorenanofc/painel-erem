@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     }
 
     const ROTAS_PROTEGIDAS = [
-      "salvar_atividade", "excluir_atividade", "avaliar_entrega",
+      "salvar_atividade", "excluir_atividade", "avaliar_entrega", "reverter_entrega", "excluir_entrega",
       "injetar_xp_manual", "cadastrar_aluno", "inscrever_trilhatech", "salvar_aluno",
       "mudar_status_trilhatech", "atualizar_senha_checkin", "toggle_modo_reposicao",
       "salvar_configuracoes", "sincronizar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "sincronizar_ava",
@@ -574,7 +574,7 @@ export async function POST(request: Request) {
         const alunosMap: Record<string, string> = {};
         alunosCache.forEach(a => { alunosMap[a.matricula] = a.nome || "Aluno"; });
 
-        const entregas: Array<{ idEntrega: string, matricula: string, nomeAluno: string, resposta: string, status: string, xpGanho: number, feedback: string }> = [];
+        const entregas: Array<{ idEntrega: string, matricula: string, nomeAluno: string, resposta: string, status: string, xpGanho: number, feedback: string, dataEnvio: number }> = [];
         entregasSnap.forEach(doc => {
           const e = doc.data();
           const mat = e.matricula || doc.id.split("-")[1] || "";
@@ -585,7 +585,8 @@ export async function POST(request: Request) {
             resposta: e.resposta || "",
             status: e.status || "Pendente",
             xpGanho: Number(e.xpGanho) || 0,
-            feedback: e.feedback || ""
+            feedback: e.feedback || "",
+            dataEnvio: Number(e.timestamp || e.dataEnvio || 0)
           });
         });
         result = { status: "sucesso", entregas };
@@ -1121,7 +1122,7 @@ export async function POST(request: Request) {
          
          result = { status: "sucesso", mensagem: "Ciclo Letivo encerrado com sucesso! XP zerado e veteranos formados." };
       }
-    } else if (["avaliar_entrega", "injetar_xp_manual", "atualizar_senha_checkin", "toggle_modo_reposicao", "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "justificar_falta", "resgatar_badge", "resgatar_aniversario", "confirmar_whatsapp", "cadastrar_aluno", "salvar_aluno", "inscrever_trilhatech", "mudar_status_trilhatech", "atualizar_contatos_aluno", "excluir_dia_letivo"].includes(requestAction)) {
+    } else if (["avaliar_entrega", "reverter_entrega", "excluir_entrega", "injetar_xp_manual", "atualizar_senha_checkin", "toggle_modo_reposicao", "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "justificar_falta", "resgatar_badge", "resgatar_aniversario", "confirmar_whatsapp", "cadastrar_aluno", "salvar_aluno", "inscrever_trilhatech", "mudar_status_trilhatech", "atualizar_contatos_aluno", "excluir_dia_letivo"].includes(requestAction)) {
       // FASE 4: Bypass total da planilha para escritas lentas. 
       // Simula o sucesso para forçar a execução do bloco de gravação local no Firestore logo abaixo.
       result = { status: "sucesso", mensagem: "Sincronizado via Firestore nativo (Bypass)" };
@@ -1150,7 +1151,7 @@ export async function POST(request: Request) {
 
     // 2. Se for sucesso, e for uma ação de escrita/sincronização do tutor, rodar a escrita local no Firestore
     const ACTIONS_TO_SYNC = [
-      "salvar_atividade", "excluir_atividade", "avaliar_entrega",
+      "salvar_atividade", "excluir_atividade", "avaliar_entrega", "reverter_entrega", "excluir_entrega",
       "injetar_xp_manual", "atualizar_senha_checkin", "toggle_modo_reposicao",
       "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote",
       "justificar_falta",
@@ -1253,26 +1254,39 @@ export async function POST(request: Request) {
 
             let statusAnterior = "Aguardando Correção";
             let xpAnterior = 0;
+            let respostaAnterior = "";
+            let dataEnvioAnterior = Date.now();
 
             if (entregaDoc.exists) {
-              statusAnterior = entregaDoc.data()?.status || "Aguardando Correção";
-              xpAnterior = Number(entregaDoc.data()?.xpGanho) || 0;
+              const entData = entregaDoc.data();
+              statusAnterior = entData?.status || "Aguardando Correção";
+              xpAnterior = Number(entData?.xpGanho) || 0;
+              respostaAnterior = entData?.resposta || "";
+              dataEnvioAnterior = Number(entData?.timestamp || entData?.dataEnvio || Date.now());
             }
 
-            const xpDiff = Number(xpGanho) - xpAnterior;
+            const xpFinal = Number(xpGanho) || 0;
+            const xpDiff = xpFinal - xpAnterior;
+            const now = Date.now();
+
+            let idAtividade = "";
+            if (entregaDoc.exists && entregaDoc.data()?.idAtividade) {
+              idAtividade = String(entregaDoc.data()?.idAtividade).trim();
+            } else if (payload.idAtividade) {
+              idAtividade = String(payload.idAtividade).trim();
+            } else {
+              idAtividade = idEntrega.replace(new RegExp(`-${mat}$`), "");
+            }
 
             transaction.set(entregaRef, {
               id: idEntrega,
               matricula: mat,
+              idAtividade,
               status: novoStatus,
-              xpGanho: Number(xpGanho),
+              xpGanho: xpFinal,
               feedback: String(feedback || ""),
-              timestamp: Date.now()
+              timestamp: now
             }, { merge: true });
-
-            const idAtividade = entregaDoc.exists
-              ? (entregaDoc.data()?.idAtividade || idEntrega.split("-")[0])
-              : idEntrega.split("-")[0];
 
             const getStatusCategory = (status: string, fb: string = "") => {
               const s = String(status).trim();
@@ -1295,17 +1309,246 @@ export async function POST(request: Request) {
               transaction.set(statsRef, statsUpdates, { merge: true });
             }
 
-            if (alunoDoc.exists) {
+            if (alunoDoc.exists && xpDiff !== 0) {
               const currentXp = Number(alunoDoc.data()?.xp) || 0;
               transaction.update(alunoRef, {
-                xp: currentXp + xpDiff,
-                lastUpdated: Date.now()
+                xp: Math.max(0, currentXp + xpDiff),
+                lastUpdated: now
+              });
+
+              const { semanaKey, mesKey } = getRankingKeys(new Date(dataEnvioAnterior));
+              const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+              transaction.set(rankSemanaRef, {
+                alunos: {
+                  [mat]: {
+                    xpNormal: FieldValue.increment(xpDiff),
+                    ultimoEnvio: now
+                  }
+                }
+              }, { merge: true });
+
+              const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+              transaction.set(rankMesRef, {
+                alunos: {
+                  [mat]: {
+                    xpNormal: FieldValue.increment(xpDiff),
+                    ultimoEnvio: now
+                  }
+                }
+              }, { merge: true });
+            }
+
+            // CQRS: Atualizar portal_views com feedback e novo status
+            if (mat !== "SISTEMA" && idAtividade) {
+              const portalViewRef = dbAdmin.collection("portal_views").doc(mat);
+              transaction.set(portalViewRef, {
+                entregasMap: {
+                  [idAtividade]: {
+                    resposta: respostaAnterior,
+                    status: novoStatus,
+                    xpGanho: xpFinal,
+                    dataEnvio: dataEnvioAnterior,
+                    feedback: String(feedback || "")
+                  }
+                }
+              }, { merge: true });
+            }
+          });
+
+          invalidatePortalCache(mat);
+          invalidateRankingCache();
+          await refreshFirestoreCacheAtividades(dbAdmin);
+        }
+      }
+
+      else if (action === "reverter_entrega") {
+        const { idEntrega, matricula } = payload;
+        const mat = String(matricula).trim();
+        if (idEntrega && mat) {
+          const entregaRef = dbAdmin.collection("entregas").doc(idEntrega);
+          const alunoRef = dbAdmin.collection("alunos").doc(mat);
+
+          await dbAdmin.runTransaction(async (transaction: Transaction) => {
+            const entregaDoc = await transaction.get(entregaRef);
+            const alunoDoc = await transaction.get(alunoRef);
+
+            if (!entregaDoc.exists) return;
+
+            const entData = entregaDoc.data();
+            const statusAnterior = entData?.status || "Avaliado";
+            const xpAnterior = Number(entData?.xpGanho) || 0;
+            const resposta = entData?.resposta || "";
+            const dataEnvioAnterior = Number(entData?.timestamp || entData?.dataEnvio || Date.now());
+            const now = Date.now();
+
+            let idAtividade = "";
+            if (entData?.idAtividade) {
+              idAtividade = String(entData.idAtividade).trim();
+            } else if (payload.idAtividade) {
+              idAtividade = String(payload.idAtividade).trim();
+            } else {
+              idAtividade = idEntrega.replace(new RegExp(`-${mat}$`), "");
+            }
+
+            // 1. Atualizar entrega para Aguardando Correção com 0 XP
+            transaction.update(entregaRef, {
+              status: "Aguardando Correção",
+              xpGanho: 0,
+              feedback: "",
+              timestamp: now
+            });
+
+            // 2. Se já tinha ganho XP, estornar
+            if (alunoDoc.exists && xpAnterior > 0) {
+              const currentXp = Number(alunoDoc.data()?.xp) || 0;
+              transaction.update(alunoRef, {
+                xp: Math.max(0, currentXp - xpAnterior),
+                lastUpdated: now
+              });
+
+              const { semanaKey, mesKey } = getRankingKeys(new Date(dataEnvioAnterior));
+              const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+              transaction.set(rankSemanaRef, {
+                alunos: {
+                  [mat]: {
+                    xpNormal: FieldValue.increment(-xpAnterior),
+                    ultimoEnvio: now
+                  }
+                }
+              }, { merge: true });
+
+              const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+              transaction.set(rankMesRef, {
+                alunos: {
+                  [mat]: {
+                    xpNormal: FieldValue.increment(-xpAnterior),
+                    ultimoEnvio: now
+                  }
+                }
+              }, { merge: true });
+            }
+
+            // 3. Atualizar contadores de pendências
+            if (idAtividade) {
+              const statsRef = dbAdmin.collection("estatisticas_atividades").doc(idAtividade);
+              const statsUpdates: Record<string, FieldValue> = {
+                pendentes: FieldValue.increment(1)
+              };
+              if (statusAnterior === "Aguardando Validação" || statusAnterior === "Aguardando Validacao") {
+                statsUpdates.aguardandoValidacao = FieldValue.increment(-1);
+              }
+              transaction.set(statsRef, statsUpdates, { merge: true });
+            }
+
+            // 4. CQRS: Atualizar portal_views
+            if (mat !== "SISTEMA" && idAtividade) {
+              const portalViewRef = dbAdmin.collection("portal_views").doc(mat);
+              transaction.set(portalViewRef, {
+                entregasMap: {
+                  [idAtividade]: {
+                    resposta,
+                    status: "Aguardando Correção",
+                    xpGanho: 0,
+                    dataEnvio: dataEnvioAnterior,
+                    feedback: ""
+                  }
+                }
+              }, { merge: true });
+            }
+          });
+
+          invalidatePortalCache(mat);
+          invalidateRankingCache();
+          await refreshFirestoreCacheAtividades(dbAdmin);
+          result = { status: "sucesso", mensagem: "Entrega revertida para Aguardando Correção!" };
+        }
+      }
+
+      else if (action === "excluir_entrega") {
+        const { idEntrega, matricula } = payload;
+        const mat = String(matricula).trim();
+        if (idEntrega && mat) {
+          const entregaRef = dbAdmin.collection("entregas").doc(idEntrega);
+          const alunoRef = dbAdmin.collection("alunos").doc(mat);
+
+          await dbAdmin.runTransaction(async (transaction: Transaction) => {
+            const entregaDoc = await transaction.get(entregaRef);
+            const alunoDoc = await transaction.get(alunoRef);
+
+            if (!entregaDoc.exists) return;
+
+            const entData = entregaDoc.data();
+            const statusAnterior = entData?.status || "Avaliado";
+            const xpAnterior = Number(entData?.xpGanho) || 0;
+            const dataEnvioAnterior = Number(entData?.timestamp || entData?.dataEnvio || Date.now());
+            const now = Date.now();
+
+            let idAtividade = "";
+            if (entData?.idAtividade) {
+              idAtividade = String(entData.idAtividade).trim();
+            } else if (payload.idAtividade) {
+              idAtividade = String(payload.idAtividade).trim();
+            } else {
+              idAtividade = idEntrega.replace(new RegExp(`-${mat}$`), "");
+            }
+
+            // 1. Deletar documento da entrega
+            transaction.delete(entregaRef);
+
+            // 2. Se já tinha ganho XP, estornar
+            if (alunoDoc.exists && xpAnterior > 0) {
+              const currentXp = Number(alunoDoc.data()?.xp) || 0;
+              transaction.update(alunoRef, {
+                xp: Math.max(0, currentXp - xpAnterior),
+                lastUpdated: now
+              });
+
+              const { semanaKey, mesKey } = getRankingKeys(new Date(dataEnvioAnterior));
+              const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+              transaction.set(rankSemanaRef, {
+                alunos: {
+                  [mat]: {
+                    xpNormal: FieldValue.increment(-xpAnterior),
+                    ultimoEnvio: now
+                  }
+                }
+              }, { merge: true });
+
+              const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+              transaction.set(rankMesRef, {
+                alunos: {
+                  [mat]: {
+                    xpNormal: FieldValue.increment(-xpAnterior),
+                    ultimoEnvio: now
+                  }
+                }
+              }, { merge: true });
+            }
+
+            // 3. Atualizar estatisticas_atividades
+            if (idAtividade) {
+              const statsRef = dbAdmin.collection("estatisticas_atividades").doc(idAtividade);
+              const statsUpdates: Record<string, FieldValue> = {};
+              if (statusAnterior === "Aguardando Correção") statsUpdates.pendentes = FieldValue.increment(-1);
+              if (statusAnterior === "Aguardando Validação" || statusAnterior === "Aguardando Validacao") statsUpdates.aguardandoValidacao = FieldValue.increment(-1);
+              if (Object.keys(statsUpdates).length > 0) {
+                transaction.set(statsRef, statsUpdates, { merge: true });
+              }
+            }
+
+            // 4. CQRS: Remover do portal_views usando FieldValue.delete()
+            if (mat !== "SISTEMA" && idAtividade) {
+              const portalViewRef = dbAdmin.collection("portal_views").doc(mat);
+              transaction.update(portalViewRef, {
+                [`entregasMap.${idAtividade}`]: FieldValue.delete()
               });
             }
           });
 
           invalidatePortalCache(mat);
           invalidateRankingCache();
+          await refreshFirestoreCacheAtividades(dbAdmin);
+          result = { status: "sucesso", mensagem: "Entrega excluída com sucesso! Aluno liberado para nova submissão." };
         }
       }
 

@@ -348,6 +348,7 @@ export const apiTutor = {
     xpGanho: number,
     novoStatus: string,
     feedback: string,
+    idAtividade?: string,
   ) =>
     fetchApi({
       action: "avaliar_entrega",
@@ -355,7 +356,24 @@ export const apiTutor = {
       matricula,
       xpGanho,
       novoStatus,
-      feedback
+      feedback,
+      idAtividade,
+    }),
+
+  reverterEntrega: (idEntrega: string, matricula: string, idAtividade?: string) =>
+    fetchApi({
+      action: "reverter_entrega",
+      idEntrega,
+      matricula,
+      idAtividade,
+    }),
+
+  excluirEntrega: (idEntrega: string, matricula: string, idAtividade?: string) =>
+    fetchApi({
+      action: "excluir_entrega",
+      idEntrega,
+      matricula,
+      idAtividade,
     }),
 
   // --- FREQUÊNCIA ---

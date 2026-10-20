@@ -84,6 +84,13 @@ export async function GET() {
       // Badges: junta badges do portal com as badges conquistadas nos questionários do memorial
       const badgesBase: string[] = Array.isArray(portal.badges) ? [...portal.badges] : [];
       const certificacoes: CertificacaoTech[] = Array.isArray(memorial.certificacoesTech) ? memorial.certificacoesTech : [];
+      
+      // Tecnologias de domínio: APENAS tecnologias com teste realizado e nota >= 7
+      const techStackAprovada: string[] = certificacoes
+        .filter(c => c.aprovado && Number(c.nota) >= 7)
+        .map(c => c.tech);
+
+      // Adiciona as badges concedidas nas certificações aprovadas
       certificacoes.filter(c => c.aprovado && c.badgeConcedida).forEach(c => {
         if (!badgesBase.includes(c.badgeConcedida)) {
           badgesBase.unshift(c.badgeConcedida);
@@ -92,6 +99,9 @@ export async function GET() {
 
       // Foto prioritária: fotoUrl do memorial -> avatar do portal -> dicebear
       const avatarFinal = memorial.fotoUrl || (portal.avatar as string) || `https://api.dicebear.com/9.x/bottts/svg?seed=${doc.id}`;
+
+      // Mensagem de reflexão: apenas se o aluno tiver redigido e salvo no perfil
+      const fraseFormatura = typeof memorial.fraseFormatura === "string" ? memorial.fraseFormatura.trim() : "";
 
       veteranos.push({
         matricula: doc.id,
@@ -102,11 +112,11 @@ export async function GET() {
         xpFinal,
         nivelFinal,
         especialidade: memorial.especialidadeOficial || "Desenvolvedor de Software",
-        fraseFormatura: memorial.fraseFormatura || "",
-        techStack: Array.isArray(memorial.techStack) ? memorial.techStack : [],
+        fraseFormatura,
+        techStack: techStackAprovada,
         destaque: memorial.seloHonorifico || "Lenda da Trilha Tech",
         projetosConcluidos: memorial.projetoDestaque?.titulo ? 1 : 0,
-        totalAplausos: memorial.totalAplausos || 0,
+        totalAplausos: Number(memorial.totalAplausos) || 0,
         publicadoNoHall: memorial.publicadoNoHall ?? true
       });
     });

@@ -400,3 +400,58 @@ export const calcularBadges = (dados: DadosParaBadges): Badge[] => {
     },
   ];
 };
+
+const DADOS_CATALOGO_ESTATICO: DadosParaBadges = {
+  atividades: [],
+  xpTotal: 0,
+  xpDoado: 0,
+  xpRecebido: 0,
+  totalCheckins: 0,
+  whatsappConfirmado: false,
+  aniversarioResgatado: false,
+  totalCurtidas: 0,
+};
+
+// Mapa estático indexado por ID para lookup O(1) de qualquer badge do sistema
+export const MAPA_BADGES_SISTEMA: Map<string, { id: string; nome: string; icone: string; descricao: string }> = new Map(
+  calcularBadges(DADOS_CATALOGO_ESTATICO).map((b) => [
+    b.id,
+    { id: b.id, nome: b.nome, icone: b.icone, descricao: b.descricao },
+  ])
+);
+
+export interface InfoBadgeFormatada {
+  id: string;
+  nome: string;
+  icone: string;
+  label: string;
+  descricao: string;
+}
+
+/**
+ * Traduz identificadores técnicos de badges (ex: "acer_1", "exec_2")
+ * para sua apresentação visual oficial com ícone e nome (ex: "🧠 Mente Brilhante").
+ */
+export function obterInfoBadge(badgeIdOuNome: string): InfoBadgeFormatada {
+  const limpo = badgeIdOuNome.replace(/["']/g, "").trim();
+  const encontrada = MAPA_BADGES_SISTEMA.get(limpo);
+  if (encontrada) {
+    return {
+      id: encontrada.id,
+      nome: encontrada.nome,
+      icone: encontrada.icone,
+      label: `${encontrada.icone} ${encontrada.nome}`,
+      descricao: encontrada.descricao,
+    };
+  }
+
+  // Se já for uma certificação ou badge com título/emoji (ex: "⚛️ React Specialist")
+  return {
+    id: limpo,
+    nome: limpo,
+    icone: "🏆",
+    label: limpo,
+    descricao: "Conquista Memorável da Trilha Tech",
+  };
+}
+

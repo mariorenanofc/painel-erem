@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import PerfilPublicoModal from "@/src/components/PerfilPublicoModal";
 import { apiAluno } from "@/src/services/api";
+import { obterInfoBadge } from "@/src/utils/badges";
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -74,8 +75,8 @@ const VETERANOS_MOCK: Veterano[] = [
     nome: "KELLY NAIARA BEZERRA DE ALENCAR",
     apelido: "Rainha dos Algoritmos",
     especialidade: "Arquiteta de Sistemas & Fullstack",
-    fraseFormatura: "Codar é transformar ideias abstratas em impacto real no mundo.",
-    techStack: ["React", "TypeScript", "Python", "Cloud"],
+    fraseFormatura: "",
+    techStack: [],
     avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Kelly",
     badges: ["🏅 Legado Ouro", "🏆 Trilionário", "💰 Magnata", "⭐ Elite Code", "👑 Top 1 Geral"],
     anoFormacao: 2026,
@@ -90,8 +91,8 @@ const VETERANOS_MOCK: Veterano[] = [
     nome: "BRENO RUAN LOPES DA SILVA",
     apelido: "Mestre da Lógica",
     especialidade: "Líder em IA & Algoritmos Complexos",
-    fraseFormatura: "A persistência no código é a ponte entre o bug e a inovação.",
-    techStack: ["Next.js", "Python", "Tailwind", "Machine Learning"],
+    fraseFormatura: "",
+    techStack: [],
     avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Breno",
     badges: ["🥈 Legado Prata", "💰 Magnata", "⚔️ Duelista Supremo", "🔥 Streak Mestre"],
     anoFormacao: 2026,
@@ -106,8 +107,8 @@ const VETERANOS_MOCK: Veterano[] = [
     nome: "ANNA BETHÂNIA DE MIRANDA CARVALHO",
     apelido: "Mestra Fullstack",
     especialidade: "Engenheira de Software & UI/UX Star",
-    fraseFormatura: "Design sem boa lógica é vazio; código sem bom design não toca as pessoas.",
-    techStack: ["React", "UI/UX", "Node.js", "Design Systems"],
+    fraseFormatura: "",
+    techStack: [],
     avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Anna",
     badges: ["🥉 Legado Bronze", "💰 Magnata", "🔥 Ofensiva Lendária", "💎 Criatividade"],
     anoFormacao: 2026,
@@ -122,8 +123,8 @@ const VETERANOS_MOCK: Veterano[] = [
     nome: "OTAVIO DE SOUZA BENEDITO",
     apelido: "Dev Resiliente",
     especialidade: "Especialista em Gamificação & Lógica Web",
-    fraseFormatura: "O verdadeiro dev não é o que nunca erra, mas o que não para até funcionar.",
-    techStack: ["JavaScript", "CSS Arts", "Firebase", "Game Dev"],
+    fraseFormatura: "",
+    techStack: [],
     avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Otavio",
     badges: ["🏅 Veterano Tech", "🥳 Festeiro", "🎮 Bug Hunter Pro", "🚀 Resiliência"],
     anoFormacao: 2026,
@@ -138,8 +139,8 @@ const VETERANOS_MOCK: Veterano[] = [
     nome: "WENDEL MARCOS AQUINO DE CARVALHO",
     apelido: "Fullstack Ninja",
     especialidade: "Frontend Moderno & Otimização de Performance",
-    fraseFormatura: "Código limpo e interfaces fluidas: essa é a assinatura que deixo.",
-    techStack: ["React", "TypeScript", "Tailwind", "REST APIs"],
+    fraseFormatura: "",
+    techStack: [],
     avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Wendel",
     badges: ["🏅 Veterano Tech", "💰 Magnata", "⚡ Speed Coder"],
     anoFormacao: 2026,
@@ -154,8 +155,8 @@ const VETERANOS_MOCK: Veterano[] = [
     nome: "GUSTAVO HENRIQUE GOMES DE SOUZA",
     apelido: "Bug Hunter X",
     especialidade: "Qualidade de Código & Back-end",
-    fraseFormatura: "Encontrar bugs antes do usuário é a verdadeira arte da programação.",
-    techStack: ["Node.js", "Banco de Dados", "Security", "Testes"],
+    fraseFormatura: "",
+    techStack: [],
     avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Gustavo",
     badges: ["🏅 Veterano Tech", "💰 Magnata", "🎯 Precisão Total"],
     anoFormacao: 2026,
@@ -170,8 +171,8 @@ const VETERANOS_MOCK: Veterano[] = [
     nome: "SAMARA RANYELLE LIMA DE OLIVEIRA",
     apelido: "Lenda Binária",
     especialidade: "Desenvolvimento Web & Criatividade Digital",
-    fraseFormatura: "A tecnologia nos dá o superpoder de criar o que antes só podíamos sonhar.",
-    techStack: ["HTML5", "CSS3", "JavaScript", "UI Design"],
+    fraseFormatura: "",
+    techStack: [],
     avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Samara",
     badges: ["🏅 Veterano Tech", "💎 Mente Brilhante", "🎨 Visual Pro"],
     anoFormacao: 2026,
@@ -186,8 +187,8 @@ const VETERANOS_MOCK: Veterano[] = [
     nome: "HELLEN SOFIA OLIVEIRA LOPES",
     apelido: "Mestre da Sintaxe",
     especialidade: "Aplicações Interativas & Clean Architecture",
-    fraseFormatura: "A simplicidade é o grau máximo de sofisticação de um bom algoritmo.",
-    techStack: ["React", "JavaScript", "Git", "Clean Architecture"],
+    fraseFormatura: "",
+    techStack: [],
     avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Hellen",
     badges: ["🏅 Veterano Tech", "⚡ Prodígio", "📚 Conhecimento Ouro"],
     anoFormacao: 2026,
@@ -566,8 +567,8 @@ export default function HallDaFamaPage() {
                         </div>
                       </div>
 
-                      {/* Frase / Citação da Lenda */}
-                      {vet.fraseFormatura && (
+                      {/* Frase / Citação da Lenda (Apenas se o aluno salvou sua própria reflexão) */}
+                      {Boolean(vet.fraseFormatura && vet.fraseFormatura.trim().length > 0) && (
                         <div className="p-3 bg-white/5 rounded-2xl border border-white/5 mb-4 relative">
                           <span className="text-amber-400/60 font-serif text-lg leading-none absolute top-1.5 left-2">&ldquo;</span>
                           <p className="text-xs text-slate-300 italic pl-3 leading-relaxed">
@@ -576,7 +577,7 @@ export default function HallDaFamaPage() {
                         </div>
                       )}
 
-                      {/* Stack de Tecnologias Dominadas */}
+                      {/* Stack de Tecnologias Dominadas (Apenas se aprovado em testes técnicos) */}
                       {vet.techStack && vet.techStack.length > 0 && (
                         <div className="mb-4">
                           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
@@ -595,29 +596,42 @@ export default function HallDaFamaPage() {
                         </div>
                       )}
 
-                      {/* Conquistas / Emblemas em Destaque */}
-                      {vet.badges && vet.badges.length > 0 && (
-                        <div className="mb-4">
-                          <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
-                            Conquistas Memoráveis
-                          </span>
-                          <div className="flex flex-wrap gap-1.5">
-                            {vet.badges.slice(0, 3).map((b, i) => (
-                              <span
-                                key={i}
-                                className="text-[10px] font-black bg-gradient-to-r from-amber-500/10 to-yellow-500/10 text-amber-300 border border-amber-500/30 px-2 py-0.5 rounded-md"
-                              >
-                                {b}
-                              </span>
-                            ))}
-                            {vet.badges.length > 3 && (
-                              <span className="text-[10px] font-bold bg-white/5 text-slate-400 px-1.5 py-0.5 rounded-md">
-                                +{vet.badges.length - 3}
-                              </span>
-                            )}
+                      {/* Conquistas Memoráveis com Nomes e Ícones Oficiais do Catálogo */}
+                      {(() => {
+                        const badgesVisiveis = (vet.badges || [])
+                          .filter((b) => !b.startsWith("VIP-") && !b.startsWith("BADGE-VIP-"))
+                          .map((b) => obterInfoBadge(b));
+
+                        if (badgesVisiveis.length === 0) return null;
+
+                        return (
+                          <div className="mb-4">
+                            <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400 block mb-1.5">
+                              Conquistas Memoráveis
+                            </span>
+                            <div className="flex flex-wrap gap-1.5">
+                              {badgesVisiveis.slice(0, 3).map((badgeInfo, i) => (
+                                <span
+                                  key={i}
+                                  title={badgeInfo.descricao}
+                                  className="text-[10px] font-black bg-gradient-to-r from-amber-500/10 to-yellow-500/10 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm"
+                                >
+                                  <span>{badgeInfo.icone}</span>
+                                  <span>{badgeInfo.nome}</span>
+                                </span>
+                              ))}
+                              {badgesVisiveis.length > 3 && (
+                                <span
+                                  title={badgesVisiveis.slice(3).map((b) => `${b.icone} ${b.nome}`).join(", ")}
+                                  className="text-[10px] font-bold bg-white/5 text-slate-400 px-2 py-1 rounded-lg flex items-center"
+                                >
+                                  +{badgesVisiveis.length - 3}
+                                </span>
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      )}
+                        );
+                      })()}
                     </div>
 
                     {/* Rodapé do Card: Pontuação & Botão de Aplausos */}

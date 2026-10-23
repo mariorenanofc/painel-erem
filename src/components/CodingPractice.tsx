@@ -394,6 +394,14 @@ export default function CodingPractice({
 
     const checkProgress = async () => {
       const saveKey = `coding_practice_${missaoAberta.id}`;
+      const isDevolvida = statusBD === "devolvida";
+      const isPendenteOuNova = statusBD === "pendente" || statusBD === "";
+
+      // Se devolvida ou pendente (após exclusão do tutor), garante tela destravada
+      if (isDevolvida || isPendenteOuNova) {
+        setIsLockedByAutoSubmit(false);
+      }
+
       const saved = localStorage.getItem(saveKey);
       let localParsed: TypingProgressState | null = null;
 
@@ -420,11 +428,24 @@ export default function CodingPractice({
         }
       }
 
+      // Se a atividade foi devolvida ou excluída pelo tutor, nunca restaura autoSubmitted antigo
+      if (isDevolvida || isPendenteOuNova) {
+        if (localParsed) localParsed.autoSubmitted = false;
+        if (cloudParsed && cloudParsed.autoSubmitted) {
+          cloudParsed.autoSubmitted = false;
+          if (usr.matricula) {
+            fetch(`/api/alunos/typing-progress?matricula=${usr.matricula}&idAtividade=${missaoAberta.id}`, {
+              method: "DELETE"
+            }).catch(() => {});
+          }
+        }
+      }
+
       let bestState: TypingProgressState | null = localParsed;
       if (cloudParsed) {
-         if (cloudParsed.autoSubmitted) {
+         if (cloudParsed.autoSubmitted && !isDevolvida && !isPendenteOuNova) {
             bestState = cloudParsed;
-         } else if (localParsed && localParsed.autoSubmitted) {
+         } else if (localParsed && localParsed.autoSubmitted && !isDevolvida && !isPendenteOuNova) {
             bestState = localParsed;
          } else if (!localParsed || (cloudParsed.currentIndex || 0) > (localParsed.currentIndex || 0)) {
             bestState = cloudParsed;
@@ -432,27 +453,10 @@ export default function CodingPractice({
       }
 
       if (bestState) {
-        // Salva o bestState no localStorage para que o botão "Continuar" leia dali
-        localStorage.setItem(saveKey, JSON.stringify(bestState));
-
-        if (bestState.autoSubmitted) {
-          if (statusBD !== "aguardando validação" && statusBD !== "aguardando validacao" && statusBD !== "avaliado" && statusBD !== "avaliada") {
-            // O progresso diz que enviou, mas o banco de dados principal não tem. Fallback!
-            if (usr.matricula) {
-              fetch("/api/alunos/enviar-missao", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  matricula: usr.matricula,
-                  idAtividade: missaoAberta.id,
-                  resposta: targetCode,
-                  xpGanho: bestState.finalXP || Number(missaoAberta.xp) || 200 // Fallback inteligente
-                })
-              }).catch(console.error);
-            }
-          }
+        if (bestState.autoSubmitted && !isDevolvida && !isPendenteOuNova) {
           setIsLockedByAutoSubmit(true);
         } else if (bestState.iniciado && bestState.codeLength === targetCode.length && (bestState.currentIndex ?? 0) > 0) {
+          localStorage.setItem(saveKey, JSON.stringify(bestState));
           setHasSavedProgress(true);
         }
       }

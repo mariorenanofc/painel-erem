@@ -1355,6 +1355,13 @@ export async function POST(request: Request) {
             }
           });
 
+          // Se devolvida, limpa o progresso em typing_progress para permitir refazer digitação do zero
+          if (novoStatus === "Devolvida" && payload.idAtividade) {
+            await dbAdmin.collection("typing_progress").doc(mat).update({
+              [String(payload.idAtividade).trim()]: FieldValue.delete()
+            }).catch(() => {});
+          }
+
           invalidatePortalCache(mat);
           invalidateRankingCache();
           await refreshFirestoreCacheAtividades(dbAdmin);
@@ -1377,7 +1384,6 @@ export async function POST(request: Request) {
             const entData = entregaDoc.data();
             const statusAnterior = entData?.status || "Avaliado";
             const xpAnterior = Number(entData?.xpGanho) || 0;
-            const resposta = entData?.resposta || "";
             const dataEnvioAnterior = Number(entData?.timestamp || entData?.dataEnvio || Date.now());
             const now = Date.now();
 
@@ -1390,13 +1396,8 @@ export async function POST(request: Request) {
               idAtividade = idEntrega.replace(new RegExp(`-${mat}$`), "");
             }
 
-            // 1. Atualizar entrega para Aguardando Correção com 0 XP
-            transaction.update(entregaRef, {
-              status: "Aguardando Correção",
-              xpGanho: 0,
-              feedback: "",
-              timestamp: now
-            });
+            // 1. Deletar documento da entrega para que volte ao estado 100% Pendente
+            transaction.delete(entregaRef);
 
             // 2. Se já tinha ganho XP, estornar
             if (alunoDoc.exists && xpAnterior > 0) {
@@ -1431,36 +1432,37 @@ export async function POST(request: Request) {
             // 3. Atualizar contadores de pendências
             if (idAtividade) {
               const statsRef = dbAdmin.collection("estatisticas_atividades").doc(idAtividade);
-              const statsUpdates: Record<string, FieldValue> = {
-                pendentes: FieldValue.increment(1)
-              };
+              const statsUpdates: Record<string, FieldValue> = {};
+              if (statusAnterior === "Aguardando Correção") statsUpdates.pendentes = FieldValue.increment(-1);
               if (statusAnterior === "Aguardando Validação" || statusAnterior === "Aguardando Validacao") {
                 statsUpdates.aguardandoValidacao = FieldValue.increment(-1);
               }
-              transaction.set(statsRef, statsUpdates, { merge: true });
+              if (Object.keys(statsUpdates).length > 0) {
+                transaction.set(statsRef, statsUpdates, { merge: true });
+              }
             }
 
-            // 4. CQRS: Atualizar portal_views
+            // 4. CQRS: Remover do portal_views usando FieldValue.delete()
             if (mat !== "SISTEMA" && idAtividade) {
               const portalViewRef = dbAdmin.collection("portal_views").doc(mat);
-              transaction.set(portalViewRef, {
-                entregasMap: {
-                  [idAtividade]: {
-                    resposta,
-                    status: "Aguardando Correção",
-                    xpGanho: 0,
-                    dataEnvio: dataEnvioAnterior,
-                    feedback: ""
-                  }
-                }
-              }, { merge: true });
+              transaction.update(portalViewRef, {
+                [`entregasMap.${idAtividade}`]: FieldValue.delete()
+              });
             }
           });
+
+          // Limpar progresso em typing_progress
+          let idAtivClean = payload.idAtividade ? String(payload.idAtividade).trim() : idEntrega.replace(new RegExp(`-${mat}$`), "");
+          if (idAtivClean) {
+            await dbAdmin.collection("typing_progress").doc(mat).update({
+              [idAtivClean]: FieldValue.delete()
+            }).catch(() => {});
+          }
 
           invalidatePortalCache(mat);
           invalidateRankingCache();
           await refreshFirestoreCacheAtividades(dbAdmin);
-          result = { status: "sucesso", mensagem: "Entrega revertida para Aguardando Correção!" };
+          result = { status: "sucesso", mensagem: "Entrega revertida para Pendente com sucesso! Aluno liberado para novo envio." };
         }
       }
 
@@ -1544,6 +1546,14 @@ export async function POST(request: Request) {
               });
             }
           });
+
+          // Limpar progresso em typing_progress
+          let idAtivClean = payload.idAtividade ? String(payload.idAtividade).trim() : idEntrega.replace(new RegExp(`-${mat}$`), "");
+          if (idAtivClean) {
+            await dbAdmin.collection("typing_progress").doc(mat).update({
+              [idAtivClean]: FieldValue.delete()
+            }).catch(() => {});
+          }
 
           invalidatePortalCache(mat);
           invalidateRankingCache();

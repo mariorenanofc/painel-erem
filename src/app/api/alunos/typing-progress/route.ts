@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { FieldValue } from "firebase-admin/firestore";
 
 export async function POST(request: Request) {
   try {
@@ -40,5 +41,24 @@ export async function GET(request: Request) {
   } catch (error: unknown) {
     const err = error as Error;
     return NextResponse.json({ error: "Erro ao buscar: " + err.message }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request) {
+  const { searchParams } = new URL(request.url);
+  const matricula = searchParams.get("matricula");
+  const idAtividade = searchParams.get("idAtividade");
+
+  if (!matricula || !idAtividade) {
+    return NextResponse.json({ error: "Parâmetros inválidos" }, { status: 400 });
+  }
+
+  try {
+    const docRef = dbAdmin.collection("typing_progress").doc(matricula);
+    await docRef.update({ [idAtividade]: FieldValue.delete() });
+    return NextResponse.json({ status: "sucesso", mensagem: "Progresso resetado com sucesso." });
+  } catch (error: unknown) {
+    const err = error as Error;
+    return NextResponse.json({ error: "Erro ao deletar: " + err.message }, { status: 500 });
   }
 }

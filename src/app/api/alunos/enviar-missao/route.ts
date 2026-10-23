@@ -56,22 +56,27 @@ export async function POST(request: Request) {
       const entData = entregaDoc.data()!;
       statusAtualBD = String(entData.status || "").toLowerCase().trim();
       xpAnterior = Number(entData.xpGanho) || 0;
-      if (String(entData.feedback || "").toLowerCase().includes("classroom") || String(entData.feedback || "").toLowerCase().includes("ava")) {
+      const fbLower = String(entData.feedback || "").toLowerCase();
+      // Checagem estrita para entrega de Classroom real (evita falso positivo com palavras como 'avaliação', 'gravação', etc.)
+      if (fbLower.includes("classroom") || fbLower.includes("sincronizada via ava") || /\bava\b/i.test(fbLower)) {
         ehEntregaClassroom = true;
       }
     }
 
     const isDevolvida = statusAtualBD === "devolvida";
 
-    if (ehEntregaClassroom && !isDevolvida) {
-      return NextResponse.json({ status: "erro", mensagem: "Você não precisa entregar por aqui! O sistema já avaliou automaticamente pelo Classroom. 🤖" });
-    }
-    if (linhaExistente && !isDevolvida) {
-      const isTyping = ativ.resolucaoTyping && String(ativ.resolucaoTyping).trim() !== "";
-      if (isTyping && statusAtualBD === "aguardando validação") {
-        // PERMITIR RE-ENVIO SILENCIOSO PARA O JOGO DE DIGITAÇÃO (Permite Auto-Save + Resgate Manual)
-      } else {
-        return NextResponse.json({ status: "erro", mensagem: "Você já enviou esta missão! Não é possível reenviar." });
+    // Se o tutor devolveu a atividade, ela está 100% liberada para reenvio do aluno!
+    if (!isDevolvida) {
+      if (ehEntregaClassroom) {
+        return NextResponse.json({ status: "erro", mensagem: "Você não precisa entregar por aqui! O sistema já avaliou automaticamente pelo Classroom. 🤖" });
+      }
+      if (linhaExistente) {
+        const isTyping = ativ.resolucaoTyping && String(ativ.resolucaoTyping).trim() !== "";
+        if (isTyping && statusAtualBD === "aguardando validação") {
+          // PERMITIR RE-ENVIO SILENCIOSO PARA O JOGO DE DIGITAÇÃO (Permite Auto-Save + Resgate Manual)
+        } else {
+          return NextResponse.json({ status: "erro", mensagem: "Você já enviou esta missão! Não é possível reenviar." });
+        }
       }
     }
 

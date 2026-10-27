@@ -59,8 +59,8 @@ docs/
     └── appscript/               # Scripts e documentação técnica legada do Google Apps Script
 ```
 
-> [!NOTE]
-> As diretrizes ativas de codificação para agentes e desenvolvedores estão centralizadas em [`.agents/AGENTS.md`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/.agents/AGENTS.md).
+> [!IMPORTANT]
+> **Instrução Obrigatória para IAs e Desenvolvedores:** Antes de propor ou implementar qualquer alteração neste repositório, leia integralmente [`.agents/AGENTS.md`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/.agents/AGENTS.md), que contém a Constituição do Agente Guardião, o Mapa Anti-Alucinação de coleções/arquivos e o Roteador de Arquitetura.
 
 ---
 

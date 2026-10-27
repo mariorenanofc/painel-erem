@@ -176,43 +176,78 @@ export default function GestaoAulasPage() {
 
   const iniciarSincronizacaoAVA = async () => {
     setSincronizandoAVA(true);
-    setProgressoSync({ progresso: 10, mensagem: "Conectando ao banco de dados..." });
-    try {
-      await new Promise((r) => setTimeout(r, 800));
-      setProgressoSync({ progresso: 40, mensagem: "Analisando módulos e buscando entregas ativas..." });
+    setProgressoSync({ progresso: 5, mensagem: "Conectando à API do Google Classroom..." });
 
+    // Progresso fluido e orgânico baseado nas etapas reais de pesquisa
+    let currentProgress = 5;
+    const stages = [
+      { max: 18, speed: 1.5, msg: "Autenticando credenciais do Google Classroom..." },
+      { max: 36, speed: 1.2, msg: "Carregando catálogo de alunos e turmas ativas..." },
+      { max: 58, speed: 0.9, msg: "Analisando módulos e buscando atividades vigentes..." },
+      { max: 76, speed: 0.6, msg: "Consultando submissões e notas no Classroom..." },
+      { max: 92, speed: 0.35, msg: "Cruzando dados de entrega e pontuações de XP..." },
+      { max: 96, speed: 0.1, msg: "Finalizando auditoria e sincronizando carteiras..." },
+    ];
+
+    let currentStageIndex = 0;
+    const interval = setInterval(() => {
+      const stage = stages[currentStageIndex];
+      if (stage) {
+        if (currentProgress < stage.max) {
+          currentProgress = Math.min(stage.max, currentProgress + stage.speed);
+          setProgressoSync({
+            progresso: Math.round(currentProgress),
+            mensagem: stage.msg,
+          });
+        } else if (currentStageIndex < stages.length - 1) {
+          currentStageIndex++;
+        }
+      }
+    }, 200);
+
+    try {
       const res = await fetch("/api/tutor/sincronizar-ava", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ filtroTurma: filtroSyncTurma, filtroModulo: filtroSyncModulo }),
       });
-      
-      setProgressoSync({ progresso: 80, mensagem: "Cruzando dados com o Classroom..." });
-      
+
+      clearInterval(interval);
+
       if (!res.ok) throw new Error("Falha na API");
-      
+
       const data = await res.json();
-      
-      setProgressoSync({ progresso: 100, mensagem: "Concluído!" });
-      
+
+      setProgressoSync({
+        progresso: 100,
+        mensagem: "Sincronização concluída com sucesso!",
+      });
+
       const match = data.mensagem?.match(/(\d+) nova\(s\)/);
       let novasEntregasTotais = 0;
       if (match && match[1]) {
-         novasEntregasTotais = parseInt(match[1], 10);
+        novasEntregasTotais = parseInt(match[1], 10);
       }
-      
+
+      await new Promise((r) => setTimeout(r, 600));
+
       if (novasEntregasTotais > 0) {
-        toast(`Sincronização concluída! ${novasEntregasTotais} nova(s) entrega(s) importada(s).`, "sync", "Sucesso!");
+        toast(
+          `Sincronização concluída! ${novasEntregasTotais} nova(s) entrega(s) importada(s).`,
+          "sync",
+          "Sucesso!",
+        );
       } else {
         toast(`Sincronização concluída. Nenhuma nota nova.`, "info", "Tudo em dia!");
       }
-      
+
       setModalSyncAberto(false);
       mutate();
-    } catch (error) {
+    } catch (error: unknown) {
+      clearInterval(interval);
       toast("Erro de conexão ao sincronizar com o AVA.", "error");
     } finally {
-      setTimeout(() => setSincronizandoAVA(false), 1000);
+      setTimeout(() => setSincronizandoAVA(false), 500);
     }
   };
 
@@ -1005,35 +1040,62 @@ export default function GestaoAulasPage() {
         </div>
       )}
 
-      {/* 🚀 MODAL 2: CARREGAMENTO DA SINCRONIZAÇÃO */}
+      {/* 🚀 MODAL 2: CARREGAMENTO DA SINCRONIZAÇÃO (AI AURORA GLOW BORDER & REAL-TIME PROGRESS) */}
       {sincronizandoAVA && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 max-w-md w-full text-center border-4 border-indigo-500">
-            <div className="text-6xl mb-4 animate-spin-slow">⚙️</div>
-            <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2">
-              Sincronizando Classroom
-            </h3>
-            <p className="text-sm font-bold text-indigo-600 dark:text-indigo-400 mb-6 h-10 flex items-center justify-center">
-              {progressoSync.mensagem || "Conectando ao banco de dados..."}
-            </p>
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
+          {/* Card Container com borda fluida e aura da IA */}
+          <div className="relative p-[3px] rounded-[32px] overflow-hidden shadow-[0_0_60px_rgba(99,102,241,0.25)] max-w-md w-full">
+            {/* 1. Halo de Brilho Atmosférico Neon (Aurora exterior pulsante) */}
+            <div className="absolute -inset-4 ai-conic-glow ai-pulse-ambient rounded-[36px] opacity-75 pointer-events-none" />
 
-            {/* BARRA DE PROGRESSO */}
-            <div className="w-full h-4 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner mb-3">
-              <div
-                className="h-full bg-indigo-500 transition-all duration-700 ease-out relative"
-                style={{ width: `${progressoSync.progresso}%` }}
-              >
-                <div className="absolute top-0 left-0 w-full h-full bg-white/20 animate-pulse"></div>
+            {/* 2. Feixe de Luz Circular Rotativo da Borda (Conic Gradient 360°) */}
+            <div className="absolute -inset-[150%] ai-conic-glow" />
+
+            {/* 3. Corpo Interno do Modal */}
+            <div className="relative bg-slate-900/95 dark:bg-slate-950/95 text-white rounded-[29px] p-8 text-center backdrop-blur-2xl shadow-inner border border-white/10">
+              {/* Brilho radial decorativo no topo */}
+              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-48 h-20 bg-indigo-500/20 blur-2xl rounded-full pointer-events-none" />
+
+              {/* Ícone Estilo Núcleo de IA */}
+              <div className="relative mx-auto mb-5 w-20 h-20 flex items-center justify-center">
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-cyan-500/30 via-indigo-500/30 to-fuchsia-500/30 blur-md animate-pulse" />
+                <div className="relative w-16 h-16 rounded-2xl bg-slate-800/80 border border-white/15 flex items-center justify-center shadow-lg backdrop-blur-sm">
+                  <span className="text-3xl animate-[spin_6s_linear_infinite] inline-block filter drop-shadow-[0_0_8px_rgba(99,102,241,0.6)]">
+                    ⚙️
+                  </span>
+                </div>
               </div>
-            </div>
 
-            <div className="flex justify-between items-center px-1">
-              <p className="text-xs text-slate-500 font-bold">
-                {progressoSync.progresso}%
+              <h3 className="text-2xl font-black text-white tracking-tight mb-2 flex items-center justify-center gap-2">
+                Sincronizando Classroom
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-500/20 text-cyan-300 border border-cyan-400/30 animate-pulse">
+                  AI Sync
+                </span>
+              </h3>
+
+              <p className="text-xs sm:text-sm font-semibold text-slate-300 mb-6 h-10 flex items-center justify-center px-4 transition-all duration-300">
+                {progressoSync.mensagem || "Conectando ao banco de dados..."}
               </p>
-              <p className="text-[10px] text-slate-400">
-                Pode levar até 2 minutos
-              </p>
+
+              {/* BARRA DE PROGRESSO COM GRADIENTE IA E SHIMMER */}
+              <div className="w-full h-3.5 bg-slate-800/80 border border-white/10 rounded-full overflow-hidden p-0.5 shadow-inner mb-3.5 relative">
+                <div
+                  className="h-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 rounded-full transition-all duration-300 ease-out relative shadow-[0_0_12px_rgba(99,102,241,0.5)]"
+                  style={{ width: `${progressoSync.progresso}%` }}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[shimmer_1.5s_infinite_linear]" />
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center px-1">
+                <span className="text-xs font-black text-cyan-400 bg-cyan-950/40 border border-cyan-500/30 px-2 py-0.5 rounded-md">
+                  {progressoSync.progresso}%
+                </span>
+                <span className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping inline-block" />
+                  Sincronização em tempo real
+                </span>
+              </div>
             </div>
           </div>
         </div>

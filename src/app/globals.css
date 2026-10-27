@@ -193,3 +193,43 @@ body {
   -webkit-background-clip: text;
   animation: textShimmer 3s linear infinite;
 }
+
+/* AI Aurora Conic Border Animations */
+@keyframes aiSpin360 {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes aiPulseGlow {
+  0%, 100% {
+    opacity: 0.55;
+    filter: blur(28px) saturate(1.2);
+  }
+  50% {
+    opacity: 0.85;
+    filter: blur(38px) saturate(1.6);
+  }
+}
+
+.ai-conic-glow {
+  background: conic-gradient(
+    from 0deg,
+    #06b6d4 0%,
+    #3b82f6 20%,
+    #8b5cf6 40%,
+    #ec4899 60%,
+    #f43f5e 80%,
+    #10b981 90%,
+    #06b6d4 100%
+  );
+  animation: aiSpin360 3.5s linear infinite;
+}
+
+.ai-pulse-ambient {
+  animation: aiPulseGlow 3s ease-in-out infinite;
+}
+

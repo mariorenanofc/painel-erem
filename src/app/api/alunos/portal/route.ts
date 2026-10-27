@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
-import { getCachedPortal, setCachedPortal, getCachedConfigs, setCachedConfigs, getCachedModulos, setCachedModulos, getCachedAtividades, setCachedAtividades, getCachedClassDates, setCachedClassDates } from "@/src/lib/cache";
+import { getCachedPortal, setCachedPortal, getCachedConfigs, setCachedConfigs, getCachedModulos, setCachedModulos, getCachedAtividades, setCachedAtividades, getCachedClassDates, setCachedClassDates, loadFirestoreCacheAtividades } from "@/src/lib/cache";
 import { calcularGamificacao } from "@/src/lib/gamificacao";
 
 interface AtividadePortal {
@@ -384,48 +384,13 @@ export async function GET(request: Request) {
     
     dadosRetorno.ofensivaDias = streak;
 
-    // 9. Atividades (com cache global de 12 horas + SINGLETON FIRESTORE)
+    // 9. Atividades (com cache global de 12 horas + SINGLETON / CHUNKED FIRESTORE)
     let atividadesList = getCachedAtividades() as AtividadeDoc[] | null;
     if (!atividadesList) {
-      console.log(`[Firestore Query] Portal: Carregando atividades publicadas (SINGLETON CACHE)`);
-      
-      const cacheDoc = await dbAdmin.collection("cache").doc("atividades_publicadas").get();
-      if (cacheDoc.exists) {
-        const data = cacheDoc.data();
-        atividadesList = data?.atividades as AtividadeDoc[] || [];
-        const updatedAt = data?.updatedAt;
-        setCachedAtividades(atividadesList, updatedAt);
-      } else {
-        console.warn(`[Firestore Query] Portal: Singleton vazio, carregando fallback...`);
-        const atividadesSnap = await dbAdmin.collection("atividades").where("statusPublicacao", "==", "Publicada").get();
-        const tempAtivList: AtividadeDoc[] = [];
-        atividadesSnap.forEach((doc: QueryDocumentSnapshot) => {
-          const data = doc.data();
-          tempAtivList.push({
-            id: doc.id,
-            titulo: data.titulo,
-            descricao: data.descricao,
-            dataLimite: data.dataLimite,
-            xp: data.xp,
-            tipo: data.tipo,
-            opcaoA: data.opcaoA,
-            opcaoB: data.opcaoB,
-            opcaoC: data.opcaoC,
-            opcaoD: data.opcaoD,
-            statusPublicacao: data.statusPublicacao,
-            turmaAlvo: data.turmaAlvo,
-            gabaritoLiberado: data.gabaritoLiberado,
-            linkClassroom: data.linkClassroom,
-            imageUrl: data.imageUrl,
-            modulo: data.modulo,
-            gabarito: data.gabarito,
-            resolucaoTyping: data.resolucaoTyping,
-            limiteTempoTyping: data.limiteTempoTyping
-          });
-        });
-        atividadesList = tempAtivList;
-        setCachedAtividades(atividadesList);
-      }
+      console.log(`[Firestore Query] Portal: Carregando atividades publicadas (Cache Particionado)`);
+      const { atividades: loadedList, updatedAt } = await loadFirestoreCacheAtividades(dbAdmin);
+      atividadesList = loadedList as AtividadeDoc[];
+      setCachedAtividades(atividadesList, updatedAt);
     }
 
     const hojeTime = new Date();

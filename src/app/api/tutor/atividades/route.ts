@@ -59,19 +59,38 @@ export async function GET(request: Request) {
     const ativSnap = await dbAdmin.collection("atividades").get();
 
     // 2. Buscar Módulos de Controle
-    const modSnap = await dbAdmin.collection("modulos").get();
     const statusModulosMap: Record<string, string> = {};
     const listaModulos: string[] = [];
-    modSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const data = doc.data();
-      const nomeMod = String(data.nome || doc.id.split("|")[0]).trim();
-      const statusMod = String(data.status || "Aberto").trim();
-      const turmaMod = String(data.turma || doc.id.split("|")[1] || "Todas").trim();
-      statusModulosMap[`${nomeMod}|${turmaMod}`] = statusMod;
-      if (!listaModulos.includes(nomeMod)) {
-        listaModulos.push(nomeMod);
-      }
-    });
+
+    const modulosCacheDoc = await dbAdmin.collection("cache").doc("modulos_gerais").get();
+    if (modulosCacheDoc.exists) {
+      const modulosList = (modulosCacheDoc.data()?.modulos as Array<{ nomeMod?: string; nome?: string; statusMod?: string; status?: string; turmaMod?: string; turma?: string }>) || [];
+      modulosList.forEach((data) => {
+        const nomeMod = String(data.nomeMod || data.nome || "").trim();
+        const statusMod = String(data.statusMod || data.status || "Aberto").trim();
+        const turmaMod = String(data.turmaMod || data.turma || "Todas").trim();
+        if (nomeMod) {
+          statusModulosMap[`${nomeMod}|${turmaMod}`] = statusMod;
+          if (!listaModulos.includes(nomeMod)) {
+            listaModulos.push(nomeMod);
+          }
+        }
+      });
+    } else {
+      const snap = await dbAdmin.collection("controle_modulos").get();
+      snap.forEach((doc: QueryDocumentSnapshot) => {
+        const data = doc.data();
+        const nomeMod = String(data.nomeMod || data.nome || doc.id.split("|")[0]).trim();
+        const statusMod = String(data.statusMod || data.status || "Aberto").trim();
+        const turmaMod = String(data.turmaMod || data.turma || doc.id.split("|")[1] || "Todas").trim();
+        if (nomeMod) {
+          statusModulosMap[`${nomeMod}|${turmaMod}`] = statusMod;
+          if (!listaModulos.includes(nomeMod)) {
+            listaModulos.push(nomeMod);
+          }
+        }
+      });
+    }
 
     // 3. Obter Estatísticas Consolidadas (Contadores de Agregação)
     const statsSnap = await dbAdmin.collection("estatisticas_atividades").get();

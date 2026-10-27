@@ -25,6 +25,21 @@ async function rebuildModulosSingleton() {
     modulos,
     updatedAt: new Date().toISOString()
   });
+
+  // Mantém a coleção legada 'modulos' sincronizada
+  for (const doc of snap.docs) {
+    const d = doc.data();
+    const nome = String(d.nomeMod || "").trim();
+    const turma = String(d.turmaMod || "Todas").trim();
+    const status = String(d.statusMod || "Aberto").trim();
+    if (nome) {
+      await dbAdmin.collection("modulos").doc(`${nome}|${turma}`).set({
+        nome,
+        turma,
+        status
+      }, { merge: true }).catch(() => {});
+    }
+  }
 }
 
 export async function POST(request: Request) {

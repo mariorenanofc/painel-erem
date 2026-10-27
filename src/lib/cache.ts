@@ -191,48 +191,191 @@ export function clearAllPortalCaches() {
 // -----------------------------------------------------------------------------
 import type { Firestore } from "firebase-admin/firestore";
 
+export interface AtividadeCacheItem {
+  id: string;
+  titulo?: string;
+  descricao?: string;
+  dataLimite?: string;
+  xp?: number;
+  tipo?: string;
+  opcaoA?: string;
+  opcaoB?: string;
+  opcaoC?: string;
+  opcaoD?: string;
+  statusPublicacao?: string;
+  turmaAlvo?: string;
+  gabaritoLiberado?: boolean;
+  linkClassroom?: string;
+  imageUrl?: string;
+  modulo?: string;
+  gabarito?: string;
+  resolucaoTyping?: string;
+  limiteTempoTyping?: number;
+}
+
+export async function loadFirestoreCacheAtividades(dbAdmin: Firestore): Promise<{ atividades: AtividadeCacheItem[]; updatedAt?: string }> {
+  try {
+    const cacheDoc = await dbAdmin.collection("cache").doc("atividades_publicadas").get();
+    if (cacheDoc.exists) {
+      const data = cacheDoc.data();
+      const updatedAt = data?.updatedAt as string | undefined;
+      const chunkCount = Number(data?.chunkCount) || 0;
+
+      if (chunkCount > 0) {
+        const chunkSnaps = await Promise.all(
+          Array.from({ length: chunkCount }).map((_, i) =>
+            dbAdmin.collection("cache").doc(`atividades_chunk_${i}`).get()
+          )
+        );
+        const allAtividades: AtividadeCacheItem[] = [];
+        for (const cDoc of chunkSnaps) {
+          if (cDoc.exists) {
+            const list = (cDoc.data()?.atividades as AtividadeCacheItem[]) || [];
+            allAtividades.push(...list);
+          }
+        }
+        return { atividades: allAtividades, updatedAt };
+      } else if (Array.isArray(data?.atividades)) {
+        return { atividades: data.atividades as AtividadeCacheItem[], updatedAt };
+      }
+    }
+
+    console.warn("[Firestore Query] Cache particionado vazio, carregando fallback da coleção atividades...");
+    const atividadesSnap = await dbAdmin.collection("atividades").where("statusPublicacao", "==", "Publicada").get();
+    const fallbackList: AtividadeCacheItem[] = [];
+    atividadesSnap.forEach((doc) => {
+      const data = doc.data();
+      fallbackList.push({
+        id: doc.id,
+        titulo: (data.titulo as string) || "",
+        descricao: (data.descricao as string) || "",
+        dataLimite: (data.dataLimite as string) || "",
+        xp: Number(data.xp) || 0,
+        tipo: (data.tipo as string) || "Projeto",
+        opcaoA: (data.opcaoA as string) || "",
+        opcaoB: (data.opcaoB as string) || "",
+        opcaoC: (data.opcaoC as string) || "",
+        opcaoD: (data.opcaoD as string) || "",
+        statusPublicacao: (data.statusPublicacao as string) || "Publicada",
+        turmaAlvo: (data.turmaAlvo as string) || "Todas",
+        gabaritoLiberado: data.gabaritoLiberado === true || String(data.gabaritoLiberado).toLowerCase() === "true",
+        linkClassroom: (data.linkClassroom as string) || "",
+        imageUrl: ((data.imageUrl || data.imagemUrl) as string) || "",
+        modulo: (data.modulo as string) || "Geral",
+        gabarito: (data.gabarito as string) || "",
+        resolucaoTyping: (data.resolucaoTyping as string) || "",
+        limiteTempoTyping: Number(data.limiteTempoTyping) || 0
+      });
+    });
+    return { atividades: fallbackList, updatedAt: new Date().toISOString() };
+  } catch (error: unknown) {
+    console.error("[Firestore Cache] Erro ao carregar cache de atividades:", error);
+    return { atividades: [], updatedAt: new Date().toISOString() };
+  }
+}
+
 export async function refreshFirestoreCacheAtividades(dbAdmin: Firestore) {
   try {
     const atividadesSnap = await dbAdmin.collection("atividades").where("statusPublicacao", "==", "Publicada").get();
-    const atividadesList: Record<string, unknown>[] = [];
+    const atividadesList: AtividadeCacheItem[] = [];
     atividadesSnap.forEach((doc) => {
       const data = doc.data();
       atividadesList.push({
         id: doc.id,
-        titulo: data.titulo,
-        descricao: data.descricao,
-        dataLimite: data.dataLimite,
-        xp: data.xp,
-        tipo: data.tipo,
-        opcaoA: data.opcaoA,
-        opcaoB: data.opcaoB,
-        opcaoC: data.opcaoC,
-        opcaoD: data.opcaoD,
-        statusPublicacao: data.statusPublicacao,
-        turmaAlvo: data.turmaAlvo,
-        gabaritoLiberado: data.gabaritoLiberado,
-        linkClassroom: data.linkClassroom,
-        imageUrl: data.imageUrl,
-        modulo: data.modulo,
-        gabarito: data.gabarito,
-        resolucaoTyping: data.resolucaoTyping,
-        limiteTempoTyping: data.limiteTempoTyping
+        titulo: (data.titulo as string) || "",
+        descricao: (data.descricao as string) || "",
+        dataLimite: (data.dataLimite as string) || "",
+        xp: Number(data.xp) || 0,
+        tipo: (data.tipo as string) || "Projeto",
+        opcaoA: (data.opcaoA as string) || "",
+        opcaoB: (data.opcaoB as string) || "",
+        opcaoC: (data.opcaoC as string) || "",
+        opcaoD: (data.opcaoD as string) || "",
+        statusPublicacao: (data.statusPublicacao as string) || "Publicada",
+        turmaAlvo: (data.turmaAlvo as string) || "Todas",
+        gabaritoLiberado: data.gabaritoLiberado === true || String(data.gabaritoLiberado).toLowerCase() === "true",
+        linkClassroom: (data.linkClassroom as string) || "",
+        imageUrl: ((data.imageUrl || data.imagemUrl) as string) || "",
+        modulo: (data.modulo as string) || "Geral",
+        gabarito: (data.gabarito as string) || "",
+        resolucaoTyping: (data.resolucaoTyping as string) || "",
+        limiteTempoTyping: Number(data.limiteTempoTyping) || 0
       });
     });
 
-    const modulosSnap = await dbAdmin.collection("modulos").get();
-    const modulosList: Record<string, unknown>[] = [];
-    modulosSnap.forEach((doc) => {
-      modulosList.push({ id: doc.id, ...doc.data() });
+    // Chunking: dividir em blocos de 150 atividades para NUNCA estourar o limite de 1MB do Firestore
+    const CHUNK_SIZE = 150;
+    const totalChunks = Math.ceil(atividadesList.length / CHUNK_SIZE);
+    const nowISO = new Date().toISOString();
+
+    const metaDoc = await dbAdmin.collection("cache").doc("atividades_publicadas").get();
+    const prevChunkCount = Number(metaDoc.data()?.chunkCount) || 0;
+
+    const chunkPromises: Promise<unknown>[] = [];
+    for (let i = 0; i < totalChunks; i++) {
+      const chunk = atividadesList.slice(i * CHUNK_SIZE, (i + 1) * CHUNK_SIZE);
+      chunkPromises.push(
+        dbAdmin.collection("cache").doc(`atividades_chunk_${i}`).set({
+          atividades: chunk,
+          index: i,
+          totalChunks,
+          updatedAt: nowISO
+        })
+      );
+    }
+
+    if (prevChunkCount > totalChunks) {
+      for (let i = totalChunks; i < prevChunkCount; i++) {
+        chunkPromises.push(dbAdmin.collection("cache").doc(`atividades_chunk_${i}`).delete());
+      }
+    }
+
+    await Promise.all(chunkPromises);
+
+    // Prepara payload do manifesto (com fallback retrocompatível se couber no limite do Firestore)
+    const compactList = atividadesList.map(a => {
+      const item: Record<string, unknown> = {
+        id: a.id,
+        titulo: a.titulo || "",
+        descricao: a.descricao || "",
+        dataLimite: a.dataLimite || "",
+        xp: a.xp || 0,
+        tipo: a.tipo || "Projeto",
+        turmaAlvo: a.turmaAlvo || "Todas",
+        modulo: a.modulo || "Geral"
+      };
+      if (a.opcaoA) item.opcaoA = a.opcaoA;
+      if (a.opcaoB) item.opcaoB = a.opcaoB;
+      if (a.opcaoC) item.opcaoC = a.opcaoC;
+      if (a.opcaoD) item.opcaoD = a.opcaoD;
+      if (a.statusPublicacao) item.statusPublicacao = a.statusPublicacao;
+      if (a.gabaritoLiberado) item.gabaritoLiberado = true;
+      if (a.linkClassroom) item.linkClassroom = a.linkClassroom;
+      if (a.imageUrl) item.imageUrl = a.imageUrl;
+      if (a.gabarito) item.gabarito = a.gabarito;
+      if (a.resolucaoTyping) item.resolucaoTyping = a.resolucaoTyping;
+      if (a.limiteTempoTyping) item.limiteTempoTyping = a.limiteTempoTyping;
+      return item;
     });
 
-    await dbAdmin.collection("cache").doc("atividades_publicadas").set({
-      atividades: atividadesList,
-      modulos: modulosList,
-      updatedAt: new Date().toISOString()
-    });
-    console.log("[Firestore Cache] Cache singleton atualizado (Redução drástica de leituras ativada).");
-  } catch (err) {
+    const manifestPayload: Record<string, unknown> = {
+      chunkCount: totalChunks,
+      totalAtividades: atividadesList.length,
+      updatedAt: nowISO
+    };
+
+    // Se o payload compactado couber com segurança dentro de 1MB, grava 'atividades' no manifesto
+    const testJson = JSON.stringify({ ...manifestPayload, atividades: compactList });
+    if (Buffer.byteLength(testJson, 'utf8') < 1035000) {
+      manifestPayload.atividades = compactList;
+    }
+
+    await dbAdmin.collection("cache").doc("atividades_publicadas").set(manifestPayload);
+
+    setCachedAtividades(atividadesList, nowISO);
+
+    console.log(`[Firestore Cache] Cache particionado atualizado com sucesso (${totalChunks} chunks, ${atividadesList.length} atividades).`);
+  } catch (err: unknown) {
     console.error("[Firestore Cache] Erro ao atualizar cache de atividades:", err);
   }
 }

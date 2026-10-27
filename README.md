@@ -1,68 +1,103 @@
-# 🏫 Painel de Gestão Escolar - EREM Barão do Exu
+# 🎓 TrilhaTech — Painel de Gestão e Gamificação Escolar (EREM)
 
-Um sistema web responsivo e moderno desenvolvido para facilitar o gerenciamento de alunos da EREM Barão do Exu. A aplicação utiliza o **Google Sheets** como banco de dados dinâmico, garantindo custo zero de infraestrutura e facilidade de manutenção para a coordenação da escola.
+> **Plataforma completa de engajamento pedagógico, gamificação de sala de aula e gestão docente.**  
+> Criado e testado em ambiente escolar real na EREM Barão de Exu, integrando Google Classroom, pontuações de XP, ranking em tempo real, diário de bordo e um santuário histórico no Hall da Fama.
 
-## ✨ Funcionalidades
+---
 
-- **Autenticação Segura:** Sistema de login validado diretamente no banco de dados.
-- **Leitura em Tempo Real:** Listagem completa de alunos carregada instantaneamente da base central.
-- **Filtros e Busca:** Pesquisa global por Nome ou Matrícula e filtro dinâmico por Turmas.
-- **Sistema de Cadastro/Edição (CRUD):** Modal intuitivo para adicionar novos alunos ou atualizar dados existentes, com travas de segurança na edição da matrícula.
-- **Espelhamento de Dados:** Ao salvar um aluno, o sistema atualiza automaticamente a Base de Dados Central e a aba específica da turma correspondente no Google Sheets.
-- **Design Responsivo:** Interface construída com Tailwind CSS, adaptando-se perfeitamente de celulares a monitores ultrawide.
+## ✨ Módulos e Funcionalidades
 
-## 🛠️ Tecnologias Utilizadas
+### 🎮 1. Portal do Aluno (`/portal`)
+* **Gamificação Completa:** Níveis dinâmicos (Iniciante a Lendário), XP acumulativo, saldo em carteira e barra de progresso.
+* **Missões & Entregas:** Visualização em tempo real de missões pendentes, concluídas, devolvidas e atrasadas, organizadas por módulos de estudo.
+* **Coding Practice & Typing Test:** Desafios de código e treino de digitação com validação de precisão e tempo.
+* **Loja de Recompensas & Rifa:** Troca de XP por itens pedagógicos, prêmios reais e rifas semanais.
+* **Quiz Teórico Infinito:** Banco inteligente de perguntas aleatórias com anti-repetição e controle de teto diário.
+* **Extrato & Pix Pedagógico:** Histórico completo de transações e transferências de XP entre colegas.
 
-**Frontend:**
-- [Next.js](https://nextjs.org/) (React Framework)
-- [TypeScript](https://www.typescriptlang.org/)
-- [Tailwind CSS](https://tailwindcss.com/)
+### 🛡️ 2. Portal do Tutor & Gestão Docente (`/trilhatech`)
+* **Sincronização com Google Classroom (AVA):** Importação automatizada de submissões, notas e feedback com barra de progresso granular e auditoria de duplicidade.
+* **Radar de Atividades:** Detecção instantânea de novas atividades publicadas no Google Classroom para inclusão em lote na Trilha.
+* **Central de Correções & Auditoria:** Moderação de notas de XP, devolução de atividades para refação e estorno seguro de pontuações.
+* **Diário de Frequência & Check-in:** Chamada rápida hoje/mensal, geração de senhas rotativas de lousa e justificativa de faltas.
+* **Ranking Semanal, Mensal e Geral:** Filtros por turma, pódio dinâmico e coroação da elite semanal com injeção de bônus.
+* **Controle de Módulos & Permissões:** Abertura, fechamento e controle de status de módulos por turma.
 
-**Backend / Banco de Dados:**
-- [Google Apps Script](https://developers.google.com/apps-script) (Atuando como API RESTful)
-- Google Sheets (Atuando como Banco de Dados NoSQL em coleções separadas por abas)
+### 🏛️ 3. Hall da Fama Público (`/hall-da-fama`)
+* **Memorial Histórico de Formandos:** Vitrine pública acessível a pais, empresas e comunidade escolar.
+* **Pódio 3D & Collector Cards:** Destaque dos formandos com stacks dominadas, frases de formatura e links de projetos reais.
+* **Curadoria do Mestre:** Apenas formandos com projeto aprovado, selo honorífico e parecer oficial do tutor são laureados.
+* **Sistema de Aplausos 👏:** Reconhecimento diário autenticado para homenagear os formandos.
 
-## 📂 Arquitetura do Projeto
+---
 
-O projeto segue o padrão estrutural do Next.js App Router, focado em separação de responsabilidades (Clean Code):
+## 🛠️ Stack Tecnológica
 
-- `/src/app`: Ponto de entrada da aplicação, rotas e estilos globais.
-- `/src/components`: Componentes UI isolados e reutilizáveis (Header, Modais, Tabelas).
-- `/src/types`: Definições de tipagem estática (Interfaces TypeScript) para garantir a integridade dos dados.
-- `/src/utils`: Funções auxiliares isoladas, como formatadores de data e máscaras de input.
+* **Frontend:** [Next.js](https://nextjs.org/) (App Router), [React](https://react.dev/), [Tailwind CSS v4](https://tailwindcss.com/), [Framer Motion](https://www.framer.com/motion/), Canvas Confetti, Lucide Icons.
+* **Backend:** Next.js Route Handlers (`/api`), [Firebase Admin SDK](https://firebase.google.com/docs/admin/setup).
+* **Banco de Dados:** [Google Cloud Firestore](https://firebase.google.com/docs/firestore) Nativo.
+* **Integrações:** Google Classroom API v1, Google OAuth2, Google Apps Script (legado).
+* **Tipagem & Qualidade:** TypeScript estrito com **proibição de `any`** e validação contínua via `tsc`.
 
-## 🚀 Como rodar o projeto localmente
+---
 
-### 1. Pré-requisitos
-Certifique-se de ter o [Node.js](https://nodejs.org/) instalado em sua máquina.
+## 📚 Mapa da Documentação Oficial (`docs/`)
 
-### 2. Clonar o repositório
-```bash
-git clone [https://github.com/mariorenanofc/painel-erem.git](https://github.com/SEU_USUARIO/painel-erem.git)
-cd painel-erem
+Toda a documentação técnica, regras de arquitetura e planos de expansão estão organizados na pasta [`docs/`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/docs/):
+
+```text
+docs/
+├── arquitetura/
+│   ├── hall-da-fama.md          # Regras, modelo de dados e contratos do Hall da Fama
+│   ├── firestore-cache-cqrs.md   # CQRS (portal_views), Cache Particionado e Cotas do Firestore
+│   └── saas-expansao.md         # Planejamento SaaS, Landing Page e Onboarding Multi-Escola
+├── planejamento/
+│   ├── plano-de-acao.md         # Relatório de auditoria e roadmap de refatorações ativas
+│   ├── fases-migracao-task.md   # Histórico de conclusão das Fases 4.1 e 4.2
+│   └── historico-correcoes-criticas.md # Histórico de correções de quiz, jogos e concorrência
+└── legado/
+    └── appscript/               # Scripts e documentação técnica legada do Google Apps Script
 ```
 
-### 3. Instalar as dependências
+> [!NOTE]
+> As diretrizes ativas de codificação para agentes e desenvolvedores estão centralizadas em [`.agents/AGENTS.md`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/.agents/AGENTS.md).
+
+---
+
+## 🚀 Como Rodar Localmente
+
+### 1. Clonar o Repositório e Instalar Dependências
 ```bash
+git clone https://github.com/mariorenanofc/painel-erem.git
+cd painel-erem
 npm install
 ```
 
-### 4. Configurar Variáveis de Ambiente
-Crie um arquivo chamado `.env.local` na raiz do projeto e adicione a URL gerada pelo seu Google Apps Script:
+### 2. Configurar as Variáveis de Ambiente
+Crie um arquivo `.env.local` na raiz com as credenciais do Firebase e do Google Classroom:
 ```env
-NEXT_PUBLIC_GOOGLE_API_URL="sua_url_da_api_do_google_aqui"
+NEXT_PUBLIC_FIREBASE_PROJECT_ID="seu-projeto-id"
+FIREBASE_CLIENT_EMAIL="firebase-adminsdk@seu-projeto.iam.gserviceaccount.com"
+FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+
+GOOGLE_CLIENT_ID="seu-client-id.apps.googleusercontent.com"
+GOOGLE_CLIENT_SECRET="seu-client-secret"
+GOOGLE_REFRESH_TOKEN="seu-refresh-token"
 ```
 
-### 5. Iniciar o servidor de desenvolvimento
+### 3. Iniciar o Servidor de Desenvolvimento
 ```bash
 npm run dev
 ```
-Abra [http://localhost:3000](http://localhost:3000) no seu navegador para ver o sistema rodando.
-
-## 📦 Deploy na Vercel
-
-Este projeto está pronto para ser hospedado na [Vercel](https://vercel.com/). 
-Durante a importação do repositório no painel da Vercel, não se esqueça de adicionar a variável de ambiente `NEXT_PUBLIC_GOOGLE_API_URL` na seção de *Environment Variables* antes de concluir o deploy.
+Acesse [http://localhost:3000](http://localhost:3000) no seu navegador.
 
 ---
-Desenvolvido com 💻 por Mario Renan.
+
+## 📦 Deploy em Produção
+
+O projeto está otimizado para deploy contínuo na [Vercel](https://vercel.com/) integrado ao repositório GitHub.  
+Todas as alterações na branch `master` disparam builds automáticos com checagem rigorosa de compilação TypeScript.
+
+---
+
+Desenvolvido com 💜 e propósito educacional por **Mario Renan**.

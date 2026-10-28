@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import useSWR from "swr";
 import Header from "@/src/components/Header";
 import { useRouter } from "next/navigation";
@@ -45,7 +45,6 @@ export default function GestaoAulasPage() {
     "Turma 1 - 1º Ano",
     "Turma 2 - 2º Ano",
   ]);
-  const [nomeProjeto, setNomeProjeto] = useState("Trilha Tech");
 
   const [linksGerais, setLinksGerais] = useState({
     planilha: "https://docs.google.com/spreadsheets",
@@ -80,7 +79,6 @@ export default function GestaoAulasPage() {
   const [opcaoD, setOpcaoD] = useState("");
   const [respostaCorreta, setRespostaCorreta] = useState("A");
   const [linkClassroom, setLinkClassroom] = useState("");
-  const [statusPublicacao, setStatusPublicacao] = useState("Publicada");
   const [imagemUrl, setImagemUrl] = useState("");
   const [modulo, setModulo] = useState("Geral");
   const [gabarito, setGabarito] = useState("");
@@ -102,6 +100,10 @@ export default function GestaoAulasPage() {
     "geral" | "mensal" | "semanal"
   >("geral");
   const [filtroTurmaRanking, setFiltroTurmaRanking] = useState<string>("Todas");
+  const rankingRequestIdRef = useRef<number>(0);
+  const rankingCacheLocalRef = useRef<
+    Record<string, { data: AlunoRankingTutor[]; ts: number }>
+  >({});
   const [modalSorteioAberto, setModalSorteioAberto] = useState(false);
 
   const [aniversariantes, setAniversariantes] = useState<
@@ -243,7 +245,7 @@ export default function GestaoAulasPage() {
 
       setModalSyncAberto(false);
       mutate();
-    } catch (error: unknown) {
+    } catch {
       clearInterval(interval);
       toast("Erro de conexão ao sincronizar com o AVA.", "error");
     } finally {
@@ -268,7 +270,6 @@ export default function GestaoAulasPage() {
             setTurmasDisponiveis(resConf.configuracoes.turmas);
             setTurmaDiario(resConf.configuracoes.turmas[0]);
           }
-          setNomeProjeto(resConf.configuracoes.nomeProjeto || "Trilha Tech");
           setLinksGerais({
             planilha:
               resConf.configuracoes.linkPlanilha ||
@@ -342,7 +343,7 @@ export default function GestaoAulasPage() {
       }
       setModalImportadorAberto(false);
       mutate();
-    } catch (e) {
+    } catch {
       toast("Houve um erro ao tentar importar algumas atividades.", "error");
     } finally {
       setSalvando(false);
@@ -373,7 +374,7 @@ export default function GestaoAulasPage() {
       } else {
         toast("Erro: " + data.mensagem, "error");
       }
-    } catch (e) {
+    } catch {
       toast("Erro de conexão ao sincronizar.", "error");
     } finally {
       setSincronizandoConfig(false);
@@ -383,15 +384,41 @@ export default function GestaoAulasPage() {
   const carregarRankingTutor = async (
     tempo: "geral" | "mensal" | "semanal",
   ) => {
-    setCarregandoRanking(true);
+    const requestId = ++rankingRequestIdRef.current;
     setFiltroTempoRanking(tempo);
+
+    // Se a aba já foi carregada nos últimos 30s, exibe instantaneamente sem misturar abas
+    const cachedAba = rankingCacheLocalRef.current[tempo];
+    if (cachedAba && Date.now() - cachedAba.ts < 30000) {
+      setDadosRanking(cachedAba.data);
+      setCarregandoRanking(false);
+      return;
+    }
+
+    // Limpa visualmente a lista anterior para nunca exibir pontos do Mensal na aba Semanal
+    setDadosRanking([]);
+    setCarregandoRanking(true);
+
     try {
       const data = await apiTutor.buscarRanking(tempo);
-      if (data.status === "sucesso") setDadosRanking(data.ranking);
+      // Trava Anti-Atropelo: ignora se o usuário já trocou para outra aba enquanto carregava
+      if (requestId !== rankingRequestIdRef.current) return;
+
+      if (data.status === "sucesso" && Array.isArray(data.ranking)) {
+        rankingCacheLocalRef.current[tempo] = {
+          data: data.ranking,
+          ts: Date.now(),
+        };
+        setDadosRanking(data.ranking);
+      }
     } catch {
-      toast("Erro ao buscar o ranking.", "error");
+      if (requestId === rankingRequestIdRef.current) {
+        toast("Erro ao buscar o ranking.", "error");
+      }
     } finally {
-      setCarregandoRanking(false);
+      if (requestId === rankingRequestIdRef.current) {
+        setCarregandoRanking(false);
+      }
     }
   };
 
@@ -445,7 +472,6 @@ export default function GestaoAulasPage() {
     setOpcaoD("");
     setRespostaCorreta("A");
     setLinkClassroom("");
-    setStatusPublicacao("Publicada");
     setImagemUrl("");
     setModulo("Geral");
     setGabarito("");
@@ -478,7 +504,6 @@ export default function GestaoAulasPage() {
     setOpcaoD(String(ativ.opcaoD || ""));
     setRespostaCorreta(String(ativ.respostaCorreta || "A"));
     setLinkClassroom(String(ativ.linkClassroom || ""));
-    setStatusPublicacao(String(ativ.statusPublicacao || "Publicada"));
     setImagemUrl(String(ativ.imagemUrl || ""));
     setModulo(String(ativ.modulo || "Geral"));
     setGabarito(String(ativ.gabarito || ""));
@@ -972,7 +997,7 @@ export default function GestaoAulasPage() {
       
       {/* 🚀 MODAL 1: FILTRO DE SINCRONIZAÇÃO */}
       {modalSyncAberto && (
-        <div className="fixed inset-0 z-[5000] flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in">
+        <div className="fixed inset-0 z-5000 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in">
           <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-2xl p-8 max-w-md w-full border border-slate-200 dark:border-slate-800">
             <div className="text-5xl mb-4 text-center">⚙️</div>
             <h3 className="text-xl font-black text-slate-800 dark:text-slate-100 mb-2 text-center">
@@ -1042,7 +1067,7 @@ export default function GestaoAulasPage() {
 
       {/* 🚀 MODAL 2: CARREGAMENTO DA SINCRONIZAÇÃO (AI AURORA GLOW BORDER & REAL-TIME PROGRESS) */}
       {sincronizandoAVA && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-9999 flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-4 animate-in fade-in duration-300">
           {/* Card Container com borda fluida e aura da IA */}
           <div className="relative p-[3px] rounded-[32px] overflow-hidden shadow-[0_0_60px_rgba(99,102,241,0.25)] max-w-md w-full">
             {/* 1. Halo de Brilho Atmosférico Neon (Aurora exterior pulsante) */}
@@ -1058,7 +1083,7 @@ export default function GestaoAulasPage() {
 
               {/* Ícone Estilo Núcleo de IA */}
               <div className="relative mx-auto mb-5 w-20 h-20 flex items-center justify-center">
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-cyan-500/30 via-indigo-500/30 to-fuchsia-500/30 blur-md animate-pulse" />
+                <div className="absolute inset-0 rounded-2xl bg-linear-to-tr from-cyan-500/30 via-indigo-500/30 to-fuchsia-500/30 blur-md animate-pulse" />
                 <div className="relative w-16 h-16 rounded-2xl bg-slate-800/80 border border-white/15 flex items-center justify-center shadow-lg backdrop-blur-sm">
                   <span className="text-3xl animate-[spin_6s_linear_infinite] inline-block filter drop-shadow-[0_0_8px_rgba(99,102,241,0.6)]">
                     ⚙️
@@ -1080,10 +1105,10 @@ export default function GestaoAulasPage() {
               {/* BARRA DE PROGRESSO COM GRADIENTE IA E SHIMMER */}
               <div className="w-full h-3.5 bg-slate-800/80 border border-white/10 rounded-full overflow-hidden p-0.5 shadow-inner mb-3.5 relative">
                 <div
-                  className="h-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 rounded-full transition-all duration-300 ease-out relative shadow-[0_0_12px_rgba(99,102,241,0.5)]"
+                  className="h-full bg-linear-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 rounded-full transition-all duration-300 ease-out relative shadow-[0_0_12px_rgba(99,102,241,0.5)]"
                   style={{ width: `${progressoSync.progresso}%` }}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[shimmer_1.5s_infinite_linear]" />
+                  <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent animate-[shimmer_1.5s_infinite_linear]" />
                 </div>
               </div>
 
@@ -1108,7 +1133,7 @@ export default function GestaoAulasPage() {
       />
 
       {/* ================= CORPO INSTITUCIONAL DA PÁGINA ================= */}
-      <div className="max-w-[1536px] w-full mx-auto px-6 lg:px-8 pt-6 relative z-10">
+      <div className="max-w-384 w-full mx-auto px-6 lg:px-8 pt-6 relative z-10">
         <Header
           carregando={isLoading}
           nomeUsuario={nomeUsuario}
@@ -1155,7 +1180,7 @@ export default function GestaoAulasPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setModalSorteioAberto(true)}
-              className="cursor-pointer px-4.5 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 text-white rounded-xl text-xs font-black shadow-md shadow-amber-500/5 flex items-center gap-1.5 border-none uppercase tracking-wider"
+              className="cursor-pointer px-4.5 py-2.5 bg-linear-to-r from-amber-500 to-orange-500 hover:brightness-110 text-white rounded-xl text-xs font-black shadow-md shadow-amber-500/5 flex items-center gap-1.5 border-none uppercase tracking-wider"
             >
               🎰 Sortear Rifa
             </motion.button>
@@ -1246,7 +1271,7 @@ export default function GestaoAulasPage() {
         </div>
       </div>
 
-      <div className="max-w-[1536px] w-full mx-auto px-6 lg:px-8">
+      <div className="max-w-384 w-full mx-auto px-6 lg:px-8">
         
         {/* BARRA DE LINKS EXTERNOS COMPACTA - DESKTOP ONLY */}
         <div className="hidden xl:flex flex-wrap gap-2 mb-6">
@@ -1370,7 +1395,7 @@ export default function GestaoAulasPage() {
           {/* PAINEL LATERAL DE CONFIGURAÇÕES - ALWAYS BLOCK ON DESKTOP, HIDE ON TRANSACTIONS, CONDITIONAL ON MOBILE */}
           <div className={`${activeTab === "ferramentas" ? "block" : "hidden"} ${activeTab === "transacoes" ? "xl:hidden" : "xl:block"} xl:col-span-1 space-y-4`}>
             {aniversariantes.length > 0 && (
-              <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800/50 p-4 rounded-xl shadow-sm transition-colors">
+              <div className="bg-linear-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800/50 p-4 rounded-xl shadow-sm transition-colors">
                 <h3 className="font-black text-sm uppercase tracking-tight text-amber-800 dark:text-amber-400 mb-1 flex items-center gap-2 transition-colors">
                   <span>🎂</span> Aniversariantes!
                 </h3>
@@ -1587,7 +1612,7 @@ export default function GestaoAulasPage() {
                         setLimiteTransacoes(Number(e.target.value));
                         setPaginaTransacoes(1);
                       }}
-                      className="w-full text-xs border border-slate-250 dark:border-slate-800 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-350 bg-slate-50 dark:bg-slate-950 outline-none transition-all shadow-sm font-bold font-black"
+                      className="w-full text-xs border border-slate-250 dark:border-slate-800 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-350 bg-slate-50 dark:bg-slate-950 outline-none transition-all shadow-sm font-black"
                     >
                       <option value={20}>Exibir 20</option>
                       <option value={50}>Exibir 50</option>

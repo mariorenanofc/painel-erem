@@ -1,7 +1,12 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
-import { getCachedTutorAtividades, setCachedTutorAtividades } from "@/src/lib/cache";
+import {
+  getCachedTutorAtividades,
+  setCachedTutorAtividades,
+  loadFirestoreCacheAtividades,
+  loadEstatisticasAtividadesResumo,
+} from "@/src/lib/cache";
 import { cookies } from "next/headers";
 
 interface TutorAtividade {
@@ -48,21 +53,25 @@ export async function GET(request: Request) {
     if (cached) {
       return NextResponse.json(cached, {
         headers: {
-          "Cache-Control": "s-maxage=30, stale-while-revalidate"
+          "Cache-Control": "no-store, max-age=0, must-revalidate"
         }
       });
     }
   }
 
   try {
-    // 1. Buscar Atividades
-    const ativSnap = await dbAdmin.collection("atividades").get();
+    // 1. Buscar Atividades via Cache Particionado (0 leituras se em RAM, ou 7 leituras dos chunks em vez de 839)
+    // E Obter Estatísticas Consolidadas (0 leituras se em RAM, ou 1 leitura do resumo em vez de 857)
+    const [{ atividades: cachedAtividadesList }, statsMap, modulosCacheDoc] = await Promise.all([
+      loadFirestoreCacheAtividades(dbAdmin),
+      loadEstatisticasAtividadesResumo(dbAdmin),
+      dbAdmin.collection("cache").doc("modulos_gerais").get(),
+    ]);
 
-    // 2. Buscar Módulos de Controle
+    // 2. Mapear Módulos de Controle
     const statusModulosMap: Record<string, string> = {};
     const listaModulos: string[] = [];
 
-    const modulosCacheDoc = await dbAdmin.collection("cache").doc("modulos_gerais").get();
     if (modulosCacheDoc.exists) {
       const modulosList = (modulosCacheDoc.data()?.modulos as Array<{ nomeMod?: string; nome?: string; statusMod?: string; status?: string; turmaMod?: string; turma?: string }>) || [];
       modulosList.forEach((data) => {
@@ -92,23 +101,9 @@ export async function GET(request: Request) {
       });
     }
 
-    // 3. Obter Estatísticas Consolidadas (Contadores de Agregação)
-    const statsSnap = await dbAdmin.collection("estatisticas_atividades").get();
-    const statsMap: Record<string, { pendentes: number; aguardandoValidacao: number; validadasAVA: number }> = {};
-
-    statsSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const data = doc.data();
-      statsMap[doc.id] = {
-        pendentes: Number(data.pendentes) || 0,
-        aguardandoValidacao: Number(data.aguardandoValidacao) || 0,
-        validadasAVA: Number(data.validadasAVA) || 0
-      };
-    });
-
     const atividades: TutorAtividade[] = [];
-    ativSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const d = doc.data();
-      const idAtiv = doc.id;
+    cachedAtividadesList.forEach((d) => {
+      const idAtiv = d.id;
       const turmaAtiv = String(d.turmaAlvo || "Todas").trim();
       const tipoAtiv = String(d.tipo || "Projeto").trim();
 
@@ -141,7 +136,7 @@ export async function GET(request: Request) {
         opcaoC: String(d.opcaoC || ""),
         opcaoD: String(d.opcaoD || ""),
         respostaCorreta: String(d.respostaCorreta || "A"),
-        linkClassroom: String(d.links_ava || d.link || d.linkClassroom || ""),
+        linkClassroom: String(d.linkClassroom || ""),
         statusPublicacao: String(d.statusPublicacao || "Publicada").trim(),
         imagemUrl: String(d.imageUrl || ""),
         modulo: nomeModulo,
@@ -168,11 +163,11 @@ export async function GET(request: Request) {
 
     return NextResponse.json(result, {
       headers: {
-        "Cache-Control": "s-maxage=30, stale-while-revalidate"
+        "Cache-Control": "no-store, max-age=0, must-revalidate"
       }
     });
   } catch (error: unknown) {
-    const err = error as Error;
+    const err = error instanceof Error ? error : new Error(String(error));
     console.error(`[API Error] Erro ao buscar atividades do tutor no Firestore: ${err.message}`);
     return NextResponse.json({ status: "erro", error: err.message }, { status: 500 });
   }

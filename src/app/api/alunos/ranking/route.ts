@@ -1,16 +1,15 @@
 export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { getCachedRanking, setCachedRanking, getCachedAtividades, setCachedAtividades, getCachedJustificativas, setCachedJustificativas } from "@/src/lib/cache";
+import {
+  getCachedRanking,
+  setCachedRanking,
+  getCachedRankingAlunosAtivos,
+  setCachedRankingAlunosAtivos,
+} from "@/src/lib/cache";
 import { getRankingKeys } from "@/src/lib/dateUtils";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 
-const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL
-  ? process.env.NEXT_PUBLIC_GOOGLE_API_URL.replace(/^["']|["']$/g, "").trim()
-  : undefined;
-const TUTOR_TOKEN_SECRET = process.env.TUTOR_TOKEN_SECRET
-  ? process.env.TUTOR_TOKEN_SECRET.replace(/^["']|["']$/g, "").trim()
-  : undefined;
 const CONTA_MESTRE = "1234567";
 
 interface RankedAluno {
@@ -26,52 +25,14 @@ interface RankedAluno {
   posicao?: number;
 }
 
-const normalizeToDateStr = (dateStr: string): string => {
-  if (!dateStr) return "";
-  let d = "", m = "", y = "";
-  if (dateStr.includes("T")) {
-    const parts = dateStr.split("T")[0].split("-");
-    if (parts.length === 3) {
-      d = parts[2];
-      m = parts[1];
-      y = parts[0];
-    }
-  } else if (dateStr.includes("-")) {
-    const parts = dateStr.split("-");
-    if (parts.length === 3) {
-      if (parts[0].length === 4) {
-        d = parts[2];
-        m = parts[1];
-        y = parts[0];
-      } else {
-        d = parts[0];
-        m = parts[1];
-        y = parts[2];
-      }
-    }
-  } else if (dateStr.includes("/")) {
-    const parts = dateStr.split("/");
-    if (parts.length === 3) {
-      d = parts[0];
-      m = parts[1];
-      y = parts[2];
-    }
-  }
-  if (d && m && y) {
-    return `${d.padStart(2, "0")}/${m.padStart(2, "0")}/${y}`;
-  }
-  return "";
-};
-
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const filtroTempo = String(searchParams.get("filtroTempo") || "geral").trim();
   const nocache = searchParams.get("nocache") === "true";
 
-  // 1. Verificar Cache
+  // 1. Verificar Cache da aba solicitada
   const cachedData = nocache ? null : getCachedRanking(filtroTempo);
   if (cachedData) {
-    console.log(`[Cache Hit] Ranking: ${filtroTempo}`);
     return NextResponse.json(cachedData, {
       headers: {
         "Cache-Control": "no-store, max-age=0, must-revalidate"
@@ -80,57 +41,54 @@ export async function GET(request: Request) {
   }
 
   try {
-    const { getFirestore } = await import("firebase-admin/firestore");
-    const db = getFirestore();
-    console.log(`[Firestore Query] Ranking: ${filtroTempo}`);
+    // 2. Carregar Alunos ativos (compartilhando cache de 60s entre as abas Geral, Mensal e Semanal)
+    let alunosAtivos = nocache ? null : getCachedRankingAlunosAtivos();
+    if (!alunosAtivos) {
+      const alunosSnap = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
+      alunosAtivos = [];
+      alunosSnap.forEach((doc: QueryDocumentSnapshot) => {
+        const data = doc.data();
+        alunosAtivos!.push({
+          matricula: doc.id,
+          nome: data.nome || `Aluno ${doc.id}`,
+          turma: data.turmaTrilha || data.turma || "",
+          nivel: data.nivel || "Iniciante",
+          avatarId: data.avatarId || "avatar-padrao",
+          xp: Number(data.xp) || 0,
+          lastUpdated: Number(data.lastUpdated) || 9999999999999
+        });
+      });
+      setCachedRankingAlunosAtivos(alunosAtivos);
+    }
 
-    // Carregar Alunos ativos
-    const alunosSnap = await db.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
     const alunosRankMap: Record<string, RankedAluno> = {};
-
-    alunosSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const mat = doc.id;
+    alunosAtivos.forEach((data) => {
+      const mat = String(data.matricula);
       if (mat === CONTA_MESTRE) return;
-      const data = doc.data();
 
       alunosRankMap[mat] = {
         matricula: mat,
-        nome: data.nome || `Aluno ${mat}`,
-        turma: data.turmaTrilha || data.turma || "",
-        nivel: data.nivel || "Iniciante",
-        avatar: data.avatarId || "avatar-padrao",
-        xpCalculado: filtroTempo === "geral" ? (data.xp || 0) : 0,
-        ultimoEnvio: data.lastUpdated || 9999999999999
+        nome: String(data.nome || `Aluno ${mat}`),
+        turma: String(data.turma || ""),
+        nivel: String(data.nivel || "Iniciante"),
+        avatar: String(data.avatarId || "avatar-padrao"),
+        xpCalculado: filtroTempo === "geral" ? (Number(data.xp) || 0) : 0,
+        ultimoEnvio: Number(data.lastUpdated) || 9999999999999
       };
     });
 
     const dataAtual = new Date();
-    let timeInicio = 0;
-    const timeFim = dataAtual.getTime();
-
-    if (filtroTempo === "semanal") {
-      const diaSemana = dataAtual.getDay();
-      const diffParaSegunda = diaSemana === 0 ? 6 : diaSemana - 1;
-      const inicioSemana = new Date(dataAtual);
-      inicioSemana.setDate(dataAtual.getDate() - diffParaSegunda);
-      inicioSemana.setHours(0, 0, 0, 0);
-      timeInicio = inicioSemana.getTime();
-    } else if (filtroTempo === "mensal") {
-      const inicioMes = new Date(dataAtual.getFullYear(), dataAtual.getMonth(), 1);
-      inicioMes.setHours(0, 0, 0, 0);
-      timeInicio = inicioMes.getTime();
-    }
 
     // Processar Entregas (Apenas no filtro de tempo ativo)
     if (filtroTempo !== "geral") {
       const { semanaKey, mesKey } = getRankingKeys(dataAtual);
 
       const targetKey = filtroTempo === "semanal" ? `ranking_semanal_${semanaKey}` : `ranking_mensal_${mesKey}`;
-      const rankingRef = db.collection("estatisticas").doc(targetKey);
+      const rankingRef = dbAdmin.collection("estatisticas").doc(targetKey);
       const rankingDoc = await rankingRef.get();
 
       if (rankingDoc.exists) {
-        const rankingData = (rankingDoc.data()?.alunos as Record<string, { xpNormal?: number, xpAtrasado?: number, ultimoEnvio?: number }>) || {};
+        const rankingData = (rankingDoc.data()?.alunos as Record<string, { xpNormal?: number; xpAtrasado?: number; ultimoEnvio?: number }>) || {};
         
         for (const mat of Object.keys(alunosRankMap)) {
           if (rankingData[mat]) {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbAdmin, registrarLogSeguranca } from "@/src/lib/firebaseAdmin";
 import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
-import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades, getCachedAdminAlunos, setCachedAdminAlunos, invalidateAdminAlunosCache, getCachedAnalyticsGeral, setCachedAnalyticsGeral, getCachedClassDates, getAlunosAtivosSnapshot } from "@/src/lib/cache";
+import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades, loadFirestoreCacheAtividades, getNextAtividadeId, loadFirestoreConfiguracoes, getCachedAdminAlunos, setCachedAdminAlunos, invalidateAdminAlunosCache, getCachedAnalyticsGeral, setCachedAnalyticsGeral, getCachedClassDates, getAlunosAtivosSnapshot, refreshAlunosAtivosSnapshot } from "@/src/lib/cache";
 import { Transaction, FieldValue, FieldPath, QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { cookies } from "next/headers";
 import { getRankingKeys } from "@/src/lib/dateUtils";
@@ -64,13 +64,13 @@ export async function POST(request: Request) {
           return dbAdmin.collection("configuracoes").doc(key).set({ valor: configs[key] });
         });
         await Promise.all(promises);
-        
+
         // Atualiza o Singleton
         await dbAdmin.collection("cache").doc("configuracoes_gerais").set({
           ...configs,
           updatedAt: new Date().toISOString()
         });
-        
+
         invalidateConfigCache();
         return NextResponse.json({ status: "sucesso", mensagem: "Configurações sincronizadas com a planilha." });
       } else {
@@ -217,23 +217,11 @@ export async function POST(request: Request) {
     }
 
     else if (requestAction === "salvar_atividade") {
-      // Interceptação: Gravar e gerar ID diretamente no Firestore, ignorando o Sheets
+      // Interceptação: Gravar e gerar ID diretamente no Firestore em O(1) via manifesto de cache
       let idAtiv = payload.idAtividadeEdit || payload.id || payload.idAtividade;
 
       if (!idAtiv) {
-        const snapshot = await dbAdmin.collection("atividades").get();
-        let maiorId = 0;
-        snapshot.forEach(doc => {
-          const docId = doc.id;
-          if (docId.startsWith("ATIV-")) {
-            const numId = parseInt(docId.replace("ATIV-", ""), 10);
-            if (!isNaN(numId) && numId > maiorId) {
-              maiorId = numId;
-            }
-          }
-        });
-        const proximoNumero = maiorId + 1;
-        idAtiv = "ATIV-" + proximoNumero.toString().padStart(3, '0');
+        idAtiv = await getNextAtividadeId(dbAdmin);
       }
 
       result = {
@@ -249,11 +237,7 @@ export async function POST(request: Request) {
         mensagem: "Missão excluída diretamente no Firestore!"
       };
     } else if (requestAction === "buscar_configuracoes") {
-      const snapshot = await dbAdmin.collection("configuracoes").get();
-      const configuracoes: Record<string, unknown> = {};
-      snapshot.forEach(doc => {
-        configuracoes[doc.id] = doc.data().valor;
-      });
+      const configuracoes = await loadFirestoreConfiguracoes(dbAdmin);
       result = { status: "sucesso", configuracoes };
     } else if (requestAction === "listar_alunos_godmode") {
       let alunos: Record<string, unknown>[] = [];
@@ -564,7 +548,8 @@ export async function POST(request: Request) {
           .where(FieldPath.documentId(), "<=", `${idAtiv}-\uf8ff`)
           .get();
 
-        let alunosCache = getCachedAdminAlunos() as Array<{ matricula: string, nome: string }> | null;
+        let alunosCache = (await getAlunosAtivosSnapshot(dbAdmin)) as Array<{ matricula: string, nome: string }> | null;
+        if (!alunosCache) alunosCache = getCachedAdminAlunos() as Array<{ matricula: string, nome: string }> | null;
         if (!alunosCache) {
           const snapshot = await dbAdmin.collection("alunos").get();
           alunosCache = snapshot.docs.map(doc => ({ matricula: doc.id, nome: String(doc.data().nome || "") }));
@@ -737,12 +722,8 @@ export async function POST(request: Request) {
       const CONTA_MESTRE = "1234567";
       const ehMestre = (mat === CONTA_MESTRE);
 
-      let limiteDiario = 50;
-      const configSnap = await dbAdmin.collection("configuracoes").get();
-      configSnap.forEach(doc => {
-        const c = doc.data();
-        if (c.chave === "LIMITE_PIX_DIARIO") limiteDiario = Number(c.valor) || 50;
-      });
+      const configMapPix = await loadFirestoreConfiguracoes(dbAdmin);
+      let limiteDiario = Number(configMapPix["LIMITE_PIX_DIARIO"]) || 50;
 
       const alunosSnap = await dbAdmin.collection("alunos").get();
 
@@ -833,12 +814,8 @@ export async function POST(request: Request) {
       if (quantidade <= 0) {
         result = { status: "erro", mensagem: "Quantidade inválida." };
       } else {
-        let limiteDiario = 50;
-        const configSnap = await dbAdmin.collection("configuracoes").get();
-        configSnap.forEach(doc => {
-          const c = doc.data();
-          if (c.chave === "LIMITE_PIX_DIARIO") limiteDiario = Number(c.valor) || 50;
-        });
+        const configMapTransf = await loadFirestoreConfiguracoes(dbAdmin);
+        const limiteDiario = Number(configMapTransf["LIMITE_PIX_DIARIO"]) || 50;
 
         const alunosSnap = await dbAdmin.collection("alunos").where("__name__", "in", [matOrigem, matDestino]).get();
         let origemDoc: QueryDocumentSnapshot | null = null, destinoDoc: QueryDocumentSnapshot | null = null;
@@ -949,7 +926,7 @@ export async function POST(request: Request) {
       const tituloLegado = `Desbloqueou: 🏅 Legado ${tipoPlaca.replace("Elite ", "")} (${nomeMes})`;
 
       const batch = dbAdmin.batch();
-      
+
       // 1. Remover a placa do dono anterior
       const entregasSnap = await dbAdmin.collection("entregas").where("idAtividade", "==", "CONQUISTA-BADGE").where("resposta", "==", `Desbloqueou: ${tipoPlaca}`).get();
 
@@ -968,7 +945,7 @@ export async function POST(request: Request) {
         .where("matricula", "==", matriculaNova)
         .where("idAtividade", "==", "CONQUISTA-BADGE")
         .get();
-        
+
       entregasAntigasSnap.forEach(doc => {
         const resp = String(doc.data().resposta || "");
         if (resp === "Desbloqueou: Elite Ouro" && tipoPlaca !== "Elite Ouro") {
@@ -1001,9 +978,9 @@ export async function POST(request: Request) {
       if (portalDoc.exists) {
         badgesAtuais = portalDoc.data()?.badges || [];
       }
-      
+
       badgesAtuais = badgesAtuais.filter((b: string) => !["Elite Ouro", "Elite Prata", "Elite Bronze"].includes(b));
-      
+
       if (!badgesAtuais.includes(tipoPlaca)) {
         badgesAtuais.push(tipoPlaca);
       }
@@ -1051,21 +1028,21 @@ export async function POST(request: Request) {
       const rifasSnap = await dbAdmin.collection("rifa_bilhetes")
         .where("status", "==", "SORTEADO_GANHADOR")
         .get();
-      
+
       let sorteioRealizado = false;
       rifasSnap.forEach((doc: QueryDocumentSnapshot) => {
         const d = doc.data();
         if (d.timestamp) {
-           const dSorteio = new Date(Number(d.timestamp));
-           if (String(dSorteio.getFullYear()) === anoAtualStr) {
-             sorteioRealizado = true;
-           }
+          const dSorteio = new Date(Number(d.timestamp));
+          if (String(dSorteio.getFullYear()) === anoAtualStr) {
+            sorteioRealizado = true;
+          }
         }
       });
 
       // 3. Check Missões (Não pode haver statusPublicacao == "Publicada")
-      const ativSnap = await dbAdmin.collection("atividades").where("statusPublicacao", "==", "Publicada").get();
-      const missaoPendenteCount = ativSnap.size;
+      const cachedAtivsFechamento = await loadFirestoreCacheAtividades(dbAdmin);
+      const missaoPendenteCount = cachedAtivsFechamento?.atividades ? cachedAtivsFechamento.atividades.filter(a => String(a.statusPublicacao || "Publicada").trim() === "Publicada").length : 0;
       const modulosEncerrados = missaoPendenteCount === 0;
 
       result = {
@@ -1081,46 +1058,47 @@ export async function POST(request: Request) {
     } else if (requestAction === "encerrar_ciclo") {
       const senhaFornecida = String(payload.senhaSeguranca || "").trim();
       const TUTOR_PASS = process.env.TUTOR_TOKEN_SECRET || "123456";
-      
+
       if (senhaFornecida !== TUTOR_PASS && payload.token !== TUTOR_PASS) {
         result = { status: "erro", mensagem: "Senha de segurança incorreta." };
       } else {
-         const formandos = Array.isArray(payload.formandos) ? payload.formandos : [];
-         
-         const anoAtual = new Date().getFullYear();
-         const batch = dbAdmin.batch();
-         
-         // Busca apenas os ativos
-         const snapAlunos = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
-         
-         snapAlunos.forEach((doc: QueryDocumentSnapshot) => {
-            const data = doc.data();
-            const mat = doc.id;
-            
-            // Snapshot do XP do ano
-            const historicoItem = {
-               ano: anoAtual,
-               xp: Number(data.xp) || 0,
-               nivel: data.nivel || "Iniciante"
-            };
-            
-            const isFormando = formandos.includes(mat);
-            
-            batch.update(doc.ref, {
-               historicoAnual: FieldValue.arrayUnion(historicoItem),
-               xp: 0,
-               xpGasto: 0, // Opcional, mas geralmente zera pra recomeçar a economia
-               nivel: "Iniciante",
-               statusTrilha: isFormando ? "Veterano" : "Ativo"
-            });
-         });
-         
-         await batch.commit();
-         clearAllPortalCaches();
-         invalidateRankingCache();
-         invalidateAdminAlunosCache();
-         
-         result = { status: "sucesso", mensagem: "Ciclo Letivo encerrado com sucesso! XP zerado e veteranos formados." };
+        const formandos = Array.isArray(payload.formandos) ? payload.formandos : [];
+
+        const anoAtual = new Date().getFullYear();
+        const batch = dbAdmin.batch();
+
+        // Busca apenas os ativos
+        const snapAlunos = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
+
+        snapAlunos.forEach((doc: QueryDocumentSnapshot) => {
+          const data = doc.data();
+          const mat = doc.id;
+
+          // Snapshot do XP do ano
+          const historicoItem = {
+            ano: anoAtual,
+            xp: Number(data.xp) || 0,
+            nivel: data.nivel || "Iniciante"
+          };
+
+          const isFormando = formandos.includes(mat);
+
+          batch.update(doc.ref, {
+            historicoAnual: FieldValue.arrayUnion(historicoItem),
+            xp: 0,
+            xpGasto: 0, // Opcional, mas geralmente zera pra recomeçar a economia
+            nivel: "Iniciante",
+            statusTrilha: isFormando ? "Veterano" : "Ativo"
+          });
+        });
+
+        await batch.commit();
+        clearAllPortalCaches();
+        invalidateRankingCache();
+        invalidateAdminAlunosCache();
+        await refreshAlunosAtivosSnapshot(dbAdmin);
+
+        result = { status: "sucesso", mensagem: "Ciclo Letivo encerrado com sucesso! XP zerado e veteranos formados." };
       }
     } else if (["avaliar_entrega", "reverter_entrega", "excluir_entrega", "injetar_xp_manual", "atualizar_senha_checkin", "toggle_modo_reposicao", "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "justificar_falta", "resgatar_badge", "resgatar_aniversario", "confirmar_whatsapp", "cadastrar_aluno", "salvar_aluno", "inscrever_trilhatech", "mudar_status_trilhatech", "atualizar_contatos_aluno", "excluir_dia_letivo"].includes(requestAction)) {
       // FASE 4: Bypass total da planilha para escritas lentas. 
@@ -1198,7 +1176,9 @@ export async function POST(request: Request) {
           }, { merge: true });
           invalidateRankingCache();
           clearAllPortalCaches();
-          await refreshFirestoreCacheAtividades(dbAdmin);
+          if (!payload.skipCacheRefresh) {
+            await refreshFirestoreCacheAtividades(dbAdmin);
+          }
         }
       }
 
@@ -1237,7 +1217,9 @@ export async function POST(request: Request) {
           await dbAdmin.collection("atividades").doc(id).delete();
           invalidateRankingCache();
           clearAllPortalCaches();
-          await refreshFirestoreCacheAtividades(dbAdmin);
+          if (!payload.skipCacheRefresh) {
+            await refreshFirestoreCacheAtividades(dbAdmin);
+          }
         }
       }
 
@@ -1307,6 +1289,10 @@ export async function POST(request: Request) {
               if (oldCat) statsUpdates[oldCat] = FieldValue.increment(-1);
               if (newCat) statsUpdates[newCat] = FieldValue.increment(1);
               transaction.set(statsRef, statsUpdates, { merge: true });
+              transaction.set(dbAdmin.collection("cache").doc("estatisticas_atividades_resumo"), {
+                stats: { [idAtividade]: statsUpdates },
+                updatedAt: new Date().toISOString()
+              }, { merge: true });
             }
 
             if (alunoDoc.exists && xpDiff !== 0) {
@@ -1359,12 +1345,11 @@ export async function POST(request: Request) {
           if (novoStatus === "Devolvida" && payload.idAtividade) {
             await dbAdmin.collection("typing_progress").doc(mat).update({
               [String(payload.idAtividade).trim()]: FieldValue.delete()
-            }).catch(() => {});
+            }).catch(() => { });
           }
 
           invalidatePortalCache(mat);
           invalidateRankingCache();
-          await refreshFirestoreCacheAtividades(dbAdmin);
         }
       }
 
@@ -1439,6 +1424,10 @@ export async function POST(request: Request) {
               }
               if (Object.keys(statsUpdates).length > 0) {
                 transaction.set(statsRef, statsUpdates, { merge: true });
+                transaction.set(dbAdmin.collection("cache").doc("estatisticas_atividades_resumo"), {
+                  stats: { [idAtividade]: statsUpdates },
+                  updatedAt: new Date().toISOString()
+                }, { merge: true });
               }
             }
 
@@ -1452,16 +1441,15 @@ export async function POST(request: Request) {
           });
 
           // Limpar progresso em typing_progress
-          let idAtivClean = payload.idAtividade ? String(payload.idAtividade).trim() : idEntrega.replace(new RegExp(`-${mat}$`), "");
+          const idAtivClean = payload.idAtividade ? String(payload.idAtividade).trim() : idEntrega.replace(new RegExp(`-${mat}$`), "");
           if (idAtivClean) {
             await dbAdmin.collection("typing_progress").doc(mat).update({
               [idAtivClean]: FieldValue.delete()
-            }).catch(() => {});
+            }).catch(() => { });
           }
 
           invalidatePortalCache(mat);
           invalidateRankingCache();
-          await refreshFirestoreCacheAtividades(dbAdmin);
           result = { status: "sucesso", mensagem: "Entrega revertida para Pendente com sucesso! Aluno liberado para novo envio." };
         }
       }
@@ -1535,6 +1523,10 @@ export async function POST(request: Request) {
               if (statusAnterior === "Aguardando Validação" || statusAnterior === "Aguardando Validacao") statsUpdates.aguardandoValidacao = FieldValue.increment(-1);
               if (Object.keys(statsUpdates).length > 0) {
                 transaction.set(statsRef, statsUpdates, { merge: true });
+                transaction.set(dbAdmin.collection("cache").doc("estatisticas_atividades_resumo"), {
+                  stats: { [idAtividade]: statsUpdates },
+                  updatedAt: new Date().toISOString()
+                }, { merge: true });
               }
             }
 
@@ -1548,16 +1540,15 @@ export async function POST(request: Request) {
           });
 
           // Limpar progresso em typing_progress
-          let idAtivClean = payload.idAtividade ? String(payload.idAtividade).trim() : idEntrega.replace(new RegExp(`-${mat}$`), "");
+          const idAtivClean = payload.idAtividade ? String(payload.idAtividade).trim() : idEntrega.replace(new RegExp(`-${mat}$`), "");
           if (idAtivClean) {
             await dbAdmin.collection("typing_progress").doc(mat).update({
               [idAtivClean]: FieldValue.delete()
-            }).catch(() => {});
+            }).catch(() => { });
           }
 
           invalidatePortalCache(mat);
           invalidateRankingCache();
-          await refreshFirestoreCacheAtividades(dbAdmin);
           result = { status: "sucesso", mensagem: "Entrega excluída com sucesso! Aluno liberado para nova submissão." };
         }
       }
@@ -1593,7 +1584,7 @@ export async function POST(request: Request) {
 
               // Atualizar Ranking Semanal e Mensal
               const { semanaKey, mesKey } = getRankingKeys(new Date(timestamp));
-              
+
               const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
               transaction.set(rankSemanaRef, {
                 alunos: {
@@ -1624,7 +1615,11 @@ export async function POST(request: Request) {
       else if (action === "atualizar_senha_checkin") {
         const { novaSenha } = payload;
         if (novaSenha) {
-          await dbAdmin.collection("configuracoes").doc("SENHA_CHECKIN").set({ valor: String(novaSenha).trim() });
+          const val = String(novaSenha).trim();
+          await Promise.all([
+            dbAdmin.collection("configuracoes").doc("SENHA_CHECKIN").set({ valor: val }),
+            dbAdmin.collection("cache").doc("configuracoes_gerais").set({ SENHA_CHECKIN: val, updatedAt: new Date().toISOString() }, { merge: true })
+          ]);
           invalidateConfigCache();
         }
       }
@@ -1632,7 +1627,11 @@ export async function POST(request: Request) {
       else if (action === "toggle_modo_reposicao") {
         const { status } = payload;
         if (status) {
-          await dbAdmin.collection("configuracoes").doc("MODO_REPOSICAO").set({ valor: String(status).trim() });
+          const val = String(status).trim();
+          await Promise.all([
+            dbAdmin.collection("configuracoes").doc("MODO_REPOSICAO").set({ valor: val }),
+            dbAdmin.collection("cache").doc("configuracoes_gerais").set({ MODO_REPOSICAO: val, updatedAt: new Date().toISOString() }, { merge: true })
+          ]);
           invalidateConfigCache();
         }
       }
@@ -1643,6 +1642,12 @@ export async function POST(request: Request) {
           const promises = Object.keys(configs).map(key => {
             return dbAdmin.collection("configuracoes").doc(key).set({ valor: configs[key] });
           });
+          promises.push(
+            dbAdmin.collection("cache").doc("configuracoes_gerais").set({
+              ...configs,
+              updatedAt: new Date().toISOString()
+            }, { merge: true })
+          );
           await Promise.all(promises);
           invalidateConfigCache();
         }
@@ -1770,7 +1775,7 @@ export async function POST(request: Request) {
 
               // Atualizar Ranking Semanal e Mensal
               const { semanaKey, mesKey } = getRankingKeys(new Date(timestamp));
-              
+
               const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
               transaction.set(rankSemanaRef, {
                 alunos: {
@@ -1930,6 +1935,7 @@ export async function POST(request: Request) {
           }, { merge: true });
           invalidatePortalCache(mat);
           invalidateAdminAlunosCache();
+          await refreshAlunosAtivosSnapshot(dbAdmin);
         }
       }
 
@@ -1955,6 +1961,7 @@ export async function POST(request: Request) {
           await dbAdmin.collection("alunos").doc(mat).set(updateData, { merge: true });
           invalidatePortalCache(mat);
           invalidateAdminAlunosCache();
+          await refreshAlunosAtivosSnapshot(dbAdmin);
         }
       }
 

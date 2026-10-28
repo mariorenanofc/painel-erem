@@ -264,6 +264,12 @@ export async function POST(request: Request) {
         if (oldCat) statsUpdates[oldCat] = FieldValue.increment(-1);
         if (newCat) statsUpdates[newCat] = FieldValue.increment(1);
         transaction.set(statsRef, statsUpdates, { merge: true });
+
+        const statsResumoRef = dbAdmin.collection("cache").doc("estatisticas_atividades_resumo");
+        transaction.set(statsResumoRef, {
+          stats: { [idAtividade]: statsUpdates },
+          updatedAt: new Date().toISOString()
+        }, { merge: true });
       }
 
       // Calcular novo XP

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { getCachedAdminAlunos, setCachedAdminAlunos, getAlunosAtivosSnapshot, invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
+import { getCachedAdminAlunos, setCachedAdminAlunos, getAlunosAtivosSnapshot, invalidatePortalCache, invalidateRankingCache, getCachedTransacoesRecentes, setCachedTransacoesRecentes } from "@/src/lib/cache";
 import { QueryDocumentSnapshot, Transaction, FieldValue } from "firebase-admin/firestore";
 import { cookies } from "next/headers";
 import { getRankingKeys } from "@/src/lib/dateUtils";
@@ -93,13 +93,18 @@ export async function GET(request: Request) {
     });
 
     // 2. Tentar buscar transações (entregas) no Firestore
-    const entregasSnap = await dbAdmin
+    const cachedEntregas = getCachedTransacoesRecentes<Transacao>();
+    if (cachedEntregas) {
+      cachedEntregas.forEach(item => transacoes.push({ ...item, nomeAluno: alunosMap[item.matricula] || item.matricula }));
+    }
+    const entregasSnap = cachedEntregas ? null : await dbAdmin
       .collection("entregas")
       .orderBy("timestamp", "desc")
       .limit(350) // Limite de varredura rápida em memória
       .get();
 
-    entregasSnap.forEach((doc: QueryDocumentSnapshot) => {
+    if (entregasSnap) setCachedTransacoesRecentes(transacoes);
+    entregasSnap?.forEach((doc: QueryDocumentSnapshot) => {
       const data = doc.data();
       const matricula = String(data.matricula || "").trim();
       transacoes.push({
@@ -308,6 +313,30 @@ export async function PUT(request: Request) {
         timestamp: Date.now() // Força sincronização
       });
 
+      // 1.1 Atualizar contadores estatísticos se o status mudou
+      const idAtivClean = String(antigaEntrega.idAtividade || "").trim();
+      if (idAtivClean && idAtivClean.startsWith("ATIV-")) {
+        const getStatusCategory = (st: string, fb: string = "") => {
+          const s = String(st || "").trim();
+          if (s === "Aguardando Correção") return "pendentes";
+          if (s === "Aguardando Validação" || s === "Aguardando Validacao") return "aguardandoValidacao";
+          if (s === "Avaliado" && (fb.includes("Classroom") || fb.includes("AVA") || fb.includes("sincronizada"))) return "validadasAVA";
+          return null;
+        };
+        const oldCat = getStatusCategory(String(antigaEntrega.status || ""), String(antigaEntrega.feedback || ""));
+        const newCat = getStatusCategory(novoStatus, novoFeedback);
+        if (oldCat !== newCat) {
+          const statsUpdates: Record<string, FieldValue> = {};
+          if (oldCat) statsUpdates[oldCat] = FieldValue.increment(-1);
+          if (newCat) statsUpdates[newCat] = FieldValue.increment(1);
+          transaction.set(dbAdmin.collection("estatisticas_atividades").doc(idAtivClean), statsUpdates, { merge: true });
+          transaction.set(dbAdmin.collection("cache").doc("estatisticas_atividades_resumo"), {
+            stats: { [idAtivClean]: statsUpdates },
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        }
+      }
+
       // 2. Se mudou o XP e a transação afeta um aluno ativo
       if (alunoDocRef) {
         transaction.update(alunoDocRef, {
@@ -446,6 +475,23 @@ export async function DELETE(request: Request) {
         resposta: `[EXCLUÍDA] ${antigaResposta}`,
         timestamp: Date.now() // Força sincronização
       });
+
+      const idAtivDel = String(antigaEntrega.idAtividade || "").trim();
+      if (idAtivDel && idAtivDel.startsWith("ATIV-")) {
+        const sAnt = String(antigaEntrega.status || "").trim();
+        const fbAnt = String(antigaEntrega.feedback || "");
+        const statsUpdates: Record<string, FieldValue> = {};
+        if (sAnt === "Aguardando Correção") statsUpdates.pendentes = FieldValue.increment(-1);
+        if (sAnt === "Aguardando Validação" || sAnt === "Aguardando Validacao") statsUpdates.aguardandoValidacao = FieldValue.increment(-1);
+        if (sAnt === "Avaliado" && (fbAnt.includes("Classroom") || fbAnt.includes("AVA") || fbAnt.includes("sincronizada"))) statsUpdates.validadasAVA = FieldValue.increment(-1);
+        if (Object.keys(statsUpdates).length > 0) {
+          transaction.set(dbAdmin.collection("estatisticas_atividades").doc(idAtivDel), statsUpdates, { merge: true });
+          transaction.set(dbAdmin.collection("cache").doc("estatisticas_atividades_resumo"), {
+            stats: { [idAtivDel]: statsUpdates },
+            updatedAt: new Date().toISOString()
+          }, { merge: true });
+        }
+      }
 
       // 2. Estornar XP do saldo total do estudante
       if (alunoDocRef) {

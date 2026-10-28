@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const TABELA_XP_PADRAO = {
@@ -23,6 +23,8 @@ interface AtividadeRadar {
   linkClassroom: string;
   xpRecomendado: number;
   dataLimite: string;
+  estadoClassroom?: string;
+  creationTime?: string;
 }
 
 interface AtividadeParseada {
@@ -37,6 +39,10 @@ interface AtividadeParseada {
   opcaoA?: string;
   resolucaoTyping?: string;
   limiteTempoTyping?: number;
+  estadoClassroom?: string;
+  statusPublicacao?: string;
+  creationTime?: string;
+  aulaNumero?: number;
 }
 
 interface ImportadorLoteModalProps {
@@ -51,6 +57,11 @@ interface ImportadorLoteModalProps {
   ) => Promise<void>;
 }
 
+const extrairNumeroAula = (titulo: string): number => {
+  const m = String(titulo).match(/aula\s*(\d+)/i);
+  return m ? parseInt(m[1], 10) : 9999;
+};
+
 export default function ImportadorLoteModal({
   isOpen,
   onClose,
@@ -60,16 +71,23 @@ export default function ImportadorLoteModal({
 }: ImportadorLoteModalProps) {
   const [modulo, setModulo] = useState("");
   const [turma, setTurma] = useState("Todas");
-  
+
   const [cursos, setCursos] = useState<CursoClassroom[]>([]);
   const [cursoSelecionado, setCursoSelecionado] = useState("");
-  
+
   const [atividades, setAtividades] = useState<AtividadeParseada[]>([]);
   const [etapa, setEtapa] = useState<1 | 2>(1);
   const [importando, setImportando] = useState(false);
   const [buscando, setBuscando] = useState(false);
   const [buscandoCursos, setBuscandoCursos] = useState(false);
   const [erroBuscar, setErroBuscar] = useState("");
+
+  // Novos controles de organização e filtragem para listas grandes
+  const [filtroEstado, setFiltroEstado] = useState<"TODOS" | "PUBLISHED" | "DRAFT">("TODOS");
+  const [buscaTexto, setBuscaTexto] = useState("");
+  const [ordenacao, setOrdenacao] = useState<"aula_asc" | "aula_desc" | "recentes">("aula_asc");
+  const [modoCompacto, setModoCompacto] = useState(true);
+  const [idExpandido, setIdExpandido] = useState<string | null>(null);
 
   // Zera estados e busca cursos quando o modal abre
   useEffect(() => {
@@ -80,6 +98,11 @@ export default function ImportadorLoteModal({
       setAtividades([]);
       setEtapa(1);
       setErroBuscar("");
+      setFiltroEstado("TODOS");
+      setBuscaTexto("");
+      setOrdenacao("aula_asc");
+      setModoCompacto(true);
+      setIdExpandido(null);
       buscarCursos();
     }
   }, [isOpen]);
@@ -95,7 +118,7 @@ export default function ImportadorLoteModal({
       } else {
         setErroBuscar(data.mensagem || "Erro ao buscar turmas do Classroom.");
       }
-    } catch (error: unknown) {
+    } catch {
       setErroBuscar("Falha de comunicação ao buscar turmas.");
     } finally {
       setBuscandoCursos(false);
@@ -107,19 +130,19 @@ export default function ImportadorLoteModal({
       setErroBuscar("Selecione uma turma do Classroom primeiro.");
       return;
     }
-    
+
     setBuscando(true);
     setErroBuscar("");
     try {
       const res = await fetch("/api/tutor/sincronizar-ava/radar", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ courseId: cursoSelecionado })
+        body: JSON.stringify({ courseId: cursoSelecionado }),
       });
       const data = await res.json();
-      
+
       if (data.status === "sucesso") {
-        const parseadas = data.atividades.map((ativ: AtividadeRadar) => {
+        const parseadas: AtividadeParseada[] = data.atividades.map((ativ: AtividadeRadar) => {
           let tipoPortal = "Material";
           let xp = ativ.xpRecomendado > 0 ? ativ.xpRecomendado : TABELA_XP_PADRAO.Material;
 
@@ -132,21 +155,28 @@ export default function ImportadorLoteModal({
             if (ativ.xpRecomendado === 100) xp = TABELA_XP_PADRAO.Projeto;
           }
 
+          const isDraft = ativ.estadoClassroom === "DRAFT";
           return {
             idTemp: ativ.idClassroom,
             titulo: ativ.titulo,
             tipo: tipoPortal,
             xp: xp,
-            selecionado: true,
+            // Por segurança, pré-seleciona apenas as Publicadas; Rascunhos vêm desmarcados até o tutor escolher!
+            selecionado: !isDraft,
             linkClassroom: ativ.linkClassroom,
             dataLimite: ativ.dataLimite,
             descricao: ativ.descricao,
             opcaoA: "",
             resolucaoTyping: "",
             limiteTempoTyping: 0,
+            estadoClassroom: ativ.estadoClassroom || "PUBLISHED",
+            statusPublicacao: isDraft ? "Rascunho" : "Publicada",
+            creationTime: ativ.creationTime || "",
+            aulaNumero: extrairNumeroAula(ativ.titulo),
           };
         });
         setAtividades(parseadas);
+        // Se só houver rascunhos, foca na aba TODOS; se houver publicadas, mostra todas organizadas
         setEtapa(2);
       } else {
         setErroBuscar(data.mensagem || "Erro desconhecido ao buscar radar.");
@@ -159,6 +189,45 @@ export default function ImportadorLoteModal({
     }
   };
 
+  const contadores = useMemo(() => {
+    const total = atividades.length;
+    const publicadas = atividades.filter((a) => a.estadoClassroom !== "DRAFT").length;
+    const rascunhos = atividades.filter((a) => a.estadoClassroom === "DRAFT").length;
+    const selecionadas = atividades.filter((a) => a.selecionado).length;
+    return { total, publicadas, rascunhos, selecionadas };
+  }, [atividades]);
+
+  const atividadesFiltradas = useMemo(() => {
+    let lista = [...atividades];
+
+    if (filtroEstado === "PUBLISHED") {
+      lista = lista.filter((a) => a.estadoClassroom !== "DRAFT");
+    } else if (filtroEstado === "DRAFT") {
+      lista = lista.filter((a) => a.estadoClassroom === "DRAFT");
+    }
+
+    if (buscaTexto.trim()) {
+      const termo = buscaTexto.toLowerCase().trim();
+      lista = lista.filter((a) => a.titulo.toLowerCase().includes(termo));
+    }
+
+    lista.sort((a, b) => {
+      if (ordenacao === "aula_asc") {
+        const diff = (a.aulaNumero ?? 9999) - (b.aulaNumero ?? 9999);
+        if (diff !== 0) return diff;
+        return a.titulo.localeCompare(b.titulo, "pt-BR", { numeric: true });
+      }
+      if (ordenacao === "aula_desc") {
+        const diff = (b.aulaNumero ?? 0) - (a.aulaNumero ?? 0);
+        if (diff !== 0) return diff;
+        return b.titulo.localeCompare(a.titulo, "pt-BR", { numeric: true });
+      }
+      return new Date(b.creationTime || 0).getTime() - new Date(a.creationTime || 0).getTime();
+    });
+
+    return lista;
+  }, [atividades, filtroEstado, buscaTexto, ordenacao]);
+
   const toggleSelecao = (idTemp: string) => {
     setAtividades((prev) =>
       prev.map((a) =>
@@ -167,9 +236,16 @@ export default function ImportadorLoteModal({
     );
   };
 
+  const selecionarVisiveis = (marcar: boolean) => {
+    const idsVisiveis = new Set(atividadesFiltradas.map((a) => a.idTemp));
+    setAtividades((prev) =>
+      prev.map((a) => (idsVisiveis.has(a.idTemp) ? { ...a, selecionado: marcar } : a)),
+    );
+  };
+
   const atualizarAtividade = (idTemp: string, campo: string, valor: string | number | boolean) => {
     setAtividades((prev) =>
-      prev.map((a) => (a.idTemp === idTemp ? { ...a, [campo]: valor } : a))
+      prev.map((a) => (a.idTemp === idTemp ? { ...a, [campo]: valor } : a)),
     );
   };
 
@@ -208,12 +284,12 @@ export default function ImportadorLoteModal({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.93, opacity: 0, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className={`glass-panel-heavy bg-white/95 dark:bg-slate-900/95 rounded-[2.5rem] shadow-[0_0_50px_rgba(59,130,246,0.15)] border border-slate-200/80 dark:border-white/5 w-full overflow-hidden flex flex-col relative z-10 transition-all duration-300 ${etapa === 2 ? 'max-w-[95vw] h-[95vh]' : 'max-w-4xl max-h-[90vh]'}`}
+            className={`glass-panel-heavy bg-white/95 dark:bg-slate-900/95 rounded-[2.5rem] shadow-[0_0_50px_rgba(59,130,246,0.15)] border border-slate-200/80 dark:border-white/5 w-full overflow-hidden flex flex-col relative z-10 transition-all duration-300 ${etapa === 2 ? "max-w-[95vw] h-[95vh]" : "max-w-4xl max-h-[90vh]"}`}
           >
             <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
 
-            <div className="bg-gradient-to-r from-blue-600 via-indigo-700 to-indigo-950 p-6 flex justify-between items-center text-white shrink-0 relative border-b border-white/5">
-              <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
+            <div className="bg-linear-to-r from-blue-600 via-indigo-700 to-indigo-950 p-5 md:p-6 flex justify-between items-center text-white shrink-0 relative border-b border-white/5">
+              <div className="absolute inset-0 bg-linear-to-b from-white/5 to-transparent pointer-events-none" />
               <div className="relative z-10">
                 <h2 className="font-display font-black text-lg md:text-xl flex items-center gap-2.5 tracking-tight">
                   <span className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-sm shadow-inner">
@@ -222,7 +298,7 @@ export default function ImportadorLoteModal({
                   Radar do Classroom
                 </h2>
                 <p className="text-white/70 text-[10px] font-black uppercase tracking-wider mt-1">
-                  Encontrando Novas Atividades Publicadas
+                  Escaneando Atividades Publicadas e Rascunhos do Curso
                 </p>
               </div>
               <button
@@ -233,7 +309,7 @@ export default function ImportadorLoteModal({
               </button>
             </div>
 
-            <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1 bg-white/40 dark:bg-transparent">
+            <div className="p-4 md:p-6 overflow-y-auto custom-scrollbar flex-1 bg-white/40 dark:bg-transparent">
               <AnimatePresence mode="wait">
                 {etapa === 1 ? (
                   <motion.div
@@ -242,15 +318,17 @@ export default function ImportadorLoteModal({
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: 15 }}
                     transition={{ duration: 0.2 }}
-                    className="flex flex-col max-w-lg mx-auto space-y-6"
+                    className="flex flex-col max-w-lg mx-auto space-y-6 py-4"
                   >
                     <div className="text-center space-y-2 mb-4">
                       <div className="w-16 h-16 rounded-full bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center mx-auto mb-4 text-2xl">
                         🔍
                       </div>
-                      <h3 className="text-xl font-black text-slate-800 dark:text-slate-100">Qual turma você quer escanear?</h3>
+                      <h3 className="text-xl font-black text-slate-800 dark:text-slate-100">
+                        Qual turma você quer escanear?
+                      </h3>
                       <p className="text-sm text-slate-500 dark:text-slate-400">
-                        Selecione a turma do Google Classroom para procurar por atividades que ainda não foram cadastradas no portal.
+                        Selecione a turma do Google Classroom para procurar por atividades (publicadas ou em rascunho) que ainda não foram cadastradas no portal.
                       </p>
                     </div>
 
@@ -269,7 +347,9 @@ export default function ImportadorLoteModal({
                           >
                             <option value="">Selecione uma turma do Google Classroom...</option>
                             {cursos.map((c) => (
-                              <option key={c.id} value={c.id}>{c.nome} {c.section ? `(${c.section})` : ""}</option>
+                              <option key={c.id} value={c.id}>
+                                {c.nome} {c.section ? `(${c.section})` : ""}
+                              </option>
                             ))}
                           </select>
                         </div>
@@ -288,7 +368,10 @@ export default function ImportadorLoteModal({
                           className="w-full cursor-pointer px-6 py-4 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-black shadow-lg shadow-blue-500/20 text-sm uppercase tracking-wider transition-all disabled:opacity-50 flex items-center justify-center gap-2"
                         >
                           {buscando ? (
-                            <><div className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" /> Escaneando Classroom...</>
+                            <>
+                              <div className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />{" "}
+                              Escaneando Classroom...
+                            </>
                           ) : (
                             "Iniciar Escaneamento"
                           )}
@@ -303,167 +386,338 @@ export default function ImportadorLoteModal({
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -15 }}
                     transition={{ duration: 0.2 }}
-                    className="flex flex-col lg:flex-row gap-6 h-full"
+                    className="flex flex-col lg:flex-row gap-5 h-full"
                   >
                     {/* Left Sidebar */}
-                    <div className="w-full lg:w-[35%] xl:w-[30%] flex flex-col gap-6 shrink-0">
-                      <div className="flex flex-col gap-6 bg-slate-50 dark:bg-slate-900/50 p-5 rounded-3xl border border-slate-200 dark:border-slate-800">
-                        <div className="space-y-2 text-left">
-                          <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                    <div className="w-full lg:w-[28%] xl:w-[25%] flex flex-col gap-4 shrink-0">
+                      <div className="flex flex-col gap-4 bg-slate-50 dark:bg-slate-900/50 p-4 rounded-3xl border border-slate-200 dark:border-slate-800">
+                        <div className="space-y-1.5 text-left">
+                          <label className="block text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                             Módulo da Matriz (Curso) *
                           </label>
                           <select
                             value={modulo}
                             onChange={(e) => setModulo(e.target.value)}
-                            className="cursor-pointer w-full p-4 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:border-blue-500 text-sm font-bold shadow-sm"
+                            className="cursor-pointer w-full p-3.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:border-blue-500 text-xs font-bold shadow-sm"
                           >
                             <option value="">Selecione o Módulo...</option>
                             {modulosCadastrados.map((m) => (
-                              <option key={m} value={m}>{m}</option>
+                              <option key={m} value={m}>
+                                {m}
+                              </option>
                             ))}
                           </select>
                         </div>
-                        <div className="space-y-2 text-left">
-                          <label className="block text-xs font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                        <div className="space-y-1.5 text-left">
+                          <label className="block text-[11px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                             Turma Alvo no Portal *
                           </label>
                           <select
                             value={turma}
                             onChange={(e) => setTurma(e.target.value)}
-                            className="cursor-pointer w-full p-4 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:border-blue-500 text-sm font-bold shadow-sm"
+                            className="cursor-pointer w-full p-3.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-200 rounded-xl outline-none focus:border-blue-500 text-xs font-bold shadow-sm"
                           >
                             <option value="Todas">Todas as Turmas (Padrão)</option>
                             {turmasDisponiveis.map((t) => (
-                              <option key={t} value={t}>{t}</option>
+                              <option key={t} value={t}>
+                                {t}
+                              </option>
                             ))}
                           </select>
                         </div>
                       </div>
 
-                      <div className="bg-blue-500/5 dark:bg-blue-955/10 border border-blue-500/20 dark:border-blue-900/30 p-5 rounded-3xl flex flex-col justify-between items-center text-center gap-4">
+                      <div className="bg-blue-500/5 dark:bg-blue-955/10 border border-blue-500/20 dark:border-blue-900/30 p-4 rounded-3xl flex flex-col justify-between items-center text-center gap-3">
                         <div>
-                          <h3 className="font-display font-black text-blue-900 dark:text-blue-400 text-sm uppercase tracking-wider">
-                            Revisão das Atividades
+                          <h3 className="font-display font-black text-blue-900 dark:text-blue-400 text-xs uppercase tracking-wider">
+                            Resumo do Escaneamento
                           </h3>
-                          <p className="text-xs text-blue-700 dark:text-blue-300 font-semibold mt-1">
-                            Encontramos {atividades.length} atividade(s) não mapeada(s) nesta turma.
+                          <p className="text-[11px] text-slate-600 dark:text-slate-400 font-semibold mt-1">
+                            {contadores.publicadas} Publicada(s) • {contadores.rascunhos} Rascunho(s)
                           </p>
                         </div>
-                        <div className="w-full text-center bg-white/70 dark:bg-slate-950/60 px-5 py-3.5 rounded-2xl border border-blue-500/20 dark:border-blue-900/30 shadow-sm">
-                          <span className="text-blue-600 dark:text-blue-450 font-display font-black text-4xl font-mono">
-                            {atividades.filter((a) => a.selecionado).length}
+                        <div className="w-full text-center bg-white/70 dark:bg-slate-950/60 px-4 py-3 rounded-2xl border border-blue-500/20 dark:border-blue-900/30 shadow-sm">
+                          <span className="text-blue-600 dark:text-blue-400 font-display font-black text-3xl font-mono">
+                            {contadores.selecionadas}
                           </span>
-                          <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-1">Atividades Selecionadas</p>
+                          <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mt-0.5">
+                            Selecionadas p/ Importar
+                          </p>
                         </div>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                          💡 <strong>Dica:</strong> Rascunhos vêm desmarcados por padrão para evitar importação acidental. Use a busca ou as abas ao lado para marcar apenas as aulas desejadas.
+                        </p>
                       </div>
                     </div>
 
                     {/* Right Content Area */}
-                    <div className="w-full lg:w-[65%] xl:w-[70%] flex flex-col min-h-[40vh] bg-white/50 dark:bg-slate-900/30 rounded-3xl border border-slate-200 dark:border-slate-800 p-2 overflow-hidden relative">
-                      <div className="absolute inset-x-0 top-0 h-4 bg-gradient-to-b from-slate-50 dark:from-slate-900 to-transparent z-10 pointer-events-none rounded-t-3xl" />
-                      <div className="overflow-y-auto custom-scrollbar p-2 h-full space-y-4">
-                        {atividades.length === 0 && (
-                          <div className="text-center py-10 text-slate-500 dark:text-slate-400 font-bold">
-                            🎉 Nenhuma atividade nova! Tudo já está mapeado para esta turma.
+                    <div className="w-full lg:w-[72%] xl:w-[75%] flex flex-col min-h-[45vh] bg-white/50 dark:bg-slate-900/30 rounded-3xl border border-slate-200 dark:border-slate-800 p-3 overflow-hidden relative">
+                      {/* Barra de Ferramentas de Filtragem, Busca e Seleção em Massa */}
+                      <div className="flex flex-col gap-2.5 pb-3 mb-2 border-b border-slate-200 dark:border-slate-800 shrink-0">
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          {/* Abas de Status */}
+                          <div className="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200/80 dark:border-slate-800">
+                            <button
+                              type="button"
+                              onClick={() => setFiltroEstado("TODOS")}
+                              className={`cursor-pointer px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all ${
+                                filtroEstado === "TODOS"
+                                  ? "bg-blue-600 text-white shadow-sm"
+                                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                              }`}
+                            >
+                              Todas ({contadores.total})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFiltroEstado("PUBLISHED")}
+                              className={`cursor-pointer px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all ${
+                                filtroEstado === "PUBLISHED"
+                                  ? "bg-emerald-600 text-white shadow-sm"
+                                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                              }`}
+                            >
+                              ✅ Publicadas ({contadores.publicadas})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setFiltroEstado("DRAFT")}
+                              className={`cursor-pointer px-3 py-1.5 rounded-lg text-[11px] font-black uppercase tracking-wider transition-all ${
+                                filtroEstado === "DRAFT"
+                                  ? "bg-amber-600 text-white shadow-sm"
+                                  : "text-slate-500 hover:text-slate-800 dark:hover:text-slate-200"
+                              }`}
+                            >
+                              📝 Rascunhos ({contadores.rascunhos})
+                            </button>
+                          </div>
+
+                          {/* Botões de Ação em Massa na Lista Filtrada */}
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => selecionarVisiveis(true)}
+                              className="cursor-pointer px-2.5 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-100 dark:bg-blue-950/60 dark:hover:bg-blue-900/60 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800/60 text-[10px] font-black uppercase tracking-wider transition-all"
+                            >
+                              ☑️ Marcar Visíveis ({atividadesFiltradas.length})
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => selecionarVisiveis(false)}
+                              className="cursor-pointer px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 text-[10px] font-black uppercase tracking-wider transition-all"
+                            >
+                              ⬜ Desmarcar Visíveis
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setModoCompacto((v) => !v)}
+                              className={`cursor-pointer px-2.5 py-1.5 rounded-lg border text-[10px] font-black uppercase tracking-wider transition-all ${
+                                modoCompacto
+                                  ? "bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/60"
+                                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700"
+                              }`}
+                              title="Alternar entre lista compacta e cartões detalhados"
+                            >
+                              {modoCompacto ? "📐 Visão Compacta" : "🗂️ Visão Expandida"}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Busca por Texto + Ordenação */}
+                        <div className="flex flex-col sm:flex-row gap-2">
+                          <div className="relative flex-1">
+                            <input
+                              type="text"
+                              value={buscaTexto}
+                              onChange={(e) => setBuscaTexto(e.target.value)}
+                              placeholder="🔎 Filtrar por nome ou número da aula (ex: Aula 39, Desafio, Projeto)..."
+                              className="w-full pl-3.5 pr-8 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-semibold text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                            />
+                            {buscaTexto && (
+                              <button
+                                type="button"
+                                onClick={() => setBuscaTexto("")}
+                                className="cursor-pointer absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-sm font-bold"
+                              >
+                                &times;
+                              </button>
+                            )}
+                          </div>
+                          <select
+                            value={ordenacao}
+                            onChange={(e) =>
+                              setOrdenacao(e.target.value as "aula_asc" | "aula_desc" | "recentes")
+                            }
+                            className="cursor-pointer px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 text-xs font-bold text-slate-700 dark:text-slate-200 outline-none focus:border-blue-500"
+                          >
+                            <option value="aula_asc">🔢 Ordem: Aula 1 → 99</option>
+                            <option value="aula_desc">🔢 Ordem: Aula 99 → 1</option>
+                            <option value="recentes">🕒 Mais Recentes no AVA</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      {/* Lista de Atividades */}
+                      <div className="overflow-y-auto custom-scrollbar pr-1 flex-1 space-y-2">
+                        {atividadesFiltradas.length === 0 && (
+                          <div className="text-center py-10 text-slate-500 dark:text-slate-400 font-bold text-sm">
+                            Nenhuma atividade encontrada para este filtro.
                           </div>
                         )}
-                        
-                        {atividades.map((ativ) => (
-                          <div
-                            key={ativ.idTemp}
-                            className={`flex flex-col gap-3 p-5 rounded-2xl border transition-all duration-300 ${
-                              ativ.selecionado
-                                ? "bg-white dark:bg-slate-800 border-blue-400 dark:border-blue-650 shadow-md"
-                                : "bg-slate-50/40 dark:bg-slate-950/15 border-slate-200/50 dark:border-slate-800 opacity-60"
-                            }`}
-                          >
-                          <div className="flex items-start gap-4">
-                            <input
-                              type="checkbox"
-                              checked={ativ.selecionado}
-                              onChange={() => toggleSelecao(ativ.idTemp)}
-                              className="cursor-pointer mt-1 w-5 h-5 text-blue-600 rounded shrink-0 border-slate-300 dark:border-slate-700"
-                            />
-                            <div className="flex-1 min-w-0">
-                              <p className="font-bold text-slate-800 dark:text-slate-100 text-sm leading-snug">
-                                {ativ.titulo}
-                              </p>
-                              {ativ.dataLimite && (
-                                <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1">Data Limite: {ativ.dataLimite}</p>
-                              )}
-                            </div>
-                          </div>
-                          
-                          {ativ.selecionado && (
-                            <div className="flex flex-col gap-3 ml-9 mt-2 p-3 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-700/50">
+
+                        {atividadesFiltradas.map((ativ) => {
+                          const mostrarDetalhes =
+                            ativ.selecionado && (!modoCompacto || idExpandido === ativ.idTemp || ativ.tipo === "Projeto");
+
+                          return (
+                            <div
+                              key={ativ.idTemp}
+                              className={`flex flex-col rounded-2xl border transition-all duration-200 ${
+                                ativ.selecionado
+                                  ? "bg-white dark:bg-slate-800/90 border-blue-400 dark:border-blue-600 shadow-sm"
+                                  : "bg-slate-50/50 dark:bg-slate-950/30 border-slate-200/60 dark:border-slate-800/80 opacity-75 hover:opacity-100"
+                              } ${modoCompacto ? "p-3" : "p-4"}`}
+                            >
                               <div className="flex flex-wrap items-center gap-3">
-                                <div className="flex-1 min-w-[120px]">
-                                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">Tipo</label>
-                                  <select 
-                                    value={ativ.tipo}
-                                    onChange={(e) => atualizarAtividade(ativ.idTemp, 'tipo', e.target.value)}
-                                    className="w-full text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 outline-none"
-                                  >
-                                    <option value="Material">Material</option>
-                                    <option value="Quiz">Desafio (Quiz)</option>
-                                    <option value="Projeto">Projeto Prático</option>
-                                  </select>
+                                <input
+                                  type="checkbox"
+                                  checked={ativ.selecionado}
+                                  onChange={() => toggleSelecao(ativ.idTemp)}
+                                  className="cursor-pointer w-4 h-4 text-blue-600 rounded shrink-0 border-slate-300 dark:border-slate-700"
+                                />
+
+                                <div
+                                  onClick={() => toggleSelecao(ativ.idTemp)}
+                                  className="flex-1 min-w-[200px] cursor-pointer"
+                                >
+                                  <div className="flex flex-wrap items-center gap-2">
+                                    <p className="font-bold text-slate-800 dark:text-slate-100 text-xs md:text-sm leading-snug">
+                                      {ativ.titulo}
+                                    </p>
+                                    {ativ.estadoClassroom === "DRAFT" ? (
+                                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300 border border-amber-300/60 dark:border-amber-700/50">
+                                        📝 Rascunho AVA
+                                      </span>
+                                    ) : (
+                                      <span className="px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-700/50">
+                                        ✅ Publicada AVA
+                                      </span>
+                                    )}
+                                    {ativ.dataLimite && (
+                                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-semibold">
+                                        • Limite: {ativ.dataLimite}
+                                      </span>
+                                    )}
+                                  </div>
                                 </div>
-                                <div className="w-24">
-                                  <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">XP</label>
-                                  <input 
-                                    type="number"
-                                    value={ativ.xp}
-                                    onChange={(e) => atualizarAtividade(ativ.idTemp, 'xp', parseInt(e.target.value) || 0)}
-                                    className="w-full text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 outline-none text-center font-bold"
-                                  />
-                                </div>
+
+                                {/* Controles Inline Rápidos quando selecionada */}
+                                {ativ.selecionado && (
+                                  <div className="flex flex-wrap items-center gap-2 shrink-0">
+                                    <select
+                                      value={ativ.tipo}
+                                      onChange={(e) => atualizarAtividade(ativ.idTemp, "tipo", e.target.value)}
+                                      className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 outline-none"
+                                      title="Tipo de Missão"
+                                    >
+                                      <option value="Material">📘 Material</option>
+                                      <option value="Quiz">⚡ Desafio (Quiz)</option>
+                                      <option value="Projeto">💻 Projeto Prático</option>
+                                    </select>
+
+                                    <select
+                                      value={ativ.statusPublicacao || "Publicada"}
+                                      onChange={(e) =>
+                                        atualizarAtividade(ativ.idTemp, "statusPublicacao", e.target.value)
+                                      }
+                                      className="text-[11px] font-bold px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 outline-none"
+                                      title="Status no Portal"
+                                    >
+                                      <option value="Publicada">🚀 Publicar no Portal</option>
+                                      <option value="Rascunho">📝 Salvar Rascunho</option>
+                                    </select>
+
+                                    <div className="flex items-center gap-1 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-700 rounded-lg px-2 py-1">
+                                      <span className="text-[9px] font-black text-slate-400 uppercase">XP</span>
+                                      <input
+                                        type="number"
+                                        value={ativ.xp}
+                                        onChange={(e) =>
+                                          atualizarAtividade(ativ.idTemp, "xp", parseInt(e.target.value) || 0)
+                                        }
+                                        className="w-12 text-xs bg-transparent outline-none text-center font-black text-blue-600 dark:text-blue-400"
+                                      />
+                                    </div>
+
+                                    {ativ.tipo === "Projeto" && modoCompacto && (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          setIdExpandido(idExpandido === ativ.idTemp ? null : ativ.idTemp)
+                                        }
+                                        className="cursor-pointer px-2 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 text-[10px] font-black uppercase"
+                                      >
+                                        {idExpandido === ativ.idTemp ? "▲ Ocultar Código" : "⚙️ Config. Typing"}
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
                               </div>
-                              
-                              {/* ─── CAMPOS ESPECÍFICOS PARA PROJETO ─── */}
+
+                              {/* Campos extras de Projeto (CodingPractice / Template) */}
                               <AnimatePresence>
-                                {ativ.tipo === "Projeto" && (
+                                {mostrarDetalhes && ativ.tipo === "Projeto" && (
                                   <motion.div
                                     initial={{ opacity: 0, height: 0 }}
                                     animate={{ opacity: 1, height: "auto" }}
                                     exit={{ opacity: 0, height: 0 }}
-                                    className="flex flex-col gap-3 pt-3 mt-1 border-t border-slate-200 dark:border-slate-700/50"
+                                    className="flex flex-col gap-3 pt-3 mt-3 border-t border-slate-200 dark:border-slate-700/50 ml-7"
                                   >
                                     <div className="flex-1">
                                       <label className="block text-[9px] font-black text-indigo-600 dark:text-indigo-400 uppercase mb-1">
                                         Link do Template Base (CodePen / Replit)
                                       </label>
-                                      <input 
+                                      <input
                                         type="url"
                                         placeholder="Opcional. Ex: https://codepen.io/..."
                                         value={ativ.opcaoA || ""}
-                                        onChange={(e) => atualizarAtividade(ativ.idTemp, 'opcaoA', e.target.value)}
-                                        className="w-full text-xs p-2.5 rounded-lg border border-indigo-200 dark:border-indigo-900 bg-white dark:bg-slate-950 outline-none focus:border-indigo-500"
+                                        onChange={(e) =>
+                                          atualizarAtividade(ativ.idTemp, "opcaoA", e.target.value)
+                                        }
+                                        className="w-full text-xs p-2 rounded-lg border border-indigo-200 dark:border-indigo-900 bg-white dark:bg-slate-950 outline-none focus:border-indigo-500"
                                       />
                                     </div>
                                     <div className="flex flex-col md:flex-row gap-3">
                                       <div className="flex-1">
                                         <label className="block text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase mb-1">
-                                          Resolução (Código a ser digitado)
+                                          Resolução (Código a ser digitado no CodingPractice)
                                         </label>
-                                        <textarea 
-                                          rows={3}
-                                          placeholder="Cole aqui o gabarito que o aluno deverá digitar..."
+                                        <textarea
+                                          rows={2}
+                                          placeholder="Cole aqui o gabarito que o aluno deverá digitar (ou edite depois no painel)..."
                                           value={ativ.resolucaoTyping || ""}
-                                          onChange={(e) => atualizarAtividade(ativ.idTemp, 'resolucaoTyping', e.target.value)}
-                                          className="w-full text-xs font-mono p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 outline-none focus:border-blue-500 custom-scrollbar"
+                                          onChange={(e) =>
+                                            atualizarAtividade(ativ.idTemp, "resolucaoTyping", e.target.value)
+                                          }
+                                          className="w-full text-xs font-mono p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 outline-none focus:border-blue-500 custom-scrollbar"
                                         />
                                       </div>
-                                      <div className="w-full md:w-32 shrink-0">
+                                      <div className="w-full md:w-28 shrink-0">
                                         <label className="block text-[9px] font-black text-slate-500 dark:text-slate-400 uppercase mb-1">
                                           Tempo (Min)
                                         </label>
-                                        <input 
+                                        <input
                                           type="number"
                                           placeholder="Ex: 15"
                                           value={ativ.limiteTempoTyping || ""}
-                                          onChange={(e) => atualizarAtividade(ativ.idTemp, 'limiteTempoTyping', parseInt(e.target.value) || 0)}
-                                          className="w-full text-xs p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 outline-none text-center"
+                                          onChange={(e) =>
+                                            atualizarAtividade(
+                                              ativ.idTemp,
+                                              "limiteTempoTyping",
+                                              parseInt(e.target.value) || 0,
+                                            )
+                                          }
+                                          className="w-full text-xs p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-950 outline-none text-center"
                                         />
                                       </div>
                                     </div>
@@ -471,18 +725,16 @@ export default function ImportadorLoteModal({
                                 )}
                               </AnimatePresence>
                             </div>
-                          )}
-                        </div>
-                        ))}
+                          );
+                        })}
                       </div>
-                      <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-slate-50 dark:from-slate-900 to-transparent z-10 pointer-events-none rounded-b-3xl" />
                     </div>
                   </motion.div>
                 )}
               </AnimatePresence>
             </div>
 
-            <div className="p-5 bg-white/50 dark:bg-transparent border-t border-slate-200/80 dark:border-slate-800/80 flex justify-between gap-3 shrink-0">
+            <div className="p-4 md:p-5 bg-white/50 dark:bg-transparent border-t border-slate-200/80 dark:border-slate-800/80 flex justify-between gap-3 shrink-0">
               <div>
                 {etapa === 2 && (
                   <motion.button
@@ -509,13 +761,16 @@ export default function ImportadorLoteModal({
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={confirmarImportacao}
-                    disabled={importando}
-                    className="cursor-pointer px-8 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white font-black shadow-lg shadow-blue-500/10 text-xs uppercase tracking-wider transition-all disabled:opacity-50 flex items-center gap-2"
+                    disabled={importando || contadores.selecionadas === 0}
+                    className="cursor-pointer px-8 py-2.5 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white font-black shadow-lg shadow-blue-500/10 text-xs uppercase tracking-wider transition-all disabled:opacity-50 flex items-center gap-2"
                   >
                     {importando ? (
-                      <><div className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" /> Importando...</>
+                      <>
+                        <div className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />{" "}
+                        Importando ({contadores.selecionadas})...
+                      </>
                     ) : (
-                      "Salvar Importação"
+                      `Salvar Importação (${contadores.selecionadas})`
                     )}
                   </motion.button>
                 )}

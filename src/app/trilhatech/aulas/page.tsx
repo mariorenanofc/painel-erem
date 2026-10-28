@@ -302,7 +302,9 @@ export default function GestaoAulasPage() {
     setSalvando(true);
     try {
       let importCount = 0;
-      for (const ativ of atividadesMapeadas) {
+      for (let i = 0; i < atividadesMapeadas.length; i++) {
+        const ativ = atividadesMapeadas[i];
+        const isLast = i === atividadesMapeadas.length - 1;
         const res = await apiTutor.salvarAtividade({
           idAtividadeEdit: null,
           titulo: ativ.titulo,
@@ -318,13 +320,14 @@ export default function GestaoAulasPage() {
           opcaoD: "",
           respostaCorreta: "A",
           linkClassroom: ativ.linkClassroom || "",
-          statusPublicacao: "Publicada",
+          statusPublicacao: ativ.statusPublicacao || "Publicada",
           imagemUrl: "",
           modulo: moduloSelecionado,
           gabarito: "",
           gabaritoLiberado: false,
           resolucaoTyping: ativ.resolucaoTyping || "",
           limiteTempoTyping: ativ.limiteTempoTyping || 0,
+          skipCacheRefresh: !isLast,
         });
         if (res.status === "sucesso") {
           importCount++;
@@ -811,10 +814,6 @@ export default function GestaoAulasPage() {
   const abrirRelatorioFrequencia = () => {
     setModalFreqAberto(true);
     setAbaDiario("mensal");
-    if (turmaDiario) {
-      buscarDiarioClasse(turmaDiario, mesDiario, anoDiario);
-      buscarFrequenciaHoje(turmaDiario);
-    }
   };
 
 

@@ -1,22 +1,37 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
+import {
+  getAlunosAtivosSnapshot,
+  getCachedFrequencia,
+  setCachedFrequencia
+} from "@/src/lib/cache";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const turma = String(searchParams.get("turma") || "").trim();
-  const mes = String(searchParams.get("mes") || "").trim(); // Ex: "8" ou "08"
-  const ano = String(searchParams.get("ano") || "").trim(); // Ex: "2026"
+  const mes = String(searchParams.get("mes") || "").trim();
+  const ano = String(searchParams.get("ano") || "").trim();
 
   if (!turma || !mes || !ano) {
     return NextResponse.json({ status: "erro", mensagem: "Parâmetros inválidos." }, { status: 400 });
   }
 
+  const cacheKey = `diario_${turma}_${mes}_${ano}`;
+  const cached = getCachedFrequencia(cacheKey);
+  if (cached) {
+    return NextResponse.json(cached);
+  }
+
   try {
-    // 1. Buscar todos os alunos ativos da turma
-    const alunosSnap = await dbAdmin.collection("alunos")
-      .where("statusTrilha", "in", ["ativo", "Ativo"])
-      .get();
+    // 1. Buscar todos os alunos ativos da turma via Snapshot (0 leituras em RAM)
+    const snapAlunos = await getAlunosAtivosSnapshot(dbAdmin);
+    const alunosSource = snapAlunos && snapAlunos.length > 0
+      ? snapAlunos
+      : (await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get()).docs.map(d => ({
+          matricula: d.id,
+          ...d.data()
+        }));
 
     interface DiarioAluno {
       matricula: string;
@@ -30,8 +45,9 @@ export async function GET(request: Request) {
     }
 
     const alunosMap: Record<string, DiarioAluno> = {};
-    alunosSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const data = doc.data();
+    alunosSource.forEach((data: Record<string, unknown>) => {
+      const mat = String(data.matricula || "").trim();
+      if (!mat) return;
       const tTrilha = String(data.turmaTrilha || "").trim();
       const tEscola = String(data.turma || "").trim();
 
@@ -46,9 +62,9 @@ export async function GET(request: Request) {
       }
 
       if (matchesTrilha || matchesEscola) {
-        alunosMap[doc.id] = {
-          matricula: doc.id,
-          nome: data.nome || `Aluno ${doc.id}`,
+        alunosMap[mat] = {
+          matricula: mat,
+          nome: String(data.nome || `Aluno ${mat}`),
           frequencia: {}
         };
       }
@@ -70,55 +86,42 @@ export async function GET(request: Request) {
 
     const mesStrFiltro = String(mesNum).padStart(2, "0");
     const anoStrFiltro = String(anoNum);
-    
-    // Filtra apenas os dias oficiais que pertencem ao mês e ano solicitados
-    let diasDoMesOficiais = diasDaTurmaGeral.filter(data => {
+
+    const diasDoMesOficiais = diasDaTurmaGeral.filter(data => {
       const parts = data.split("/");
       return parts.length === 3 && parts[1] === mesStrFiltro && parts[2] === anoStrFiltro;
     });
 
     const diasComAulaSet = new Set<string>(diasDoMesOficiais);
-    const matriculasAtivas = Object.keys(alunosMap);
+    const matriculasAtivas = new Set(Object.keys(alunosMap));
 
-    // 3. Buscar todas as frequências desses alunos no mês (Busca Otimizada)
+    // 3. Buscar todas as frequências no mês usando índice simples de timestamp (evita erro FAILED_PRECONDITION)
     const inicioMesDate = new Date(anoNum, mesNum - 1, 1, 0, 0, 0);
     const fimMesDate = new Date(anoNum, mesNum, 0, 23, 59, 59, 999);
-    
+
     const inicioTimestamp = inicioMesDate.getTime();
     const fimTimestamp = fimMesDate.getTime();
 
-    let freqDocs: QueryDocumentSnapshot[] = [];
-    try {
-      const freqSnap = await dbAdmin.collection("frequencia")
-        .where("turma", "==", turma)
-        .where("timestamp", ">=", inicioTimestamp)
-        .where("timestamp", "<=", fimTimestamp)
-        .get();
-      freqDocs = freqSnap.docs;
-    } catch (e: unknown) {
-      const err = e as Error;
-      console.warn("[Diário de Classe] Índice Composto não encontrado, caindo para busca via Timestamp: ", err.message);
-      // Fallback seguro usando apenas índice simples de timestamp
-      const freqSnap = await dbAdmin.collection("frequencia")
-        .where("timestamp", ">=", inicioTimestamp)
-        .where("timestamp", "<=", fimTimestamp)
-        .get();
-      freqDocs = freqSnap.docs.filter(doc => {
-         const mat = doc.data().matricula;
-         return matriculasAtivas.includes(mat);
-      });
-    }
+    const freqSnap = await dbAdmin.collection("frequencia")
+      .where("timestamp", ">=", inicioTimestamp)
+      .where("timestamp", "<=", fimTimestamp)
+      .get();
+
+    const freqDocs = freqSnap.docs.filter((doc: QueryDocumentSnapshot) => {
+      const mat = String(doc.data().matricula || "").trim();
+      return matriculasAtivas.has(mat);
+    });
 
     freqDocs.forEach((doc: QueryDocumentSnapshot) => {
       const f = doc.data();
       const idFreq = String(f.id || doc.id).trim();
       if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
-      
+
       let dataClean = String(f.data || "").trim();
       if (dataClean.includes("/") && dataClean.length > 10) {
         dataClean = dataClean.slice(0, 10);
       }
-      
+
       const delim = dataClean.includes("/") ? "/" : "-";
       const parts = dataClean.split(delim);
       if (parts.length !== 3) return;
@@ -127,18 +130,16 @@ export async function GET(request: Request) {
       const m = String(parts[1]).padStart(2, "0");
       const y = String(parts[2]);
 
-      // Processamos a frequência formatada
       const dataFormatada = `${d}/${m}/${y}`;
-      const mat = f.matricula;
+      const mat = String(f.matricula || "").trim();
       if (alunosMap[mat]) {
-        // Se não tínhamos dias oficiais (fallback), adicionamos o dia encontrado no Set
         if (diasDoMesOficiais.length === 0) {
           diasComAulaSet.add(dataFormatada);
         }
 
         const rawSt = String(f.status || "").toLowerCase().trim();
         const isPresenteOuJustificada = (f.xpGanho === 0 && f.justificativa) || rawSt === "presente" || rawSt === "p" || rawSt === "justificada" || rawSt === "j";
-        
+
         let statusMapeado = "falta";
         if (isPresenteOuJustificada) {
           statusMapeado = (rawSt === "justificada" || rawSt === "j" || (f.xpGanho === 0 && f.justificativa)) ? "justificada" : "presente";
@@ -172,11 +173,14 @@ export async function GET(request: Request) {
       });
     });
 
-    return NextResponse.json({
+    const responsePayload = {
       status: "sucesso",
       diasComAula,
       alunos: Object.values(alunosMap)
-    }, {
+    };
+    setCachedFrequencia(cacheKey, responsePayload);
+
+    return NextResponse.json(responsePayload, {
       headers: {
         "Cache-Control": "s-maxage=60, stale-while-revalidate"
       }

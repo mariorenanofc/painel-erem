@@ -147,34 +147,24 @@ Para garantir que a gestão não perca a habilidade de manipular esses dados (qu
 2. **Migrar Regra de Negócio**: Transcreveremos a lógica do arquivo `appscript.md` para o TypeScript. Ela fará o mapeamento de ID do curso e ID da atividade a partir do `linkClassroom`, buscará as entregas (`studentSubmissions`), aplicará penalidades por atraso ou gabarito liberado, e injetará as notas validadas diretamente na coleção `entregas` e somará o XP no aluno.
 3. **[MODIFY] `src/app/trilhatech/aulas/page.tsx`**: O botão "Sincronizar AVA" que antes chamava o `action-proxy` enviando ação para o AppScript, passará a consumir a nossa nova rota `/api/tutor/sincronizar-ava` de forma 100% nativa.
 
-> [!WARNING] 
-> **Questão de Segurança & Acesso:** O Google Classroom exige que a conta de serviço (a mesma do Firebase) tenha permissão nas turmas, ou que se utilize Delegação de Domínio Amplo (Domain-Wide Delegation) caso seja Google Workspace For Education. Precisaremos garantir que a API consegue ler as turmas.
-
-> [!IMPORTANT]
-> **Dúvida sobre as Rubricas (Ouro, Prata, Bronze):** No arquivo `appscript.md` analisado (na rota `sincronizar_ava`), a lógica deduz o XP baseado no valor da atividade (`xpAtiv`) e aplica descontos (Atraso, Gabarito Liberado). Não encontrei menção a "Ouro, Prata, Bronze" ou "Rubricas" no código legado do AppScript. Devemos manter o cálculo legado de atraso/gabarito, ou devemos implementar uma lógica **nova** que leia as rubricas (`assignedGrade`) do Classroom?
-
 ---
 
-# Fase 5: Fim das Varreduras no Ranking e Diário de Classe
+# Fase 5: Blindagem do Painel Docente, Diário de Classe e Sincronização AVA em Lote (Concluído — 28/10/2026)
 
-Após a conclusão das melhorias do Portal (Fase 2), precisamos otimizar duas lógicas que continuam varrendo as coleções `entregas` e `frequencia`: o Ranking Semanal e o Diário de Classe.
+Durante a auditoria de telemetria (`monitor_leituras`) e testes locais do Painel Docente (`/trilhatech`), foram solucionados 5 gargalos críticos de performance e consumo:
 
-## User Review Required
-
-> [!WARNING]
-> Para abandonarmos a varredura das entregas no Ranking Semanal e da frequência no Diário de Classe, precisaremos alterar a arquitetura do banco. Veja a proposta abaixo.
-
-## Proposed Changes
-
-### 1. Ranking Semanal / Mensal em Tempo Real
-**O Problema Atual:** O ranking varre TODAS as `entregas` de todos os alunos e filtra no backend os envios que caem dentro da semana ou mês para somar o XP.
-**A Solução (Contadores Parciais):**
-- Quando um aluno ganha XP (Missão, Quiz, Jogos, Frequência), salvaremos este XP também em um documento agredador chamado `ranking_semanal` (com a chave da semana/mês). 
-- Assim, a rota de Ranking fará APENAS UMA LEITURA do documento agregado `ranking_semana_X` ou `ranking_mes_Y`, resultando em 1 leitura contra 5.000 leituras antigas.
-
-### 2. Diário de Classe com Índice Composto
-**O Problema Atual:** A rota `/api/tutor/diario-classe` busca todos os alunos e depois roda chunks de leitura `.where("matricula", "in", chunk)` na coleção `frequencia`, varrendo toda a frequência histórica do aluno para filtrar o mês em memória.
-**A Solução:**
-- Alteraremos a query para usar o `.where("turma", "==", turma).where("timestamp", ">=", inicioMes).where("timestamp", "<=", fimMes)`.
-- Isso exigirá a criação de um **Índice Composto** no Firestore (Turma Ascendente + Timestamp Ascendente).
-- A API fará apenas 1 query direta, retornando estritamente os dias daquele mês sem baixar o histórico todo dos estudantes.
+1. **Eliminação da Varredura de 1.696 Documentos em `/api/tutor/atividades`:**
+   - **Problema:** A tela de Aulas do tutor lia 839 documentos de `atividades` + 857 documentos de `estatisticas_atividades` (duas vezes na abertura da página = 3.394 leituras).
+   - **Solução:** Unificação dos chunks `cache/atividades_chunk_{i}` (`includesRascunhos: true`, `respostaCorreta`) + criação do singleton `cache/estatisticas_atividades_resumo` atualizado atomicamente via `FieldValue.increment`. Custo caiu de **3.394 leituras para ~8 leituras no *cold start* e 0 em RAM**.
+2. **Remoção de Rebuilds Desnecessários e Geração de ID $O(1)$:**
+   - **Problema:** `avaliar_entrega`, `reverter_entrega` e `excluir_entrega` disparavam `refreshFirestoreCacheAtividades(dbAdmin)` (+839 leituras por correção), e `salvar_atividade` varria toda a coleção `atividades` para calcular o próximo `ATIV-XXX`.
+   - **Solução:** Remoção do rebuild nas rotas de entrega, cálculo de ID via `getNextAtividadeId(dbAdmin)` usando `maiorIdNumerico` do manifesto, e flag `skipCacheRefresh` na importação em lote.
+3. **Correção do Erro `9 FAILED_PRECONDITION` no Diário de Classe e Caches de Navegação Docente:**
+   - **Problema:** `diario-classe` tentava um índice composto inexistente (`turma` + `timestamp`), caía no `catch` e varria `frequencia` em blocos por matrícula; além disso, `aulas/page.tsx` disparava `fetch` duplicado em `abrirRelatorioFrequencia`.
+   - **Solução:** Consulta direta por intervalo de `timestamp` com filtragem de turma em memória + caches L1 (`getCachedFrequencia`, `getCachedTransacoesRecentes`, `getCachedRifas`, `alunosAtivosSnapshotRamCache`).
+4. **Aceleração do `Sincronizar AVA` (De ~7 minutos para poucos segundos) & Radar Classroom Organizado:**
+   - **Problema:** `sincronizar-ava` lia a coleção `atividades` inteira e fazia ~800 chamadas HTTP sequenciais (uma por atividade) ao Google Classroom.
+   - **Solução:** Uso de `loadFirestoreCacheAtividades(dbAdmin)`, pulo imediato (`0ms`) de atividades ainda em `DRAFT`, auto-publicação de rascunhos recém-publicados no Classroom, e busca em lote `courseWorkId: "-"` (`states: ["TURNED_IN", "RETURNED"]`) por curso. No `ImportadorLoteModal.tsx`, adicionadas abas (`Publicadas`, `Rascunhos`, `Todas`), busca instantânea, ordenação por número de aula e pré-seleção segura apenas das publicadas.
+5. **Blindagem do Monitor de Telemetria (`firestoreMonkeyPatched`):**
+   - **Problema:** No `npm run dev`, recompilações do Next.js empilhavam múltiplos wrappers sobre `Query.prototype.get` e `DocumentReference.prototype.get` em [`src/lib/firebaseAdmin.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/lib/firebaseAdmin.ts), multiplicando os logs e contadores em `monitor_leituras`.
+   - **Solução:** Adicionada trava `globalForFirebase.firestoreMonkeyPatched` garantindo instrumentação única.

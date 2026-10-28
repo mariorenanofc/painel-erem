@@ -1,5 +1,5 @@
 import { getApps, initializeApp, cert } from "firebase-admin/app";
-import { Firestore, getFirestore, Query, DocumentReference, CollectionReference } from "firebase-admin/firestore";
+import { Firestore, getFirestore, Query, DocumentReference } from "firebase-admin/firestore";
 
 let dbAdmin: Firestore;
 
@@ -34,12 +34,13 @@ if (!isPlaceholder(projectId) && !isPlaceholder(clientEmail) && !isPlaceholder(p
   }
   dbAdmin = getFirestore();
 
-  // === INJEÇÃO DO MONITOR SEGURO DE LEITURAS (MONKEY PATCH) ===
+  // === INJEÇÃO DO MONITOR SEGURO DE LEITURAS (MONKEY PATCH ÚNICO) ===
   interface GlobalWithStats {
     firestoreReadStats?: Record<string, { buscas: number; documentosLidos: number }>;
     firestoreMonitorTimeout?: NodeJS.Timeout | null;
+    firestoreMonkeyPatched?: boolean;
   }
-  const globalStats = global as unknown as GlobalWithStats;
+  const globalStats = globalThis as unknown as GlobalWithStats;
 
   if (!globalStats.firestoreReadStats) {
     globalStats.firestoreReadStats = {};
@@ -48,35 +49,34 @@ if (!isPlaceholder(projectId) && !isPlaceholder(clientEmail) && !isPlaceholder(p
 
   function registrarLeitura(collectionPath: string, size: number) {
     if (collectionPath.includes("monitor_leituras")) return;
-    
-    // Assegura que o objeto principal existe
+
     if (!globalStats.firestoreReadStats) {
       globalStats.firestoreReadStats = {};
     }
-    
+
     if (!globalStats.firestoreReadStats[collectionPath]) {
       globalStats.firestoreReadStats[collectionPath] = { buscas: 0, documentosLidos: 0 };
     }
     globalStats.firestoreReadStats[collectionPath].buscas += 1;
     globalStats.firestoreReadStats[collectionPath].documentosLidos += size;
-    
+
     if (!globalStats.firestoreMonitorTimeout) {
       globalStats.firestoreMonitorTimeout = setTimeout(async () => {
         const statsToSave = { ...globalStats.firestoreReadStats };
         globalStats.firestoreReadStats = {};
         globalStats.firestoreMonitorTimeout = null;
-        
+
         let totalLidos = 0;
         for (const key in statsToSave) {
           totalLidos += statsToSave[key].documentosLidos;
         }
-        
+
         if (totalLidos > 0) {
           try {
             const tzOffset = -3 * 60 * 60 * 1000;
             const now = new Date(Date.now() + tzOffset);
             const dataHoraStr = now.toISOString().replace("T", " ").split(".")[0];
-            
+
             await dbAdmin.collection("monitor_leituras").add({
               dataHora: dataHoraStr,
               totalLeiturasNestaJanela: totalLidos,
@@ -88,7 +88,7 @@ if (!isPlaceholder(projectId) && !isPlaceholder(clientEmail) && !isPlaceholder(p
             console.error("[FIRESTORE MONITOR] Erro ao salvar agregado:", err);
           }
         }
-      }, 10000); // Tenta salvar a cada 10 segundos
+      }, 10000);
     }
   }
 
@@ -101,45 +101,48 @@ if (!isPlaceholder(projectId) && !isPlaceholder(clientEmail) && !isPlaceholder(p
     };
   }
 
-  const origQueryGet = Query.prototype.get;
-  Query.prototype.get = async function (...args) {
-    const snap = await origQueryGet.apply(this, args);
-    const size = snap.size || 0;
-    
-    let path = "query_desconhecida";
-    try {
-      const internalQuery = this as unknown as InternalQuery;
-      if (internalQuery._queryOptions?.collectionId) {
-        path = internalQuery._queryOptions.collectionId;
-      } else if (internalQuery._queryOptions?.parentPath?.segments) {
-        path = internalQuery._queryOptions.parentPath.segments.join('/');
-      }
-    } catch {}
+  if (!globalStats.firestoreMonkeyPatched) {
+    globalStats.firestoreMonkeyPatched = true;
 
-    registrarLeitura(path, size);
-    return snap;
-  };
+    const origQueryGet = Query.prototype.get;
+    Query.prototype.get = async function (...args) {
+      const snap = await origQueryGet.apply(this, args);
+      const size = snap.size || 0;
 
-  const origDocGet = DocumentReference.prototype.get;
-  DocumentReference.prototype.get = async function (...args) {
-    const snap = await origDocGet.apply(this, args);
-    const size = snap.exists ? 1 : 0;
-    
-    let path = "doc_desconhecido";
-    try {
-      if (this.path) {
-        path = this.path.split('/')[0];
-      }
-    } catch {}
+      let path = "query_desconhecida";
+      try {
+        const internalQuery = this as unknown as InternalQuery;
+        if (internalQuery._queryOptions?.collectionId) {
+          path = internalQuery._queryOptions.collectionId;
+        } else if (internalQuery._queryOptions?.parentPath?.segments) {
+          path = internalQuery._queryOptions.parentPath.segments.join("/");
+        }
+      } catch {}
 
-    registrarLeitura(path, size);
-    return snap;
-  };
+      registrarLeitura(path, size);
+      return snap;
+    };
+
+    const origDocGet = DocumentReference.prototype.get;
+    DocumentReference.prototype.get = async function (...args) {
+      const snap = await origDocGet.apply(this, args);
+      const size = snap.exists ? 1 : 0;
+
+      let path = "doc_desconhecido";
+      try {
+        if (this.path) {
+          path = this.path.split("/")[0];
+        }
+      } catch {}
+
+      registrarLeitura(path, size);
+      return snap;
+    };
+  }
 
 } else {
-  // Durante o build ou se as chaves não forem configuradas, evitamos quebrar o processo com erros do OpenSSL
   dbAdmin = new Proxy({}, {
-    get(target, prop) {
+    get(_target, prop) {
       return () => {
         throw new Error(`Firestore Admin acionado para a propriedade '${String(prop)}' sem credenciais válidas configuradas no arquivo .env.local.`);
       };
@@ -162,7 +165,7 @@ export async function registrarLogSeguranca(
     const tzOffset = -3 * 60 * 60 * 1000;
     const now = new Date(Date.now() + tzOffset);
     const dataHoraStr = now.toISOString().replace("T", " ").split(".")[0];
-    
+
     await dbAdmin.collection("logs_seguranca").add({
       dataHora: dataHoraStr,
       matricula,

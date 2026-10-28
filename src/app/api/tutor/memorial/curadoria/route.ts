@@ -5,7 +5,8 @@ import {
   invalidatePortalCache,
   invalidateVeteranosCache,
   invalidateAdminAlunosCache,
-  invalidateRankingCache
+  invalidateRankingCache,
+  refreshAlunosAtivosSnapshot
 } from "@/src/lib/cache";
 import { MemorialFormatura, ProjetoConclusao, CertificacaoTech } from "@/src/types";
 
@@ -252,6 +253,10 @@ export async function POST(request: Request) {
     invalidateVeteranosCache();
     invalidateAdminAlunosCache();
     invalidateRankingCache();
+
+    if (novoStatusTrilha !== alunoData.statusTrilha) {
+      await refreshAlunosAtivosSnapshot(dbAdmin);
+    }
 
     return NextResponse.json({
       status: "sucesso",

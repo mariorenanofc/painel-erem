@@ -67,7 +67,7 @@ flowchart TD
 
 ### Especificação dos Documentos de Cache:
 1. **Manifesto (`cache/atividades_publicadas`):**
-   * Guarda metadados: `{ chunkCount: 6, totalAtividades: 832, updatedAt: "..." }`.
+   * Guarda metadados: `{ chunkCount: 6, totalAtividades: 839, includesRascunhos: true, maiorIdNumerico: 863, updatedAt: "..." }`.
    * Mantém retrocompatibilidade automática com versões legadas enquanto o tamanho couber com segurança.
 2. **Blocos de Dados (`cache/atividades_chunk_{i}`):**
    * Tamanho máximo por bloco: **150 atividades**.
@@ -78,3 +78,40 @@ flowchart TD
 * **Sem cache:** 50 alunos $\times$ 832 atividades = **41.600 leituras**.
 * **Com cache particionado (após expiração da RAM):** 1 manifesto + 6 chunks = **Apenas 7 leituras** *(Economia de 99,98%)*.
 * **Em regime normal (memória RAM ativa):** **Zero leituras** no Firestore.
+
+---
+
+## 4. 🛡️ Fase 2 de Blindagem de Cota (Otimização do Fluxo Docente, Singletons & Classroom em Lote)
+
+### Diagnóstico de Telemetria (`monitor_leituras` — 28/10/2026)
+A análise da telemetria em produção identificou que o **Portal do Aluno (`portal_views`)** já operava com consumo mínimo (**< 1% da cota diária**, ~283 leituras/dia), enquanto **86,5% do consumo diário (28.697+ leituras)** concentrava-se no fluxo administrativo do Tutor:
+1. `GET /api/tutor/atividades` realizava varredura completa de `atividades` (~839 docs) + `estatisticas_atividades` (~857 docs) = **~1.696 leituras por chamada**, com TTL em memória de apenas 10s.
+2. As ações `avaliar_entrega`, `reverter_entrega` e `excluir_entrega` disparavam `refreshFirestoreCacheAtividades(dbAdmin)` desnecessariamente (+839 leituras a cada avaliação de tarefa).
+3. A criação e importação em lote (`salvar_atividade`) varria 839 documentos para gerar o ID sequencial `ATIV-XXX` e reconstruía os chunks a cada item do lote.
+4. O `sincronizar-ava` lia `atividades` inteira (~839 docs) e fazia 1 chamada HTTP sequencial na API do Google Classroom por atividade (~800 requisições HTTP), levando ~7 minutos.
+5. As telas de `diario-classe`, `frequencia-hoje`, `transacoes`, `rifas` e modais de `buscar_entregas_atividade` / `verificar_regras_fechamento` não compartilhavam cache em memória e reconsultavam o banco a cada troca de aba.
+6. Em ambiente de desenvolvimento (`npm run dev`), o *monkey-patch* de telemetria em [`src/lib/firebaseAdmin.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/lib/firebaseAdmin.ts) era empilhado múltiplas vezes durante recompilações de rotas, inflando artificialmente o contador `monitor_leituras`.
+
+### Arquitetura da Solução Implementada e Validada
+1. **Unificação dos Chunks de Atividades (Aluno + Tutor) & Resumo de Estatísticas:**
+   * Os blocos `cache/atividades_chunk_{i}` armazenam todas as atividades (`Publicada` e `Rascunho`) com todos os metadados (`respostaCorreta`, `resolucaoTyping`, `limiteTempoTyping`, `linkClassroom`, etc.).
+   * **Filtro de Segurança por Perfil:**
+     * `GET /api/alunos/portal`: Filtra estritamente `statusPublicacao === "Publicada"` e omite `respostaCorreta` antes de enviar ao cliente.
+     * `GET /api/tutor/atividades`: Lê os mesmos chunks (**7 leituras** no *cold start* ou **0 em RAM**, em vez de 839) e mantém visibilidade total de rascunhos e gabaritos.
+   * **Singleton de Contadores (`cache/estatisticas_atividades_resumo`):** Consolida os contadores `{ pendentes, aguardandoValidacao, validadasAVA }` em um único documento (~50 KB para 850 atividades), atualizado atomicamente via `FieldValue.increment` em todas as rotas de submissão/avaliação, reduzindo 857 leituras para **1 leitura**.
+2. **Desacoplamento de Avaliação vs. Cache Estrutural de Atividades:**
+   * `refreshFirestoreCacheAtividades(dbAdmin)` é executado exclusivamente quando a **estrutura da missão** é alterada (`salvar_atividade`, `excluir_atividade`, `toggle_gabarito`, `salvar_gabaritos_lote`, ou auto-publicação via `sincronizar-ava`).
+   * Avaliações de entregas atualizam `portal_views/{matricula}` e `cache/estatisticas_atividades_resumo` sem reler a coleção `atividades`.
+3. **Geração de ID $O(1)$ e Importação em Lote (`skipCacheRefresh`):**
+   * O maior número sequencial `ATIV-XXX` é obtido via `getNextAtividadeId(dbAdmin)` a partir do manifesto `cache/atividades_publicadas` (`maiorIdNumerico`) ou do cache em memória, sem varrer a coleção `atividades`.
+   * Na importação em lote do Radar Classroom, `refreshFirestoreCacheAtividades` roda apenas no último item do lote.
+4. **Sincronia de Singletons (`configuracoes_gerais` e `cache_alunos_geral_0`) e Caches L1 do Painel Docente:**
+   * `refreshAlunosAtivosSnapshot(dbAdmin)` mantém `metadata/cache_alunos_geral_0` sincronizado e em cache RAM (`alunosAtivosSnapshotRamCache`) sempre que a secretaria ou o tutor cadastrar, editar, ativar/inativar ou graduar estudantes.
+   * `cache/configuracoes_gerais` é compartilhado entre `/api/alunos/portal`, `/api/configuracoes` e `/api/tutor/senha-checkin` (**1 leitura** no *cold start* / **0 em RAM**).
+   * Caches em RAM dedicados (`getCachedFrequencia`, `getCachedTransacoesRecentes`, `getCachedRifas`, `getCachedRankingAlunosAtivos`) e consulta direta por `timestamp` em `diario-classe` zeram leituras repetidas na navegação entre abas do painel docente.
+5. **Radar Classroom Organizado (`DRAFT` + `PUBLISHED`) & Sincronização AVA em Lote (`courseWorkId: "-"`):**
+   * O **Radar Classroom** escaneia tanto `PUBLISHED` quanto `DRAFT` no Google Classroom (filtrando links já existentes via `loadFirestoreCacheAtividades`), exibindo abas (`Publicadas`, `Rascunhos`, `Todas`), busca instantânea, ordenação por número de aula e pré-seleção segura apenas das publicadas.
+   * Rascunhos do AVA importados como `statusPublicacao: "Rascunho"` permitem pré-configurar o [`CodingPractice.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/CodingPractice.tsx) antes da aula e são promovidos automaticamente para `"Publicada"` no `sincronizar-ava` assim que publicados no Classroom.
+   * O `POST /api/tutor/sincronizar-ava` lê o catálogo de atividades do cache particionado (**0 a 7 leituras**), pula missões ainda em `DRAFT` em `0ms`, e utiliza busca paginada em lote (`courseWorkId: "-"`, `states: ["TURNED_IN", "RETURNED"]`) quando há mais de 4 atividades por curso, reduzindo o tempo de sincronização global e mantendo o consumo do Firestore em ~44 leituras para todas as turmas.
+6. **Proteção de Telemetria (`firestoreMonkeyPatched`):**
+   * Adicionada flag global `globalForFirebase.firestoreMonkeyPatched` em [`src/lib/firebaseAdmin.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/lib/firebaseAdmin.ts) garantindo que `Query.prototype.get` e `DocumentReference.prototype.get` sejam instrumentados uma única vez por processo.

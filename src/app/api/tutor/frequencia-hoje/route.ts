@@ -1,6 +1,11 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
+import {
+  getAlunosAtivosSnapshot,
+  getCachedFrequencia,
+  setCachedFrequencia
+} from "@/src/lib/cache";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -11,7 +16,6 @@ export async function GET(request: Request) {
   }
 
   try {
-    // 1. Obter a data de hoje no fuso de Brasília
     const hoje = new Date();
     const options = { timeZone: "America/Sao_Paulo", day: "2-digit" as const, month: "2-digit" as const, year: "numeric" as const };
     const formatter = new Intl.DateTimeFormat("pt-BR", options);
@@ -21,10 +25,20 @@ export async function GET(request: Request) {
     const ano = parts.find(p => p.type === "year")?.value || String(hoje.getFullYear());
     const dataHojeStr = `${dia}/${mes}/${ano}`;
 
-    // 2. Buscar todos os alunos ativos da turma
-    const alunosSnap = await dbAdmin.collection("alunos")
-      .where("statusTrilha", "in", ["ativo", "Ativo"])
-      .get();
+    const cacheKey = `hoje_${turma}_${dataHojeStr}`;
+    const cached = getCachedFrequencia(cacheKey);
+    if (cached) {
+      return NextResponse.json(cached);
+    }
+
+    // 2. Buscar todos os alunos ativos da turma via Snapshot (0 leituras em RAM)
+    const snapAlunos = await getAlunosAtivosSnapshot(dbAdmin);
+    const alunosSource = snapAlunos && snapAlunos.length > 0
+      ? snapAlunos
+      : (await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get()).docs.map(d => ({
+          matricula: d.id,
+          ...d.data()
+        }));
 
     interface AlunoFrequenciaHoje {
       matricula: string;
@@ -36,8 +50,9 @@ export async function GET(request: Request) {
     }
 
     const alunosMap: Record<string, AlunoFrequenciaHoje> = {};
-    alunosSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const data = doc.data();
+    alunosSource.forEach((data: Record<string, unknown>) => {
+      const mat = String(data.matricula || "").trim();
+      if (!mat) return;
       const tTrilha = String(data.turmaTrilha || "").trim();
       const tEscola = String(data.turma || "").trim();
 
@@ -52,9 +67,9 @@ export async function GET(request: Request) {
       }
 
       if (matchesTrilha || matchesEscola) {
-        alunosMap[doc.id] = {
-          matricula: doc.id,
-          nome: data.nome || `Aluno ${doc.id}`,
+        alunosMap[mat] = {
+          matricula: mat,
+          nome: String(data.nome || `Aluno ${mat}`),
           presencasTotais: 0,
           faltasTotais: 0,
           presenteHoje: false,
@@ -71,36 +86,23 @@ export async function GET(request: Request) {
     const metaRef = dbAdmin.collection("metadata").doc("dias_aula_turmas");
     const metaSnap = await metaRef.get();
     let totalAulasTurma = 0;
+    let diasDaTurma: string[] = [];
     if (metaSnap.exists) {
       const metaData = metaSnap.data() || {};
-      // Lê a estrutura padrão (mesma do action-proxy e portal)
-      const dias = metaData[turma] || [];
-      totalAulasTurma = dias.length;
-    }
-
-    const matriculasAtivas = Object.keys(alunosMap);
-
-    // 4. Carregar todo o histórico de frequência desses alunos por blocos de 30 para calcular presentesHoje e presencasTotais
-    // Isso elimina o count() que ignorava as "justificativas" e remove a dependência da coluna "turma".
-    // O fallback avança se totalAulasTurma == 0
-    let diasDaTurma: string[] = [];
-    if (metaSnap.exists && metaSnap.data()![turma]) {
-       diasDaTurma = metaSnap.data()![turma];
+      diasDaTurma = metaData[turma] || [];
+      totalAulasTurma = diasDaTurma.length;
     }
 
     const diasSet = new Set<string>();
+    const todosRegistros: Array<{ matricula: string; dataFormatada: string; id?: string; status?: string; xpGanho?: number; justificativa?: string; hora?: string; timestamp?: number }> = [];
 
-    // 1ª Passagem: Buscar todos os registros e armazenar em memória
-    const todosRegistros: Array<{ matricula: string, dataFormatada: string, id?: string, status?: string, xpGanho?: number, justificativa?: string, hora?: string, timestamp?: number }> = [];
-    
-    // Busca otimizada usando a turma diretamente (1 query ao invés de N chunks)
     const freqSnap = await dbAdmin.collection("frequencia").where("turma", "==", turma).get();
-    
+
     freqSnap.forEach((doc: QueryDocumentSnapshot) => {
       const f = doc.data();
       const idFreq = String(f.id || doc.id).trim();
       if (idFreq.startsWith("BDAY") || idFreq.startsWith("NIVER-") || idFreq.startsWith("COMPRA-") || idFreq.startsWith("DOACAO-") || idFreq.startsWith("BADGE-")) return;
-      
+
       let dataFormatada = f.data || "";
       if (dataFormatada.includes("/") && dataFormatada.length > 10) {
         dataFormatada = dataFormatada.slice(0, 10);
@@ -121,34 +123,31 @@ export async function GET(request: Request) {
     });
 
     if (diasDaTurma.length === 0 && diasSet.size > 0) {
-       diasDaTurma = Array.from(diasSet);
-       totalAulasTurma = diasDaTurma.length;
-       await metaRef.set({
-          [turma]: diasDaTurma
-       }, { merge: true });
+      diasDaTurma = Array.from(diasSet);
+      totalAulasTurma = diasDaTurma.length;
+      await metaRef.set({
+        [turma]: diasDaTurma
+      }, { merge: true });
     }
 
-    // 2ª Passagem: Processar apenas os dias oficiais da turma
     todosRegistros.forEach(f => {
       const mat = f.matricula;
       if (!alunosMap[mat]) return;
-      
+
       const dataFormatada = f.dataFormatada;
       const idFreq = String(f.id || "").trim();
       const st = String(f.status || "").toLowerCase().trim();
       const isPresenteOuJustificada = (f.xpGanho === 0 && f.justificativa) || st === "presente" || st === "p" || st === "justificada" || st === "j";
-      
-      // Se for presença em um dia oficial da turma, soma no total
+
       if (diasDaTurma.includes(dataFormatada) && isPresenteOuJustificada) {
         alunosMap[mat].presencasTotais++;
       }
 
-      // Se for a presença de HOJE, marca no painel
       if (dataFormatada === dataHojeStr) {
-         if (isPresenteOuJustificada && !idFreq.startsWith("FALTA-") && st !== "justificada" && st !== "j") {
-           alunosMap[mat].presenteHoje = true;
-           alunosMap[mat].horaHoje = String(f.hora || f.timestamp ? new Date(f.timestamp || 0).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "Marcar");
-         }
+        if (isPresenteOuJustificada && !idFreq.startsWith("FALTA-") && st !== "justificada" && st !== "j") {
+          alunosMap[mat].presenteHoje = true;
+          alunosMap[mat].horaHoje = String(f.hora || f.timestamp ? new Date(f.timestamp || 0).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : "Marcar");
+        }
       }
     });
 
@@ -158,11 +157,14 @@ export async function GET(request: Request) {
       return a;
     });
 
-    return NextResponse.json({
+    const responsePayload = {
       status: "sucesso",
       registros: listaFinal,
       totalAulas: totalAulasTurma
-    }, {
+    };
+    setCachedFrequencia(cacheKey, responsePayload);
+
+    return NextResponse.json(responsePayload, {
       headers: {
         "Cache-Control": "s-maxage=15, stale-while-revalidate"
       }

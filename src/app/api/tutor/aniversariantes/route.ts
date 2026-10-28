@@ -1,7 +1,11 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { QueryDocumentSnapshot } from "firebase-admin/firestore";
-import { getCachedAniversariantes, setCachedAniversariantes } from "@/src/lib/cache";
+import {
+  getCachedAniversariantes,
+  setCachedAniversariantes,
+  getAlunosAtivosSnapshot,
+  refreshAlunosAtivosSnapshot
+} from "@/src/lib/cache";
 import { cookies } from "next/headers";
 
 export async function GET() {
@@ -25,11 +29,14 @@ export async function GET() {
       return NextResponse.json(cached);
     }
 
-    const activeSnap = await dbAdmin.collection("alunos").where("statusTrilha", "in", ["ativo", "Ativo"]).get();
+    let alunosAtivos = await getAlunosAtivosSnapshot(dbAdmin);
+    if (!alunosAtivos || alunosAtivos.length === 0 || (alunosAtivos.length > 0 && !("dataNasc" in alunosAtivos[0]))) {
+      alunosAtivos = await refreshAlunosAtivosSnapshot(dbAdmin);
+    }
+
     const list: { nome: string; turma: string }[] = [];
 
-    activeSnap.forEach((doc: QueryDocumentSnapshot) => {
-      const d = doc.data();
+    alunosAtivos.forEach((d) => {
       const dataNasc = String(d.dataNasc || "").trim();
       let match = false;
       if (dataNasc.includes("-")) {
@@ -60,7 +67,7 @@ export async function GET() {
       }
     });
   } catch (error: unknown) {
-    const err = error as Error;
+    const err = error instanceof Error ? error : new Error(String(error));
     console.error(`[API Error] Erro ao buscar aniversariantes no Firestore: ${err.message}`);
     return NextResponse.json({ status: "erro", error: err.message }, { status: 500 });
   }

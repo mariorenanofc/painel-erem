@@ -31,10 +31,10 @@ O sistema está crescendo rapidamente e alguns arquivos tornaram-se "monolítico
 
 ## 4. 🗄️ Estratégia de Dados, Cache e Sincronização
 
-A transição gradual do Google Sheets para o Firestore Nativo (Fase 4) está fluindo, mas deixou alguns resquícios estruturais:
+A transição gradual do Google Sheets para o Firestore Nativo (Fase 4) está concluída nos fluxos principais:
 
-*   **Cache de Configurações:** O arquivo `src/lib/cache.ts` é excelente para economizar leituras (mantendo cache por 5 min). No entanto, precisamos estender esse padrão de cache no servidor (ou Redux/Zustand no cliente) para a lista de `atividades` e `alunos`, que são os maiores gargalos de faturamento do Firebase.
-*   **Autenticação e Segurança (Erro 403):** O bloqueio de segurança que verifica o cookie `tutor_session` está funcional. Você recentemente aplicou o redirecionamento manual para `/trilhatech` em caso de 403 (Token Expirado/Não Autorizado) no `api.ts`, o que é uma boa prática de UX. Precisamos apenas garantir que as rotas de API do Aluno também tenham camadas robustas de verificação.
+*   **Cache Unificado de Configurações, Atividades e Alunos (`src/lib/cache.ts`):** Estendido para cobrir tanto o Portal do Aluno quanto o Painel do Tutor (`/trilhatech`), utilizando singletons (`cache/configuracoes_gerais`, `cache/estatisticas_atividades_resumo`, `metadata/cache_alunos_geral_0`) e chunks particionados (`cache/atividades_chunk_{i}`).
+*   **Autenticação e Segurança (Erro 403):** O bloqueio de segurança que verifica o cookie `tutor_session` está funcional, com redirecionamento automático em caso de expiração.
 
 ---
 
@@ -46,14 +46,15 @@ A transição gradual do Google Sheets para o Firestore Nativo (Fase 4) está fl
 3. **Hall da Fama — Etapa 2 (Curadoria do Tutor & Cache de Veteranos):**
    - Implementados [`src/app/api/tutor/memorial/curadoria/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/tutor/memorial/curadoria/route.ts) e [`src/components/CuradoriaHallModal.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/CuradoriaHallModal.tsx).
    - Aplicada soberania estrita de `publicadoNoHall === true` na vitrine pública ([`src/app/api/alunos/veteranos/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/alunos/veteranos/route.ts)) e remoção de mockups forçados.
+4. **Fase 2 de Blindagem de Cota do Firestore, Radar Classroom Organizado & Sincronizar AVA em Lote (Concluída em 28/10/2026):**
+   - [x] **Etapa 1 (`src/lib/cache.ts` & `src/lib/firebaseAdmin.ts`):** Chunks de atividades unificados (`includesRascunhos: true`, `respostaCorreta`, `maiorIdNumerico`), singletons `loadEstatisticasAtividadesResumo`, `loadFirestoreConfiguracoes`, `refreshAlunosAtivosSnapshot` (com cache RAM), caches em memória para frequência, transações e rifas, e trava `firestoreMonkeyPatched` em `firebaseAdmin.ts`.
+   - [x] **Etapa 2 (`src/app/api/tutor/atividades/route.ts` & `src/app/api/alunos/portal/route.ts`):** `/api/tutor/atividades` lendo de `loadFirestoreCacheAtividades` + `loadEstatisticasAtividadesResumo` (reduzindo de ~1.696 para ~8 leituras no *cold start* e 0 em RAM); filtro estrito `statusPublicacao === "Publicada"` e omissão de `respostaCorreta` em `/api/alunos/portal`.
+   - [x] **Etapa 3 (`src/app/api/action-proxy/route.ts`, `enviar-missao`, `transacoes`, `diario-classe`, `frequencia-hoje`, `rifas`):** Removido `refreshFirestoreCacheAtividades` de `avaliar_entrega`/`reverter_entrega`/`excluir_entrega`; geração de ID `O(1)` (`getNextAtividadeId`) e `skipCacheRefresh` em `salvar_atividade`; sincronia atômica de `cache/estatisticas_atividades_resumo`, `cache/configuracoes_gerais` e `refreshAlunosAtivosSnapshot`; eliminação do erro de índice composto em `diario-classe`.
+   - [x] **Etapa 4 (`radar/route.ts`, `ImportadorLoteModal.tsx`, `sincronizar-ava/route.ts`):** Leitura de `PUBLISHED` e `DRAFT` no Radar Classroom com interface organizada (abas Publicadas/Rascunhos/Todas, busca, ordenação por aula, modo compacto e seleção segura); auto-publicação ao sincronizar com o AVA e busca em lote `courseWorkId: "-"` no Google Classroom (reduzindo a sincronização geral para poucos segundos e ~44 leituras no Firestore).
 
 ### ⏳ Onde Retomar na Próxima Sessão (Checklist de Continuidade)
-1. **Validação Local & Deploy da Etapa 2 do Hall da Fama:**
-   - Confirmar testes locais da Curadoria do Tutor (publicar/ocultar formandos, aprovar TCC e exibir *Palavra do Mestre*).
-   - Executar validação final e subir (`git commit` + `git push`) os arquivos da Etapa 2.
-2. **Hall da Fama — Etapa 3 (Certificados & Compartilhamento):**
+1. **Hall da Fama — Etapa 3 (Certificados & Compartilhamento):**
    - Construir `src/components/CertificadoModal.tsx` (Certificado Digital Verificável) e `src/components/CardCompartilharModal.tsx` (Card para Stories).
-3. **Refatoração Modular & Validação Sistêmica:**
+2. **Refatoração Modular & Validação Sistêmica:**
    - Desmembrar gradualmente [`src/app/api/action-proxy/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/action-proxy/route.ts) em handlers dedicados.
    - Validar de ponta a ponta o fechamento da semana (`coroar_elite` / TOP 10 Semanal) e desconto de 30% de XP por atraso.
-

@@ -1,10 +1,16 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { getCachedRifas, setCachedRifas } from "@/src/lib/cache";
 
 export async function GET() {
   try {
+    const cached = getCachedRifas();
+    if (cached) {
+      return NextResponse.json(cached);
+    }
+
     const snapshot = await dbAdmin.collection("rifa_bilhetes").get();
-    
+
     const bilhetes: Record<string, unknown>[] = [];
     let ativos = 0;
     let sorteados = 0;
@@ -19,7 +25,7 @@ export async function GET() {
     // Ordenar do mais recente para o mais antigo
     bilhetes.sort((a, b) => (Number(b.timestamp) || 0) - (Number(a.timestamp) || 0));
 
-    return NextResponse.json({
+    const responsePayload = {
       status: "sucesso",
       estatisticas: {
         total: bilhetes.length,
@@ -27,7 +33,10 @@ export async function GET() {
         sorteados
       },
       bilhetes
-    });
+    };
+
+    setCachedRifas(responsePayload);
+    return NextResponse.json(responsePayload);
   } catch (error: unknown) {
     const err = error as Error;
     console.error("Erro ao listar rifas:", err);

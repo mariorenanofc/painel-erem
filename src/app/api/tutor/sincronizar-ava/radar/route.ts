@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { loadFirestoreCacheAtividades } from "@/src/lib/cache";
 import { google } from "googleapis";
 
 export async function POST(req: Request) {
@@ -22,38 +23,53 @@ export async function POST(req: Request) {
     auth.setCredentials({ refresh_token: refreshToken });
     const classroom = google.classroom({ version: "v1", auth });
 
-    // 1. Busca CourseWorks apenas para o curso especificado
+    // 1. Busca CourseWorks (Publicadas e Rascunhos) apenas para o curso especificado
     const atividadesDoCurso = [];
-    let pageToken = undefined;
-    
-    // Para evitar que busque todo o histórico de anos, podemos limitar
-    // Mas vamos buscar todos os ativos dessa turma
+    let pageToken: string | undefined = undefined;
+
     do {
       const cwRes = await classroom.courses.courseWork.list({
         courseId: courseId,
-        courseWorkStates: ["PUBLISHED"],
+        courseWorkStates: ["PUBLISHED", "DRAFT"],
         pageToken: pageToken
-      }) as { data: { courseWork: Array<{ alternateLink?: string, id: string, title: string, description?: string, maxPoints?: number, dueDate?: { day: number, month: number, year: number }, creationTime: string }>, nextPageToken?: string } };
-      
+      }) as {
+        data: {
+          courseWork?: Array<{
+            alternateLink?: string;
+            id: string;
+            title: string;
+            description?: string;
+            maxPoints?: number;
+            dueDate?: { day: number; month: number; year: number };
+            creationTime: string;
+            state?: string;
+          }>;
+          nextPageToken?: string;
+        };
+      };
+
       const courseWorks = cwRes.data.courseWork || [];
-      
+
       for (const cw of courseWorks) {
-        if (!cw.alternateLink) continue;
-        const linkCwNorm = String(cw.alternateLink).trim().split('?')[0].replace(/\/$/, "");
-        
+        const courseB64 = Buffer.from(String(courseId)).toString("base64").replace(/=+$/, "");
+        const cwB64 = Buffer.from(String(cw.id)).toString("base64").replace(/=+$/, "");
+        const linkFinal = cw.alternateLink || `https://classroom.google.com/c/${courseB64}/a/${cwB64}/details`;
+        const linkCwNorm = String(linkFinal).trim().split("?")[0].replace(/\/$/, "");
+
         atividadesDoCurso.push({
           idClassroom: cw.id,
           courseId: courseId,
           titulo: cw.title,
           descricao: cw.description || "",
-          linkClassroom: cw.alternateLink,
+          linkClassroom: linkFinal,
           linkNorm: linkCwNorm,
-          xpRecomendado: cw.maxPoints || 100,
+          xpRecomendado: cw.maxPoints || 10,
           dataLimite: cw.dueDate ? `${cw.dueDate.day}/${cw.dueDate.month}/${cw.dueDate.year}` : "",
-          creationTime: cw.creationTime
+          creationTime: cw.creationTime,
+          estadoClassroom: cw.state || "PUBLISHED"
         });
       }
-      
+
       pageToken = cwRes.data.nextPageToken;
     } while (pageToken);
 
@@ -61,31 +77,39 @@ export async function POST(req: Request) {
       return NextResponse.json({ status: "sucesso", atividades: [] });
     }
 
-    // 2. Extrai os links e verifica no Firebase usando lotes (chunking max 30 por query 'in')
+    // 2. Verifica links já cadastrados usando o Cache Particionado (0 a 7 leituras em vez de varrer coleção)
     const linksCadastrados = new Set<string>();
-    
-    const chunkSize = 30;
-    for (let i = 0; i < atividadesDoCurso.length; i += chunkSize) {
-      const chunk = atividadesDoCurso.slice(i, i + chunkSize);
-      const linksChunk = chunk.map(a => a.linkNorm);
-      
-      // Essa query é cirúrgica e gasta no MÁXIMO 30 leituras, em vez de milhares
-      const atividadesSnap = await dbAdmin.collection("atividades")
-        .where("linkClassroom", "in", linksChunk)
-        .get();
-        
-      atividadesSnap.forEach(doc => {
-        const linkReal = String(doc.data().linkClassroom).trim().split('?')[0].replace(/\/$/, "");
-        linksCadastrados.add(linkReal);
+    const cachedAtividades = await loadFirestoreCacheAtividades(dbAdmin);
+
+    if (cachedAtividades && Array.isArray(cachedAtividades.atividades)) {
+      cachedAtividades.atividades.forEach(doc => {
+        if (doc.linkClassroom) {
+          const linkReal = String(doc.linkClassroom).trim().split("?")[0].replace(/\/$/, "");
+          linksCadastrados.add(linkReal);
+        }
       });
+    } else {
+      const chunkSize = 30;
+      for (let i = 0; i < atividadesDoCurso.length; i += chunkSize) {
+        const chunk = atividadesDoCurso.slice(i, i + chunkSize);
+        const linksChunk = chunk.map(a => a.linkNorm);
+        const atividadesSnap = await dbAdmin.collection("atividades")
+          .where("linkClassroom", "in", linksChunk)
+          .get();
+
+        atividadesSnap.forEach(doc => {
+          const linkReal = String(doc.data().linkClassroom).trim().split("?")[0].replace(/\/$/, "");
+          linksCadastrados.add(linkReal);
+        });
+      }
     }
 
     // 3. Filtra apenas as que não estão cadastradas
     const novasAtividades = atividadesDoCurso
       .filter(a => !linksCadastrados.has(a.linkNorm))
       .map(a => {
-        // Remover linkNorm antes de mandar para o frontend
-        const { linkNorm, ...resto } = a;
+        const { linkNorm: _linkNorm, ...resto } = a;
+        void _linkNorm;
         return resto;
       });
 

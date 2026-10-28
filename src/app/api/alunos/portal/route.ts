@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
-import { getCachedPortal, setCachedPortal, getCachedConfigs, setCachedConfigs, getCachedModulos, setCachedModulos, getCachedAtividades, setCachedAtividades, getCachedClassDates, setCachedClassDates, loadFirestoreCacheAtividades } from "@/src/lib/cache";
+import { getCachedPortal, setCachedPortal, loadFirestoreConfiguracoes, getCachedModulos, setCachedModulos, getCachedAtividades, setCachedAtividades, getCachedClassDates, setCachedClassDates, loadFirestoreCacheAtividades } from "@/src/lib/cache";
 import { calcularGamificacao } from "@/src/lib/gamificacao";
 
 interface AtividadePortal {
@@ -174,35 +174,14 @@ export async function GET(request: Request) {
     dadosRetorno.nivel = gStatus.nivel;
     dadosRetorno.progressoNivel = gStatus.progressoNivel;
 
-    // 4. WhatsApp link da turma (com cache de 10 minutos)
-    let configMap = getCachedConfigs() as Record<string, string> | null;
-    if (!configMap) {
-      console.log(`[Firestore Query] Portal: Carregando configuracoes (Singleton)`);
-      const tempMap: Record<string, string> = {};
-      
-      const configCacheDoc = await dbAdmin.collection("cache").doc("configuracoes_gerais").get();
-      if (configCacheDoc.exists) {
-        const data = configCacheDoc.data() || {};
-        for (const k of Object.keys(data)) {
-          if (k !== 'updatedAt') tempMap[k] = String(data[k]);
-        }
-      } else {
-        console.warn(`[Firestore Query] Singleton de configuracoes não encontrado, caindo para fallback`);
-        const configSnap = await dbAdmin.collection("configuracoes").get();
-        configSnap.forEach((doc: QueryDocumentSnapshot) => {
-          tempMap[doc.id] = doc.data().valor;
-        });
-      }
-      
-      configMap = tempMap;
-      setCachedConfigs(configMap);
-    }
+    // 4. WhatsApp link da turma (com cache padronizado via Singleton)
+    const configMap = await loadFirestoreConfiguracoes(dbAdmin);
 
     const turmaDoAluno: string = aluno.turmaTrilha || aluno.turma || "";
     if (turmaDoAluno.includes("1º") || turmaDoAluno.includes("1")) {
-      dadosRetorno.whatsapp.link = configMap["WHATSAPP_1ANO"] || "";
+      dadosRetorno.whatsapp.link = String(configMap["WHATSAPP_1ANO"] || "");
     } else if (turmaDoAluno.includes("2º") || turmaDoAluno.includes("2")) {
-      dadosRetorno.whatsapp.link = configMap["WHATSAPP_2ANO"] || "";
+      dadosRetorno.whatsapp.link = String(configMap["WHATSAPP_2ANO"] || "");
     }
 
     // 5. Checar Aniversário
@@ -384,19 +363,22 @@ export async function GET(request: Request) {
     
     dadosRetorno.ofensivaDias = streak;
 
-    // 9. Atividades (com cache global de 12 horas + SINGLETON / CHUNKED FIRESTORE)
+    // 9. Atividades (com cache global + SINGLETON / CHUNKED FIRESTORE)
     let atividadesList = getCachedAtividades() as AtividadeDoc[] | null;
     if (!atividadesList) {
       console.log(`[Firestore Query] Portal: Carregando atividades publicadas (Cache Particionado)`);
-      const { atividades: loadedList, updatedAt } = await loadFirestoreCacheAtividades(dbAdmin);
+      const { atividades: loadedList, updatedAt, maiorIdNumerico } = await loadFirestoreCacheAtividades(dbAdmin);
       atividadesList = loadedList as AtividadeDoc[];
-      setCachedAtividades(atividadesList, updatedAt);
+      setCachedAtividades(atividadesList, updatedAt, maiorIdNumerico);
     }
 
     const hojeTime = new Date();
     hojeTime.setHours(0, 0, 0, 0);
 
     atividadesList.forEach((ativ) => {
+      // Garantia de segurança: atividades em Rascunho jamais são exibidas no Portal do Aluno
+      if (ativ.statusPublicacao && String(ativ.statusPublicacao).trim() !== "Publicada") return;
+
       const turmaAlvo = ativ.turmaAlvo || "Todas";
 
       if (turmaAlvo.toLowerCase() === "todas" || turmaAlvo === turmaDoAluno) {

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { FieldValue } from "firebase-admin/firestore";
-import { invalidatePortalCache } from "@/src/lib/cache";
+import { invalidatePortalCache, invalidateVeteranosCache } from "@/src/lib/cache";
 
 export const maxDuration = 10;
 export const dynamic = "force-dynamic";
@@ -116,6 +116,7 @@ export async function POST(request: Request) {
     });
 
     invalidatePortalCache(matriculaDestinatario);
+    invalidateVeteranosCache();
 
     return NextResponse.json({
       status: "sucesso",

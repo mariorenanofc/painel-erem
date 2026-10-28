@@ -22,8 +22,8 @@ Ele serve como o guia definitivo para saber:
 | **Etapa 1** | Rotas de API do Memorial (Foto, Frase, TCC & Quiz) | ✅ Concluído | `src/app/api/alunos/memorial/route.ts` |
 | **Etapa 1** | Banco de Questionários Técnicos (10 Questões • Nota $\ge 7$) | ✅ Concluído | `src/lib/questionariosTech.ts` |
 | **Etapa 1** | Persistência Real de Aplausos Diários Autenticados (1/dia) | ✅ Concluído | `src/app/api/hall-da-fama/aplaudir/route.ts` |
-| **Etapa 2** | Aba "Curadoria do Hall da Fama" no Painel do Tutor | ⏳ Pendente | `src/app/trilhatech/page.tsx` |
-| **Etapa 2** | API do Tutor para aprovação, selos de honra e parecer | ⏳ Pendente | `src/app/api/tutor/memorial/curadoria/route.ts` |
+| **Etapa 2** | Aba/Modal "Curadoria do Hall da Fama" no Painel do Tutor | ✅ Concluído | `src/components/CuradoriaHallModal.tsx` & `src/app/trilhatech/page.tsx` |
+| **Etapa 2** | API do Tutor para aprovação, selos de honra e parecer | ✅ Concluído | `src/app/api/tutor/memorial/curadoria/route.ts` |
 | **Etapa 3** | Modal de Certificado Digital Verificável | ⏳ Pendente | `src/components/CertificadoModal.tsx` |
 | **Etapa 3** | Gerador de Card para Story (Instagram/WhatsApp) | ⏳ Pendente | `src/components/CardCompartilharModal.tsx` |
 
@@ -182,22 +182,24 @@ export interface MemorialFormatura {
 
 ## 🗺️ Roadmap de Execução (Onde Continuar)
 
-### 🚀 Etapa 1: O Lado do Aluno (Próximo Passo Imediato)
-1. Adicionar os tipos `ProjetoConclusao` e `MemorialFormatura` em [`src/types/index.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/types/index.ts).
-2. Criar a rota de API [`src/app/api/alunos/memorial/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/alunos/memorial/route.ts) com validação de sessão e travas de segurança.
-3. Atualizar o modal do perfil ([`src/components/PerfilModal.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/PerfilModal.tsx)) adicionando a aba **"🎓 Memorial de Formatura"** para o aluno preencher seus dados.
+### ✅ Etapa 1: O Lado do Aluno (Concluída)
+1. Tipos `ProjetoConclusao`, `CertificacaoTech` e `MemorialFormatura` em [`src/types/index.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/types/index.ts).
+2. Rota de API [`src/app/api/alunos/memorial/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/alunos/memorial/route.ts) com questionário técnico (10 questões, nota mínima $\ge 7$) e sanitização contra campos `undefined`.
+3. Aba **"🎓 Memorial de Formatura"** em [`src/components/MemorialTab.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/MemorialTab.tsx) & [`src/components/PerfilModal.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/PerfilModal.tsx).
 
-### 🛡️ Etapa 2: O Lado do Tutor (Curadoria e Aprovação)
-1. Criar a rota de API [`src/app/api/tutor/memorial/curadoria/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/tutor/memorial/curadoria/route.ts).
-2. Adicionar uma aba ou gaveta de curadoria no painel do tutor ([`src/app/trilhatech/page.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/trilhatech/page.tsx)) permitindo ao tutor:
-   - Visualizar a lista de formandos pendentes de revisão.
-   - Atribuir a especialidade e selo de honra.
-   - Escrever o parecer do mestre e publicar no Hall.
+### ✅ Etapa 2: O Lado do Tutor — Curadoria e Publicação (Concluída — Em Validação Local)
+1. Rota de API [`src/app/api/tutor/memorial/curadoria/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/tutor/memorial/curadoria/route.ts) com preservação de imutabilidade (`xpFinal`/`nivelFinal` para Veteranos), higienização de propriedades `undefined` e notificação no `portal_views`.
+2. Modal de Curadoria [`src/components/CuradoriaHallModal.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/CuradoriaHallModal.tsx) integrado ao painel [`src/app/trilhatech/page.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/trilhatech/page.tsx) (atualização otimista em estado local sem re-leitura de documentos).
+3. Soberania estrita de `publicadoNoHall === true` em [`src/app/api/alunos/veteranos/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/alunos/veteranos/route.ts) e [`src/app/hall-da-fama/page.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/hall-da-fama/page.tsx) (remoção de mockups forçados quando desativado pelo tutor + cache em memória `getCachedVeteranos` em [`src/lib/cache.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/lib/cache.ts)).
 
-### 🏛️ Etapa 3: A Experiência Pública dos Visitantes
-1. Conectar [`src/app/hall-da-fama/page.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/hall-da-fama/page.tsx) para buscar diretamente os alunos que possuem `memorialFormatura.publicadoNoHall == true`.
-2. Adicionar o modal de **Certificado Digital de Conclusão** com design oficial e autenticidade.
-3. Criar a função de compartilhamento de card de formatura para redes sociais.
+### 🏛️ Etapa 3: Próximo Passo (A Construir Após Validação da Etapa 2)
+1. **Checklist de Validação Pré-Etapa 3:**
+   - [ ] Validar ativação e desativação individual de formandos (`Publicar no Hall`) no ambiente local e confirmar reflexo imediato em `/hall-da-fama`.
+   - [ ] Validar exibição da *Palavra do Mestre* (`parecerTutor`) e dos links de *Projeto Aprovado* (`projetoDestaque.aprovadoPeloTutor`) nos Collector Cards.
+   - [ ] Fazer commit e push da Etapa 2 após aprovação final do tutor.
+2. **Construção da Etapa 3:**
+   - [ ] Criar o modal de **Certificado Digital Verificável** (`src/components/CertificadoModal.tsx`) com design oficial e opção de impressão/PDF.
+   - [ ] Criar o gerador de **Card para Story (Instagram/WhatsApp/LinkedIn)** (`src/components/CardCompartilharModal.tsx`).
 
 ---
 

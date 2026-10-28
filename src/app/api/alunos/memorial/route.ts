@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
-import { invalidatePortalCache } from "@/src/lib/cache";
+import { invalidatePortalCache, invalidateVeteranosCache } from "@/src/lib/cache";
 import {
   listarTecnologiasDisponiveis,
   obterQuestoesPublicas,
@@ -177,6 +177,7 @@ export async function POST(request: Request) {
       }, { merge: true });
 
       invalidatePortalCache(matricula);
+      invalidateVeteranosCache();
 
       return NextResponse.json({
         status: "sucesso",
@@ -217,14 +218,23 @@ export async function POST(request: Request) {
         aprovadoPeloTutor: projetoExistente.aprovadoPeloTutor // Apenas tutor altera esta flag
       };
 
-      const novoMemorial: Partial<MemorialFormatura> = {
+      const novoMemorial: Record<string, unknown> = {
         ...memorialExistente,
         fraseFormatura,
-        fotoUrl,
         linkedinUrl,
         githubUrl,
         projetoDestaque
       };
+
+      if (fotoUrl) {
+        novoMemorial.fotoUrl = fotoUrl;
+      }
+
+      Object.keys(novoMemorial).forEach(k => {
+        if (novoMemorial[k] === undefined) {
+          delete novoMemorial[k];
+        }
+      });
 
       await alunoRef.set({
         memorialFormatura: novoMemorial,
@@ -240,6 +250,7 @@ export async function POST(request: Request) {
       }
 
       invalidatePortalCache(matricula);
+      invalidateVeteranosCache();
 
       return NextResponse.json({
         status: "sucesso",

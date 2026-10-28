@@ -458,3 +458,27 @@ export async function getAlunosAtivosSnapshot(dbAdmin: Firestore) {
   }
 }
 
+
+// -----------------------------------------------------------------------------
+// CACHE EM MEMÓRIA PARA HALL DA FAMA (VETERANOS)
+// Evita leituras repetidas nas coleções 'alunos' e 'portal_views' em visitas públicas
+// -----------------------------------------------------------------------------
+let veteranosCache: { data: unknown; timestamp: number } | null = null;
+
+export function getCachedVeteranos(): unknown | null {
+  if (veteranosCache && Date.now() - veteranosCache.timestamp < 600000) { // 10 minutos
+    return veteranosCache.data;
+  }
+  return null;
+}
+
+export function setCachedVeteranos(data: unknown) {
+  veteranosCache = {
+    data,
+    timestamp: Date.now()
+  };
+}
+
+export function invalidateVeteranosCache() {
+  veteranosCache = null;
+}

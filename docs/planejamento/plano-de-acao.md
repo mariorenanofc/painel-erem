@@ -38,11 +38,22 @@ A transição gradual do Google Sheets para o Firestore Nativo (Fase 4) está fl
 
 ---
 
-## 5. 🛠️ Plano de Ação Proposto (Próximos Passos)
+## 5. 🛠️ Plano de Ação Proposto (Status Atual & Próximos Passos)
 
-1.  **Fase Seguinte: Refatoração do Action Proxy**
-    *   Desmembrar o arquivo monolítico `action-proxy/route.ts` dividindo as responsabilidades para `/handlers/`, garantindo a manutenibilidade da API conforme a TrilhaTech cresce.
-2.  **Fase Final: Validação Funcional Sistêmica**
-    *   Validar o desconto de 30% do XP e as regras do gabarito.
-    *   Testar de ponta a ponta o fechamento da semana e injeção do bônus.
+### ✅ Entregas Recentes Concluídas
+1. **Cache Particionado de Atividades & Correção "Aula 47":** Implementado particionamento em blocos (*chunks* de 150 itens) em [`src/lib/cache.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/lib/cache.ts) e sincronização com `portal_views`.
+2. **Constituição do Agente Guardião ([`.agents/AGENTS.md`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/.agents/AGENTS.md)):** Criado protocolo de interrupção proativa de risco, roteador de intenção e mapa anti-alucinação.
+3. **Hall da Fama — Etapa 2 (Curadoria do Tutor & Cache de Veteranos):**
+   - Implementados [`src/app/api/tutor/memorial/curadoria/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/tutor/memorial/curadoria/route.ts) e [`src/components/CuradoriaHallModal.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/CuradoriaHallModal.tsx).
+   - Aplicada soberania estrita de `publicadoNoHall === true` na vitrine pública ([`src/app/api/alunos/veteranos/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/alunos/veteranos/route.ts)) e remoção de mockups forçados.
+
+### ⏳ Onde Retomar na Próxima Sessão (Checklist de Continuidade)
+1. **Validação Local & Deploy da Etapa 2 do Hall da Fama:**
+   - Confirmar testes locais da Curadoria do Tutor (publicar/ocultar formandos, aprovar TCC e exibir *Palavra do Mestre*).
+   - Executar validação final e subir (`git commit` + `git push`) os arquivos da Etapa 2.
+2. **Hall da Fama — Etapa 3 (Certificados & Compartilhamento):**
+   - Construir `src/components/CertificadoModal.tsx` (Certificado Digital Verificável) e `src/components/CardCompartilharModal.tsx` (Card para Stories).
+3. **Refatoração Modular & Validação Sistêmica:**
+   - Desmembrar gradualmente [`src/app/api/action-proxy/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/action-proxy/route.ts) em handlers dedicados.
+   - Validar de ponta a ponta o fechamento da semana (`coroar_elite` / TOP 10 Semanal) e desconto de 30% de XP por atraso.
 

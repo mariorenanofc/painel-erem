@@ -2,6 +2,7 @@
 
 import Header from "@/src/components/Header";
 import StudentModal from "@/src/components/StudentModal";
+import CuradoriaHallModal from "@/src/components/CuradoriaHallModal";
 import TrilhaStatsCards from "@/src/components/TrilhaStatsCards";
 import TrilhaFilters from "@/src/components/TrilhaFilters";
 import TrilhaTable from "@/src/components/TrilhaTable";
@@ -26,6 +27,7 @@ export default function TrilhaTechPage() {
   >(null);
 
   const [modalAberto, setModalAberto] = useState(false);
+  const [modalCuradoriaAberto, setModalCuradoriaAberto] = useState(false);
   const [alunoSelecionado, setAlunoSelecionado] = useState<Aluno>({
     matricula: "",
     nome: "",
@@ -205,6 +207,14 @@ export default function TrilhaTechPage() {
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
+              onClick={() => setModalCuradoriaAberto(true)}
+              className="cursor-pointer bg-gradient-to-r from-amber-500 to-yellow-600 hover:brightness-110 text-slate-950 text-xs font-black uppercase tracking-wider py-3.5 px-6 rounded-2xl shadow-lg shadow-amber-500/20 transition-all flex items-center gap-2"
+            >
+              <span>🏛️</span> Curadoria Hall da Fama
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
               onClick={() => (window.location.href = "/trilhatech/aulas")}
               className="cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-650 hover:brightness-110 text-white text-xs font-black uppercase tracking-wider py-3.5 px-6 rounded-2xl shadow-lg shadow-blue-500/10 transition-all flex items-center gap-2"
             >
@@ -258,6 +268,12 @@ export default function TrilhaTechPage() {
         handleChange={() => {}}
         salvarAluno={() => {}}
         salvando={false}
+      />
+
+      <CuradoriaHallModal
+        isOpen={modalCuradoriaAberto}
+        onClose={() => setModalCuradoriaAberto(false)}
+        onSaved={() => mutate()}
       />
     </main>
   );

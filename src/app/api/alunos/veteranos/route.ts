@@ -1,21 +1,11 @@
 import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
+import { getCachedVeteranos, setCachedVeteranos } from "@/src/lib/cache";
 import { QueryDocumentSnapshot, DocumentSnapshot } from "firebase-admin/firestore";
-import { MemorialFormatura, CertificacaoTech } from "@/src/types";
+import { MemorialFormatura, CertificacaoTech, ProjetoConclusao } from "@/src/types";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 10;
-
-const MATRICULAS_LENDAS_OFICIAIS = [
-  "3756187", // Kelly
-  "3826087", // Breno
-  "3183600", // Anna
-  "3826381", // Otavio
-  "2908059", // Wendel
-  "3116928", // Gustavo
-  "3763451", // Samara
-  "2950897"  // Hellen
-];
 
 interface VeteranoResposta {
   matricula: string;
@@ -30,37 +20,44 @@ interface VeteranoResposta {
   fraseFormatura?: string;
   techStack?: string[];
   destaque?: string;
+  parecerTutor?: string;
+  projetoDestaque?: ProjetoConclusao;
+  linkedinUrl?: string;
+  githubUrl?: string;
   projetosConcluidos?: number;
   totalAplausos?: number;
   publicadoNoHall?: boolean;
+  curadoriaEstrita?: boolean;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    // Busca alunos com status Veterano
-    const snapVeteranos = await dbAdmin.collection("alunos").where("statusTrilha", "==", "Veterano").get();
+    const { searchParams } = new URL(request.url);
+    const nocache = searchParams.get("nocache") === "true";
 
-    // Também busca alunos que já foram marcados com publicadoNoHall no memorial
-    const snapPublicados = await dbAdmin.collection("alunos").where("memorialFormatura.publicadoNoHall", "==", true).get();
-
-    // Consolida mapa por matrícula para evitar duplicações
-    const docsMap = new Map<string, DocumentSnapshot>();
-    snapVeteranos.docs.forEach((doc: QueryDocumentSnapshot) => docsMap.set(doc.id, doc));
-    snapPublicados.docs.forEach((doc: QueryDocumentSnapshot) => docsMap.set(doc.id, doc));
-
-    // Fallback de segurança para garantir a listagem das lendas oficiais do curso
-    if (docsMap.size === 0) {
-      const lendasSnaps = await Promise.all(
-        MATRICULAS_LENDAS_OFICIAIS.map(m => dbAdmin.collection("alunos").doc(m).get())
-      );
-      lendasSnaps.forEach(docSnap => {
-        if (docSnap.exists) {
-          docsMap.set(docSnap.id, docSnap);
-        }
-      });
+    if (!nocache) {
+      const cached = getCachedVeteranos() as VeteranoResposta[] | null;
+      if (cached && (cached.length === 0 || cached[0]?.curadoriaEstrita === true)) {
+        return NextResponse.json({ status: "sucesso", veteranos: cached, fromCache: true });
+      }
     }
 
-    const docs = Array.from(docsMap.values());
+    // Regra Soberana do Tutor (.agents/AGENTS.md):
+    // APENAS alunos com memorialFormatura.publicadoNoHall === true aparecem na vitrine pública!
+    const snapPublicados = await dbAdmin
+      .collection("alunos")
+      .where("memorialFormatura.publicadoNoHall", "==", true)
+      .get();
+
+    const docs: DocumentSnapshot[] = snapPublicados.docs.filter((doc: QueryDocumentSnapshot) => {
+      const d = doc.data();
+      return d.memorialFormatura?.publicadoNoHall === true;
+    });
+
+    if (docs.length === 0) {
+      setCachedVeteranos([]);
+      return NextResponse.json({ status: "sucesso", veteranos: [] });
+    }
 
     // Buscar portal_views para sincronizar badges e fotos
     const portalViewsSnaps = await Promise.all(
@@ -73,6 +70,9 @@ export async function GET() {
       const data = doc.data() || {};
       const portal = portalViewsSnaps[i].exists ? (portalViewsSnaps[i].data() || {}) : {};
       const memorial = (data.memorialFormatura || {}) as Partial<MemorialFormatura>;
+
+      // Dupla trava: se publicadoNoHall não for estritamente true, ignora
+      if (memorial.publicadoNoHall !== true) return;
 
       const historico = Array.isArray(data.historicoAnual) ? data.historicoAnual : [];
       const ultimoHistorico = historico.length > 0 ? historico[historico.length - 1] : null;
@@ -115,15 +115,22 @@ export async function GET() {
         fraseFormatura,
         techStack: techStackAprovada,
         destaque: memorial.seloHonorifico || "Lenda da Trilha Tech",
+        parecerTutor: memorial.parecerTutor || "",
+        projetoDestaque: memorial.projetoDestaque,
+        linkedinUrl: memorial.linkedinUrl || "",
+        githubUrl: memorial.githubUrl || "",
         projetosConcluidos: memorial.projetoDestaque?.titulo ? 1 : 0,
         totalAplausos: Number(memorial.totalAplausos) || 0,
-        publicadoNoHall: memorial.publicadoNoHall ?? true
+        publicadoNoHall: true,
+        curadoriaEstrita: true
       });
     });
 
+    setCachedVeteranos(veteranos);
+
     return NextResponse.json({ status: "sucesso", veteranos });
   } catch (error: unknown) {
-    const err = error as Error;
+    const err = error instanceof Error ? error : new Error(String(error));
     console.error("[Veteranos API] Erro ao buscar formandos:", err.message);
     return NextResponse.json({ status: "erro", mensagem: err.message }, { status: 500 });
   }

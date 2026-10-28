@@ -25,6 +25,14 @@ interface Veterano {
   fraseFormatura?: string;
   techStack?: string[];
   destaque?: string;
+  parecerTutor?: string;
+  projetoDestaque?: {
+    titulo: string;
+    descricao: string;
+    linkDeploy?: string;
+    linkGithub?: string;
+    aprovadoPeloTutor: boolean;
+  };
   projetosConcluidos?: number;
   totalAplausos?: number;
 }
@@ -68,138 +76,6 @@ function obterDadosAlunoConectado(): DadosSessaoAluno {
   };
 }
 
-// Mockup de Alta Fidelidade: As Lendas Formadas da Trilha Tech
-const VETERANOS_MOCK: Veterano[] = [
-  {
-    matricula: "3756187",
-    nome: "KELLY NAIARA BEZERRA DE ALENCAR",
-    apelido: "Rainha dos Algoritmos",
-    especialidade: "Arquiteta de Sistemas & Fullstack",
-    fraseFormatura: "",
-    techStack: [],
-    avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Kelly",
-    badges: ["🏅 Legado Ouro", "🏆 Trilionário", "💰 Magnata", "⭐ Elite Code", "👑 Top 1 Geral"],
-    anoFormacao: 2026,
-    xpFinal: 18520,
-    nivelFinal: "Dev Supremo",
-    destaque: "1º Lugar Geral • Maior XP da História",
-    projetosConcluidos: 14,
-    totalAplausos: 0
-  },
-  {
-    matricula: "3826087",
-    nome: "BRENO RUAN LOPES DA SILVA",
-    apelido: "Mestre da Lógica",
-    especialidade: "Líder em IA & Algoritmos Complexos",
-    fraseFormatura: "",
-    techStack: [],
-    avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Breno",
-    badges: ["🥈 Legado Prata", "💰 Magnata", "⚔️ Duelista Supremo", "🔥 Streak Mestre"],
-    anoFormacao: 2026,
-    xpFinal: 17150,
-    nivelFinal: "Dev Supremo",
-    destaque: "2º Lugar Geral • Campeão Invencível de Duelos",
-    projetosConcluidos: 12,
-    totalAplausos: 0
-  },
-  {
-    matricula: "3183600",
-    nome: "ANNA BETHÂNIA DE MIRANDA CARVALHO",
-    apelido: "Mestra Fullstack",
-    especialidade: "Engenheira de Software & UI/UX Star",
-    fraseFormatura: "",
-    techStack: [],
-    avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Anna",
-    badges: ["🥉 Legado Bronze", "💰 Magnata", "🔥 Ofensiva Lendária", "💎 Criatividade"],
-    anoFormacao: 2026,
-    xpFinal: 16890,
-    nivelFinal: "Dev Supremo",
-    destaque: "3º Lugar Geral • 100% de Presença e Pontualidade",
-    projetosConcluidos: 11,
-    totalAplausos: 0
-  },
-  {
-    matricula: "3826381",
-    nome: "OTAVIO DE SOUZA BENEDITO",
-    apelido: "Dev Resiliente",
-    especialidade: "Especialista em Gamificação & Lógica Web",
-    fraseFormatura: "",
-    techStack: [],
-    avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Otavio",
-    badges: ["🏅 Veterano Tech", "🥳 Festeiro", "🎮 Bug Hunter Pro", "🚀 Resiliência"],
-    anoFormacao: 2026,
-    xpFinal: 14065,
-    nivelFinal: "Dev Supremo",
-    destaque: "Top Honra • Destaque em Superação e Gamificação",
-    projetosConcluidos: 9,
-    totalAplausos: 0
-  },
-  {
-    matricula: "2908059",
-    nome: "WENDEL MARCOS AQUINO DE CARVALHO",
-    apelido: "Fullstack Ninja",
-    especialidade: "Frontend Moderno & Otimização de Performance",
-    fraseFormatura: "",
-    techStack: [],
-    avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Wendel",
-    badges: ["🏅 Veterano Tech", "💰 Magnata", "⚡ Speed Coder"],
-    anoFormacao: 2026,
-    xpFinal: 16442,
-    nivelFinal: "Dev Supremo",
-    destaque: "Top Honra • Especialista em Performance Web",
-    projetosConcluidos: 10,
-    totalAplausos: 0
-  },
-  {
-    matricula: "3116928",
-    nome: "GUSTAVO HENRIQUE GOMES DE SOUZA",
-    apelido: "Bug Hunter X",
-    especialidade: "Qualidade de Código & Back-end",
-    fraseFormatura: "",
-    techStack: [],
-    avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Gustavo",
-    badges: ["🏅 Veterano Tech", "💰 Magnata", "🎯 Precisão Total"],
-    anoFormacao: 2026,
-    xpFinal: 16529,
-    nivelFinal: "Dev Supremo",
-    destaque: "Top Honra • Guardião da Estabilidade dos Sistemas",
-    projetosConcluidos: 10,
-    totalAplausos: 0
-  },
-  {
-    matricula: "3763451",
-    nome: "SAMARA RANYELLE LIMA DE OLIVEIRA",
-    apelido: "Lenda Binária",
-    especialidade: "Desenvolvimento Web & Criatividade Digital",
-    fraseFormatura: "",
-    techStack: [],
-    avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Samara",
-    badges: ["🏅 Veterano Tech", "💎 Mente Brilhante", "🎨 Visual Pro"],
-    anoFormacao: 2026,
-    xpFinal: 14717,
-    nivelFinal: "Dev Supremo",
-    destaque: "Top Honra • Destaque em Criatividade e Estética",
-    projetosConcluidos: 8,
-    totalAplausos: 0
-  },
-  {
-    matricula: "2950897",
-    nome: "HELLEN SOFIA OLIVEIRA LOPES",
-    apelido: "Mestre da Sintaxe",
-    especialidade: "Aplicações Interativas & Clean Architecture",
-    fraseFormatura: "",
-    techStack: [],
-    avatar: "https://api.dicebear.com/9.x/bottts/svg?seed=Hellen",
-    badges: ["🏅 Veterano Tech", "⚡ Prodígio", "📚 Conhecimento Ouro"],
-    anoFormacao: 2026,
-    xpFinal: 14567,
-    nivelFinal: "Dev Supremo",
-    destaque: "Top Honra • Destaque em Clareza e Arquitetura",
-    projetosConcluidos: 9,
-    totalAplausos: 0
-  }
-];
-
 export default function HallDaFamaPage() {
   const { data, isLoading, mutate } = useSWR<{ status: string; veteranos: Veterano[] }>("/api/alunos/veteranos", fetcher, {
     revalidateOnFocus: true,
@@ -233,7 +109,7 @@ export default function HallDaFamaPage() {
   };
 
   const veteranosReais: Veterano[] = data?.status === "sucesso" && Array.isArray(data.veteranos) ? data.veteranos : [];
-  const baseVeteranos = veteranosReais.length > 0 ? veteranosReais : VETERANOS_MOCK;
+  const baseVeteranos = veteranosReais;
 
   // Filtragem e busca
   const veteranosFiltrados = baseVeteranos.filter((vet) => {
@@ -496,17 +372,25 @@ export default function HallDaFamaPage() {
           </div>
         ) : veteranosOrdenados.length === 0 ? (
           <div className="text-center py-24 glass-panel border-white/10 rounded-3xl p-8 max-w-lg mx-auto">
-            <span className="text-5xl block mb-3">🔍</span>
-            <h3 className="text-xl font-bold text-slate-300">Nenhuma lenda encontrada</h3>
+            <span className="text-5xl block mb-3">{baseVeteranos.length === 0 ? "🏛️" : "🔍"}</span>
+            <h3 className="text-xl font-bold text-slate-300">
+              {baseVeteranos.length === 0
+                ? "Santuário em Curadoria pelo Mestre"
+                : "Nenhuma lenda encontrada"}
+            </h3>
             <p className="text-xs text-slate-400 mt-1">
-              Tente redefinir a busca ou alternar para a aba &ldquo;Todas as Lendas&rdquo;.
+              {baseVeteranos.length === 0
+                ? "Os memoriais de formatura estão passando pela revisão oficial do Tutor e serão publicados em breve."
+                : "Tente redefinir a busca ou alternar para a aba \"Todas as Lendas\"."}
             </p>
-            <button
-              onClick={() => { setBusca(""); setFiltroAba("TODOS"); }}
-              className="mt-5 px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all"
-            >
-              Limpar Filtros
-            </button>
+            {baseVeteranos.length > 0 && (
+              <button
+                onClick={() => { setBusca(""); setFiltroAba("TODOS"); }}
+                className="mt-5 px-5 py-2 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all"
+              >
+                Limpar Filtros
+              </button>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -574,6 +458,57 @@ export default function HallDaFamaPage() {
                           <p className="text-xs text-slate-300 italic pl-3 leading-relaxed">
                             {vet.fraseFormatura}
                           </p>
+                        </div>
+                      )}
+
+                      {/* Palavra do Mestre / Parecer Oficial do Tutor */}
+                      {Boolean(vet.parecerTutor && vet.parecerTutor.trim().length > 0) && (
+                        <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/25 mb-4">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1 mb-1">
+                            <span>🛡️</span> Palavra do Mestre
+                          </span>
+                          <p className="text-xs text-amber-100/90 leading-relaxed">
+                            {vet.parecerTutor}
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Projeto de Conclusão Aprovado pelo Tutor */}
+                      {Boolean(vet.projetoDestaque?.titulo && vet.projetoDestaque?.aprovadoPeloTutor) && (
+                        <div
+                          onClick={(e) => e.stopPropagation()}
+                          className="p-3 bg-slate-950/70 rounded-2xl border border-emerald-500/30 mb-4"
+                        >
+                          <div className="flex items-center justify-between gap-2 mb-1">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                              <span>🚀</span> Projeto Aprovado
+                            </span>
+                          </div>
+                          <p className="text-xs font-bold text-white truncate">
+                            {vet.projetoDestaque?.titulo}
+                          </p>
+                          <div className="flex items-center gap-2 mt-2">
+                            {vet.projetoDestaque?.linkDeploy && (
+                              <a
+                                href={vet.projetoDestaque.linkDeploy}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 transition-colors"
+                              >
+                                🌐 Ver Projeto
+                              </a>
+                            )}
+                            {vet.projetoDestaque?.linkGithub && (
+                              <a
+                                href={vet.projetoDestaque.linkGithub}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-slate-200 border border-white/10 transition-colors"
+                              >
+                                💻 Código
+                              </a>
+                            )}
+                          </div>
                         </div>
                       )}
 

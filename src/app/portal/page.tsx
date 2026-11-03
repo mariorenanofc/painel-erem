@@ -127,6 +127,7 @@ export default function PortalDashboard() {
 
   const [modalFrequenciaAberto, setModalFrequenciaAberto] = useState(false);
   const [modalCalendarioAberto, setModalCalendarioAberto] = useState(false);
+  const [diaFechamentoSemanal, setDiaFechamentoSemanal] = useState<number>(0);
   const [carregandoFrequencia, setCarregandoFrequencia] = useState(false);
   const [dadosFrequencia, setDadosFrequencia] =
     useState<DadosFrequencia | null>(null);
@@ -482,6 +483,14 @@ export default function PortalDashboard() {
       } catch {
         // Falha silenciosa em background
       }
+    }
+    try {
+      const res = await apiGeral.buscarRegrasCiclos();
+      if (res.status === "sucesso" && res.regras?.semanal?.diaFechamento !== undefined) {
+        setDiaFechamentoSemanal(Number(res.regras.semanal.diaFechamento));
+      }
+    } catch {
+      // Falha silenciosa
     }
   };
 
@@ -1920,6 +1929,7 @@ export default function PortalDashboard() {
             atividades={atividades}
             diasAulas={dadosFrequencia?.historico?.map(h => h.data) || []}
             turmaNome={aluno?.turma || "Minha Turma"}
+            diaFechamentoSemanal={diaFechamentoSemanal}
           />
         )}
 

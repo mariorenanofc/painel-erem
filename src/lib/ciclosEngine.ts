@@ -218,34 +218,48 @@ export async function executarFechamentoCiclo(
     }
 
     // 8. Gerar Mensagens do WhatsApp
+    const temBrinde = regraTipo.brindeFisicoTop1 !== false;
+    const xpTop1 = regraTipo.xpTop1 || 0;
+    const xpTop2_3 = regraTipo.xpTop2_3 || 0;
+    const xpTop4_10 = regraTipo.xpTop4_10 || 0;
+
     const gerarMensagem = (titulo: string, turmaLabel: string, lista: AlunoCalculado[]) => {
       let txt = `🏆 *RANKING ${titulo.toUpperCase()} FECHADO: ${chaveFinal} – ${turmaLabel.toUpperCase()}!* 🏆\n\n`;
       txt += `Fala, Devs! O sistema finalizou a contagem oficial do ciclo ${tipo}! Parabéns a todos pelo foco, constância e pelas entregas! 🔥💻\n\n`;
 
       const t1 = lista[0];
       if (t1) {
-        txt += `🥇 *CAMPEÃ(O) DO CICLO:*\n👑 *1º ${t1.nome.toUpperCase()}* — ${t1.xpTotal} XP\n*(Aplaude de pé! 👏 Topo absoluto!)*\n\n`;
+        txt += `🥇 *CAMPEÃ(O) DO CICLO:*\n👑 *1º ${t1.nome.toUpperCase()}* — ${t1.xpTotal} XP\n`;
+        if (temBrinde && xpTop1 > 0) {
+          txt += `🎁 *Premiação do 1º Lugar:* Brinde Físico Exclusivo + ${xpTop1} XP de Bônus!\n*(Aplaude de pé! 👏 Topo absoluto!)*\n\n`;
+        } else if (temBrinde && xpTop1 === 0) {
+          txt += `🎁 *Premiação do 1º Lugar:* Brinde Físico Exclusivo do Ciclo!\n*(Aplaude de pé! 👏 Topo absoluto!)*\n\n`;
+        } else if (!temBrinde && xpTop1 > 0) {
+          txt += `⚡ *Premiação do 1º Lugar:* +${xpTop1} XP de Bônus na conta!\n*(Aplaude de pé! 👏 Topo absoluto!)*\n\n`;
+        } else {
+          txt += `*(Aplaude de pé! 👏 Topo absoluto!)*\n\n`;
+        }
       }
 
       const pElite = lista.slice(1, 3);
       if (pElite.length > 0) {
-        txt += `🥈 *PÓDIO DE ELITE:*\n`;
+        txt += `🥈 *PÓDIO DE ELITE (+${xpTop2_3} XP):*\n`;
         pElite.forEach((a, i) => {
-          txt += `* ⭐ *${i + 2}º ${a.nome.toUpperCase()}* — ${a.xpTotal} XP\n`;
+          txt += `* ⭐ *${i + 2}º ${a.nome.toUpperCase()}* — ${a.xpTotal} XP (+${xpTop2_3} XP)\n`;
         });
         txt += `\n`;
       }
 
       const outros = lista.slice(3, 10);
       if (outros.length > 0) {
-        txt += `🎖️ *TOP 10 COMPLETO:*\n`;
+        txt += `🎖️ *TOP 10 COMPLETO (+${xpTop4_10} XP):*\n`;
         outros.forEach((a, i) => {
-          txt += `* 🎖️ *${i + 4}º ${a.nome.toUpperCase()}* — ${a.xpTotal} XP\n`;
+          txt += `* 🎖️ *${i + 4}º ${a.nome.toUpperCase()}* — ${a.xpTotal} XP (+${xpTop4_10} XP)\n`;
         });
         txt += `\n`;
       }
 
-      txt += `🚀 *BÔNUS DE XP CREDITADOS!* Os pontos já foram adicionados na conta de vocês no portal. Bora com tudo para o próximo ciclo! 💪🔥`;
+      txt += `🚀 *BÔNUS DE XP CREDITADOS!* Os pontos por colocação já foram adicionados na conta de vocês no portal. Bora com tudo para o próximo ciclo! 💪🔥`;
       return txt;
     };
 

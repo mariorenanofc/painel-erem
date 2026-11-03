@@ -75,6 +75,8 @@ export const apiGeral = {
     const res = await fetch("/api/configuracoes");
     return res.json();
   },
+
+  buscarRegrasCiclos: () => fetchApi({ action: "buscar_regras_ciclos" }),
 };
 
 // ==========================================

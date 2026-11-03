@@ -169,6 +169,29 @@ export default function AbaCiclos({ onSalvo }: AbaCiclosProps) {
             </div>
           </div>
 
+          {/* Checkbox Brinde Físico 1º Lugar */}
+          <label className="flex items-start gap-3 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl cursor-pointer hover:bg-amber-500/15 transition-all">
+            <input
+              type="checkbox"
+              checked={regras.semanal.brindeFisicoTop1 ?? true}
+              onChange={(e) =>
+                setRegras({
+                  ...regras,
+                  semanal: { ...regras.semanal, brindeFisicoTop1: e.target.checked }
+                })
+              }
+              className="mt-0.5 w-4 h-4 rounded text-amber-600 focus:ring-amber-500"
+            />
+            <div>
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                <span>🎁</span> 1º Colocado ganha Brinde Físico Semanal
+              </span>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Se marcado, a mensagem do WhatsApp anuncia a entrega do brinde físico para o campeão da semana.
+              </p>
+            </div>
+          </label>
+
           {/* Modo de Execução */}
           <div>
             <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-1">
@@ -342,6 +365,29 @@ export default function AbaCiclos({ onSalvo }: AbaCiclosProps) {
               />
             </div>
           </div>
+
+          {/* Checkbox Brinde Físico 1º Lugar */}
+          <label className="flex items-start gap-3 p-3.5 bg-amber-500/10 border border-amber-500/30 rounded-xl cursor-pointer hover:bg-amber-500/15 transition-all">
+            <input
+              type="checkbox"
+              checked={regras.mensal.brindeFisicoTop1 ?? true}
+              onChange={(e) =>
+                setRegras({
+                  ...regras,
+                  mensal: { ...regras.mensal, brindeFisicoTop1: e.target.checked }
+                })
+              }
+              className="mt-0.5 w-4 h-4 rounded text-amber-600 focus:ring-amber-500"
+            />
+            <div>
+              <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                <span>🎁</span> 1º Colocado ganha Brinde Físico Mensal
+              </span>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                Se marcado, a mensagem do WhatsApp anuncia a entrega do troféu/brinde físico do mês.
+              </p>
+            </div>
+          </label>
 
           {/* Modo de Execução */}
           <div>

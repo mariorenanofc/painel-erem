@@ -522,6 +522,7 @@ export interface RegraCicloSemanal {
   xpTop2_3: number;
   xpTop4_10: number;
   modoExecucao: "automatico" | "manual_com_alerta";
+  brindeFisicoTop1?: boolean;
 }
 
 export interface RegraCicloMensal {
@@ -532,6 +533,7 @@ export interface RegraCicloMensal {
   xpTop2_3: number;
   xpTop4_10: number;
   modoExecucao: "automatico" | "manual_com_alerta";
+  brindeFisicoTop1?: boolean;
 }
 
 export interface RegrasCiclosConfig {

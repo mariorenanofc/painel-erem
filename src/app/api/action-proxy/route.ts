@@ -40,7 +40,7 @@ export async function POST(request: Request) {
       "mudar_status_trilhatech", "atualizar_senha_checkin", "toggle_modo_reposicao",
       "salvar_configuracoes", "sincronizar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "sincronizar_ava",
       "justificar_falta", "buscar_analytics_geral", "buscar_ficha_360", "listar_alunos_godmode", "buscar_alunos_admin",
-      "coroar_elite", "sortear_rifa", "atualizar_senha_aluno", "verificar_regras_fechamento", "encerrar_ciclo", "salvar_regras_ciclos", "buscar_regras_ciclos", "fechar_ciclo_manual", "estornar_ciclo", "listar_historico_ciclos"
+      "coroar_elite", "sortear_rifa", "atualizar_senha_aluno", "verificar_regras_fechamento", "encerrar_ciclo"
     ];
 
     if (ROTAS_PROTEGIDAS.includes(requestAction)) {
@@ -55,7 +55,49 @@ export async function POST(request: Request) {
     }
     // ---------------------------------
 
-    if (requestAction === "sincronizar_configuracoes") {
+    // ==========================================
+    // HANDLERS NATIVOS DE CICLOS (FIRESTORE DIRETO)
+    // ==========================================
+    if (requestAction === "salvar_regras_ciclos") {
+      const { regras } = payload;
+      if (regras && typeof regras === "object") {
+        await dbAdmin.collection("configuracoes").doc("REGRAS_CICLOS").set(regras, { merge: true });
+        invalidateRegrasCiclosCache();
+        return NextResponse.json({ status: "sucesso", mensagem: "Regras de ciclos salvas com sucesso no banco de dados!" });
+      }
+      return NextResponse.json({ status: "erro", mensagem: "Dados das regras inválidos." });
+    }
+
+    if (requestAction === "buscar_regras_ciclos") {
+      const regras = await loadRegrasCiclos(dbAdmin);
+      return NextResponse.json({ status: "sucesso", regras });
+    }
+
+    if (requestAction === "fechar_ciclo_manual") {
+      const tipo = payload.tipo === "mensal" ? "mensal" : "semanal";
+      const chave = payload.chave ? String(payload.chave).trim() : undefined;
+      const autor = payload.autor ? String(payload.autor).trim() : "tutor:admin";
+      const resCiclo = await executarFechamentoCiclo(tipo, chave, autor);
+      return NextResponse.json(resCiclo);
+    }
+
+    if (requestAction === "estornar_ciclo") {
+      const cicloId = String(payload.cicloId || "").trim();
+      const autor = payload.autor ? String(payload.autor).trim() : "tutor:admin";
+      if (cicloId) {
+        const resEstorno = await executarEstornoCiclo(cicloId, autor);
+        return NextResponse.json(resEstorno);
+      }
+      return NextResponse.json({ status: "erro", mensagem: "ID do ciclo não informado para estorno." });
+    }
+
+    if (requestAction === "listar_historico_ciclos") {
+      const snap = await dbAdmin.collection("historico_ciclos").orderBy("dataFechamento", "desc").limit(20).get();
+      const historico = snap.docs.map(doc => doc.data());
+      return NextResponse.json({ status: "sucesso", historico });
+    }
+
+        if (requestAction === "sincronizar_configuracoes") {
       const sheetsResponse = await fetchSheetsQueued(GOOGLE_API_URL, { action: "buscar_configuracoes" });
       const resultSync = await sheetsResponse.json();
 
@@ -1101,7 +1143,7 @@ export async function POST(request: Request) {
 
         result = { status: "sucesso", mensagem: "Ciclo Letivo encerrado com sucesso! XP zerado e veteranos formados." };
       }
-    } else if (["avaliar_entrega", "reverter_entrega", "excluir_entrega", "injetar_xp_manual", "atualizar_senha_checkin", "toggle_modo_reposicao", "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "justificar_falta", "resgatar_badge", "resgatar_aniversario", "confirmar_whatsapp", "cadastrar_aluno", "salvar_aluno", "inscrever_trilhatech", "mudar_status_trilhatech", "atualizar_contatos_aluno", "excluir_dia_letivo"].includes(requestAction)) {
+    } else if (["avaliar_entrega", "reverter_entrega", "excluir_entrega", "injetar_xp_manual", "atualizar_senha_checkin", "toggle_modo_reposicao", "salvar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "justificar_falta", "resgatar_badge", "resgatar_aniversario", "confirmar_whatsapp", "cadastrar_aluno", "salvar_aluno", "inscrever_trilhatech", "mudar_status_trilhatech", "atualizar_contatos_aluno", "excluir_dia_letivo", "salvar_regras_ciclos", "buscar_regras_ciclos", "fechar_ciclo_manual", "estornar_ciclo", "listar_historico_ciclos"].includes(requestAction)) {
       // FASE 4: Bypass total da planilha para escritas lentas. 
       // Simula o sucesso para forçar a execução do bloco de gravação local no Firestore logo abaixo.
       result = { status: "sucesso", mensagem: "Sincronizado via Firestore nativo (Bypass)" };
@@ -1654,44 +1696,7 @@ export async function POST(request: Request) {
         }
       }
 
-      else if (action === "salvar_regras_ciclos") {
-        const { regras } = payload;
-        if (regras && typeof regras === "object") {
-          await dbAdmin.collection("configuracoes").doc("REGRAS_CICLOS").set(regras, { merge: true });
-          invalidateRegrasCiclosCache();
-          result = { status: "sucesso", mensagem: "Regras de ciclos salvas com sucesso!" };
-        } else {
-          result = { status: "erro", mensagem: "Dados das regras inválidos." };
-        }
-      }
 
-      else if (action === "buscar_regras_ciclos") {
-        const regras = await loadRegrasCiclos(dbAdmin);
-        result = { status: "sucesso", regras };
-      }
-
-      else if (action === "fechar_ciclo_manual") {
-        const tipo = payload.tipo === "mensal" ? "mensal" : "semanal";
-        const chave = payload.chave ? String(payload.chave).trim() : undefined;
-        const autor = payload.autor ? String(payload.autor).trim() : "tutor:admin";
-        result = await executarFechamentoCiclo(tipo, chave, autor);
-      }
-
-      else if (action === "estornar_ciclo") {
-        const cicloId = String(payload.cicloId || "").trim();
-        const autor = payload.autor ? String(payload.autor).trim() : "tutor:admin";
-        if (cicloId) {
-          result = await executarEstornoCiclo(cicloId, autor);
-        } else {
-          result = { status: "erro", mensagem: "ID do ciclo não informado para estorno." };
-        }
-      }
-
-      else if (action === "listar_historico_ciclos") {
-        const snap = await dbAdmin.collection("historico_ciclos").orderBy("dataFechamento", "desc").limit(20).get();
-        const historico = snap.docs.map(doc => doc.data());
-        result = { status: "sucesso", historico };
-      }
 
       else if (action === "toggle_gabarito") {
         const { idAtividade } = payload;

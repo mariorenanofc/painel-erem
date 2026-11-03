@@ -5,11 +5,49 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Atividade } from "@/src/types";
 import { getFeriadosAno } from "@/src/lib/feriadosUtils";
 
+/**
+ * Normaliza qualquer formato de data (DD/MM/YYYY, YYYY-MM-DD, ISO com hora) para YYYY-MM-DD
+ */
+function extrairDataIso(valor: unknown): string {
+  if (!valor) return "";
+  const str = String(valor).trim();
+  if (!str) return "";
+
+  // Se já for YYYY-MM-DD (com ou sem horário após espaço ou T)
+  const isoMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (isoMatch) {
+    const [, y, m, d] = isoMatch;
+    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+
+  // Se for DD/MM/YYYY (com ou sem horário após espaço)
+  if (str.includes("/")) {
+    const semHora = str.split(/\s+/)[0];
+    const partes = semHora.split("/");
+    if (partes.length === 3) {
+      const d = partes[0].padStart(2, "0");
+      const m = partes[1].padStart(2, "0");
+      let y = partes[2];
+      if (y.length === 2) y = `20${y}`;
+      if (y.length === 4) return `${y}-${m}-${d}`;
+    }
+  }
+
+  // Se for DD-MM-YYYY
+  const brMatch = str.match(/^(\d{1,2})-(\d{1,2})-(\d{4})/);
+  if (brMatch) {
+    const [, d, m, y] = brMatch;
+    return `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  }
+
+  return "";
+}
+
 export interface CalendarioEvento {
   id: string;
   titulo: string;
   data: string; // "YYYY-MM-DD"
-  tipo: "aula" | "prazo" | "ciclo_semanal" | "ciclo_mensal" | "feriado";
+  tipo: "aula" | "prazo" | "ciclo_semanal" | "ciclo_mensal" | "feriado" | "recesso";
   descricao?: string;
   xp?: number;
   badge?: string;
@@ -66,59 +104,47 @@ export default function CalendarioOficial({
       map[dataIso].push(evento);
     };
 
-    // 1. Feriados Nacionais do Ano
+    // 1. Feriados Nacionais, Estaduais (PE) e Recessos Escolares da SEE-PE
     const feriados = getFeriadosAno(ano);
     feriados.forEach((f, idx) => {
       adicionarEvento(f.dataIso, {
         id: `feriado-${idx}-${f.dataIso}`,
         titulo: f.nome,
         data: f.dataIso,
-        tipo: "feriado",
-        descricao: "Feriado Nacional (Sem aula presencial)",
-        badge: "🏖️ Feriado"
+        tipo: f.tipo === "nacional" || f.tipo === "estadual_pe" ? "feriado" : "recesso",
+        descricao: f.descricao,
+        badge: f.badge || (f.tipo === "escolar_pe" ? "🏖️ Recesso SEE-PE" : "🏖️ Feriado")
       });
     });
 
-    // 2. Prazos e Conteúdos das Atividades
+    // 2. Prazos e Conteúdos das Atividades (Mapeamento Robusto)
     atividades.forEach((ativ) => {
-      if (ativ.dataLimite) {
-        let dataIso = "";
-        if (ativ.dataLimite.includes("/")) {
-          const [d, m, y] = ativ.dataLimite.split("/");
-          if (d && m && y) dataIso = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
-        } else if (ativ.dataLimite.includes("-")) {
-          dataIso = ativ.dataLimite.split("T")[0];
-        }
+      const ativRec = ativ as unknown as Record<string, unknown>;
+      const rawData = ativ.dataLimite || ativRec.prazo || ativRec.dataEntrega || ativRec.data;
+      const dataIso = extrairDataIso(rawData);
 
-        if (dataIso) {
-          const statusText = ativ.status === "Aprovada" || ativ.status === "Devolvida" || ativ.status === "Pendente"
-            ? ativ.status
-            : "Aguardando envio";
+      if (dataIso) {
+        const statusText = ativ.status === "Aprovada" || ativ.status === "Devolvida" || ativ.status === "Pendente"
+          ? ativ.status
+          : "Aguardando envio";
 
-          adicionarEvento(dataIso, {
-            id: `ativ-${ativ.id}`,
-            titulo: ativ.titulo,
-            data: dataIso,
-            tipo: "prazo",
-            descricao: ativ.descricao ? ativ.descricao.slice(0, 90) + "..." : `Entrega da missão (${ativ.xp} XP)`,
-            xp: Number(ativ.xp) || 0,
-            badge: "⏰ Prazo",
-            modulo: ativ.tipo || "Missão",
-            statusEntrega: statusText
-          });
-        }
+        adicionarEvento(dataIso, {
+          id: `ativ-${ativ.id}`,
+          titulo: ativ.titulo,
+          data: dataIso,
+          tipo: "prazo",
+          descricao: ativ.descricao ? ativ.descricao.slice(0, 90) + "..." : `Entrega da missão (${ativ.xp} XP)`,
+          xp: Number(ativ.xp) || 0,
+          badge: "⏰ Prazo",
+          modulo: ativ.tipo || "Missão",
+          statusEntrega: statusText
+        });
       }
     });
 
     // 3. Dias de Aulas Presenciais
     diasAulas.forEach((diaStr, idx) => {
-      let dataIso = "";
-      if (diaStr.includes("/")) {
-        const [d, m, y] = diaStr.split("/");
-        if (d && m && y) dataIso = `${y}-${m.padStart(2, "0")}-${d.padStart(2, "0")}`;
-      } else if (diaStr.includes("-")) {
-        dataIso = diaStr.split("T")[0];
-      }
+      const dataIso = extrairDataIso(diaStr);
 
       if (dataIso) {
         adicionarEvento(dataIso, {
@@ -170,7 +196,7 @@ export default function CalendarioOficial({
     if (filtroTipo === "prazos") return ev.tipo === "prazo";
     if (filtroTipo === "aulas") return ev.tipo === "aula";
     if (filtroTipo === "ciclos") return ev.tipo === "ciclo_semanal" || ev.tipo === "ciclo_mensal";
-    if (filtroTipo === "feriados") return ev.tipo === "feriado";
+    if (filtroTipo === "feriados") return ev.tipo === "feriado" || ev.tipo === "recesso";
     return true;
   };
 
@@ -348,7 +374,12 @@ export default function CalendarioOficial({
                           return <div key={`empty-${index}`} className="h-20 rounded-2xl bg-slate-50/30 dark:bg-slate-900/10 opacity-30" />;
                         }
 
-                        const eventosDoDia = (eventosMap[item.dataIso] || []).filter(filtrarEvento);
+                        const eventosDoDia = (eventosMap[item.dataIso] || [])
+                          .filter(filtrarEvento)
+                          .sort((a, b) => {
+                            const peso: Record<string, number> = { prazo: 1, aula: 2, feriado: 3, recesso: 4, ciclo_semanal: 5, ciclo_mensal: 6 };
+                            return (peso[a.tipo] || 99) - (peso[b.tipo] || 99);
+                          });
                         const isHoje = item.dataIso === dataHojeIso;
                         const isSelecionado = item.dataIso === diaSelecionado;
 
@@ -356,7 +387,7 @@ export default function CalendarioOficial({
                           <div
                             key={item.dataIso}
                             onClick={() => setDiaSelecionado(item.dataIso)}
-                            className={`cursor-pointer h-20 p-2 rounded-2xl border transition-all flex flex-col justify-between select-none ${
+                            className={`cursor-pointer min-h-[88px] p-2 rounded-2xl border transition-all flex flex-col justify-between select-none ${
                               isSelecionado
                                 ? "bg-indigo-500/10 border-indigo-500 shadow-md ring-2 ring-indigo-500/20"
                                 : isHoje
@@ -383,7 +414,7 @@ export default function CalendarioOficial({
 
                             {/* Pílulas de eventos */}
                             <div className="space-y-0.5 overflow-hidden">
-                              {eventosDoDia.slice(0, 2).map((ev) => (
+                              {eventosDoDia.slice(0, 3).map((ev) => (
                                 <div
                                   key={ev.id}
                                   className={`text-[9px] font-bold px-1.5 py-0.5 rounded truncate ${
@@ -393,15 +424,17 @@ export default function CalendarioOficial({
                                       ? "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300"
                                       : ev.tipo === "feriado"
                                       ? "bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300"
+                                      : ev.tipo === "recesso"
+                                      ? "bg-cyan-100 dark:bg-cyan-950/60 text-cyan-800 dark:text-cyan-300"
                                       : "bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300"
                                   }`}
                                 >
                                   {ev.titulo}
                                 </div>
                               ))}
-                              {eventosDoDia.length > 2 && (
+                              {eventosDoDia.length > 3 && (
                                 <span className="text-[8px] font-bold text-slate-400 block text-right">
-                                  +{eventosDoDia.length - 2} mais
+                                  +{eventosDoDia.length - 3} mais
                                 </span>
                               )}
                             </div>
@@ -438,6 +471,8 @@ export default function CalendarioOficial({
                                     ? "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
                                     : ev.tipo === "feriado"
                                     ? "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
+                                    : ev.tipo === "recesso"
+                                    ? "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/60 dark:text-cyan-300"
                                     : "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
                                 }`}
                               >
@@ -507,6 +542,8 @@ export default function CalendarioOficial({
                                         ? "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
                                         : e.tipo === "feriado"
                                         ? "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
+                                        : e.tipo === "recesso"
+                                        ? "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/60 dark:text-cyan-300"
                                         : "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
                                     }`}
                                   >

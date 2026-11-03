@@ -26,6 +26,7 @@ import ImportadorLoteModal from "@/src/components/ImportadorLoteModal";
 import FechamentoCicloModal from "@/src/components/FechamentoCicloModal";
 import CalendarioOficial from "@/src/components/CalendarioOficial";
 import RoletaSorteioModal from "@/src/components/RoletaSorteioModal";
+import AuditoriaEntregasModal from "@/src/components/AuditoriaEntregasModal";
 
 const fetcherAtividades = async () => {
   return await apiTutor.buscarTodasAtividades("Todas", "Todos");
@@ -108,6 +109,7 @@ export default function GestaoAulasPage() {
     Record<string, { data: AlunoRankingTutor[]; ts: number }>
   >({});
   const [modalSorteioAberto, setModalSorteioAberto] = useState(false);
+  const [missaoAuditoria, setMissaoAuditoria] = useState<Atividade | null>(null);
 
   const [aniversariantes, setAniversariantes] = useState<
     { nome: string; turma: string }[]
@@ -905,6 +907,15 @@ export default function GestaoAulasPage() {
         onExcluirEntrega={excluirEntregaAluno}
       />
 
+      <AuditoriaEntregasModal
+        isOpen={!!missaoAuditoria}
+        onClose={() => setMissaoAuditoria(null)}
+        missao={missaoAuditoria}
+        onSuccess={() => {
+          mutate();
+          toast("Auditoria concluída e XP creditado!", "success");
+        }}
+      />
       <GestaoFrequenciaModal
         isOpen={modalFreqAberto}
         onClose={() => setModalFreqAberto(false)}
@@ -1565,6 +1576,7 @@ export default function GestaoAulasPage() {
                   onEdit={preencherEdicao}
                   onDelete={excluirAtividade}
                   onViewEntregas={abrirModalEntregas}
+                  onAuditarEntregas={(ativ) => setMissaoAuditoria(ativ)}
                 />
               </div>
             </div>

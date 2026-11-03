@@ -34,18 +34,27 @@ export default function CalendarioOficial({
   turmaNome = "Geral",
   diaFechamentoSemanal = 0 // Padrão: Domingo
 }: CalendarioOficialProps) {
+  // Data de hoje calculada no fuso horário local do navegador (Brasil)
+  const hoje = new Date();
+  const dataHojeIso = `${hoje.getFullYear()}-${String(hoje.getMonth() + 1).padStart(2, "0")}-${String(hoje.getDate()).padStart(2, "0")}`;
+
   const [dataVisualizada, setDataVisualizada] = useState(new Date());
   const [visao, setVisao] = useState<"mes" | "lista">("mes");
   const [filtroTipo, setFiltroTipo] = useState<"todos" | "prazos" | "aulas" | "ciclos" | "feriados">("todos");
-  const [diaSelecionado, setDiaSelecionado] = useState<string | null>(null);
+  const [diaSelecionado, setDiaSelecionado] = useState<string | null>(dataHojeIso);
 
   const ano = dataVisualizada.getFullYear();
   const mes = dataVisualizada.getMonth(); // 0 a 11
 
   // Navegar meses
   const mudarMes = (offset: number) => {
-    setDataVisualizada(new Date(ano, mes + offset, 1));
-    setDiaSelecionado(null);
+    const novaData = new Date(ano, mes + offset, 1);
+    setDataVisualizada(novaData);
+    if (novaData.getFullYear() === hoje.getFullYear() && novaData.getMonth() === hoje.getMonth()) {
+      setDiaSelecionado(dataHojeIso);
+    } else {
+      setDiaSelecionado(`${novaData.getFullYear()}-${String(novaData.getMonth() + 1).padStart(2, "0")}-01`);
+    }
   };
 
   // Mapear eventos a partir das atividades, aulas, ciclos e feriados
@@ -179,7 +188,6 @@ export default function CalendarioOficial({
   }
 
   const nomeMesExtenso = dataVisualizada.toLocaleString("pt-BR", { month: "long" });
-  const dataHojeIso = new Date().toISOString().split("T")[0];
 
   const eventosDoDiaSelecionado = diaSelecionado
     ? (eventosMap[diaSelecionado] || []).filter(filtrarEvento)
@@ -406,7 +414,7 @@ export default function CalendarioOficial({
                   {/* Detalhes do Dia Selecionado */}
                   <div className="lg:col-span-4 bg-slate-50/70 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 flex flex-col">
                     <h4 className="font-display font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider mb-3">
-                      📌 Eventos do Dia {diaSelecionado ? new Date(diaSelecionado + "T12:00:00").toLocaleDateString("pt-BR") : "Selecione um dia"}
+                      📌 {diaSelecionado === dataHojeIso ? "Eventos de Hoje" : "Eventos do Dia"} {diaSelecionado ? `(${new Date(diaSelecionado + "T12:00:00").toLocaleDateString("pt-BR")})` : ""}
                     </h4>
 
                     {eventosDoDiaSelecionado.length === 0 ? (

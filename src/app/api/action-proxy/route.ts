@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { dbAdmin, registrarLogSeguranca } from "@/src/lib/firebaseAdmin";
 import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
-import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades, loadFirestoreCacheAtividades, getNextAtividadeId, loadFirestoreConfiguracoes, getCachedAdminAlunos, setCachedAdminAlunos, invalidateAdminAlunosCache, getCachedAnalyticsGeral, setCachedAnalyticsGeral, getCachedClassDates, getAlunosAtivosSnapshot, refreshAlunosAtivosSnapshot } from "@/src/lib/cache";
+import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades, loadFirestoreCacheAtividades, getNextAtividadeId, loadFirestoreConfiguracoes, getCachedAdminAlunos, setCachedAdminAlunos, invalidateAdminAlunosCache, getCachedAnalyticsGeral, setCachedAnalyticsGeral, getCachedClassDates, getAlunosAtivosSnapshot, refreshAlunosAtivosSnapshot, loadRegrasCiclos, invalidateRegrasCiclosCache } from "@/src/lib/cache";
+import { executarFechamentoCiclo, executarEstornoCiclo } from "@/src/lib/ciclosEngine";
 import { Transaction, FieldValue, FieldPath, QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { cookies } from "next/headers";
 import { getRankingKeys } from "@/src/lib/dateUtils";
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
       "mudar_status_trilhatech", "atualizar_senha_checkin", "toggle_modo_reposicao",
       "salvar_configuracoes", "sincronizar_configuracoes", "toggle_gabarito", "salvar_gabaritos_lote", "sincronizar_ava",
       "justificar_falta", "buscar_analytics_geral", "buscar_ficha_360", "listar_alunos_godmode", "buscar_alunos_admin",
-      "coroar_elite", "sortear_rifa", "atualizar_senha_aluno", "verificar_regras_fechamento", "encerrar_ciclo"
+      "coroar_elite", "sortear_rifa", "atualizar_senha_aluno", "verificar_regras_fechamento", "encerrar_ciclo", "salvar_regras_ciclos", "buscar_regras_ciclos", "fechar_ciclo_manual", "estornar_ciclo", "listar_historico_ciclos"
     ];
 
     if (ROTAS_PROTEGIDAS.includes(requestAction)) {
@@ -1651,6 +1652,45 @@ export async function POST(request: Request) {
           await Promise.all(promises);
           invalidateConfigCache();
         }
+      }
+
+      else if (action === "salvar_regras_ciclos") {
+        const { regras } = payload;
+        if (regras && typeof regras === "object") {
+          await dbAdmin.collection("configuracoes").doc("REGRAS_CICLOS").set(regras, { merge: true });
+          invalidateRegrasCiclosCache();
+          result = { status: "sucesso", mensagem: "Regras de ciclos salvas com sucesso!" };
+        } else {
+          result = { status: "erro", mensagem: "Dados das regras inválidos." };
+        }
+      }
+
+      else if (action === "buscar_regras_ciclos") {
+        const regras = await loadRegrasCiclos(dbAdmin);
+        result = { status: "sucesso", regras };
+      }
+
+      else if (action === "fechar_ciclo_manual") {
+        const tipo = payload.tipo === "mensal" ? "mensal" : "semanal";
+        const chave = payload.chave ? String(payload.chave).trim() : undefined;
+        const autor = payload.autor ? String(payload.autor).trim() : "tutor:admin";
+        result = await executarFechamentoCiclo(tipo, chave, autor);
+      }
+
+      else if (action === "estornar_ciclo") {
+        const cicloId = String(payload.cicloId || "").trim();
+        const autor = payload.autor ? String(payload.autor).trim() : "tutor:admin";
+        if (cicloId) {
+          result = await executarEstornoCiclo(cicloId, autor);
+        } else {
+          result = { status: "erro", mensagem: "ID do ciclo não informado para estorno." };
+        }
+      }
+
+      else if (action === "listar_historico_ciclos") {
+        const snap = await dbAdmin.collection("historico_ciclos").orderBy("dataFechamento", "desc").limit(20).get();
+        const historico = snap.docs.map(doc => doc.data());
+        result = { status: "sucesso", historico };
       }
 
       else if (action === "toggle_gabarito") {

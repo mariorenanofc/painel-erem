@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -28,6 +28,7 @@ import PerfilModal from "@/src/components/PerfilModal";
 import NovaConquistaModal from "@/src/components/NovaConquistaModal";
 import NovidadesModal from "@/src/components/NovidadesModal";
 import ResponderMissaoModal from "@/src/components/ResponderMissaoModal";
+import CalendarioOficial from "@/src/components/CalendarioOficial";
 import { PerfilAtualizado } from "@/src/components/LojaRifaModal";
 import LojaRifaModal from "@/src/components/LojaRifaModal";
 import MeusBilhetesModal from "@/src/components/MeusBilhetesModal";
@@ -125,6 +126,7 @@ export default function PortalDashboard() {
   const [salvandoPerfil, setSalvandoPerfil] = useState(false);
 
   const [modalFrequenciaAberto, setModalFrequenciaAberto] = useState(false);
+  const [modalCalendarioAberto, setModalCalendarioAberto] = useState(false);
   const [carregandoFrequencia, setCarregandoFrequencia] = useState(false);
   const [dadosFrequencia, setDadosFrequencia] =
     useState<DadosFrequencia | null>(null);
@@ -468,6 +470,18 @@ export default function PortalDashboard() {
       toast("Erro ao tentar salvar perfil.", "error", "Erro de Rede");
     } finally {
       setSalvandoPerfil(false);
+    }
+  };
+
+  const abrirMeuCalendario = async () => {
+    setModalCalendarioAberto(true);
+    if (!dadosFrequencia && aluno) {
+      try {
+        const data = await apiAluno.minhaFrequencia(aluno.matricula);
+        if (data && data.status === "sucesso") setDadosFrequencia(data);
+      } catch {
+        // Falha silenciosa em background
+      }
     }
   };
 
@@ -815,6 +829,7 @@ export default function PortalDashboard() {
           notificacoes={notificacoes}
           onAbrirRanking={() => setRankingAberto(true)}
           onAbrirFrequencia={abrirMinhaFrequencia}
+          onAbrirCalendario={abrirMeuCalendario}
           onAbrirPerfil={abrirPerfil}
           onLogout={fazerLogout}
         />
@@ -1898,6 +1913,16 @@ export default function PortalDashboard() {
       )}
 
       <AnimatePresence>
+        {modalCalendarioAberto && (
+          <CalendarioOficial
+            isOpen={modalCalendarioAberto}
+            onClose={() => setModalCalendarioAberto(false)}
+            atividades={atividades}
+            diasAulas={dadosFrequencia?.historico?.map(h => h.data) || []}
+            turmaNome={aluno?.turma || "Minha Turma"}
+          />
+        )}
+
         {modalFrequenciaAberto && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             {/* Backdrop */}

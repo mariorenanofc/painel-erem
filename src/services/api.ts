@@ -1,4 +1,4 @@
-import { AlunoRankingTutor } from "../types";
+﻿import { AlunoRankingTutor } from "../types";
 
 /**
  * Função central de comunicação com o Google Apps Script.
@@ -501,6 +501,13 @@ export const apiTutor = {
   },
 
   // --- FECHAMENTO DE CICLO LETIVO ---
+  // --- REGRAS DINÂMICAS DE CICLOS (SEMANAL / MENSAL) ---
+  buscarRegrasCiclos: () => fetchApi({ action: "buscar_regras_ciclos" }),
+  salvarRegrasCiclos: (regras: Record<string, unknown>) => fetchApi({ action: "salvar_regras_ciclos", regras }),
+  fecharCicloManual: (tipo: "semanal" | "mensal", chave?: string, autor?: string) => fetchApi({ action: "fechar_ciclo_manual", tipo, chave, autor }),
+  estornarCiclo: (cicloId: string, autor?: string) => fetchApi({ action: "estornar_ciclo", cicloId, autor }),
+  listarHistoricoCiclos: () => fetchApi({ action: "listar_historico_ciclos" }),
+
   verificarRegrasFechamento: () => fetchApi({ action: "verificar_regras_fechamento" }),
   
   encerrarCiclo: (

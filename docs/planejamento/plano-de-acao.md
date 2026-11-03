@@ -8,10 +8,9 @@ Este documento apresenta uma análise profunda de toda a estrutura do projeto, d
 
 Durante as sessões de desenvolvimento, identificamos problemas críticos que precisam ser endereçados imediatamente antes de adicionar novas funcionalidades:
 
-
 > [!IMPORTANT]
 > **Validação do TOP 10 Semanal**
-> O fluxo do `FechamentoCicloModal.tsx` e a injeção do bônus de XP semanal não foram completamente validados. Precisamos garantir que a lógica de "coroar_elite" seja testada de ponta a ponta sem falhas de concorrência.
+> O fluxo do `FechamentoCicloModal.tsx` e a injeção do bônus de XP semanal e mensal agora operam com motor central de idempotência e parametrização dinâmica de regras de corte e premiação.
 
 ---
 
@@ -27,7 +26,6 @@ O sistema está crescendo rapidamente e alguns arquivos tornaram-se "monolítico
     *   **Proposta:** Utilizar o padrão de "Controllers" ou "Handlers" (ex: criar uma pasta `/handlers/` e separar as lógicas como `handleAtividades.ts`, `handleAlunos.ts`, `handleConfiguracoes.ts`).
 
 ---
-
 
 ## 4. 🗄️ Estratégia de Dados, Cache e Sincronização
 
@@ -47,14 +45,16 @@ A transição gradual do Google Sheets para o Firestore Nativo (Fase 4) está co
    - Implementados [`src/app/api/tutor/memorial/curadoria/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/tutor/memorial/curadoria/route.ts) e [`src/components/CuradoriaHallModal.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/CuradoriaHallModal.tsx).
    - Aplicada soberania estrita de `publicadoNoHall === true` na vitrine pública ([`src/app/api/alunos/veteranos/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/alunos/veteranos/route.ts)) e remoção de mockups forçados.
 4. **Fase 2 de Blindagem de Cota do Firestore, Radar Classroom Organizado & Sincronizar AVA em Lote (Concluída em 28/10/2026):**
-   - [x] **Etapa 1 (`src/lib/cache.ts` & `src/lib/firebaseAdmin.ts`):** Chunks de atividades unificados (`includesRascunhos: true`, `respostaCorreta`, `maiorIdNumerico`), singletons `loadEstatisticasAtividadesResumo`, `loadFirestoreConfiguracoes`, `refreshAlunosAtivosSnapshot` (com cache RAM), caches em memória para frequência, transações e rifas, e trava `firestoreMonkeyPatched` em `firebaseAdmin.ts`.
-   - [x] **Etapa 2 (`src/app/api/tutor/atividades/route.ts` & `src/app/api/alunos/portal/route.ts`):** `/api/tutor/atividades` lendo de `loadFirestoreCacheAtividades` + `loadEstatisticasAtividadesResumo` (reduzindo de ~1.696 para ~8 leituras no *cold start* e 0 em RAM); filtro estrito `statusPublicacao === "Publicada"` e omissão de `respostaCorreta` em `/api/alunos/portal`.
-   - [x] **Etapa 3 (`src/app/api/action-proxy/route.ts`, `enviar-missao`, `transacoes`, `diario-classe`, `frequencia-hoje`, `rifas`):** Removido `refreshFirestoreCacheAtividades` de `avaliar_entrega`/`reverter_entrega`/`excluir_entrega`; geração de ID `O(1)` (`getNextAtividadeId`) e `skipCacheRefresh` em `salvar_atividade`; sincronia atômica de `cache/estatisticas_atividades_resumo`, `cache/configuracoes_gerais` e `refreshAlunosAtivosSnapshot`; eliminação do erro de índice composto em `diario-classe`.
-   - [x] **Etapa 4 (`radar/route.ts`, `ImportadorLoteModal.tsx`, `sincronizar-ava/route.ts`):** Leitura de `PUBLISHED` e `DRAFT` no Radar Classroom com interface organizada (abas Publicadas/Rascunhos/Todas, busca, ordenação por aula, modo compacto e seleção segura); auto-publicação ao sincronizar com o AVA e busca em lote `courseWorkId: "-"` no Google Classroom (reduzindo a sincronização geral para poucos segundos e ~44 leituras no Firestore).
+   - [x] Chunks de atividades unificados (`includesRascunhos: true`, `respostaCorreta`, `maiorIdNumerico`) e singletons otimizados.
+   - [x] Radar Classroom organizado (`DRAFT` + `PUBLISHED`) e Sincronizar AVA acelerado com busca em lote (`courseWorkId: "-"`).
+5. **Automação Inteligente de Ciclos, Calendário Oficial & Parametrização Dinâmica de XP (Concluído em 02/11/2026):**
+   - [x] **Fase 1 (Parametrização Dinâmica):** Modelos `RegrasCiclosConfig` em `types/index.ts`, cache L1 em `cache.ts`, endpoints no backend e nova aba de gestão visual em `AbaCiclos.tsx` (dia de fechamento, horário de corte, modo automático/alerta e XP do Top 1, Top 2-3 e Top 4-10).
+   - [x] **Fase 2 (Motor de Fechamento & Estorno Seguro):** Engine `ciclosEngine.ts` com idempotência absoluta, IDs determinísticos na coleção `entregas`, isolamento total das notas escolares, atualização CQRS em `portal_views`, gravação de snapshot em `historico_ciclos`, ação `estornar_ciclo` e endpoint `/api/cron/fechar-ciclo`.
+   - [x] **Fase 3 (Modal Renovado com Retroatividade):** `FechamentoCicloModal.tsx` com navegação entre "Ciclo Anterior" e "Ciclo Atual", auditoria com status `✅ Pago / Concluído`, abas de WhatsApp individuais (Turma 1, Turma 2, Geral) e botão de estorno de emergência.
+   - [x] **Fase 4 (Calendário Oficial Integrado):** `CalendarioOficial.tsx` com visão mensal estilo Google Agenda, lista de prazos de missões, datas de aulas, contagem regressiva para fechamento de ciclo e feriados nacionais (fixos e móveis calculados por feriadosUtils.ts), com acesso no Portal do Aluno (botão de acesso rápido no header e menu de perfil) e no Painel do Tutor.
 
 ### ⏳ Onde Retomar na Próxima Sessão (Checklist de Continuidade)
 1. **Hall da Fama — Etapa 3 (Certificados & Compartilhamento):**
    - Construir `src/components/CertificadoModal.tsx` (Certificado Digital Verificável) e `src/components/CardCompartilharModal.tsx` (Card para Stories).
-2. **Refatoração Modular & Validação Sistêmica:**
-   - Desmembrar gradualmente [`src/app/api/action-proxy/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/action-proxy/route.ts) em handlers dedicados.
-   - Validar de ponta a ponta o fechamento da semana (`coroar_elite` / TOP 10 Semanal) e desconto de 30% de XP por atraso.
+2. **Refatoração Modular do Backend:**
+   - Desmembrar gradualmente [`src/app/api/action-proxy/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/action-proxy/route.ts) em handlers dedicados por domínio.

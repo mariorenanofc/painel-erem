@@ -16,6 +16,7 @@ import AbaAtividades from "@/src/components/admin/AbaAtividades";
 import AbaEntregas from "@/src/components/admin/AbaEntregas";
 import AbaRifas from "@/src/components/admin/AbaRifas";
 import AbaCurtidas from "@/src/components/admin/AbaCurtidas";
+import AbaCiclos from "@/src/components/admin/AbaCiclos";
 import LancamentoNovidadesModal from "@/src/components/LancamentoNovidadesModal";
 
 export default function ConfiguracoesPage() {
@@ -45,6 +46,7 @@ export default function ConfiguracoesPage() {
     | "modulos"
     | "usuarios"
     | "seguranca"
+    | "ciclos"
     | "onboarding"
   >("geral");
 
@@ -461,6 +463,16 @@ export default function ConfiguracoesPage() {
             
             <div className="pt-4 mt-4 border-t border-slate-200 dark:border-slate-800">
               <button
+                onClick={() => setAbaAtiva("ciclos")}
+                className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border mb-2 ${
+                  abaAtiva === "ciclos"
+                    ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
+                    : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                }`}
+              >
+                ⚙️ Automação de Ciclos
+              </button>
+              <button
                 onClick={() => setAbaAtiva("onboarding")}
                 className={`w-full text-left px-5 py-4 rounded-xl font-black transition-all text-xs uppercase tracking-wider border ${
                   abaAtiva === "onboarding"
@@ -871,6 +883,11 @@ export default function ConfiguracoesPage() {
                         </table>
                       </div>
                     </div>
+                  )}
+
+                  {/* CONTEÚDO: REGRAS E AUTOMAÇÃO DE CICLOS */}
+                  {abaAtiva === "ciclos" && (
+                    <AbaCiclos />
                   )}
 
                   {/* CONTEÚDO: PRIMEIRO ACESSO (ONBOARDING) */}

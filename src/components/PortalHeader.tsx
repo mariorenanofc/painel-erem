@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/set-state-in-effect */
+﻿/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -13,6 +13,7 @@ export default function PortalHeader({
   notificacoes,
   onAbrirRanking,
   onAbrirFrequencia,
+  onAbrirCalendario,
   onAbrirPerfil,
   onLogout,
 }: PortalHeaderProps) {
@@ -107,6 +108,19 @@ export default function PortalHeader({
               {isDarkMode ? "☀️" : "🌙"}
             </span>
           </motion.button>
+
+          {/* CALENDAR QUICK BUTTON */}
+          {onAbrirCalendario && (
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              onClick={onAbrirCalendario}
+              className="cursor-pointer p-2 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-indigo-600 dark:text-indigo-400 rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-sm"
+              title="Calendário e Cronograma de Prazos"
+            >
+              <span className="text-lg leading-none block select-none">📅</span>
+            </motion.button>
+          )}
 
           {/* NOTIFICATION CONTROLLER */}
           <div className="relative" ref={notifRef}>
@@ -251,6 +265,17 @@ export default function PortalHeader({
                     >
                       <span>🏆</span> Ranking
                     </button>
+                    {onAbrirCalendario && (
+                      <button
+                        onClick={() => {
+                          onAbrirCalendario();
+                          setMenuAberto(false);
+                        }}
+                        className="cursor-pointer w-full text-left px-3 py-2.5 text-xs text-indigo-600 dark:text-indigo-400 font-black uppercase tracking-wider hover:bg-indigo-50 dark:hover:bg-indigo-500/10 hover:text-indigo-700 dark:hover:text-indigo-300 rounded-xl transition-colors flex items-center gap-2.5"
+                      >
+                        <span>📅</span> Calendário & Prazos
+                      </button>
+                    )}
                     <button
                       onClick={() => {
                         onAbrirFrequencia();

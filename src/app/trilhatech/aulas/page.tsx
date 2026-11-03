@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import useSWR from "swr";
@@ -24,6 +24,7 @@ import GodModeModal from "@/src/components/GodModeModal";
 import FormularioMissaoModal from "@/src/components/FormularioMissaoModal";
 import ImportadorLoteModal from "@/src/components/ImportadorLoteModal";
 import FechamentoCicloModal from "@/src/components/FechamentoCicloModal";
+import CalendarioOficial from "@/src/components/CalendarioOficial";
 import RoletaSorteioModal from "@/src/components/RoletaSorteioModal";
 
 const fetcherAtividades = async () => {
@@ -61,6 +62,7 @@ export default function GestaoAulasPage() {
 
   // Estados dos Modais
   const [modalFechamentoAberto, setModalFechamentoAberto] = useState(false);
+  const [modalCalendarioAberto, setModalCalendarioAberto] = useState(false);
   const [modalNovaMissaoAberto, setModalNovaMissaoAberto] = useState(false);
   const [modalImportadorAberto, setModalImportadorAberto] = useState(false);
   const [modalSyncAberto, setModalSyncAberto] = useState(false);
@@ -985,6 +987,16 @@ export default function GestaoAulasPage() {
         />
       )}
 
+      {modalCalendarioAberto && (
+        <CalendarioOficial
+          isOpen={modalCalendarioAberto}
+          onClose={() => setModalCalendarioAberto(false)}
+          atividades={atividades as unknown as Atividade[]}
+          diasAulas={diasComAula}
+          turmaNome={turmaAlvo}
+        />
+      )}
+
       {modalFechamentoAberto && (
         <FechamentoCicloModal
           isOpen={modalFechamentoAberto}
@@ -1502,6 +1514,12 @@ export default function GestaoAulasPage() {
                 </div>
 
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                  <button
+                    onClick={() => setModalCalendarioAberto(true)}
+                    className="cursor-pointer bg-white dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-800/50 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-4 py-2 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
+                  >
+                    <span className="text-base leading-none">📅</span> Calendário Oficial
+                  </button>
                   <button
                     onClick={() => setModalSyncAberto(true)}
                     className="cursor-pointer bg-white dark:bg-slate-900 border-2 border-emerald-200 dark:border-emerald-800/50 hover:border-emerald-400 dark:hover:border-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 px-4 py-2 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"

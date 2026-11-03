@@ -1,4 +1,4 @@
-import { ChangeEvent } from "react";
+﻿import { ChangeEvent } from "react";
 import { Badge, DadosParaBadges } from "../utils/badges";
 
 // ==========================================
@@ -451,6 +451,7 @@ export interface PortalHeaderProps {
   notificacoes: Notificacao[];
   onAbrirRanking: () => void;
   onAbrirFrequencia: () => void;
+  onAbrirCalendario?: () => void;
   onAbrirPerfil: () => void;
   onLogout: () => void;
 }
@@ -510,4 +511,60 @@ export interface MemorialFormatura {
   dataGraduacao?: number;
 }
 
+// ==========================================
+// 7. REGRAS DINÂMICAS DE CICLOS E PREMIAÇÃO
+// ==========================================
+export interface RegraCicloSemanal {
+  ativo: boolean;
+  diaFechamento: number; // 0 = Domingo, 1 = Segunda, 5 = Sexta
+  horaFechamento: string; // "23:59"
+  xpTop1: number;
+  xpTop2_3: number;
+  xpTop4_10: number;
+  modoExecucao: "automatico" | "manual_com_alerta";
+}
 
+export interface RegraCicloMensal {
+  ativo: boolean;
+  diaFechamento: "ultimo_dia_mes";
+  horaFechamento: string; // "23:59"
+  xpTop1: number;
+  xpTop2_3: number;
+  xpTop4_10: number;
+  modoExecucao: "automatico" | "manual_com_alerta";
+}
+
+export interface RegrasCiclosConfig {
+  semanal: RegraCicloSemanal;
+  mensal: RegraCicloMensal;
+}
+
+export interface CicloHistoricoItem {
+  id: string; // Ex: "mensal_2026_10" ou "semanal_2026_W44"
+  tipo: "semanal" | "mensal";
+  chave: string;
+  dataFechamento: number; // timestamp
+  fechadoPor: string; // "automacao" | "tutor:nome"
+  regrasAplicadas: {
+    xpTop1: number;
+    xpTop2_3: number;
+    xpTop4_10: number;
+  };
+  totalPremiados: number;
+  premiados: Array<{
+    matricula: string;
+    nome: string;
+    turma: string;
+    posicao: number;
+    xpAcumulado: number;
+    xpBonus: number;
+  }>;
+  mensagens: {
+    turma1: string;
+    turma2: string;
+    geral: string;
+  };
+  status: "FECHADO" | "ESTORNADO";
+  estornadoEm?: number;
+  estornadoPor?: string;
+}

@@ -726,3 +726,61 @@ export function invalidateRifasCache() {
   rifasRamCache = null;
   // Mantém chave para fechar a função:
 }
+
+
+// -----------------------------------------------------------------------------
+// CACHE DE REGRAS DE CICLOS (SEMANAL / MENSAL)
+// -----------------------------------------------------------------------------
+import type { RegrasCiclosConfig } from "@/src/types";
+
+export const DEFAULT_REGRAS_CICLOS: RegrasCiclosConfig = {
+  semanal: {
+    ativo: true,
+    diaFechamento: 0, // 0 = Domingo
+    horaFechamento: "23:59",
+    xpTop1: 0,
+    xpTop2_3: 30,
+    xpTop4_10: 15,
+    modoExecucao: "manual_com_alerta"
+  },
+  mensal: {
+    ativo: true,
+    diaFechamento: "ultimo_dia_mes",
+    horaFechamento: "23:59",
+    xpTop1: 40,
+    xpTop2_3: 80,
+    xpTop4_10: 40,
+    modoExecucao: "automatico"
+  }
+};
+
+let regrasCiclosRamCache: { data: RegrasCiclosConfig; timestamp: number } | null = null;
+
+export async function loadRegrasCiclos(dbAdmin: Firestore): Promise<RegrasCiclosConfig> {
+  if (regrasCiclosRamCache && Date.now() - regrasCiclosRamCache.timestamp < 3600000) { // 1 hora
+    return regrasCiclosRamCache.data;
+  }
+  try {
+    const doc = await dbAdmin.collection("configuracoes").doc("REGRAS_CICLOS").get();
+    if (doc.exists) {
+      const data = doc.data() as Partial<RegrasCiclosConfig>;
+      const merged: RegrasCiclosConfig = {
+        semanal: { ...DEFAULT_REGRAS_CICLOS.semanal, ...(data.semanal || {}) },
+        mensal: { ...DEFAULT_REGRAS_CICLOS.mensal, ...(data.mensal || {}) }
+      };
+      regrasCiclosRamCache = { data: merged, timestamp: Date.now() };
+      return merged;
+    }
+    // Cria documento padrão se ainda não existir
+    await dbAdmin.collection("configuracoes").doc("REGRAS_CICLOS").set(DEFAULT_REGRAS_CICLOS);
+    regrasCiclosRamCache = { data: DEFAULT_REGRAS_CICLOS, timestamp: Date.now() };
+    return DEFAULT_REGRAS_CICLOS;
+  } catch (err: unknown) {
+    console.error("[Firestore Cache] Erro ao carregar REGRAS_CICLOS:", err);
+    return DEFAULT_REGRAS_CICLOS;
+  }
+}
+
+export function invalidateRegrasCiclosCache() {
+  regrasCiclosRamCache = null;
+}

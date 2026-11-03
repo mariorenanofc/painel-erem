@@ -237,29 +237,29 @@ export default function CalendarioOficial({
             initial={{ opacity: 0, scale: 0.95, y: 15 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 15 }}
-            className="relative w-full max-w-5xl max-h-[92vh] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-10"
+            className="relative w-full max-w-[96vw] xl:max-w-6xl 2xl:max-w-7xl max-h-[94vh] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-10"
           >
             {/* Header */}
-            <div className="p-6 border-b border-slate-200/80 dark:border-slate-800 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
+            <div className="p-4 sm:p-6 border-b border-slate-200/80 dark:border-slate-800 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 bg-slate-50/50 dark:bg-slate-900/50 shrink-0">
               <div className="flex items-center gap-3">
-                <div className="p-2.5 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-2xl text-indigo-600 dark:text-indigo-400">
-                  <span className="text-2xl select-none">📅</span>
+                <div className="p-2 sm:p-2.5 bg-indigo-500/10 dark:bg-indigo-500/20 rounded-2xl text-indigo-600 dark:text-indigo-400 shrink-0">
+                  <span className="text-xl sm:text-2xl select-none">📅</span>
                 </div>
-                <div>
-                  <h2 className="font-display font-black text-xl text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                    Calendário & Cronograma Escolar
+                <div className="min-w-0">
+                  <h2 className="font-display font-black text-base sm:text-xl text-slate-800 dark:text-slate-100 flex flex-wrap items-center gap-2">
+                    <span>Calendário & Cronograma</span>
                     <span className="text-[10px] bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400 font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-indigo-500/20">
                       {turmaNome}
                     </span>
                   </h2>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">
-                    Acompanhe aulas, prazos de entrega, feriados nacionais e os dias oficiais de apuração dos rankings.
+                  <p className="text-[11px] sm:text-xs text-slate-500 dark:text-slate-400 truncate sm:whitespace-normal">
+                    Acompanhe aulas, prazos de missões, feriados e apuração dos ciclos.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <div className="flex bg-slate-200/70 dark:bg-slate-800 p-1 rounded-2xl mr-2">
+              <div className="flex items-center justify-between sm:justify-end gap-2 self-end sm:self-auto w-full sm:w-auto">
+                <div className="flex bg-slate-200/70 dark:bg-slate-800 p-1 rounded-2xl">
                   <button
                     onClick={() => setVisao("mes")}
                     className={`cursor-pointer px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
@@ -281,6 +281,7 @@ export default function CalendarioOficial({
                 <button
                   onClick={onClose}
                   className="cursor-pointer text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                  title="Fechar"
                 >
                   ✕
                 </button>
@@ -288,66 +289,68 @@ export default function CalendarioOficial({
             </div>
 
             {/* Sub-Header: Navegação Mensal e Filtros por Categoria */}
-            <div className="px-6 py-3 bg-slate-100/50 dark:bg-slate-950/40 border-b border-slate-200/60 dark:border-slate-800 flex flex-wrap items-center justify-between gap-3 shrink-0">
-              <div className="flex items-center gap-3">
+            <div className="px-4 sm:px-6 py-2.5 sm:py-3 bg-slate-100/50 dark:bg-slate-950/40 border-b border-slate-200/60 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 shrink-0">
+              <div className="flex items-center justify-between sm:justify-start gap-3">
                 <button
                   onClick={() => mudarMes(-1)}
-                  className="cursor-pointer p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold transition-colors"
+                  className="cursor-pointer p-1.5 sm:p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold transition-colors"
+                  title="Mês anterior"
                 >
                   ◀
                 </button>
-                <h3 className="font-display font-black text-sm text-slate-800 dark:text-white capitalize">
+                <h3 className="font-display font-black text-sm sm:text-base text-slate-800 dark:text-white capitalize">
                   {nomeMesExtenso} de {ano}
                 </h3>
                 <button
                   onClick={() => mudarMes(1)}
-                  className="cursor-pointer p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold transition-colors"
+                  className="cursor-pointer p-1.5 sm:p-2 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 font-bold transition-colors"
+                  title="Próximo mês"
                 >
                   ▶
                 </button>
               </div>
 
-              {/* Botões de Filtro Rápido */}
-              <div className="flex flex-wrap items-center gap-1.5 text-[10px] font-bold">
+              {/* Botões de Filtro com carrossel horizontal suave sem quebrar linhas */}
+              <div className="flex items-center gap-1.5 text-[10px] sm:text-[11px] font-bold overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
                 <button
                   onClick={() => setFiltroTipo("todos")}
-                  className={`cursor-pointer px-2.5 py-1 rounded-lg transition-all ${
-                    filtroTipo === "todos" ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900" : "bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
+                  className={`cursor-pointer shrink-0 px-2.5 py-1 rounded-lg transition-all ${
+                    filtroTipo === "todos" ? "bg-slate-900 dark:bg-white text-white dark:text-slate-900 shadow-sm" : "bg-slate-200/60 dark:bg-slate-800 text-slate-600 dark:text-slate-400"
                   }`}
                 >
                   Todos
                 </button>
                 <button
-                  onClick={() => setFiltroTipo("aulas")}
-                  className={`cursor-pointer px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
-                    filtroTipo === "aulas" ? "bg-emerald-600 text-white" : "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"
-                  }`}
-                >
-                  💻 Aulas
-                </button>
-                <button
                   onClick={() => setFiltroTipo("prazos")}
-                  className={`cursor-pointer px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
-                    filtroTipo === "prazos" ? "bg-amber-600 text-white" : "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"
+                  className={`cursor-pointer shrink-0 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                    filtroTipo === "prazos" ? "bg-amber-600 text-white shadow-sm" : "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400"
                   }`}
                 >
                   ⏰ Prazos
                 </button>
                 <button
+                  onClick={() => setFiltroTipo("aulas")}
+                  className={`cursor-pointer shrink-0 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                    filtroTipo === "aulas" ? "bg-emerald-600 text-white shadow-sm" : "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"
+                  }`}
+                >
+                  💻 Aulas
+                </button>
+                <button
                   onClick={() => setFiltroTipo("ciclos")}
-                  className={`cursor-pointer px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
-                    filtroTipo === "ciclos" ? "bg-indigo-600 text-white" : "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400"
+                  className={`cursor-pointer shrink-0 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                    filtroTipo === "ciclos" ? "bg-indigo-600 text-white shadow-sm" : "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400"
                   }`}
                 >
                   🏆 Fechamentos
                 </button>
                 <button
                   onClick={() => setFiltroTipo("feriados")}
-                  className={`cursor-pointer px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
-                    filtroTipo === "feriados" ? "bg-rose-600 text-white" : "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400"
+                  className={`cursor-pointer shrink-0 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                    filtroTipo === "feriados" ? "bg-rose-600 text-white shadow-sm" : "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400"
                   }`}
                 >
-                  🏖️ Feriados
+                  🏖️ Feriados & Recesso
                 </button>
               </div>
             </div>
@@ -355,9 +358,9 @@ export default function CalendarioOficial({
             {/* Conteúdo Principal */}
             <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
               {visao === "mes" ? (
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
                   {/* Grid do Mês */}
-                  <div className="lg:col-span-8 space-y-2">
+                  <div className="lg:col-span-7 xl:col-span-7 space-y-2">
                     {/* Dias da semana */}
                     <div className="grid grid-cols-7 gap-1 text-center mb-2">
                       {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((d) => (
@@ -387,7 +390,7 @@ export default function CalendarioOficial({
                           <div
                             key={item.dataIso}
                             onClick={() => setDiaSelecionado(item.dataIso)}
-                            className={`cursor-pointer min-h-[88px] p-2 rounded-2xl border transition-all flex flex-col justify-between select-none ${
+                            className={`cursor-pointer min-h-[74px] sm:min-h-[88px] p-1.5 sm:p-2 rounded-2xl border transition-all flex flex-col justify-between select-none ${
                               isSelecionado
                                 ? "bg-indigo-500/10 border-indigo-500 shadow-md ring-2 ring-indigo-500/20"
                                 : isHoje
@@ -445,60 +448,84 @@ export default function CalendarioOficial({
                   </div>
 
                   {/* Detalhes do Dia Selecionado */}
-                  <div className="lg:col-span-4 bg-slate-50/70 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 flex flex-col">
-                    <h4 className="font-display font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider mb-3">
-                      📌 {diaSelecionado === dataHojeIso ? "Eventos de Hoje" : "Eventos do Dia"} {diaSelecionado ? `(${new Date(diaSelecionado + "T12:00:00").toLocaleDateString("pt-BR")})` : ""}
-                    </h4>
+                  <div className="lg:col-span-5 xl:col-span-5 bg-slate-50/70 dark:bg-slate-900/50 border border-slate-200/80 dark:border-slate-800 rounded-3xl p-5 sm:p-6 flex flex-col shadow-sm">
+                    <div className="flex items-center justify-between border-b border-slate-200/60 dark:border-slate-800/80 pb-3 mb-4">
+                      <h4 className="font-display font-black text-sm sm:text-base text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                        <span>📌</span> {diaSelecionado === dataHojeIso ? "Eventos de Hoje" : "Eventos do Dia"}
+                        <span className="text-xs font-mono font-bold text-indigo-600 dark:text-indigo-400 normal-case">
+                          {diaSelecionado ? `(${new Date(diaSelecionado + "T12:00:00").toLocaleDateString("pt-BR")})` : ""}
+                        </span>
+                      </h4>
+                      {eventosDoDiaSelecionado.length > 0 && (
+                        <span className="text-[10px] bg-indigo-100 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 font-black px-2.5 py-0.5 rounded-full border border-indigo-500/20">
+                          {eventosDoDiaSelecionado.length} {eventosDoDiaSelecionado.length === 1 ? "evento" : "eventos"}
+                        </span>
+                      )}
+                    </div>
 
                     {eventosDoDiaSelecionado.length === 0 ? (
-                      <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-slate-400 text-xs">
-                        <span className="text-3xl mb-2 select-none">🏖️</span>
-                        Nenhum evento registrado para esta data.
+                      <div className="flex-1 min-h-[220px] flex flex-col items-center justify-center text-center p-6 text-slate-400 text-xs sm:text-sm">
+                        <span className="text-4xl mb-3 select-none">🏖️</span>
+                        <p className="font-bold text-slate-600 dark:text-slate-300">Nenhum evento registrado</p>
+                        <p className="text-[11px] text-slate-400 mt-1 max-w-xs">Não há prazos de entrega, aulas presenciais ou fechamentos agendados para este dia.</p>
                       </div>
                     ) : (
-                      <div className="space-y-2.5 overflow-y-auto max-h-[380px] custom-scrollbar pr-1">
+                      <div className="space-y-3 overflow-y-auto max-h-[500px] custom-scrollbar pr-1">
                         {eventosDoDiaSelecionado.map((ev) => (
                           <div
                             key={ev.id}
-                            className="p-3.5 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/60 dark:border-slate-700/60 space-y-1.5 shadow-sm"
+                            className="p-4 bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200/80 dark:border-slate-700/70 space-y-2.5 shadow-sm hover:shadow-md transition-shadow"
                           >
-                            <div className="flex items-center justify-between">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
                               <span
-                                className={`text-[10px] font-black uppercase px-2 py-0.5 rounded-md ${
+                                className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border ${
                                   ev.tipo === "aula"
-                                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
+                                    ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-500/20"
                                     : ev.tipo === "prazo"
-                                    ? "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"
+                                    ? "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-500/20"
                                     : ev.tipo === "feriado"
-                                    ? "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300"
+                                    ? "bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-500/20"
                                     : ev.tipo === "recesso"
-                                    ? "bg-cyan-100 text-cyan-800 dark:bg-cyan-950/60 dark:text-cyan-300"
-                                    : "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300"
+                                    ? "bg-cyan-50 dark:bg-cyan-950/50 text-cyan-800 dark:text-cyan-300 border-cyan-500/20"
+                                    : "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-500/20"
                                 }`}
                               >
                                 {ev.badge || ev.tipo}
                               </span>
+
                               {ev.xp ? (
-                                <span className="font-mono font-bold text-xs text-emerald-500">
+                                <span className="font-mono font-black text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/20 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
                                   +{ev.xp} XP
                                 </span>
                               ) : null}
                             </div>
-                            <h5 className="font-bold text-xs text-slate-800 dark:text-slate-100 leading-snug">
+
+                            <h5 className="font-bold text-sm text-slate-800 dark:text-slate-100 leading-snug">
                               {ev.titulo}
                             </h5>
-                            {ev.modulo && (
-                              <span className="inline-block text-[10px] font-bold text-slate-400 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded">
-                                {ev.modulo}
-                              </span>
-                            )}
-                            {ev.statusEntrega && (
-                              <p className="text-[10px] text-slate-500 font-semibold">
-                                Status da entrega: <span className="font-bold">{ev.statusEntrega}</span>
-                              </p>
-                            )}
+
+                            <div className="flex flex-wrap items-center gap-2">
+                              {ev.modulo && (
+                                <span className="inline-block text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200/50 dark:border-slate-800">
+                                  {ev.modulo}
+                                </span>
+                              )}
+
+                              {ev.statusEntrega && (
+                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                                  ev.statusEntrega === "Aprovada"
+                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                    : ev.statusEntrega === "Devolvida"
+                                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                }`}>
+                                  Status: {ev.statusEntrega}
+                                </span>
+                              )}
+                            </div>
+
                             {ev.descricao && (
-                              <p className="text-[11px] text-slate-400">
+                              <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/60">
                                 {ev.descricao}
                               </p>
                             )}

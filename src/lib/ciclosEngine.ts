@@ -1,6 +1,6 @@
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { loadRegrasCiclos, invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
-import { getRankingKeys, getCicloAnteriorKeys } from "@/src/lib/dateUtils";
+import { getRankingKeys, getCicloAnteriorKeys, getOpcoesCicloSemanal } from "@/src/lib/dateUtils";
 import { CicloHistoricoItem, RegrasCiclosConfig } from "@/src/types";
 
 interface AlunoCalculado {
@@ -386,3 +386,60 @@ export async function executarEstornoCiclo(
   }
 }
 
+
+/**
+ * Verificação "Just-in-Time" de Ciclos Pendentes de Fechamento.
+ * Executada de forma leve e não-bloqueante no acesso ao ranking ou portal.
+ * Se o ciclo atual já passou do dia e horário configurados para fechamento e ainda não foi arquivado,
+ * executa o fechamento silenciosamente no mesmo instante.
+ */
+let ultimaChecagemTimestamp = 0;
+
+export async function verificarEFecharCiclosPendentes(db: FirebaseFirestore.Firestore): Promise<void> {
+  const agora = Date.now();
+  // Throttle em memória: não checar mais de uma vez a cada 60 segundos por instância
+  if (agora - ultimaChecagemTimestamp < 60000) return;
+  ultimaChecagemTimestamp = agora;
+
+  try {
+    const regras: RegrasCiclosConfig = await loadRegrasCiclos(dbAdmin);
+
+    // 1. Verificar Ciclo Semanal
+    if (regras.semanal.ativo && regras.semanal.modoExecucao === "automatico") {
+      const diaCorte = regras.semanal.diaFechamento !== undefined ? Number(regras.semanal.diaFechamento) : 5;
+      const horaCorte = regras.semanal.horaFechamento || "16:59";
+      
+      const { semanaAlvoPrincipal, passouCorteSemanaAtual } = getOpcoesCicloSemanal(new Date(), diaCorte, horaCorte);
+
+      if (passouCorteSemanaAtual) {
+        const cicloId = `semanal_${semanaAlvoPrincipal}`;
+        const cicloDoc = await dbAdmin.collection("historico_ciclos").doc(cicloId).get();
+        if (!cicloDoc.exists || cicloDoc.data()?.status !== "FECHADO") {
+          console.log(`[Just-in-Time Ciclos] Fechamento automático pendente detectado para ${cicloId}. Executando...`);
+          await executarFechamentoCiclo("semanal", semanaAlvoPrincipal, "automacao:just-in-time");
+        }
+      }
+    }
+
+    // 2. Verificar Ciclo Mensal
+    if (regras.mensal.ativo && regras.mensal.modoExecucao === "automatico") {
+      const dataHoje = new Date();
+      const ultimoDiaMes = new Date(dataHoje.getFullYear(), dataHoje.getMonth() + 1, 0).getDate();
+      const horaCorteMensal = regras.mensal.horaFechamento || "23:59";
+      const horaMinutoAtual = String(dataHoje.getHours()).padStart(2, "0") + ":" + String(dataHoje.getMinutes()).padStart(2, "0");
+
+      // Se for o último dia do mês e já passou da hora de corte
+      if (dataHoje.getDate() === ultimoDiaMes && horaMinutoAtual >= horaCorteMensal) {
+        const { mesKey } = getRankingKeys(dataHoje);
+        const cicloId = `mensal_${mesKey}`;
+        const cicloDoc = await dbAdmin.collection("historico_ciclos").doc(cicloId).get();
+        if (!cicloDoc.exists || cicloDoc.data()?.status !== "FECHADO") {
+          console.log(`[Just-in-Time Ciclos] Fechamento mensal pendente detectado para ${cicloId}. Executando...`);
+          await executarFechamentoCiclo("mensal", mesKey, "automacao:just-in-time");
+        }
+      }
+    }
+  } catch (err: unknown) {
+    console.warn("[Just-in-Time Ciclos] Erro na verificação silenciosa:", (err as Error).message);
+  }
+}

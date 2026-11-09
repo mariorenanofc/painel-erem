@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { apiTutor } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
 import { CicloHistoricoItem } from "../types";
-import { getRankingKeys, getCicloAnteriorKeys } from "@/src/lib/dateUtils";
+import { getRankingKeys, getCicloAnteriorKeys, getOpcoesCicloSemanal, getLabelSemana } from "@/src/lib/dateUtils";
 
 interface FechamentoCicloModalProps {
   isOpen: boolean;
@@ -30,15 +30,26 @@ export default function FechamentoCicloModal({
   const [estornando, setEstornando] = useState(false);
   const [cicloData, setCicloData] = useState<CicloHistoricoItem | null>(null);
 
-  // Determinar a chave do período selecionado
+  // Determinar opções e rótulo inteligente de ciclo
+  const dataHoje = new Date();
+  const opcoesSemanais = getOpcoesCicloSemanal(dataHoje);
+
   const obterChavePeriodo = (): string => {
-    const dataHoje = new Date();
-    if (periodo === "atual") {
-      const { semanaKey, mesKey } = getRankingKeys(dataHoje);
-      return tipo === "mensal" ? mesKey : semanaKey;
+    if (tipo === "mensal") {
+      if (periodo === "atual") {
+        const { mesKey } = getRankingKeys(dataHoje);
+        return mesKey;
+      } else {
+        const { mesAnteriorKey } = getCicloAnteriorKeys(dataHoje);
+        return mesAnteriorKey;
+      }
     } else {
-      const { mesAnteriorKey, semanaAnteriorKey } = getCicloAnteriorKeys(dataHoje);
-      return tipo === "mensal" ? mesAnteriorKey : semanaAnteriorKey;
+      // Semanal: usa a semana prioritária a ser apurada (detectando se já passou de sexta 16:59)
+      if (periodo === "anterior") {
+        return opcoesSemanais.semanaAlvoPrincipal;
+      } else {
+        return opcoesSemanais.semanaAtualKey;
+      }
     }
   };
 
@@ -224,7 +235,7 @@ export default function FechamentoCicloModal({
                         : "text-slate-500 dark:text-slate-400"
                     }`}
                   >
-                    ⏮️ Ciclo Anterior ({chaveAtual})
+                    ⏮️ {tipo === "semanal" ? `${opcoesSemanais.labelAlvoPrincipal}` : `Mês Anterior (${chaveAtual})`}
                   </button>
                   <button
                     onClick={() => setPeriodo("atual")}
@@ -234,7 +245,7 @@ export default function FechamentoCicloModal({
                         : "text-slate-500 dark:text-slate-400"
                     }`}
                   >
-                    ▶️ Ciclo Atual em Curso
+                    ▶️ {tipo === "semanal" ? `Semana Atual (${opcoesSemanais.labelSemanaAtual})` : `Mês Atual em Curso`}
                   </button>
                 </div>
               </div>

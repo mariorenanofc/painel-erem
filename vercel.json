@@ -1,0 +1,13 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/fechar-ciclo?tipo=semanal",
+      "schedule": "0 20 * * 5"
+    },
+    {
+      "path": "/api/cron/fechar-ciclo?tipo=mensal",
+      "schedule": "59 23 28-31 * *"
+    }
+  ]
+}
+

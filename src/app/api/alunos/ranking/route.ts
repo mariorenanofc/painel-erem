@@ -8,6 +8,7 @@ import {
   setCachedRankingAlunosAtivos,
 } from "@/src/lib/cache";
 import { getRankingKeys } from "@/src/lib/dateUtils";
+import { verificarEFecharCiclosPendentes } from "@/src/lib/ciclosEngine";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 
 const CONTA_MESTRE = "1234567";
@@ -26,6 +27,8 @@ interface RankedAluno {
 }
 
 export async function GET(request: Request) {
+  // Verificação Just-in-Time: se o ciclo da semana/mês venceu e ainda não foi fechado, fecha silenciosamente
+  verificarEFecharCiclosPendentes(dbAdmin).catch((e) => console.warn("[Ranking] Erro na checagem just-in-time:", e));
   const { searchParams } = new URL(request.url);
   const filtroTempo = String(searchParams.get("filtroTempo") || "geral").trim();
   const nocache = searchParams.get("nocache") === "true";

@@ -102,8 +102,12 @@ export async function executarFechamentoCiclo(
       };
     });
 
-    // 5. Consolidar pontuações dos alunos com o teto de atraso
-    const limiteAtrasoCap = tipo === "semanal" ? 50 : 150;
+    // 5. Consolidar pontuações dos alunos com o teto de atraso configurável
+    const gami = regrasGerais.gamificacao;
+    const tetoAtivo = gami ? gami.tetoAtrasoRankingAtivo : true;
+    const limiteAtrasoCap = tetoAtivo
+      ? (tipo === "semanal" ? (gami?.tetoSemanalAtraso ?? 50) : (gami?.tetoMensalAtraso ?? 150))
+      : Infinity;
     const listaAlunos: AlunoCalculado[] = [];
 
     for (const mat of Object.keys(rankingData)) {

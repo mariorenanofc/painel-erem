@@ -729,9 +729,24 @@ export function invalidateRifasCache() {
 
 
 // -----------------------------------------------------------------------------
-// CACHE DE REGRAS DE CICLOS (SEMANAL / MENSAL)
+// CACHE DE REGRAS DE CICLOS (SEMANAL / MENSAL) & GAMIFICAÇÃO
 // -----------------------------------------------------------------------------
-import type { RegrasCiclosConfig } from "@/src/types";
+import type { RegrasCiclosConfig, RegrasGamificacaoConfig } from "@/src/types";
+
+export const DEFAULT_REGRAS_GAMIFICACAO: RegrasGamificacaoConfig = {
+  descontoAtrasoAtivo: true,
+  xpDescontoPorDia: 1,
+  descontoGabaritoAtivo: true,
+  percentualDescontoGabarito: 30,
+  pisoMinimoAtivo: true,
+  percentualPisoMinimo: 10,
+  tetoAtrasoRankingAtivo: true,
+  tetoSemanalAtraso: 50,
+  tetoMensalAtraso: 150,
+  badgesContamRanking: true,
+  xpManualContaRanking: true,
+  pixContaRanking: false,
+};
 
 export const DEFAULT_REGRAS_CICLOS: RegrasCiclosConfig = {
   semanal: {
@@ -751,7 +766,8 @@ export const DEFAULT_REGRAS_CICLOS: RegrasCiclosConfig = {
     xpTop2_3: 80,
     xpTop4_10: 40,
     modoExecucao: "automatico"
-  }
+  },
+  gamificacao: DEFAULT_REGRAS_GAMIFICACAO
 };
 
 let regrasCiclosRamCache: { data: RegrasCiclosConfig; timestamp: number } | null = null;
@@ -766,7 +782,8 @@ export async function loadRegrasCiclos(dbAdmin: Firestore): Promise<RegrasCiclos
       const data = doc.data() as Partial<RegrasCiclosConfig>;
       const merged: RegrasCiclosConfig = {
         semanal: { ...DEFAULT_REGRAS_CICLOS.semanal, ...(data.semanal || {}) },
-        mensal: { ...DEFAULT_REGRAS_CICLOS.mensal, ...(data.mensal || {}) }
+        mensal: { ...DEFAULT_REGRAS_CICLOS.mensal, ...(data.mensal || {}) },
+        gamificacao: { ...DEFAULT_REGRAS_GAMIFICACAO, ...(data.gamificacao || {}) }
       };
       regrasCiclosRamCache = { data: merged, timestamp: Date.now() };
       return merged;

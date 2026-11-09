@@ -953,6 +953,33 @@ export async function POST(request: Request) {
                 batch.set(dbAdmin.collection("entregas").doc(`${idBase}-RECEBEU`), {
                   id: `${idBase}-RECEBEU`, matricula: matDestino, idAtividade: "PIX-XP", resposta: `Recebeu de ${matOrigem}: ${motivo}`, status: "Avaliado", xpGanho: quantidade, timestamp: agoraTime
                 });
+
+                const regrasPix = await loadRegrasCiclos(dbAdmin);
+                if (regrasPix.gamificacao?.pixContaRanking) {
+                  const { semanaKey, mesKey } = getRankingKeys(new Date(agoraTime));
+                  const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+                  const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+
+                  const updatesSemana: Record<string, unknown> = {
+                    [`alunos.${matDestino}.xpNormal`]: FieldValue.increment(quantidade),
+                    [`alunos.${matDestino}.ultimoEnvio`]: agoraTime
+                  };
+                  const updatesMes: Record<string, unknown> = {
+                    [`alunos.${matDestino}.xpNormal`]: FieldValue.increment(quantidade),
+                    [`alunos.${matDestino}.ultimoEnvio`]: agoraTime
+                  };
+
+                  if (!ehMestre) {
+                    updatesSemana[`alunos.${matOrigem}.xpNormal`] = FieldValue.increment(-quantidade);
+                    updatesSemana[`alunos.${matOrigem}.ultimoEnvio`] = agoraTime;
+                    updatesMes[`alunos.${matOrigem}.xpNormal`] = FieldValue.increment(-quantidade);
+                    updatesMes[`alunos.${matOrigem}.ultimoEnvio`] = agoraTime;
+                  }
+
+                  batch.set(rankSemanaRef, updatesSemana, { merge: true });
+                  batch.set(rankMesRef, updatesMes, { merge: true });
+                }
+
                 await batch.commit();
                 result = { status: "sucesso" };
               }
@@ -1604,6 +1631,7 @@ export async function POST(request: Request) {
           const alunoRef = dbAdmin.collection("alunos").doc(mat);
           const timestamp = Date.now();
           const idEntrega = `NOTIF-${timestamp}-${mat}`;
+          const regrasCiclos = await loadRegrasCiclos(dbAdmin);
 
           await dbAdmin.runTransaction(async (transaction: Transaction) => {
             const alunoDoc = await transaction.get(alunoRef);
@@ -1625,28 +1653,30 @@ export async function POST(request: Request) {
                 timestamp
               });
 
-              // Atualizar Ranking Semanal e Mensal
-              const { semanaKey, mesKey } = getRankingKeys(new Date(timestamp));
+              // Atualizar Ranking Semanal e Mensal (se configurado nas regras)
+              if (regrasCiclos.gamificacao?.xpManualContaRanking !== false) {
+                const { semanaKey, mesKey } = getRankingKeys(new Date(timestamp));
 
-              const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
-              transaction.set(rankSemanaRef, {
-                alunos: {
-                  [mat]: {
-                    xpNormal: FieldValue.increment(xp),
-                    ultimoEnvio: timestamp
+                const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+                transaction.set(rankSemanaRef, {
+                  alunos: {
+                    [mat]: {
+                      xpNormal: FieldValue.increment(xp),
+                      ultimoEnvio: timestamp
+                    }
                   }
-                }
-              }, { merge: true });
+                }, { merge: true });
 
-              const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
-              transaction.set(rankMesRef, {
-                alunos: {
-                  [mat]: {
-                    xpNormal: FieldValue.increment(xp),
-                    ultimoEnvio: timestamp
+                const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+                transaction.set(rankMesRef, {
+                  alunos: {
+                    [mat]: {
+                      xpNormal: FieldValue.increment(xp),
+                      ultimoEnvio: timestamp
+                    }
                   }
-                }
-              }, { merge: true });
+                }, { merge: true });
+              }
             }
           });
 
@@ -1787,6 +1817,7 @@ export async function POST(request: Request) {
           const idEntrega = `BADGE-${badgeId}-${mat}`;
           const entregaRef = dbAdmin.collection("entregas").doc(idEntrega);
           const portalViewRef = dbAdmin.collection("portal_views").doc(mat);
+          const regrasCiclos = await loadRegrasCiclos(dbAdmin);
 
           let jaResgatou = false;
           await dbAdmin.runTransaction(async (transaction: Transaction) => {
@@ -1818,28 +1849,30 @@ export async function POST(request: Request) {
                 badges: FieldValue.arrayUnion(badgeId)
               }, { merge: true });
 
-              // Atualizar Ranking Semanal e Mensal
-              const { semanaKey, mesKey } = getRankingKeys(new Date(timestamp));
+              // Atualizar Ranking Semanal e Mensal (se badges contam ranking)
+              if (regrasCiclos.gamificacao?.badgesContamRanking !== false) {
+                const { semanaKey, mesKey } = getRankingKeys(new Date(timestamp));
 
-              const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
-              transaction.set(rankSemanaRef, {
-                alunos: {
-                  [mat]: {
-                    xpNormal: FieldValue.increment(xp),
-                    ultimoEnvio: timestamp
+                const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+                transaction.set(rankSemanaRef, {
+                  alunos: {
+                    [mat]: {
+                      xpNormal: FieldValue.increment(xp),
+                      ultimoEnvio: timestamp
+                    }
                   }
-                }
-              }, { merge: true });
+                }, { merge: true });
 
-              const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
-              transaction.set(rankMesRef, {
-                alunos: {
-                  [mat]: {
-                    xpNormal: FieldValue.increment(xp),
-                    ultimoEnvio: timestamp
+                const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+                transaction.set(rankMesRef, {
+                  alunos: {
+                    [mat]: {
+                      xpNormal: FieldValue.increment(xp),
+                      ultimoEnvio: timestamp
+                    }
                   }
-                }
-              }, { merge: true });
+                }, { merge: true });
+              }
             }
           });
 
@@ -1868,6 +1901,7 @@ export async function POST(request: Request) {
           const idEntrega = `BDAY-${ano}-${mat}`;
           const entregaRef = dbAdmin.collection("entregas").doc(idEntrega);
           const portalViewRef = dbAdmin.collection("portal_views").doc(mat);
+          const regrasCiclos = await loadRegrasCiclos(dbAdmin);
 
           let jaResgatou = false;
           const xpAniversario = 100;
@@ -1912,27 +1946,29 @@ export async function POST(request: Request) {
                 }
               }, { merge: true });
 
-              // Atualizar Ranking Semanal e Mensal
-              const { semanaKey, mesKey } = getRankingKeys(new Date(timestamp));
-              const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
-              transaction.set(rankSemanaRef, {
-                alunos: {
-                  [mat]: {
-                    xpNormal: FieldValue.increment(xpAniversario),
-                    ultimoEnvio: timestamp
+              // Atualizar Ranking Semanal e Mensal (se badges contam ranking)
+              if (regrasCiclos.gamificacao?.badgesContamRanking !== false) {
+                const { semanaKey, mesKey } = getRankingKeys(new Date(timestamp));
+                const rankSemanaRef = dbAdmin.collection("estatisticas").doc(`ranking_semanal_${semanaKey}`);
+                transaction.set(rankSemanaRef, {
+                  alunos: {
+                    [mat]: {
+                      xpNormal: FieldValue.increment(xpAniversario),
+                      ultimoEnvio: timestamp
+                    }
                   }
-                }
-              }, { merge: true });
+                }, { merge: true });
 
-              const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
-              transaction.set(rankMesRef, {
-                alunos: {
-                  [mat]: {
-                    xpNormal: FieldValue.increment(xpAniversario),
-                    ultimoEnvio: timestamp
+                const rankMesRef = dbAdmin.collection("estatisticas").doc(`ranking_mensal_${mesKey}`);
+                transaction.set(rankMesRef, {
+                  alunos: {
+                    [mat]: {
+                      xpNormal: FieldValue.increment(xpAniversario),
+                      ultimoEnvio: timestamp
+                    }
                   }
-                }
-              }, { merge: true });
+                }, { merge: true });
+              }
             }
           });
 

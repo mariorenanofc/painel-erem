@@ -6,6 +6,7 @@ import {
   setCachedRanking,
   getCachedRankingAlunosAtivos,
   setCachedRankingAlunosAtivos,
+  loadRegrasCiclos,
 } from "@/src/lib/cache";
 import { getRankingKeys } from "@/src/lib/dateUtils";
 import { verificarEFecharCiclosPendentes } from "@/src/lib/ciclosEngine";
@@ -111,15 +112,25 @@ export async function GET(request: Request) {
     // Ordenar e Formatar o Ranking
     let ranking = Object.values(alunosRankMap);
 
-    // Aplicar o limite de XP de atraso (Cap) se não for o ranking geral
+    // Aplicar o limite de XP de atraso (Cap) se não for o ranking geral (Respeitando configurações)
     if (filtroTempo !== "geral") {
-      const limiteAtrasoCap = filtroTempo === "semanal" ? 50 : 150;
-      ranking = ranking.map((aluno: RankedAluno) => {
-        const xpAtrasado = aluno.xpAtrasadoAcumulado || 0;
-        const xpAtrasadoCapped = Math.min(xpAtrasado, limiteAtrasoCap);
-        aluno.xpCalculado += xpAtrasadoCapped;
-        return aluno;
-      });
+      const regras = await loadRegrasCiclos(dbAdmin);
+      const gami = regras.gamificacao;
+      const tetoAtivo = gami ? gami.tetoAtrasoRankingAtivo : true;
+      if (tetoAtivo) {
+        const limiteAtrasoCap = filtroTempo === "semanal" ? (gami?.tetoSemanalAtraso ?? 50) : (gami?.tetoMensalAtraso ?? 150);
+        ranking = ranking.map((aluno: RankedAluno) => {
+          const xpAtrasado = aluno.xpAtrasadoAcumulado || 0;
+          const xpAtrasadoCapped = Math.min(xpAtrasado, limiteAtrasoCap);
+          aluno.xpCalculado += xpAtrasadoCapped;
+          return aluno;
+        });
+      } else {
+        ranking = ranking.map((aluno: RankedAluno) => {
+          aluno.xpCalculado += aluno.xpAtrasadoAcumulado || 0;
+          return aluno;
+        });
+      }
     }
 
     ranking.sort((a: RankedAluno, b: RankedAluno) => {

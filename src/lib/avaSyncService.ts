@@ -6,6 +6,8 @@ import {
   invalidateTutorAtividadesCache,
   invalidateRankingCache,
   clearAllPortalCaches,
+  loadRegrasCiclos,
+  DEFAULT_REGRAS_GAMIFICACAO,
 } from "@/src/lib/cache";
 import { google } from "googleapis";
 import { FieldValue } from "firebase-admin/firestore";
@@ -81,12 +83,15 @@ export async function sincronizarAvaDireto(filtros?: {
   auth.setCredentials({ refresh_token: refreshToken });
   const classroom = google.classroom({ version: "v1", auth });
 
-  // 1. Carregar Atividades, Alunos e Módulos do Cache Particionado
-  const [cachedAtividades, snapAlunos, modulosSnap] = await Promise.all([
+  // 1. Carregar Atividades, Alunos, Módulos e Regras de Gamificação
+  const [cachedAtividades, snapAlunos, modulosSnap, regrasConfig] = await Promise.all([
     loadFirestoreCacheAtividades(dbAdmin),
     getAlunosAtivosSnapshot(dbAdmin),
     dbAdmin.collection("modulos").get(),
+    loadRegrasCiclos(dbAdmin),
   ]);
+
+  const gamificacao = regrasConfig.gamificacao || DEFAULT_REGRAS_GAMIFICACAO;
 
   const atividadesLista: Array<{
     idDoc: string;
@@ -479,25 +484,29 @@ export async function sincronizarAvaDireto(filtros?: {
             }
           }
 
-          if (atrasoDias > 0 && xpAtiv > 0) {
-            descontoAtraso = atrasoDias;
+          if (gamificacao.descontoAtrasoAtivo && atrasoDias > 0 && xpAtiv > 0) {
+            descontoAtraso = atrasoDias * (gamificacao.xpDescontoPorDia ?? 1);
           }
 
           let descontoGabarito = 0;
-          if (atrasoDias > 0 && isGabaritoLiberado && xpAtiv > 0) {
-            descontoGabarito = Math.floor(xpAtiv * 0.3);
+          if (gamificacao.descontoGabaritoAtivo && atrasoDias > 0 && isGabaritoLiberado && xpAtiv > 0) {
+            const percGabarito = (gamificacao.percentualDescontoGabarito ?? 30) / 100;
+            descontoGabarito = Math.floor(xpAtiv * percGabarito);
           }
 
           descontoTotal = descontoAtraso + descontoGabarito;
           xpGanhoFinal = xpAtiv - Math.min(descontoTotal, xpAtiv);
 
-          const piso = Math.ceil(xpAtiv * 0.1);
-          if (xpGanhoFinal < piso && xpAtiv > 0) xpGanhoFinal = piso;
+          if (gamificacao.pisoMinimoAtivo && xpAtiv > 0) {
+            const percPiso = (gamificacao.percentualPisoMinimo ?? 10) / 100;
+            const piso = Math.ceil(xpAtiv * percPiso);
+            if (xpGanhoFinal < piso) xpGanhoFinal = piso;
+          }
 
           if (descontoTotal > 0) {
             const msgs = [];
             if (descontoAtraso > 0) msgs.push(`-${descontoAtraso}XP por Atraso`);
-            if (descontoGabarito > 0) msgs.push(`-30% por Gabarito Liberado`);
+            if (descontoGabarito > 0) msgs.push(`-${gamificacao.percentualDescontoGabarito}% por Gabarito Liberado`);
             notaAdicional = ` (${msgs.join(", ")})`;
           }
         }

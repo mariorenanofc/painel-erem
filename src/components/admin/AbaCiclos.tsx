@@ -4,12 +4,27 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { apiTutor } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
-import { RegrasCiclosConfig } from "@/src/types";
+import { RegrasCiclosConfig, RegrasGamificacaoConfig } from "@/src/types";
 import { DIAS_SEMANA_NOMES } from "@/src/lib/dateUtils";
 
 interface AbaCiclosProps {
   onSalvo?: () => void;
 }
+
+const DEFAULT_GAMIFICACAO: RegrasGamificacaoConfig = {
+  descontoAtrasoAtivo: true,
+  xpDescontoPorDia: 1,
+  descontoGabaritoAtivo: true,
+  percentualDescontoGabarito: 30,
+  pisoMinimoAtivo: true,
+  percentualPisoMinimo: 10,
+  tetoAtrasoRankingAtivo: true,
+  tetoSemanalAtraso: 50,
+  tetoMensalAtraso: 150,
+  badgesContamRanking: true,
+  xpManualContaRanking: true,
+  pixContaRanking: false,
+};
 
 export default function AbaCiclos({ onSalvo }: AbaCiclosProps) {
   const { toast } = useToast();
@@ -34,7 +49,8 @@ export default function AbaCiclos({ onSalvo }: AbaCiclosProps) {
       xpTop2_3: 80,
       xpTop4_10: 40,
       modoExecucao: "automatico"
-    }
+    },
+    gamificacao: DEFAULT_GAMIFICACAO
   });
 
   useEffect(() => {
@@ -46,13 +62,29 @@ export default function AbaCiclos({ onSalvo }: AbaCiclosProps) {
     try {
       const res = await apiTutor.buscarRegrasCiclos();
       if (res.status === "sucesso" && res.regras) {
-        setRegras(res.regras);
+        setRegras({
+          ...res.regras,
+          gamificacao: {
+            ...DEFAULT_GAMIFICACAO,
+            ...(res.regras.gamificacao || {})
+          }
+        });
       }
     } catch {
       toast("Não foi possível carregar as regras de ciclos.", "error", "Falha de Leitura");
     } finally {
       setCarregando(false);
     }
+  };
+
+  const updateGamificacao = (novosCampos: Partial<RegrasGamificacaoConfig>) => {
+    setRegras((prev) => ({
+      ...prev,
+      gamificacao: {
+        ...(prev.gamificacao || DEFAULT_GAMIFICACAO),
+        ...novosCampos
+      }
+    }));
   };
 
   const salvarRegras = async () => {
@@ -82,6 +114,8 @@ export default function AbaCiclos({ onSalvo }: AbaCiclosProps) {
       </div>
     );
   }
+
+  const gamificacao = regras.gamificacao || DEFAULT_GAMIFICACAO;
 
   return (
     <div className="space-y-8">
@@ -499,6 +533,308 @@ export default function AbaCiclos({ onSalvo }: AbaCiclosProps) {
             </div>
           </div>
         </motion.div>
+      </div>
+
+      {/* SEÇÃO 2: POLÍTICAS DE PONTUAÇÃO & GAMIFICAÇÃO */}
+      <div className="border-t border-slate-200 dark:border-slate-800 pt-6">
+        <div className="mb-6">
+          <h3 className="text-xl font-black text-slate-800 dark:text-white font-display flex items-center gap-2">
+            <span>⚖️</span> Regras de Prazos, Descontos & Composição de Rankings
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Configure as regras de tolerância de atraso no AVA e quais fontes de XP contam para as disputas de pódio semanal e mensal.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* BLOCO 3: PRAZOS, DESCONTOS & GABARITO (AVA) */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-slate-50/70 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 space-y-6 shadow-sm"
+          >
+            <div className="border-b border-slate-200/60 dark:border-slate-800 pb-3">
+              <h4 className="font-display font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                <span>📐</span> Políticas de Atraso e Entregas (AVA)
+              </h4>
+              <p className="text-[11px] text-slate-400">
+                Determina as deduções automáticas ao sincronizar submissões do Google Classroom
+              </p>
+            </div>
+
+            {/* Regra 1: Desconto Progressivo por Atraso */}
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                    <span>⏳</span> Desconto Diário por Atraso
+                  </span>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Deduz XP proporcional aos dias passados da data limite
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={gamificacao.descontoAtrasoAtivo}
+                    onChange={(e) => updateGamificacao({ descontoAtrasoAtivo: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+              {gamificacao.descontoAtrasoAtivo && (
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                    Penalidade diária:
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-rose-500 font-bold">-</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={10}
+                      value={gamificacao.xpDescontoPorDia}
+                      onChange={(e) => updateGamificacao({ xpDescontoPorDia: Number(e.target.value) })}
+                      className="w-16 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono font-bold text-xs p-1.5 rounded-lg text-slate-800 dark:text-slate-100 text-center"
+                    />
+                    <span className="text-[11px] text-slate-400 font-bold">XP / dia</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Regra 2: Desconto por Gabarito Já Liberado */}
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                    <span>🗝️</span> Penalidade por Gabarito Liberado
+                  </span>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Aplica corte percentual se a entrega atrasada ocorreu após o gabarito estar público
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={gamificacao.descontoGabaritoAtivo}
+                    onChange={(e) => updateGamificacao({ descontoGabaritoAtivo: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+              {gamificacao.descontoGabaritoAtivo && (
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                    Desconto no XP da atividade:
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-rose-500 font-bold">-</span>
+                    <input
+                      type="number"
+                      min={5}
+                      max={90}
+                      step={5}
+                      value={gamificacao.percentualDescontoGabarito}
+                      onChange={(e) => updateGamificacao({ percentualDescontoGabarito: Number(e.target.value) })}
+                      className="w-16 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono font-bold text-xs p-1.5 rounded-lg text-slate-800 dark:text-slate-100 text-center"
+                    />
+                    <span className="text-[11px] text-slate-400 font-bold">%</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Regra 3: Piso Mínimo Garantido de Esforço */}
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                    <span>🛡️</span> Piso Mínimo de Esforço
+                  </span>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Garante um XP residual mínimo por tentar, mesmo em atrasos muito longos
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={gamificacao.pisoMinimoAtivo}
+                    onChange={(e) => updateGamificacao({ pisoMinimoAtivo: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+              {gamificacao.pisoMinimoAtivo && (
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between">
+                  <label className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                    Garantia mínima de recompensa:
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-emerald-500 font-bold">mín.</span>
+                    <input
+                      type="number"
+                      min={1}
+                      max={50}
+                      step={5}
+                      value={gamificacao.percentualPisoMinimo}
+                      onChange={(e) => updateGamificacao({ percentualPisoMinimo: Number(e.target.value) })}
+                      className="w-16 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono font-bold text-xs p-1.5 rounded-lg text-slate-800 dark:text-slate-100 text-center"
+                    />
+                    <span className="text-[11px] text-slate-400 font-bold">%</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          </motion.div>
+
+          {/* BLOCO 4: COMPOSIÇÃO DOS RANKINGS */}
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-slate-50/70 dark:bg-slate-900/40 border border-slate-200/80 dark:border-slate-800 rounded-2xl p-6 space-y-6 shadow-sm"
+          >
+            <div className="border-b border-slate-200/60 dark:border-slate-800 pb-3">
+              <h4 className="font-display font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                <span>📊</span> Composição dos Rankings Semanal & Mensal
+              </h4>
+              <p className="text-[11px] text-slate-400">
+                Selecione quais pontuações e fontes alimentam as disputas de pódio dos ciclos
+              </p>
+            </div>
+
+            {/* Regra 1: Teto de Atraso nos Rankings */}
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                    <span>🧊</span> Teto de Atraso nos Rankings (Anti-Bola de Neve)
+                  </span>
+                  <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                    Evita que envio em lote de lições antigas tome o pódio de alunos pontuais
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={gamificacao.tetoAtrasoRankingAtivo}
+                    onChange={(e) => updateGamificacao({ tetoAtrasoRankingAtivo: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+                </label>
+              </div>
+
+              {gamificacao.tetoAtrasoRankingAtivo && (
+                <div className="pt-2 border-t border-slate-100 dark:border-slate-700/60 grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                      Teto Semanal:
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        min={0}
+                        step={10}
+                        value={gamificacao.tetoSemanalAtraso}
+                        onChange={(e) => updateGamificacao({ tetoSemanalAtraso: Number(e.target.value) })}
+                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono font-bold text-xs p-1.5 rounded-lg text-slate-800 dark:text-slate-100 text-center"
+                      />
+                      <span className="text-[10px] text-slate-400 font-bold">XP</span>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase mb-1">
+                      Teto Mensal:
+                    </label>
+                    <div className="flex items-center gap-1">
+                      <input
+                        type="number"
+                        min={0}
+                        step={10}
+                        value={gamificacao.tetoMensalAtraso}
+                        onChange={(e) => updateGamificacao({ tetoMensalAtraso: Number(e.target.value) })}
+                        className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 font-mono font-bold text-xs p-1.5 rounded-lg text-slate-800 dark:text-slate-100 text-center"
+                      />
+                      <span className="text-[10px] text-slate-400 font-bold">XP</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Regra 2: Conquistas & Badges */}
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                  <span>🎖️</span> XP de Badges e Conquistas
+                </span>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  Pontos resgatados de badges somam no ranking da semana e do mês
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={gamificacao.badgesContamRanking}
+                  onChange={(e) => updateGamificacao({ badgesContamRanking: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+
+            {/* Regra 3: Bônus Manuais do Tutor */}
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                  <span>✍️</span> Ajustes & Bônus Manuais do Tutor
+                </span>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  XP injetado manualmente pelo professor altera as disputas dos rankings de ciclos
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={gamificacao.xpManualContaRanking}
+                  onChange={(e) => updateGamificacao({ xpManualContaRanking: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+
+            {/* Regra 4: Transferências de Pix */}
+            <div className="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 flex items-center justify-between">
+              <div>
+                <span className="text-xs font-bold text-slate-800 dark:text-slate-100 flex items-center gap-1.5">
+                  <span>💸</span> Transferências de Pix de XP
+                </span>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                  {gamificacao.pixContaRanking
+                    ? "⚠️ Pix afeta o pódio semanal/mensal (pode haver combinações entre alunos)"
+                    : "🔒 Pix afeta apenas o saldo geral, sem alterar o pódio semanal/mensal (Recomendado)"}
+                </p>
+              </div>
+              <label className="relative inline-flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={gamificacao.pixContaRanking}
+                  onChange={(e) => updateGamificacao({ pixContaRanking: e.target.checked })}
+                  className="sr-only peer"
+                />
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-indigo-600"></div>
+              </label>
+            </div>
+          </motion.div>
+        </div>
       </div>
 
       {/* Botão de Salvar */}

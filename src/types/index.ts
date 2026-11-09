@@ -537,9 +537,29 @@ export interface RegraCicloMensal {
   brindeFisicoTop1?: boolean;
 }
 
+
+// ==========================================
+// 8. POLÍTICAS DE PONTUAÇÃO E GAMIFICAÇÃO
+// ==========================================
+export interface RegrasGamificacaoConfig {
+  descontoAtrasoAtivo: boolean;
+  xpDescontoPorDia: number;
+  descontoGabaritoAtivo: boolean;
+  percentualDescontoGabarito: number; // ex: 30
+  pisoMinimoAtivo: boolean;
+  percentualPisoMinimo: number; // ex: 10
+  tetoAtrasoRankingAtivo: boolean;
+  tetoSemanalAtraso: number; // ex: 50
+  tetoMensalAtraso: number; // ex: 150
+  badgesContamRanking: boolean;
+  xpManualContaRanking: boolean;
+  pixContaRanking: boolean;
+}
+
 export interface RegrasCiclosConfig {
   semanal: RegraCicloSemanal;
   mensal: RegraCicloMensal;
+  gamificacao?: RegrasGamificacaoConfig;
 }
 
 export interface CicloHistoricoItem {

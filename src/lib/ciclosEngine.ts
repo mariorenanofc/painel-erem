@@ -1,6 +1,7 @@
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { loadRegrasCiclos, invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
 import { getRankingKeys, getCicloAnteriorKeys, getOpcoesCicloSemanal } from "@/src/lib/dateUtils";
+import { sincronizarAvaDireto } from "@/src/lib/avaSyncService";
 import { CicloHistoricoItem, RegrasCiclosConfig } from "@/src/types";
 
 interface AlunoCalculado {
@@ -62,6 +63,15 @@ export async function executarFechamentoCiclo(
         status: "aviso",
         mensagem: `O ciclo ${tipo} está desativado nas configurações do sistema.`
       };
+    }
+
+    // 2.1. AUTO-SYNC AVA: Sincronização prévia das últimas entregas do Google Classroom antes de apurar
+    try {
+      console.log(`[Fechamento ${tipo}] Executando Auto-Sync prévio com o Google Classroom para ${chaveFinal}...`);
+      const syncRes = await sincronizarAvaDireto();
+      console.log(`[Fechamento ${tipo}] Auto-Sync concluído: ${syncRes.entregasNovas} nova(s) entrega(s) sincronizadas.`);
+    } catch (errSync: unknown) {
+      console.warn(`[Fechamento ${tipo}] Aviso: Auto-Sync prévio com Classroom falhou ou não conectou, prosseguindo com dados locais já sincronizados:`, (errSync as Error).message);
     }
 
     // 3. Buscar dados agregados de XP do ranking

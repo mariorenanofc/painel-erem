@@ -563,7 +563,8 @@ export async function POST(req: Request) {
             }
           }, { merge: true });
 
-          const ehAtrasado = atrasoDias > 0 || isGabaritoLiberado || (descontoTotal > 0 && descontoAtraso > 0);
+          const aplicarTetoAtraso = gamificacao.tetoAtrasoRankingAtivo;
+          const ehAtrasado = aplicarTetoAtraso && (atrasoDias > 0 || isGabaritoLiberado || (descontoTotal > 0 && descontoAtraso > 0));
           const xpNormalIncr = ehAtrasado ? 0 : xpGanhoFinal;
           const xpAtrasadoIncr = ehAtrasado ? xpGanhoFinal : 0;
 

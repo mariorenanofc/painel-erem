@@ -1,4 +1,4 @@
-﻿import { NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { dbAdmin, registrarLogSeguranca } from "@/src/lib/firebaseAdmin";
 import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
 import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades, loadFirestoreCacheAtividades, getNextAtividadeId, loadFirestoreConfiguracoes, getCachedAdminAlunos, setCachedAdminAlunos, invalidateAdminAlunosCache, getCachedAnalyticsGeral, setCachedAnalyticsGeral, getCachedClassDates, getAlunosAtivosSnapshot, refreshAlunosAtivosSnapshot, loadRegrasCiclos, invalidateRegrasCiclosCache } from "@/src/lib/cache";
@@ -63,6 +63,7 @@ export async function POST(request: Request) {
       if (regras && typeof regras === "object") {
         await dbAdmin.collection("configuracoes").doc("REGRAS_CICLOS").set(regras, { merge: true });
         invalidateRegrasCiclosCache();
+        invalidateRankingCache();
         return NextResponse.json({ status: "sucesso", mensagem: "Regras de ciclos salvas com sucesso no banco de dados!" });
       }
       return NextResponse.json({ status: "erro", mensagem: "Dados das regras inválidos." });

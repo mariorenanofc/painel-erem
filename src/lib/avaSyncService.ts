@@ -559,8 +559,9 @@ export async function sincronizarAvaDireto(filtros?: {
           { merge: true }
         );
 
+        const aplicarTetoAtraso = gamificacao.tetoAtrasoRankingAtivo;
         const ehAtrasado =
-          atrasoDias > 0 || isGabaritoLiberado || (descontoTotal > 0 && descontoAtraso > 0);
+          aplicarTetoAtraso && (atrasoDias > 0 || isGabaritoLiberado || (descontoTotal > 0 && descontoAtraso > 0));
         const xpNormalIncr = ehAtrasado ? 0 : xpGanhoFinal;
         const xpAtrasadoIncr = ehAtrasado ? xpGanhoFinal : 0;
 

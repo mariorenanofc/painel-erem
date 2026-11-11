@@ -90,7 +90,12 @@ export default function AbaCiclos({ onSalvo }: AbaCiclosProps) {
   const salvarRegras = async () => {
     setSalvando(true);
     try {
-      const res = await apiTutor.salvarRegrasCiclos(regras as unknown as Record<string, unknown>);
+      const payloadRegras: RegrasCiclosConfig = {
+        semanal: regras.semanal,
+        mensal: regras.mensal,
+        gamificacao: regras.gamificacao || DEFAULT_GAMIFICACAO
+      };
+      const res = await apiTutor.salvarRegrasCiclos(payloadRegras as unknown as Record<string, unknown>);
       if (res.status === "sucesso") {
         toast("Regras de ciclos e pontuações atualizadas com sucesso!", "success", "Salvo!");
         if (onSalvo) onSalvo();
@@ -240,11 +245,10 @@ export default function AbaCiclos({ onSalvo }: AbaCiclosProps) {
                     semanal: { ...regras.semanal, modoExecucao: "manual_com_alerta" }
                   })
                 }
-                className={`p-3 rounded-xl border text-xs font-bold transition-all text-left ${
-                  regras.semanal.modoExecucao === "manual_com_alerta"
+                className={`p-3 rounded-xl border text-xs font-bold transition-all text-left ${regras.semanal.modoExecucao === "manual_com_alerta"
                     ? "bg-indigo-500/10 border-indigo-500 text-indigo-600 dark:text-indigo-400"
                     : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
-                }`}
+                  }`}
               >
                 🔔 Alerta no Painel
                 <span className="block text-[10px] font-normal text-slate-400 mt-0.5">
@@ -260,11 +264,10 @@ export default function AbaCiclos({ onSalvo }: AbaCiclosProps) {
                     semanal: { ...regras.semanal, modoExecucao: "automatico" }
                   })
                 }
-                className={`p-3 rounded-xl border text-xs font-bold transition-all text-left ${
-                  regras.semanal.modoExecucao === "automatico"
+                className={`p-3 rounded-xl border text-xs font-bold transition-all text-left ${regras.semanal.modoExecucao === "automatico"
                     ? "bg-indigo-500/10 border-indigo-500 text-indigo-600 dark:text-indigo-400"
                     : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
-                }`}
+                  }`}
               >
                 ⚡ 100% Automático
                 <span className="block text-[10px] font-normal text-slate-400 mt-0.5">
@@ -437,11 +440,10 @@ export default function AbaCiclos({ onSalvo }: AbaCiclosProps) {
                     mensal: { ...regras.mensal, modoExecucao: "automatico" }
                   })
                 }
-                className={`p-3 rounded-xl border text-xs font-bold transition-all text-left ${
-                  regras.mensal.modoExecucao === "automatico"
+                className={`p-3 rounded-xl border text-xs font-bold transition-all text-left ${regras.mensal.modoExecucao === "automatico"
                     ? "bg-indigo-500/10 border-indigo-500 text-indigo-600 dark:text-indigo-400"
                     : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
-                }`}
+                  }`}
               >
                 ⚡ 100% Automático
                 <span className="block text-[10px] font-normal text-slate-400 mt-0.5">
@@ -457,11 +459,10 @@ export default function AbaCiclos({ onSalvo }: AbaCiclosProps) {
                     mensal: { ...regras.mensal, modoExecucao: "manual_com_alerta" }
                   })
                 }
-                className={`p-3 rounded-xl border text-xs font-bold transition-all text-left ${
-                  regras.mensal.modoExecucao === "manual_com_alerta"
+                className={`p-3 rounded-xl border text-xs font-bold transition-all text-left ${regras.mensal.modoExecucao === "manual_com_alerta"
                     ? "bg-indigo-500/10 border-indigo-500 text-indigo-600 dark:text-indigo-400"
                     : "bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400"
-                }`}
+                  }`}
               >
                 🔔 Alerta no Painel
                 <span className="block text-[10px] font-normal text-slate-400 mt-0.5">

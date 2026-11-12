@@ -267,6 +267,49 @@ export default function StudentModal({
                       </div>
                     )
                   )}
+
+                  {/* Certificados Oficiais PFT */}
+                  {formData.certificadosPFT && formData.certificadosPFT.length > 0 && (
+                    <div className="bg-emerald-500/5 dark:bg-emerald-950/15 p-5 rounded-3xl border border-emerald-500/20 shadow-sm mt-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <h3 className="text-xs font-black text-emerald-700 dark:text-emerald-400 uppercase tracking-widest flex items-center gap-2">
+                          <span>🎓</span> Certificados Oficiais PFT ({formData.certificadosPFT.length})
+                        </h3>
+                        <span className="text-[10px] font-bold text-slate-400">CESAR School</span>
+                      </div>
+                      <div className="space-y-2">
+                        {formData.certificadosPFT.map((cert) => (
+                          <div
+                            key={cert.id}
+                            className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-white dark:bg-slate-900 border border-emerald-500/10 text-xs gap-2"
+                          >
+                            <div className="min-w-0 flex-1 mr-3">
+                              <p className="font-bold text-slate-800 dark:text-slate-100 truncate">{cert.modulo}</p>
+                              <p className="text-[10px] text-slate-400 truncate">{cert.titulo}</p>
+                            </div>
+                            <div className="flex gap-2 shrink-0">
+                              <a
+                                href={cert.urlPreview}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2.5 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[11px]"
+                              >
+                                Visualizar
+                              </a>
+                              <a
+                                href={cert.urlDownload}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="px-2.5 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px]"
+                              >
+                                Baixar
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </motion.div>
               ) : (
                 /* MODO EDIÇÃO */

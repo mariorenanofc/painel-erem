@@ -1,4 +1,4 @@
-﻿import { ChangeEvent } from "react";
+import { ChangeEvent } from "react";
 import { Badge, DadosParaBadges } from "../utils/badges";
 
 // ==========================================
@@ -16,6 +16,7 @@ export interface Aluno {
   turmaTrilha?: string;
   statusTrilha?: string;
   whatsapp?: boolean;
+  certificadosPFT?: CertificadoPFT[];
 }
 
 // ==========================================
@@ -26,6 +27,7 @@ export interface DadosAluno {
   nome: string;
   turma: string;
   saldoCarteira: number;
+  certificadosPFT?: CertificadoPFT[];
 }
 
 export interface Atividade {
@@ -454,6 +456,8 @@ export interface PortalHeaderProps {
   onAbrirFrequencia: () => void;
   onAbrirCalendario?: () => void;
   onAbrirPerfil: () => void;
+  onAbrirCertificados?: () => void;
+  totalCertificados?: number;
   onLogout: () => void;
 }
 
@@ -590,4 +594,16 @@ export interface CicloHistoricoItem {
   status: "FECHADO" | "ESTORNADO";
   estornadoEm?: number;
   estornadoPor?: string;
+}
+// ==========================================
+// 9. CERTIFICADOS OFICIAIS DO PFT
+// ==========================================
+export interface CertificadoPFT {
+  id: string; // ID do arquivo no Google Drive
+  modulo: string; // Nome oficial do módulo (ex: "CSS Essencial Cores, Tipografia e Layout Básico")
+  titulo: string; // Título legível do certificado
+  arquivoNome: string;
+  urlPreview: string; // Link para visualizar direto no Google Drive
+  urlDownload: string; // Link direto para download do PDF
+  dataImportacao?: string;
 }

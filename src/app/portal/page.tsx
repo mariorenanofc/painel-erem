@@ -17,6 +17,7 @@ import {
   FrequenciaHistorico,
   DadosFrequencia,
   Notificacao,
+  CertificadoPFT,
 } from "@/src/types";
 
 import { calcularBadges, Badge } from "@/src/utils/badges";
@@ -29,6 +30,7 @@ import NovaConquistaModal from "@/src/components/NovaConquistaModal";
 import NovidadesModal from "@/src/components/NovidadesModal";
 import ResponderMissaoModal from "@/src/components/ResponderMissaoModal";
 import CalendarioOficial from "@/src/components/CalendarioOficial";
+import CertificadosModal from "@/src/components/CertificadosModal";
 import { PerfilAtualizado } from "@/src/components/LojaRifaModal";
 import LojaRifaModal from "@/src/components/LojaRifaModal";
 import MeusBilhetesModal from "@/src/components/MeusBilhetesModal";
@@ -103,6 +105,8 @@ export default function PortalDashboard() {
   const [saldoCarteira, setSaldoCarteira] = useState(0); // 🔥 Novo estado
   const [modalBilhetesAberto, setModalBilhetesAberto] = useState(false);
   const [modalRegulamentoAberto, setModalRegulamentoAberto] = useState(false);
+  const [certificados, setCertificados] = useState<CertificadoPFT[]>([]);
+  const [modalCertificadosAberto, setModalCertificadosAberto] = useState(false);
 
   const [abaAtividade, setAbaAtividade] = useState<
     "Pendentes" | "Atrasadas" | "Devolvidas" | "Concluidas"
@@ -193,6 +197,9 @@ export default function PortalDashboard() {
         }
         // 🔥 ATUALIZE O SALDO AQUI
         setSaldoCarteira(data.saldoCarteira || 0);
+        if (data.certificadosPFT && Array.isArray(data.certificadosPFT)) {
+          setCertificados(data.certificadosPFT);
+        }
       }
     } catch (e: unknown) {
       console.error("Erro ao carregar o portal:", (e as Error).message);
@@ -840,6 +847,8 @@ export default function PortalDashboard() {
           onAbrirFrequencia={abrirMinhaFrequencia}
           onAbrirCalendario={abrirMeuCalendario}
           onAbrirPerfil={abrirPerfil}
+          onAbrirCertificados={() => setModalCertificadosAberto(true)}
+          totalCertificados={certificados.length}
           onLogout={fazerLogout}
         />
       </div>
@@ -983,7 +992,23 @@ export default function PortalDashboard() {
                 </motion.button>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <motion.button
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => setModalCertificadosAberto(true)}
+                  className={`cursor-pointer flex items-center justify-center gap-2 font-bold py-3.5 px-3 rounded-xl border transition-all ${
+                    certificados.length > 0
+                      ? "bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-500 text-white shadow-lg shadow-emerald-600/20 border-emerald-400/30 hover:brightness-110"
+                      : "bg-slate-100 dark:bg-slate-950/45 hover:bg-slate-200 dark:hover:bg-slate-900/45 text-slate-800 dark:text-slate-300 border-slate-200 dark:border-white/5"
+                  }`}
+                >
+                  <span className="text-base">🎓</span>
+                  <span className="text-xs uppercase tracking-wider">
+                    Certificados {certificados.length > 0 && `(${certificados.length})`}
+                  </span>
+                </motion.button>
+
                 <motion.button
                   whileHover={{ scale: 1.02 }}
                   whileTap={{ scale: 0.98 }}
@@ -1835,6 +1860,14 @@ export default function PortalDashboard() {
         </div>
       </div>
 
+      {/* MODAL DE CERTIFICADOS OFICIAIS DO PFT */}
+      <CertificadosModal
+        isOpen={modalCertificadosAberto}
+        onClose={() => setModalCertificadosAberto(false)}
+        certificados={certificados}
+        nomeAluno={aluno ? aluno.nome : "Estudante"}
+      />
+
       {/* OUTROS MODAIS DA PÁGINA */}
       {perfilAberto && (
         <PerfilModal
@@ -1848,6 +1881,7 @@ export default function PortalDashboard() {
           avatarAtual={avatarSistema}
           totalCurtidas={curtidasSistema}
           onSalvarAvatar={salvarNovoAvatar}
+          certificados={certificados}
           dadosBadges={{
             atividades: atividades,
             xpTotal: xpTotalSistema,

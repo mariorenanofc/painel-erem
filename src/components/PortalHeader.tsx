@@ -15,6 +15,8 @@ export default function PortalHeader({
   onAbrirFrequencia,
   onAbrirCalendario,
   onAbrirPerfil,
+  onAbrirCertificados,
+  totalCertificados = 0,
   onLogout,
 }: PortalHeaderProps) {
   const [menuAberto, setMenuAberto] = useState(false);
@@ -265,6 +267,24 @@ export default function PortalHeader({
                     >
                       <span>🏆</span> Ranking
                     </button>
+                    {onAbrirCertificados && (
+                      <button
+                        onClick={() => {
+                          onAbrirCertificados();
+                          setMenuAberto(false);
+                        }}
+                        className="cursor-pointer w-full text-left px-3 py-2.5 text-xs text-emerald-600 dark:text-emerald-400 font-black uppercase tracking-wider hover:bg-emerald-50 dark:hover:bg-emerald-500/10 hover:text-emerald-700 dark:hover:text-emerald-300 rounded-xl transition-colors flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <span>📜</span> Certificados PFT
+                        </div>
+                        {totalCertificados > 0 && (
+                          <span className="bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full font-black font-mono">
+                            {totalCertificados}
+                          </span>
+                        )}
+                      </button>
+                    )}
                     {onAbrirCalendario && (
                       <button
                         onClick={() => {

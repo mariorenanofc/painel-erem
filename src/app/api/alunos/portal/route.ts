@@ -4,6 +4,7 @@ import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { getCachedPortal, setCachedPortal, loadFirestoreConfiguracoes, getCachedModulos, setCachedModulos, getCachedAtividades, setCachedAtividades, getCachedClassDates, setCachedClassDates, loadFirestoreCacheAtividades } from "@/src/lib/cache";
 import { calcularGamificacao } from "@/src/lib/gamificacao";
+import { CertificadoPFT } from "@/src/types";
 
 interface AtividadePortal {
   id: string;
@@ -77,6 +78,7 @@ interface PortalData {
     nomeProximo: string;
     isMaximo: boolean;
   };
+  certificadosPFT?: CertificadoPFT[];
 }
 
 
@@ -226,6 +228,7 @@ export async function GET(request: Request) {
 
     dadosRetorno.notificacoes = pvData.notificacoes as Array<{ id: string, mensagem: string, xp: number, tempo: number, tipo: string }>;
     dadosRetorno.extratoPix = pvData.extratoPix;
+    dadosRetorno.certificadosPFT = (Array.isArray(portalView.certificadosPFT) ? portalView.certificadosPFT : (Array.isArray(aluno.certificadosPFT) ? aluno.certificadosPFT : [])) as CertificadoPFT[];
 
     dadosRetorno.extratoPix.forEach((p: {tipo: string, xp: number}) => {
       if (p.tipo === "RECEBEU") dadosRetorno.stats.xpRecebido += p.xp;

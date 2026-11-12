@@ -168,3 +168,21 @@ Durante a auditoria de telemetria (`monitor_leituras`) e testes locais do Painel
 5. **Blindagem do Monitor de Telemetria (`firestoreMonkeyPatched`):**
    - **Problema:** No `npm run dev`, recompilações do Next.js empilhavam múltiplos wrappers sobre `Query.prototype.get` e `DocumentReference.prototype.get` em [`src/lib/firebaseAdmin.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/lib/firebaseAdmin.ts), multiplicando os logs e contadores em `monitor_leituras`.
    - **Solução:** Adicionada trava `globalForFirebase.firestoreMonkeyPatched` garantindo instrumentação única.
+
+
+---
+
+# Fase 6: Integração de Certificações Oficiais do PFT (Novembro/2026)
+
+Mapeamento e disponibilização dos certificados oficiais emitidos pelo **Programa Florescendo Talentos (PFT / CESAR School / EREM Barão de Exu)** para visualização e download direto no Portal do Aluno:
+
+1. **Extração e Mapeamento de Certificados:**
+   - Extraídos 74 certificados oficiais em PDF distribuídos entre 6 subpastas temáticas no Google Drive (CSS Essencial, HTML 01, HTML Avançado, Javascript 01, Javascript 02, Lógica Matemática).
+   - Cruzamento automatizado com o cadastro de estudantes do EREM Barão de Exu, contemplando 36 alunos com 1 a 3 certificados cada.
+2. **Arquitetura de Dados Zero Custo:**
+   - Injeção em lote (`batch.commit`) dos arrays `certificadosPFT` nos documentos mestre `alunos/{matricula}` e na visão consolidada CQRS `portal_views/{matricula}`.
+   - Retorno embutido na rota `/api/alunos/portal` sem disparar consultas adicionais no Firestore (**0 leituras adicionais**).
+3. **Interface do Usuário e Experiência do Estudante:**
+   - Criação do componente `src/components/CertificadosModal.tsx` com design moderno, identificação temática por tecnologia (CSS 🎨, HTML 🌐, JS ⚡, Lógica 🧠), visualização de PDF (`urlPreview`) e download direto (`urlDownload`).
+   - Adição de botão de acesso rápido no cockpit do portal e atalho direto no menu de perfil do `PortalHeader.tsx`.
+   - Adição da aba "Certificados" no `PerfilModal.tsx` e visualização de certificados na ficha do aluno do tutor (`StudentModal.tsx`).

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { PerfilAluno } from "@/src/types";
+import { PerfilAluno, CertificadoPFT } from "@/src/types";
 import { DadosParaBadges } from "@/src/utils/badges";
 import BadgesGallery from "./BadgesGallery";
 import MemorialTab from "./MemorialTab";
@@ -19,6 +19,7 @@ interface PerfilModalProps {
   totalCurtidas: number;
   onSalvarAvatar: (emoji: string) => void;
   ofensivaDias: number;
+  certificados?: CertificadoPFT[];
 }
 
 const GALERIA_AVATARES = [
@@ -47,8 +48,9 @@ export default function PerfilModal({
   totalCurtidas,
   onSalvarAvatar,
   ofensivaDias,
+  certificados = [],
 }: PerfilModalProps) {
-  const [abaAtiva, setAbaAtiva] = useState<"dados" | "avatar" | "badges" | "aparencia" | "memorial">("dados");
+  const [abaAtiva, setAbaAtiva] = useState<"dados" | "certificados" | "avatar" | "badges" | "aparencia" | "memorial">("dados");
   const [selectedBg, setSelectedBg] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("interactiveBg") || "constellation";
@@ -117,6 +119,7 @@ export default function PerfilModal({
         <div className="flex border-b border-slate-200 dark:border-slate-800 bg-slate-100/60 dark:bg-slate-950/40 shrink-0 transition-colors duration-300 font-sans overflow-x-auto">
           {[
             { id: "dados", label: "👤 Meus Dados" },
+            { id: "certificados", label: `📜 Certificados (${certificados.length})` },
             { id: "avatar", label: "🎭 Avatar" },
             { id: "badges", label: "🏆 Conquistas" },
             { id: "memorial", label: "🎓 Memorial & Formatura" },
@@ -124,7 +127,7 @@ export default function PerfilModal({
           ].map((tab) => (
             <button
               key={tab.id}
-              onClick={() => setAbaAtiva(tab.id as "dados" | "avatar" | "badges" | "aparencia" | "memorial")}
+              onClick={() => setAbaAtiva(tab.id as "dados" | "certificados" | "avatar" | "badges" | "aparencia" | "memorial")}
               className={`cursor-pointer whitespace-nowrap px-4 py-3.5 text-xs md:text-sm font-bold border-b-2 transition-all duration-200 ${
                 abaAtiva === tab.id
                   ? "border-brand-primary text-brand-primary dark:text-brand-secondary bg-white/70 dark:bg-slate-900/60"
@@ -354,6 +357,74 @@ export default function PerfilModal({
                       </motion.button>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {/* TAB: CERTIFICADOS OFICIAIS DO PFT */}
+              {abaAtiva === "certificados" && (
+                <div className="animate-in fade-in duration-300 space-y-4">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-slate-200 dark:border-white/5">
+                    <div>
+                      <h3 className="font-display font-bold text-slate-800 dark:text-slate-100 text-lg">
+                        Certificações Oficiais PFT
+                      </h3>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
+                        Emitidos pelo Programa Florescendo Talentos em parceria com a CESAR School
+                      </p>
+                    </div>
+                    <span className="self-start sm:self-auto px-3 py-1 rounded-full text-xs font-black bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                      {certificados.length} {certificados.length === 1 ? "Certificado" : "Certificados"}
+                    </span>
+                  </div>
+
+                  {certificados.length === 0 ? (
+                    <div className="text-center py-10 px-4">
+                      <div className="text-4xl mb-3">📜</div>
+                      <p className="font-bold text-slate-700 dark:text-slate-200 text-sm">
+                        Nenhum certificado liberado no momento.
+                      </p>
+                      <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                        Conclua os módulos e missões do curso para garantir sua certificação oficial.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-1">
+                      {certificados.map((cert) => (
+                        <div
+                          key={cert.id}
+                          className="p-4 rounded-2xl bg-white dark:bg-slate-950/40 border border-slate-200/80 dark:border-white/5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
+                        >
+                          <div>
+                            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-900/30">
+                              Módulo Concluído
+                            </span>
+                            <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 mt-2 line-clamp-2">
+                              {cert.modulo}
+                            </h4>
+                          </div>
+
+                          <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex gap-2">
+                            <a
+                              href={cert.urlPreview}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="cursor-pointer flex-1 text-center py-1.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-sm"
+                            >
+                              👁️ Visualizar
+                            </a>
+                            <a
+                              href={cert.urlDownload}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="cursor-pointer flex-1 text-center py-1.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold transition-all shadow-sm"
+                            >
+                              ⬇️ Baixar
+                            </a>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )}
 

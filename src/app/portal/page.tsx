@@ -154,7 +154,7 @@ export default function PortalDashboard() {
   const [jogosAberto, setJogosAberto] = useState(false);
   const [arenaAberta, setArenaAberta] = useState(false);
 
-  const [versaoAtualizacao, setVersaoAtualizacao] = useState("v2.2.0");
+  const [versaoAtualizacao, setVersaoAtualizacao] = useState("v2.2.1");
   const [markdownAtualizacao, setMarkdownAtualizacao] = useState("");
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
   const [cardNotificacaoNovidades, setCardNotificacaoNovidades] = useState(false);

@@ -200,3 +200,17 @@ Mapeamento e disponibilização dos certificados oficiais emitidos pelo **Progra
      - Injeção de `autoCapitalize="none"`, `autoCorrect="off"`, `autoComplete="off"` e `spellCheck={false}` no `<textarea>`.
      - Interceptação inteligente no motor (`handleInput` e `handleVirtualKeyPress`): se o código requer minúsculo e o teclado móvel enviou maiúsculo, aceita como acerto sem penalização.
      - Criação da **Barra Rápida de Símbolos Mobile (*Mobile Dev Accessory Bar*)**: botões de acesso instantâneo a `{`, `}`, `(`, `)`, `[`, `]`, `;`, `=`, `<`, `>`, `"`, `'`, `Tab`, `Enter` com destaque animado (*pulse*) no próximo caractere esperado, sem fechar o teclado virtual do celular.
+
+
+---
+
+# Fase 8: Aniversariantes no Calendário Escolar e Resiliência do Modal de Novidades (Novembro/2026)
+
+1. **Integração de Aniversariantes Escolares no Calendário Oficial (`src/components/CalendarioOficial.tsx`):**
+   - **Objetivo:** Permitir que todos os estudantes visualizem os aniversariantes do dia e do mês integrados ao cronograma de aulas e prazos de missões.
+   - **Privacidade & LGPD:** Exibição exclusiva do **Primeiro Nome + Último Sobrenome** (com suporte a agnomes como Filho, Neto, Junior), **sem expor a turma**, abrangendo os 362 alunos cadastrados.
+   - **Blindagem de Cota Firestore:** Rota `/api/alunos/aniversarios` com singleton pré-processado (`metadata/aniversarios_alunos`) e cache L1 em memória de 24h (`src/lib/cache.ts`), consumindo **0 leituras por acesso** e no máximo **1 leitura** no cold start da instância.
+   - **Interface & Filtros:** Adicionado filtro rápido `🎂 Aniversários`, pílulas coloridas no grid do mês, e cards festivos detalhados no dia selecionado.
+2. **Resiliência do Parser de Novidades (`NovidadesModal.tsx` & `LancamentoNovidadesModal.tsx`):**
+   - **Problema:** Textos antigos ou com parágrafos introdutórios longos gravados no Firestore geravam vazamento de markdown (`*upgrade*`, `**TrilhaTech**`) e sobrecarregavam a primeira tela do modal com títulos desproporcionais.
+   - **Solução:** Parser aprimorado com divisão inteligente por seções (`---` e `###`), higienização estrita de formatações markdown em títulos (`limparTextoMarkdown`) e proteção contra quebra de layout quando a linha inicial for um parágrafo longo, garantindo apresentação fluida em slides limpos.

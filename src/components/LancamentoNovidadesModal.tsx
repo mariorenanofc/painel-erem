@@ -10,10 +10,10 @@ interface LancamentoNovidadesModalProps {
   onClose: () => void;
 }
 
-export const TEMPLATE_HOJE_MARKDOWN = `### 🏛️ Santuário dos Veteranos & Stories 9:16
-📸 **Gerador de Cards para Story (9:16):** Exporte cards em alta definição com QR Code dinâmico para Instagram e WhatsApp nos temas *Ouro Cósmico*, *Cyber Neon* e *Aurora Deep*.
-🏛️ **Santuário Público das Lendas:** Conheça os formandos oficiais da Trilha Tech com memorial, projetos concluídos, stack e certificações aprovadas pelo tutor.
-🌗 **Contraste Perfeito:** Interface 100% calibrada para Modo Escuro e Modo Claro em todos os cards, estatísticas e badges.
+export const TEMPLATE_HOJE_MARKDOWN = `### 🎂 Aniversariantes no Calendário Escolar
+🎂 **Mural de Aniversários:** Acompanhe os aniversários de todos os colegas integrados ao calendário de aulas e prazos de missões.
+🔒 **Privacidade Respeitada:** Exibição elegante com Primeiro Nome e Último Sobrenome, sem expor dados sensíveis ou turmas.
+⚡ **Filtro Rápido:** Novo botão de filtro '🎂 Aniversários' para navegar diretamente pelas datas comemorativas do mês.
 
 ---
 
@@ -24,25 +24,25 @@ export const TEMPLATE_HOJE_MARKDOWN = `### 🏛️ Santuário dos Veteranos & St
 
 ---
 
-### ⚡ Login Nativo em Menos de 40ms
-⚡ **Autenticação Direta no Firestore:** Fim dos travamentos no botão *Autenticando...*. Resposta imediata local sem depender de conexões externas lentas.
-📅 **Normalização Flexível de Datas:** Não importa se você preencheu pelo calendário ou digitou com barras (\`DD/MM/YYYY\`) ou traços (\`YYYY-MM-DD\`), seu login sempre funciona.
-🔍 **Recuperação Rápida de Matrícula:** Esqueceu sua matrícula? Recupere em 1 clique direto no banco de dados com seu nome e data de nascimento.`;
+### 🏛️ Santuário dos Veteranos & Stories 9:16
+📸 **Gerador de Cards para Story (9:16):** Exporte cards em alta definição com QR Code dinâmico para Instagram e WhatsApp nos temas *Ouro Cósmico*, *Cyber Neon* e *Aurora Deep*.
+🏛️ **Santuário Público das Lendas:** Conheça os formandos oficiais da Trilha Tech com memorial, projetos concluídos, stack e certificações aprovadas pelo tutor.
+🌗 **Contraste Perfeito:** Interface 100% calibrada para Modo Escuro e Modo Claro em todos os cards, estatísticas e badges.`;
 
 export default function LancamentoNovidadesModal({ onClose }: LancamentoNovidadesModalProps) {
   const { toast } = useToast();
   const [rascunho, setRascunho] = useState(
-    "Hoje implementamos: 1) Hall da Fama oficial com gerador de cards de story 9:16 (3 temas cósmicos, QR code e download HD) e correção de contraste dark/light; 2) Blindagem mobile completa no Coding Practice (anti-shift inteligente e barra de símbolos rápidos); 3) Autenticação nativa via Firestore respondendo em <40ms com normalizador de data de nascimento."
+    "Hoje implementamos: 1) Integração de aniversariantes no Calendário Escolar (primeiro nome e último sobrenome de todos os alunos, sem turma); 2) Blindagem mobile anti-shift e atalhos de código no Coding Practice; 3) Cards para Stories 9:16 e contraste dark/light no Hall da Fama."
   );
-  const [versao, setVersao] = useState("v2.2.0");
+  const [versao, setVersao] = useState("v2.2.1");
   const [markdownGerado, setMarkdownGerado] = useState(TEMPLATE_HOJE_MARKDOWN);
   const [isGerando, setIsGerando] = useState(false);
   const [isSalvando, setIsSalvando] = useState(false);
 
   const carregarTemplateHoje = () => {
-    setVersao("v2.2.0");
+    setVersao("v2.2.1");
     setMarkdownGerado(TEMPLATE_HOJE_MARKDOWN);
-    toast("Novidades da versão v2.2.0 carregadas!", "info", "Atualizado");
+    toast("Novidades da versão v2.2.1 carregadas!", "info", "Atualizado");
   };
 
   const handleGerarIA = async () => {

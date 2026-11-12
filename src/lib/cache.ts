@@ -801,3 +801,27 @@ export async function loadRegrasCiclos(dbAdmin: Firestore): Promise<RegrasCiclos
 export function invalidateRegrasCiclosCache() {
   regrasCiclosRamCache = null;
 }
+
+// === CACHE L1 PARA ANIVERSARIANTES ESCOLARES (CALENDÁRIO OFICIAL) ===
+export interface AniversarianteItem {
+  dia: number;
+  mes: number;
+  nomeExibicao: string;
+}
+
+let aniversariosRamCache: { data: AniversarianteItem[]; timestamp: number } | null = null;
+
+export function getCachedAniversarios(): AniversarianteItem[] | null {
+  if (aniversariosRamCache && Date.now() - aniversariosRamCache.timestamp < 86400000) { // 24 horas
+    return aniversariosRamCache.data;
+  }
+  return null;
+}
+
+export function setCachedAniversarios(data: AniversarianteItem[]) {
+  aniversariosRamCache = { data, timestamp: Date.now() };
+}
+
+export function invalidateAniversariosCache() {
+  aniversariosRamCache = null;
+}

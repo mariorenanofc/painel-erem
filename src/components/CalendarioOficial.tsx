@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Atividade } from "@/src/types";
 import { getFeriadosAno } from "@/src/lib/feriadosUtils";
@@ -47,12 +47,18 @@ export interface CalendarioEvento {
   id: string;
   titulo: string;
   data: string; // "YYYY-MM-DD"
-  tipo: "aula" | "prazo" | "ciclo_semanal" | "ciclo_mensal" | "feriado" | "recesso";
+  tipo: "aula" | "prazo" | "ciclo_semanal" | "ciclo_mensal" | "feriado" | "recesso" | "aniversario";
   descricao?: string;
   xp?: number;
   badge?: string;
   modulo?: string;
   statusEntrega?: string;
+}
+
+interface AniversarianteDados {
+  dia: number;
+  mes: number;
+  nomeExibicao: string;
 }
 
 interface CalendarioOficialProps {
@@ -78,8 +84,28 @@ export default function CalendarioOficial({
 
   const [dataVisualizada, setDataVisualizada] = useState(new Date());
   const [visao, setVisao] = useState<"mes" | "lista">("mes");
-  const [filtroTipo, setFiltroTipo] = useState<"todos" | "prazos" | "aulas" | "ciclos" | "feriados">("todos");
+  const [filtroTipo, setFiltroTipo] = useState<"todos" | "prazos" | "aulas" | "ciclos" | "feriados" | "aniversarios">("todos");
   const [diaSelecionado, setDiaSelecionado] = useState<string | null>(dataHojeIso);
+  const [aniversariantes, setAniversariantes] = useState<AniversarianteDados[]>([]);
+
+  // Busca lista de aniversariantes da escola (cache L1 / singleton no Firestore sem sobrecarga)
+  useEffect(() => {
+    if (!isOpen) return;
+    let isMounted = true;
+    fetch("/api/alunos/aniversarios")
+      .then((res) => res.json())
+      .then((data: { status: string; aniversariantes?: AniversarianteDados[] }) => {
+        if (isMounted && data.status === "sucesso" && Array.isArray(data.aniversariantes)) {
+          setAniversariantes(data.aniversariantes);
+        }
+      })
+      .catch((err: unknown) => {
+        console.warn("Erro ao buscar aniversariantes para o calendário:", err);
+      });
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen]);
 
   const ano = dataVisualizada.getFullYear();
   const mes = dataVisualizada.getMonth(); // 0 a 11
@@ -95,7 +121,7 @@ export default function CalendarioOficial({
     }
   };
 
-  // Mapear eventos a partir das atividades, aulas, ciclos e feriados
+  // Mapear eventos a partir das atividades, aulas, ciclos, feriados e aniversários
   const eventosMap = useMemo(() => {
     const map: Record<string, CalendarioEvento[]> = {};
 
@@ -187,8 +213,23 @@ export default function CalendarioOficial({
       badge: "🏆 Fechamento Mensal"
     });
 
+    // 6. Aniversários dos Estudantes da Escola (Primeiro Nome + Último Sobrenome, sem turma)
+    aniversariantes
+      .filter((a) => a.mes === mes + 1)
+      .forEach((aniv, idx) => {
+        const dataIsoAniv = `${ano}-${String(aniv.mes).padStart(2, "0")}-${String(aniv.dia).padStart(2, "0")}`;
+        adicionarEvento(dataIsoAniv, {
+          id: `aniv-${idx}-${dataIsoAniv}`,
+          titulo: `🎂 Aniversário: ${aniv.nomeExibicao}`,
+          data: dataIsoAniv,
+          tipo: "aniversario",
+          descricao: "Hoje é dia de festa! Deseje os parabéns ao colega! 🎉",
+          badge: "🎂 Aniversário"
+        });
+      });
+
     return map;
-  }, [ano, mes, atividades, diasAulas, diaFechamentoSemanal]);
+  }, [ano, mes, atividades, diasAulas, diaFechamentoSemanal, aniversariantes]);
 
   // Filtragem dos eventos conforme categoria selecionada
   const filtrarEvento = (ev: CalendarioEvento): boolean => {
@@ -197,6 +238,7 @@ export default function CalendarioOficial({
     if (filtroTipo === "aulas") return ev.tipo === "aula";
     if (filtroTipo === "ciclos") return ev.tipo === "ciclo_semanal" || ev.tipo === "ciclo_mensal";
     if (filtroTipo === "feriados") return ev.tipo === "feriado" || ev.tipo === "recesso";
+    if (filtroTipo === "aniversarios") return ev.tipo === "aniversario";
     return true;
   };
 
@@ -352,6 +394,16 @@ export default function CalendarioOficial({
                 >
                   🏖️ Feriados & Recesso
                 </button>
+                <button
+                  onClick={() => setFiltroTipo("aniversarios")}
+                  className={`cursor-pointer shrink-0 px-2.5 py-1 rounded-lg transition-all flex items-center gap-1 ${
+                    filtroTipo === "aniversarios"
+                      ? "bg-pink-600 text-white shadow-sm"
+                      : "bg-pink-50 dark:bg-pink-950/30 text-pink-700 dark:text-pink-400"
+                  }`}
+                >
+                  🎂 Aniversários
+                </button>
               </div>
             </div>
 
@@ -380,7 +432,15 @@ export default function CalendarioOficial({
                         const eventosDoDia = (eventosMap[item.dataIso] || [])
                           .filter(filtrarEvento)
                           .sort((a, b) => {
-                            const peso: Record<string, number> = { prazo: 1, aula: 2, feriado: 3, recesso: 4, ciclo_semanal: 5, ciclo_mensal: 6 };
+                            const peso: Record<string, number> = {
+                              aniversario: 0,
+                              prazo: 1,
+                              aula: 2,
+                              feriado: 3,
+                              recesso: 4,
+                              ciclo_semanal: 5,
+                              ciclo_mensal: 6
+                            };
                             return (peso[a.tipo] || 99) - (peso[b.tipo] || 99);
                           });
                         const isHoje = item.dataIso === dataHojeIso;
@@ -421,7 +481,9 @@ export default function CalendarioOficial({
                                 <div
                                   key={ev.id}
                                   className={`text-[9px] font-bold px-1.5 py-0.5 rounded truncate ${
-                                    ev.tipo === "aula"
+                                    ev.tipo === "aniversario"
+                                      ? "bg-pink-100 dark:bg-pink-950/70 text-pink-700 dark:text-pink-300 font-semibold"
+                                      : ev.tipo === "aula"
                                       ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300"
                                       : ev.tipo === "prazo"
                                       ? "bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300"
@@ -471,66 +533,90 @@ export default function CalendarioOficial({
                       </div>
                     ) : (
                       <div className="space-y-3 overflow-y-auto max-h-[500px] custom-scrollbar pr-1">
-                        {eventosDoDiaSelecionado.map((ev) => (
-                          <div
-                            key={ev.id}
-                            className="p-4 bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200/80 dark:border-slate-700/70 space-y-2.5 shadow-sm hover:shadow-md transition-shadow"
-                          >
-                            <div className="flex flex-wrap items-center justify-between gap-2">
-                              <span
-                                className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border ${
-                                  ev.tipo === "aula"
-                                    ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-500/20"
-                                    : ev.tipo === "prazo"
-                                    ? "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-500/20"
-                                    : ev.tipo === "feriado"
-                                    ? "bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-500/20"
-                                    : ev.tipo === "recesso"
-                                    ? "bg-cyan-50 dark:bg-cyan-950/50 text-cyan-800 dark:text-cyan-300 border-cyan-500/20"
-                                    : "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-500/20"
-                                }`}
+                        {eventosDoDiaSelecionado.map((ev) => {
+                          if (ev.tipo === "aniversario") {
+                            return (
+                              <div
+                                key={ev.id}
+                                className="p-4 bg-gradient-to-r from-pink-500/10 via-rose-500/10 to-amber-500/10 dark:from-pink-950/30 dark:via-rose-950/30 dark:to-amber-950/20 rounded-2xl border border-pink-300/60 dark:border-pink-500/30 space-y-2.5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden"
                               >
-                                {ev.badge || ev.tipo}
-                              </span>
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border bg-pink-50 dark:bg-pink-950/60 text-pink-700 dark:text-pink-300 border-pink-500/30 flex items-center gap-1">
+                                    🎂 Aniversariante
+                                  </span>
+                                  <span className="text-base select-none">🎉</span>
+                                </div>
+                                <h5 className="font-bold text-sm sm:text-base text-pink-950 dark:text-pink-100 leading-snug flex items-center gap-1.5">
+                                  <span>🎂</span> {ev.titulo.replace(/^🎂\s*Aniversário:\s*/, "")}
+                                </h5>
+                                <p className="text-xs text-pink-800/80 dark:text-pink-200/80 leading-relaxed bg-white/60 dark:bg-slate-900/60 p-2.5 rounded-xl border border-pink-200/40 dark:border-pink-800/30">
+                                  {ev.descricao}
+                                </p>
+                              </div>
+                            );
+                          }
 
-                              {ev.xp ? (
-                                <span className="font-mono font-black text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/20 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
-                                  +{ev.xp} XP
+                          return (
+                            <div
+                              key={ev.id}
+                              className="p-4 bg-white dark:bg-slate-800/90 rounded-2xl border border-slate-200/80 dark:border-slate-700/70 space-y-2.5 shadow-sm hover:shadow-md transition-shadow"
+                            >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
+                                <span
+                                  className={`text-[10px] font-black uppercase px-2.5 py-1 rounded-lg border ${
+                                    ev.tipo === "aula"
+                                      ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-500/20"
+                                      : ev.tipo === "prazo"
+                                      ? "bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-500/20"
+                                      : ev.tipo === "feriado"
+                                      ? "bg-rose-50 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 border-rose-500/20"
+                                      : ev.tipo === "recesso"
+                                      ? "bg-cyan-50 dark:bg-cyan-950/50 text-cyan-800 dark:text-cyan-300 border-cyan-500/20"
+                                      : "bg-indigo-50 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 border-indigo-500/20"
+                                  }`}
+                                >
+                                  {ev.badge || ev.tipo}
                                 </span>
-                              ) : null}
-                            </div>
 
-                            <h5 className="font-bold text-sm text-slate-800 dark:text-slate-100 leading-snug">
-                              {ev.titulo}
-                            </h5>
+                                {ev.xp ? (
+                                  <span className="font-mono font-black text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-500/20 px-2.5 py-0.5 rounded-md border border-emerald-500/20">
+                                    +{ev.xp} XP
+                                  </span>
+                                ) : null}
+                              </div>
 
-                            <div className="flex flex-wrap items-center gap-2">
-                              {ev.modulo && (
-                                <span className="inline-block text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200/50 dark:border-slate-800">
-                                  {ev.modulo}
-                                </span>
+                              <h5 className="font-bold text-sm text-slate-800 dark:text-slate-100 leading-snug">
+                                {ev.titulo}
+                              </h5>
+
+                              <div className="flex flex-wrap items-center gap-2">
+                                {ev.modulo && (
+                                  <span className="inline-block text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-200/50 dark:border-slate-800">
+                                    {ev.modulo}
+                                  </span>
+                                )}
+
+                                {ev.statusEntrega && (
+                                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
+                                    ev.statusEntrega === "Aprovada"
+                                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
+                                      : ev.statusEntrega === "Devolvida"
+                                      ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
+                                      : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
+                                  }`}>
+                                    Status: {ev.statusEntrega}
+                                  </span>
+                                )}
+                              </div>
+
+                              {ev.descricao && (
+                                <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/60">
+                                  {ev.descricao}
+                                </p>
                               )}
-
-                              {ev.statusEntrega && (
-                                <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
-                                  ev.statusEntrega === "Aprovada"
-                                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
-                                    : ev.statusEntrega === "Devolvida"
-                                    ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20"
-                                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
-                                }`}>
-                                  Status: {ev.statusEntrega}
-                                </span>
-                              )}
                             </div>
-
-                            {ev.descricao && (
-                              <p className="text-xs text-slate-500 dark:text-slate-300 leading-relaxed bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800/60">
-                                {ev.descricao}
-                              </p>
-                            )}
-                          </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     )}
                   </div>
@@ -563,7 +649,9 @@ export default function CalendarioOficial({
                                 <div className="flex items-center gap-1.5">
                                   <span
                                     className={`text-[9px] font-black uppercase px-1.5 py-0.5 rounded ${
-                                      e.tipo === "aula"
+                                      e.tipo === "aniversario"
+                                        ? "bg-pink-100 text-pink-700 dark:bg-pink-950/60 dark:text-pink-300"
+                                        : e.tipo === "aula"
                                         ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300"
                                         : e.tipo === "prazo"
                                         ? "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300"

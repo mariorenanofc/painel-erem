@@ -461,6 +461,31 @@ export interface PortalHeaderProps {
   onLogout: () => void;
 }
 
+export interface PortalCockpitProps {
+  nomeAluno: string;
+  missoesPendentes: number;
+  ofensivaDias: number;
+  checkinRealizado: boolean;
+  nivelSistema: string;
+  xpTotalSistema: number;
+  totalCertificados: number;
+  progressoNivel: {
+    porcentagem: number;
+    faltam: number;
+    nomeProximo: string;
+    isMaximo: boolean;
+  };
+  onFazerCheckin: () => void;
+  onAbrirPix: () => void;
+  onAbrirGabaritos: () => void;
+  onAbrirJogos: () => void;
+  onAbrirArena: () => void;
+  onAbrirRifa: () => void;
+  onAbrirBilhetes: () => void;
+  onAbrirRegulamento: () => void;
+  onAbrirCertificados: () => void;
+}
+
 // ==========================================
 // 5. FECHAMENTO DE CICLO (NOVO)
 // ==========================================

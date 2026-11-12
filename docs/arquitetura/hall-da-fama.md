@@ -24,7 +24,7 @@ Ele serve como o guia definitivo para saber:
 | **Etapa 1** | Persistência Real de Aplausos Diários Autenticados (1/dia) | ✅ Concluído | `src/app/api/hall-da-fama/aplaudir/route.ts` |
 | **Etapa 2** | Aba/Modal "Curadoria do Hall da Fama" no Painel do Tutor | ✅ Concluído | `src/components/CuradoriaHallModal.tsx` & `src/app/trilhatech/page.tsx` |
 | **Etapa 2** | API do Tutor para aprovação, selos de honra e parecer | ✅ Concluído | `src/app/api/tutor/memorial/curadoria/route.ts` |
-| **Etapa 3** | Modal de Certificado Digital Verificável | ⏳ Pendente | `src/components/CertificadoModal.tsx` |
+| **Etapa 3** | Modal de Certificados Oficiais PFT & Verificador | ✅ Concluído | `src/components/CertificadosModal.tsx` |
 | **Etapa 3** | Gerador de Card para Story (Instagram/WhatsApp) | ⏳ Pendente | `src/components/CardCompartilharModal.tsx` |
 
 ---

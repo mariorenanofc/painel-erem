@@ -90,6 +90,25 @@ export default function HallDaFamaPage() {
   const [toast, setToast] = useState<{ mensagem: string; tipo: "sucesso" | "aviso" | "info" } | null>(null);
 
   const [alunoConectado, setAlunoConectado] = useState<DadosSessaoAluno>({ matricula: "", nome: "" });
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setIsDarkMode(document.documentElement.classList.contains("dark"));
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    if (isDarkMode) {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+      setIsDarkMode(false);
+    } else {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+      setIsDarkMode(true);
+    }
+  };
 
   useEffect(() => {
     const sessao = obterDadosAlunoConectado();
@@ -192,9 +211,9 @@ export default function HallDaFamaPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white relative overflow-x-hidden selection:bg-amber-400 selection:text-black">
+    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white relative overflow-x-hidden selection:bg-amber-400 selection:text-black transition-colors duration-300">
       {/* Luzes Nebulares Cósmicas de Fundo */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-gradient-to-b from-amber-500/15 via-purple-600/10 to-transparent blur-[150px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-gradient-to-b from-amber-500/20 via-purple-600/10 to-transparent blur-[150px] rounded-full pointer-events-none opacity-60 dark:opacity-100" />
       <div className="absolute top-1/4 right-0 w-[550px] h-[550px] bg-indigo-600/15 blur-[140px] rounded-full pointer-events-none" />
       <div className="absolute bottom-1/4 left-0 w-[600px] h-[600px] bg-amber-600/10 blur-[130px] rounded-full pointer-events-none" />
 
@@ -220,33 +239,45 @@ export default function HallDaFamaPage() {
       </AnimatePresence>
 
       {/* Navegação Superior */}
-      <nav className="border-b border-white/10 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-40">
+      <nav className="border-b border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl sticky top-0 z-40 transition-colors duration-300 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-3.5 flex items-center justify-between">
           <Link
             href="/portal"
-            className="group px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-amber-400/50 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 hover:shadow-[0_0_15px_rgba(251,191,36,0.25)]"
+            className="group px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200/80 dark:border-white/10 hover:border-amber-400 text-slate-800 dark:text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 hover:shadow-[0_0_15px_rgba(251,191,36,0.25)] shadow-xs"
           >
-            <span className="text-amber-400 group-hover:-translate-x-1 transition-transform">&larr;</span>
+            <span className="text-amber-500 group-hover:-translate-x-1 transition-transform">&larr;</span>
             <span>Voltar ao Portal</span>
           </Link>
 
           <div className="flex items-center gap-3">
+            {/* Alternador de Tema Claro / Escuro */}
+            <button
+              onClick={toggleTheme}
+              className="cursor-pointer p-2 bg-slate-100 dark:bg-slate-900 hover:bg-slate-200 dark:hover:bg-slate-800 border border-slate-200/80 dark:border-white/10 text-slate-700 dark:text-white rounded-xl transition-all flex items-center justify-center w-9 h-9 shadow-sm"
+              aria-label="Alternar tema"
+              title={isDarkMode ? "☀️ Alternar para Modo Claro" : "🌙 Alternar para Modo Escuro"}
+            >
+              <span className="text-base leading-none select-none">
+                {isDarkMode ? "☀️" : "🌙"}
+              </span>
+            </button>
+
             {estaConectado ? (
-              <span className="text-xs font-bold text-amber-300 bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-500/30 hidden sm:flex items-center gap-1.5">
+              <span className="text-xs font-bold text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-500/10 px-3 py-1.5 rounded-lg border border-amber-200 dark:border-amber-500/30 hidden sm:flex items-center gap-1.5 shadow-xs">
                 <span>👤</span>
                 <span className="max-w-[180px] truncate">{alunoConectado.nome || `Matrícula: ${matriculaVisualizador}`}</span>
               </span>
             ) : (
               <Link
                 href="/portal/login"
-                className="text-xs font-bold text-amber-300 bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg border border-white/10 hover:border-amber-400/50 hidden sm:flex items-center gap-1.5 transition-colors"
+                className="text-xs font-bold text-amber-800 dark:text-amber-300 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 px-3 py-1.5 rounded-lg border border-slate-200/80 dark:border-white/10 hover:border-amber-400 hidden sm:flex items-center gap-1.5 transition-colors shadow-xs"
               >
                 <span>🔑</span>
                 <span>Conectar para Aplaudir</span>
               </Link>
             )}
 
-            <div className="px-3 py-1.5 bg-amber-500/10 border border-amber-500/30 rounded-lg text-amber-300 font-bold text-xs flex items-center gap-1.5 shadow-[0_0_15px_rgba(251,191,36,0.15)]">
+            <div className="px-3 py-1.5 bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/30 rounded-lg text-amber-800 dark:text-amber-300 font-bold text-xs flex items-center gap-1.5 shadow-[0_0_15px_rgba(251,191,36,0.15)]">
               <span>🎓</span>
               <span>Dados Oficiais</span>
             </div>
@@ -262,44 +293,44 @@ export default function HallDaFamaPage() {
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-500/20 border border-amber-400/40 rounded-full text-xs font-black uppercase tracking-widest text-amber-300 mb-4 shadow-[0_0_25px_rgba(251,191,36,0.25)]"
+            className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-100 dark:bg-slate-900/90 dark:bg-gradient-to-r dark:from-amber-500/20 dark:via-yellow-500/20 dark:to-amber-500/20 border border-amber-300 dark:border-amber-400/40 rounded-full text-xs font-black uppercase tracking-widest text-amber-900 dark:text-amber-300 mb-4 shadow-sm dark:shadow-[0_0_25px_rgba(251,191,36,0.25)]"
           >
             <span>🎓</span> Conclusão de Curso &bull; Obras &bull; Conquistas
           </motion.div>
 
-          <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-100 via-yellow-300 to-amber-500 uppercase tracking-tight filter drop-shadow-[0_0_30px_rgba(251,191,36,0.35)] leading-tight">
+          <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-700 dark:from-amber-100 dark:via-yellow-300 dark:to-amber-500 uppercase tracking-tight filter drop-shadow-[0_0_30px_rgba(251,191,36,0.35)] leading-tight">
             Hall da Fama
           </h1>
 
-          <p className="text-base md:text-lg text-slate-300 font-medium mt-3 leading-relaxed">
-            As lendas que concluíram com louvor o curso da <strong className="text-amber-300">Trilha Tech</strong>. Conheça suas especialidades, conquistas eternas e projetos que marcaram nossa história.
+          <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 font-medium mt-3 leading-relaxed">
+            As lendas que concluíram com louvor o curso da <strong className="text-amber-700 dark:text-amber-300">Trilha Tech</strong>. Conheça suas especialidades, conquistas eternas e projetos que marcaram nossa história.
           </p>
 
           {/* PLACAR DE HONRA GLOBAL (STATS) */}
           <div className="grid grid-cols-3 gap-3 md:gap-6 mt-8 max-w-2xl mx-auto">
-            <div className="glass-panel p-4 rounded-2xl border border-amber-500/30 bg-gradient-to-b from-amber-500/10 to-transparent">
-              <span className="text-2xl md:text-3xl font-black text-amber-300 block">
+            <div className="bg-white/90 dark:bg-slate-900/60 dark:bg-gradient-to-b dark:from-amber-500/10 dark:to-transparent p-4 rounded-2xl border border-amber-200 dark:border-amber-500/30 shadow-sm dark:shadow-none">
+              <span className="text-2xl md:text-3xl font-black text-amber-600 dark:text-amber-300 block">
                 {baseVeteranos.length}
               </span>
-              <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <span className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Lendas Formadas
               </span>
             </div>
 
-            <div className="glass-panel p-4 rounded-2xl border border-purple-500/30 bg-gradient-to-b from-purple-500/10 to-transparent">
-              <span className="text-2xl md:text-3xl font-black text-purple-300 block">
+            <div className="bg-white/90 dark:bg-slate-900/60 dark:bg-gradient-to-b dark:from-purple-500/10 dark:to-transparent p-4 rounded-2xl border border-purple-200 dark:border-purple-500/30 shadow-sm dark:shadow-none">
+              <span className="text-2xl md:text-3xl font-black text-purple-600 dark:text-purple-300 block">
                 83+
               </span>
-              <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <span className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Projetos Entregues
               </span>
             </div>
 
-            <div className="glass-panel p-4 rounded-2xl border border-emerald-500/30 bg-gradient-to-b from-emerald-500/10 to-transparent">
-              <span className="text-2xl md:text-3xl font-black text-emerald-300 block">
+            <div className="bg-white/90 dark:bg-slate-900/60 dark:bg-gradient-to-b dark:from-emerald-500/10 dark:to-transparent p-4 rounded-2xl border border-emerald-200 dark:border-emerald-500/30 shadow-sm dark:shadow-none">
+              <span className="text-2xl md:text-3xl font-black text-emerald-600 dark:text-emerald-300 block">
                 100%
               </span>
-              <span className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">
+              <span className="text-[10px] md:text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                 Devs Qualificados
               </span>
             </div>
@@ -307,14 +338,14 @@ export default function HallDaFamaPage() {
         </header>
 
         {/* BARRA DE FILTROS & PESQUISA */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10 pb-6 border-b border-white/10">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mb-10 pb-6 border-b border-slate-200/80 dark:border-white/10">
           <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0">
             <button
               onClick={() => setFiltroAba("TODOS")}
               className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                 filtroAba === "TODOS"
                   ? "bg-amber-400 text-slate-950 shadow-[0_0_20px_rgba(251,191,36,0.35)]"
-                  : "bg-white/5 text-slate-300 hover:bg-white/10"
+                  : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5 hover:bg-slate-200 dark:hover:bg-white/10"
               }`}
             >
               🌟 Todas as Lendas
@@ -324,7 +355,7 @@ export default function HallDaFamaPage() {
               className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                 filtroAba === "OURO"
                   ? "bg-amber-400 text-slate-950 shadow-[0_0_20px_rgba(251,191,36,0.35)]"
-                  : "bg-white/5 text-slate-300 hover:bg-white/10"
+                  : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5 hover:bg-slate-200 dark:hover:bg-white/10"
               }`}
             >
               🏆 Destaques de Honra
@@ -334,7 +365,7 @@ export default function HallDaFamaPage() {
               className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer ${
                 filtroAba === "FULLSTACK"
                   ? "bg-amber-400 text-slate-950 shadow-[0_0_20px_rgba(251,191,36,0.35)]"
-                  : "bg-white/5 text-slate-300 hover:bg-white/10"
+                  : "bg-slate-100 dark:bg-white/5 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-white/5 hover:bg-slate-200 dark:hover:bg-white/10"
               }`}
             >
               💻 Especialistas Fullstack
@@ -347,12 +378,12 @@ export default function HallDaFamaPage() {
               value={busca}
               onChange={(e) => setBusca(e.target.value)}
               placeholder="Buscar por nome ou tecnologia..."
-              className="w-full bg-slate-900/90 border border-white/15 focus:border-amber-400 rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors"
+              className="w-full bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-white/15 focus:border-amber-500 rounded-xl px-4 py-2.5 text-xs text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none transition-colors shadow-xs"
             />
             {busca && (
               <button
                 onClick={() => setBusca("")}
-                className="absolute right-3 top-2.5 text-slate-400 hover:text-white text-xs"
+                className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-700 dark:hover:text-white text-xs"
               >
                 ✕
               </button>
@@ -371,14 +402,14 @@ export default function HallDaFamaPage() {
             </p>
           </div>
         ) : veteranosOrdenados.length === 0 ? (
-          <div className="text-center py-24 glass-panel border-white/10 rounded-3xl p-8 max-w-lg mx-auto">
+          <div className="text-center py-24 bg-white dark:bg-slate-900/40 border border-slate-200 dark:border-white/10 rounded-3xl p-8 max-w-lg mx-auto shadow-md dark:shadow-none">
             <span className="text-5xl block mb-3">{baseVeteranos.length === 0 ? "🏛️" : "🔍"}</span>
-            <h3 className="text-xl font-bold text-slate-300">
+            <h3 className="text-xl font-bold text-slate-800 dark:text-slate-300">
               {baseVeteranos.length === 0
                 ? "Santuário em Curadoria pelo Mestre"
                 : "Nenhuma lenda encontrada"}
             </h3>
-            <p className="text-xs text-slate-400 mt-1">
+            <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
               {baseVeteranos.length === 0
                 ? "Os memoriais de formatura estão passando pela revisão oficial do Tutor e serão publicados em breve."
                 : "Tente redefinir a busca ou alternar para a aba \"Todas as Lendas\"."}
@@ -407,7 +438,7 @@ export default function HallDaFamaPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.06 }}
                     onClick={() => setPerfilAberto(vet.matricula)}
-                    className="group cursor-pointer relative glass-panel bg-gradient-to-b from-slate-900/90 via-slate-900/80 to-slate-950 border border-white/10 hover:border-amber-400/60 rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1.5 hover:shadow-[0_0_35px_rgba(251,191,36,0.2)] flex flex-col justify-between overflow-hidden"
+                    className="group cursor-pointer relative bg-white/95 dark:bg-slate-900 dark:bg-gradient-to-b dark:from-slate-900/90 dark:via-slate-900/80 dark:to-slate-950 border border-slate-200/90 dark:border-white/10 hover:border-amber-400/80 dark:hover:border-amber-400/60 rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1.5 shadow-md hover:shadow-xl dark:shadow-none flex flex-col justify-between overflow-hidden"
                   >
                     {/* Efeito Glow Interno */}
                     <div className="absolute top-0 right-0 w-44 h-44 bg-amber-500/5 group-hover:bg-amber-500/15 rounded-full blur-2xl pointer-events-none transition-all" />
@@ -415,11 +446,11 @@ export default function HallDaFamaPage() {
                     <div>
                       {/* Topo do Card: Badge de Turma e Especialidade */}
                       <div className="flex items-center justify-between gap-2 mb-4">
-                        <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500/15 text-amber-300 px-2.5 py-1 rounded-lg border border-amber-500/30 flex items-center gap-1">
+                        <span className="text-[10px] font-black uppercase tracking-wider bg-amber-50 text-amber-800 border-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:border-amber-500/30 px-2.5 py-1 rounded-lg border flex items-center gap-1 shadow-xs">
                           <span>🎓</span> Turma {vet.anoFormacao}
                         </span>
 
-                        <span className="text-[11px] font-bold text-slate-400 flex items-center gap-1">
+                        <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
                           <span>⭐</span> {vet.nivelFinal}
                         </span>
                       </div>
@@ -439,13 +470,13 @@ export default function HallDaFamaPage() {
                         </div>
 
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-display font-black text-base text-white group-hover:text-amber-200 transition-colors line-clamp-1 leading-snug">
+                          <h3 className="font-display font-black text-base text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-200 transition-colors line-clamp-1 leading-snug">
                             {vet.nome}
                           </h3>
-                          <p className="text-xs font-bold text-amber-400/90 truncate mt-0.5">
+                          <p className="text-xs font-bold text-amber-600 dark:text-amber-400/90 truncate mt-0.5">
                             {vet.especialidade || vet.apelido || "Desenvolvedor de Software"}
                           </p>
-                          <span className="text-[10px] text-slate-400 font-medium block mt-0.5">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium block mt-0.5">
                             {vet.projetosConcluidos || 10} projetos validados
                           </span>
                         </div>
@@ -453,9 +484,9 @@ export default function HallDaFamaPage() {
 
                       {/* Frase / Citação da Lenda (Apenas se o aluno salvou sua própria reflexão) */}
                       {Boolean(vet.fraseFormatura && vet.fraseFormatura.trim().length > 0) && (
-                        <div className="p-3 bg-white/5 rounded-2xl border border-white/5 mb-4 relative">
+                        <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200/80 dark:border-white/5 mb-4 relative">
                           <span className="text-amber-400/60 font-serif text-lg leading-none absolute top-1.5 left-2">&ldquo;</span>
-                          <p className="text-xs text-slate-300 italic pl-3 leading-relaxed">
+                          <p className="text-xs text-slate-700 dark:text-slate-300 italic pl-3 leading-relaxed">
                             {vet.fraseFormatura}
                           </p>
                         </div>
@@ -463,11 +494,11 @@ export default function HallDaFamaPage() {
 
                       {/* Palavra do Mestre / Parecer Oficial do Tutor */}
                       {Boolean(vet.parecerTutor && vet.parecerTutor.trim().length > 0) && (
-                        <div className="p-3 bg-amber-500/10 rounded-2xl border border-amber-500/25 mb-4">
-                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-300 flex items-center gap-1 mb-1">
+                        <div className="p-3 bg-amber-50/90 dark:bg-amber-500/10 rounded-2xl border border-amber-300/80 dark:border-amber-500/25 mb-4">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-amber-800 dark:text-amber-300 flex items-center gap-1 mb-1">
                             <span>🛡️</span> Palavra do Mestre
                           </span>
-                          <p className="text-xs text-amber-100/90 leading-relaxed">
+                          <p className="text-xs text-amber-950 dark:text-amber-100/90 leading-relaxed font-medium">
                             {vet.parecerTutor}
                           </p>
                         </div>
@@ -477,14 +508,14 @@ export default function HallDaFamaPage() {
                       {Boolean(vet.projetoDestaque?.titulo && vet.projetoDestaque?.aprovadoPeloTutor) && (
                         <div
                           onClick={(e) => e.stopPropagation()}
-                          className="p-3 bg-slate-950/70 rounded-2xl border border-emerald-500/30 mb-4"
+                          className="p-3 bg-emerald-50/70 dark:bg-slate-950/70 rounded-2xl border border-emerald-300 dark:border-emerald-500/30 mb-4"
                         >
                           <div className="flex items-center justify-between gap-2 mb-1">
-                            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-400 flex items-center gap-1">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
                               <span>🚀</span> Projeto Aprovado
                             </span>
                           </div>
-                          <p className="text-xs font-bold text-white truncate">
+                          <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                             {vet.projetoDestaque?.titulo}
                           </p>
                           <div className="flex items-center gap-2 mt-2">
@@ -493,7 +524,7 @@ export default function HallDaFamaPage() {
                                 href={vet.projetoDestaque.linkDeploy}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/30 transition-colors"
+                                className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 border border-emerald-300 dark:bg-emerald-500/20 dark:hover:bg-emerald-500/30 dark:text-emerald-300 dark:border-emerald-500/30 transition-colors"
                               >
                                 🌐 Ver Projeto
                               </a>
@@ -503,7 +534,7 @@ export default function HallDaFamaPage() {
                                 href={vet.projetoDestaque.linkGithub}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-slate-200 border border-white/10 transition-colors"
+                                className="text-[10px] font-black px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 border border-slate-200 dark:bg-white/10 dark:hover:bg-white/15 dark:text-slate-200 dark:border-white/10 transition-colors"
                               >
                                 💻 Código
                               </a>
@@ -522,7 +553,7 @@ export default function HallDaFamaPage() {
                             {vet.techStack.map((tech, i) => (
                               <span
                                 key={i}
-                                className="text-[10px] font-bold bg-slate-800 text-slate-200 px-2 py-0.5 rounded-md border border-slate-700"
+                                className="text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 px-2 py-0.5 rounded-md border border-slate-200 dark:border-slate-700"
                               >
                                 {tech}
                               </span>
@@ -549,7 +580,7 @@ export default function HallDaFamaPage() {
                                 <span
                                   key={i}
                                   title={badgeInfo.descricao}
-                                  className="text-[10px] font-black bg-gradient-to-r from-amber-500/10 to-yellow-500/10 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-sm"
+                                  className="text-[10px] font-black bg-amber-50 dark:bg-slate-900/80 dark:bg-gradient-to-r dark:from-amber-500/10 dark:to-yellow-500/10 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-500/30 px-2.5 py-1 rounded-lg flex items-center gap-1.5 shadow-xs"
                                 >
                                   <span>{badgeInfo.icone}</span>
                                   <span>{badgeInfo.nome}</span>
@@ -558,7 +589,7 @@ export default function HallDaFamaPage() {
                               {badgesVisiveis.length > 3 && (
                                 <span
                                   title={badgesVisiveis.slice(3).map((b) => `${b.icone} ${b.nome}`).join(", ")}
-                                  className="text-[10px] font-bold bg-white/5 text-slate-400 px-2 py-1 rounded-lg flex items-center"
+                                  className="text-[10px] font-bold bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-transparent px-2 py-1 rounded-lg flex items-center"
                                 >
                                   +{badgesVisiveis.length - 3}
                                 </span>
@@ -570,12 +601,12 @@ export default function HallDaFamaPage() {
                     </div>
 
                     {/* Rodapé do Card: Pontuação & Botão de Aplausos */}
-                    <div className="pt-4 border-t border-white/10 flex items-center justify-between gap-2 mt-2">
+                    <div className="pt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-between gap-2 mt-2">
                       <div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
                           XP da Carreira
                         </span>
-                        <span className="text-base font-black text-amber-300">
+                        <span className="text-base font-black text-amber-600 dark:text-amber-300">
                           {vet.xpFinal.toLocaleString()} XP
                         </span>
                       </div>
@@ -602,33 +633,33 @@ export default function HallDaFamaPage() {
         {/* ========================================================
             SEÇÃO INFORMATIVA: COMO ENTRAR NO HALL DA FAMA
            ======================================================== */}
-        <section className="mt-16 glass-panel bg-gradient-to-r from-amber-500/10 via-purple-950/20 to-slate-900 border border-amber-500/30 rounded-3xl p-6 md:p-10 shadow-2xl">
+        <section className="mt-16 bg-gradient-to-r from-amber-50/90 via-purple-50/50 to-slate-50/90 dark:from-amber-500/10 dark:via-purple-950/20 dark:to-slate-900 border border-amber-300 dark:border-amber-500/30 rounded-3xl p-6 md:p-10 shadow-xl transition-colors duration-300">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-500/20 rounded-full text-xs font-black text-amber-300 mb-2 border border-amber-500/30">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30 rounded-full text-xs font-black mb-2 border">
                 <span>⚡</span> Para os Alunos Atuais
               </div>
-              <h2 className="text-2xl md:text-3xl font-black text-white">
+              <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">
                 Como Gravar Seu Nome no Hall da Fama?
               </h2>
-              <p className="text-sm text-slate-300 mt-2 max-w-2xl leading-relaxed">
+              <p className="text-sm text-slate-600 dark:text-slate-300 mt-2 max-w-2xl leading-relaxed">
                 O Hall da Fama é o destino final de quem conclui a formação da Trilha Tech. Para conquistar sua vaga eterna entre as lendas, cumpra os pilares de formatura:
               </p>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
-                <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                <div className="p-4 bg-white dark:bg-white/5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-xs">
                   <span className="text-xl block mb-1">🎯</span>
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-amber-300">1. Concluir os Módulos</h4>
-                  <p className="text-xs text-slate-400 mt-1">Completar 100% das missões e trilhas do curso.</p>
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-amber-700 dark:text-amber-300">1. Concluir os Módulos</h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Completar 100% das missões e trilhas do curso.</p>
                 </div>
-                <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                <div className="p-4 bg-white dark:bg-white/5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-xs">
                   <span className="text-xl block mb-1">⚡</span>
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-amber-300">2. Nível de Mestre</h4>
-                  <p className="text-xs text-slate-400 mt-1">Alcançar o status lendário e alta frequência nas aulas.</p>
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-amber-700 dark:text-amber-300">2. Nível de Mestre</h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Alcançar o status lendário e alta frequência nas aulas.</p>
                 </div>
-                <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
+                <div className="p-4 bg-white dark:bg-white/5 rounded-2xl border border-slate-200/90 dark:border-white/10 shadow-xs">
                   <span className="text-xl block mb-1">💼</span>
-                  <h4 className="font-bold text-xs uppercase tracking-wider text-amber-300">3. Projeto de Conclusão</h4>
-                  <p className="text-xs text-slate-400 mt-1">Apresentar seu software final e receber o certificado oficial.</p>
+                  <h4 className="font-bold text-xs uppercase tracking-wider text-amber-700 dark:text-amber-300">3. Projeto de Conclusão</h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">Apresentar seu software final e receber o certificado oficial.</p>
                 </div>
               </div>
             </div>
@@ -648,22 +679,22 @@ export default function HallDaFamaPage() {
       {/* Modal Amigável para Visitantes Deslogados */}
       <AnimatePresence>
         {modalLoginAberto && (
-          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-4">
+          <div className="fixed inset-0 bg-slate-900/50 dark:bg-slate-950/80 backdrop-blur-md flex items-center justify-center z-50 p-4 transition-colors">
             <motion.div
               initial={{ scale: 0.9, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
-              className="glass-panel-heavy bg-slate-900 border border-amber-400/40 rounded-3xl p-6 md:p-8 max-w-md w-full text-center shadow-2xl relative"
+              className="bg-white dark:bg-slate-900 border border-amber-300 dark:border-amber-400/40 rounded-3xl p-6 md:p-8 max-w-md w-full text-center shadow-2xl relative text-slate-800 dark:text-white transition-colors"
             >
-              <div className="w-16 h-16 rounded-2xl bg-amber-500/20 border border-amber-400/40 flex items-center justify-center text-3xl mx-auto mb-4">
+              <div className="w-16 h-16 rounded-2xl bg-amber-100 dark:bg-amber-500/20 border border-amber-300 dark:border-amber-400/40 text-amber-800 dark:text-amber-300 flex items-center justify-center text-3xl mx-auto mb-4">
                 👏
               </div>
 
-              <h3 className="text-xl font-black text-white">
+              <h3 className="text-xl font-black text-slate-900 dark:text-white">
                 Deseja Aplaudir Nossas Lendas?
               </h3>
 
-              <p className="text-xs text-slate-300 mt-2 leading-relaxed">
+              <p className="text-xs text-slate-600 dark:text-slate-300 mt-2 leading-relaxed">
                 A visualização do Hall da Fama é <strong className="text-amber-300">100% pública e aberta a todos</strong>! Porém, para computar seu aplauso diário com sua assinatura oficial de aluno, você precisa estar conectado ao portal.
               </p>
 
@@ -678,7 +709,7 @@ export default function HallDaFamaPage() {
                 <button
                   type="button"
                   onClick={() => setModalLoginAberto(false)}
-                  className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-slate-400 hover:text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                  className="w-full py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 dark:bg-white/5 dark:hover:bg-white/10 dark:text-slate-400 dark:hover:text-white font-bold text-xs rounded-xl transition-colors cursor-pointer"
                 >
                   Continuar Apenas Visualizando
                 </button>

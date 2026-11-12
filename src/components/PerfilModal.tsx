@@ -20,6 +20,7 @@ interface PerfilModalProps {
   onSalvarAvatar: (emoji: string) => void;
   ofensivaDias: number;
   certificados?: CertificadoPFT[];
+  onVisualizarCertificado?: (cert: CertificadoPFT) => void;
 }
 
 const GALERIA_AVATARES = [
@@ -49,6 +50,7 @@ export default function PerfilModal({
   onSalvarAvatar,
   ofensivaDias,
   certificados = [],
+  onVisualizarCertificado,
 }: PerfilModalProps) {
   const [abaAtiva, setAbaAtiva] = useState<"dados" | "certificados" | "avatar" | "badges" | "aparencia" | "memorial">("dados");
   const [selectedBg, setSelectedBg] = useState(() => {
@@ -404,14 +406,19 @@ export default function PerfilModal({
                           </div>
 
                           <div className="mt-4 pt-3 border-t border-slate-100 dark:border-white/5 flex gap-2">
-                            <a
-                              href={cert.urlPreview}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (onVisualizarCertificado) {
+                                  onVisualizarCertificado(cert);
+                                } else {
+                                  window.open(cert.urlPreview, "_blank");
+                                }
+                              }}
                               className="cursor-pointer flex-1 text-center py-1.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-sm"
                             >
-                              👁️ Visualizar
-                            </a>
+                              👁️ Visualizar no Portal
+                            </button>
                             <a
                               href={cert.urlDownload}
                               target="_blank"

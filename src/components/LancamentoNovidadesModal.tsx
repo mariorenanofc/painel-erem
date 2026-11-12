@@ -10,13 +10,40 @@ interface LancamentoNovidadesModalProps {
   onClose: () => void;
 }
 
+export const TEMPLATE_HOJE_MARKDOWN = `### 🏛️ Santuário dos Veteranos & Stories 9:16
+📸 **Gerador de Cards para Story (9:16):** Exporte cards em alta definição com QR Code dinâmico para Instagram e WhatsApp nos temas *Ouro Cósmico*, *Cyber Neon* e *Aurora Deep*.
+🏛️ **Santuário Público das Lendas:** Conheça os formandos oficiais da Trilha Tech com memorial, projetos concluídos, stack e certificações aprovadas pelo tutor.
+🌗 **Contraste Perfeito:** Interface 100% calibrada para Modo Escuro e Modo Claro em todos os cards, estatísticas e badges.
+
+---
+
+### 📱 Blindagem Mobile no Coding Practice
+🛡️ **Blindagem Anti-Shift:** O teclado virtual do celular não forçará mais maiúsculas acidentais. Se o código requer letra minúscula e o celular insistir em Shift, o motor aceita de forma transparente sem punir com erro.
+⚡ **Barra Rápida de Símbolos:** Toque direto em teclas essenciais (\`Tab\`, \`{\`, \`}\`, \`(\`, \`)\`, \`;\`, \`=\`, \`<\`, \`>\`, \`"\`, \`'\`, \`↵ Enter\`) com destaque animado no próximo caractere esperado.
+⌨️ **Foco Contínuo:** Os toques nos símbolos não fecham nem desconectam o teclado virtual nativo do seu smartphone.
+
+---
+
+### ⚡ Login Nativo em Menos de 40ms
+⚡ **Autenticação Direta no Firestore:** Fim dos travamentos no botão *Autenticando...*. Resposta imediata local sem depender de conexões externas lentas.
+📅 **Normalização Flexível de Datas:** Não importa se você preencheu pelo calendário ou digitou com barras (\`DD/MM/YYYY\`) ou traços (\`YYYY-MM-DD\`), seu login sempre funciona.
+🔍 **Recuperação Rápida de Matrícula:** Esqueceu sua matrícula? Recupere em 1 clique direto no banco de dados com seu nome e data de nascimento.`;
+
 export default function LancamentoNovidadesModal({ onClose }: LancamentoNovidadesModalProps) {
   const { toast } = useToast();
-  const [rascunho, setRascunho] = useState("");
-  const [versao, setVersao] = useState("");
-  const [markdownGerado, setMarkdownGerado] = useState("");
+  const [rascunho, setRascunho] = useState(
+    "Hoje implementamos: 1) Hall da Fama oficial com gerador de cards de story 9:16 (3 temas cósmicos, QR code e download HD) e correção de contraste dark/light; 2) Blindagem mobile completa no Coding Practice (anti-shift inteligente e barra de símbolos rápidos); 3) Autenticação nativa via Firestore respondendo em <40ms com normalizador de data de nascimento."
+  );
+  const [versao, setVersao] = useState("v2.2.0");
+  const [markdownGerado, setMarkdownGerado] = useState(TEMPLATE_HOJE_MARKDOWN);
   const [isGerando, setIsGerando] = useState(false);
   const [isSalvando, setIsSalvando] = useState(false);
+
+  const carregarTemplateHoje = () => {
+    setVersao("v2.2.0");
+    setMarkdownGerado(TEMPLATE_HOJE_MARKDOWN);
+    toast("Novidades da versão v2.2.0 carregadas!", "info", "Atualizado");
+  };
 
   const handleGerarIA = async () => {
     if (!rascunho.trim()) {
@@ -102,9 +129,18 @@ export default function LancamentoNovidadesModal({ onClose }: LancamentoNovidade
             <div className="w-full md:w-1/2 p-6 border-r border-slate-200 dark:border-slate-800 overflow-y-auto">
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-1">
-                    Versão (Ex: v2.1.0)
-                  </label>
+                  <div className="flex items-center justify-between mb-1">
+                    <label className="block text-sm font-semibold text-slate-700 dark:text-slate-300">
+                      Versão (Ex: v2.1.0)
+                    </label>
+                    <button
+                      type="button"
+                      onClick={carregarTemplateHoje}
+                      className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold cursor-pointer flex items-center gap-1"
+                    >
+                      <span>⚡</span> Carregar Novidades v2.1.0
+                    </button>
+                  </div>
                   <input
                     type="text"
                     value={versao}

@@ -92,6 +92,10 @@ Quando o usuário acionar você com poucos detalhes, identifique o tema pela tab
 ### 4.3. Sincronização Viva da Documentação (`Doc-Sync`)
 * Sempre que uma alteração modificar contratos de banco, regras do Hall da Fama, lógica de cache ou etapas do roadmap, **atualize o respectivo arquivo dentro de [`docs/`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/docs/) na mesma entrega**.
 
+### 4.4. Sincronização Obrigatória das Novidades da Plataforma (`Release-Sync`)
+* **Regra**: Sempre que novas funcionalidades, telas ou correções forem entregues, a IA **DEVE obrigatoriamente** atualizar os slides de novidades em [`src/components/NovidadesModal.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/NovidadesModal.tsx) e o modelo em [`src/components/LancamentoNovidadesModal.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/LancamentoNovidadesModal.tsx).
+* O conteúdo deve ser 100% verídico e descritivo em relação ao que foi codificado (telas reais, badges, recursos entregues), estruturado em telas (*slides*) para que os estudantes vejam o progresso da plataforma sem alucinações.
+
 ---
 
 ## ⚡ 5. Protocolo de Comando Rápido (Acionamento Único)
@@ -101,9 +105,10 @@ Quando o usuário digitar comandos curtos como **"Valide"**, **"Audite"**, **"An
 1. **Inspeção de Escopo**: Verifique `git status` e `git diff` para listar todos os arquivos afetados.
 2. **Varredura de Tipagem (`Zero Any`)**: Confirme que nenhum `any` foi introduzido nos arquivos alterados.
 3. **Auditoria de Arquitetura e Cota**: Confirme que a mudança respeita [`docs/arquitetura/firestore-cache-cqrs.md`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/docs/arquitetura/firestore-cache-cqrs.md), [`docs/arquitetura/hall-da-fama.md`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/docs/arquitetura/hall-da-fama.md) e [`docs/arquitetura/saas-expansao.md`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/docs/arquitetura/saas-expansao.md).
-4. **Compilação Estrita**: Execute `npx tsc --noEmit` e garanta saída com **código 0**.
-5. **Verificação de Limpeza**: Garanta que não restaram arquivos temporários na raiz do projeto.
-6. **Relatório & Deploy**: Apresente o resumo objetivo da validação e, se autorizado pelo usuário, realize `git commit` semântico e `git push origin master`.
+4. **Sincronização de Novidades do Estudante**: Confirme que os textos de novidades em `NovidadesModal.tsx` e `LancamentoNovidadesModal.tsx` descrevem exatamente as melhorias entregues, com a versão atualizada (`versaoAtualizacao`) para disparar o card de notificação aos alunos.
+5. **Compilação Estrita**: Execute `npx tsc --noEmit` e garanta saída com **código 0**.
+6. **Verificação de Limpeza**: Garanta que não restaram arquivos temporários na raiz do projeto.
+7. **Relatório & Deploy**: Apresente o resumo objetivo da validação e, se autorizado pelo usuário, realize `git commit` semântico e `git push origin master`.
 
 ### 🗄️ Dicionário Oficial de Coleções do Firestore
 * `alunos`: Cadastro mestre dos estudantes (ID do doc = matrícula ou ID único, contém `xp`, `turma`, `statusGraduacao`, `memorial`, etc.).
@@ -147,6 +152,10 @@ Quando o usuário digitar comandos curtos como **"Valide"**, **"Audite"**, **"An
 ### 4.3. Sincronização Viva da Documentação (`Doc-Sync`)
 * Sempre que uma alteração modificar contratos de banco, regras do Hall da Fama, lógica de cache ou etapas do roadmap, **atualize o respectivo arquivo dentro de [`docs/`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/docs/) na mesma entrega**.
 
+### 4.4. Sincronização Obrigatória das Novidades da Plataforma (`Release-Sync`)
+* **Regra**: Sempre que novas funcionalidades, telas ou correções forem entregues, a IA **DEVE obrigatoriamente** atualizar os slides de novidades em [`src/components/NovidadesModal.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/NovidadesModal.tsx) e o modelo em [`src/components/LancamentoNovidadesModal.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/LancamentoNovidadesModal.tsx).
+* O conteúdo deve ser 100% verídico e descritivo em relação ao que foi codificado (telas reais, badges, recursos entregues), estruturado em telas (*slides*) para que os estudantes vejam o progresso da plataforma sem alucinações.
+
 ---
 
 ## ⚡ 5. Protocolo de Comando Rápido (Acionamento Único)
@@ -156,7 +165,8 @@ Quando o usuário digitar comandos curtos como **"Valide"**, **"Audite"**, **"An
 1. **Inspeção de Escopo**: Verifique `git status` e `git diff` para listar todos os arquivos afetados.
 2. **Varredura de Tipagem (`Zero Any`)**: Confirme que nenhum `any` foi introduzido nos arquivos alterados.
 3. **Auditoria de Arquitetura e Cota**: Confirme que a mudança respeita [`docs/arquitetura/firestore-cache-cqrs.md`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/docs/arquitetura/firestore-cache-cqrs.md), [`docs/arquitetura/hall-da-fama.md`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/docs/arquitetura/hall-da-fama.md) e [`docs/arquitetura/saas-expansao.md`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/docs/arquitetura/saas-expansao.md).
-4. **Compilação Estrita**: Execute `npx tsc --noEmit` e garanta saída com **código 0**.
-5. **Verificação de Limpeza**: Garanta que não restaram arquivos temporários na raiz do projeto.
-6. **Relatório & Deploy**: Apresente o resumo objetivo da validação e, se autorizado pelo usuário, realize `git commit` semântico e `git push origin master`.
+4. **Sincronização de Novidades do Estudante**: Confirme que os textos de novidades em `NovidadesModal.tsx` e `LancamentoNovidadesModal.tsx` descrevem exatamente as melhorias entregues, com a versão atualizada (`versaoAtualizacao`) para disparar o card de notificação aos alunos.
+5. **Compilação Estrita**: Execute `npx tsc --noEmit` e garanta saída com **código 0**.
+6. **Verificação de Limpeza**: Garanta que não restaram arquivos temporários na raiz do projeto.
+7. **Relatório & Deploy**: Apresente o resumo objetivo da validação e, se autorizado pelo usuário, realize `git commit` semântico e `git push origin master`.
 

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -154,9 +154,10 @@ export default function PortalDashboard() {
   const [jogosAberto, setJogosAberto] = useState(false);
   const [arenaAberta, setArenaAberta] = useState(false);
 
-  const [versaoAtualizacao, setVersaoAtualizacao] = useState("");
+  const [versaoAtualizacao, setVersaoAtualizacao] = useState("v2.2.0");
   const [markdownAtualizacao, setMarkdownAtualizacao] = useState("");
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
+  const [cardNotificacaoNovidades, setCardNotificacaoNovidades] = useState(false);
 
   // ================= EFEITOS =================
   useEffect(() => {
@@ -249,12 +250,12 @@ export default function PortalDashboard() {
     }
   }, [montado, aluno, carregarPortal, router, dadosSalvos]);
 
-  // Efeito exclusivo para a versão do modal (não mistura com o carregarPortal)
+  // Efeito exclusivo para o card de novidades (avisa com card flutuante em vez de abrir direto)
   useEffect(() => {
     if (montado && aluno && versaoAtualizacao) {
       const versaoLida = localStorage.getItem(`novidades_${aluno.matricula}`);
       if (versaoLida !== versaoAtualizacao) {
-        setModalNovidadesAberto(true);
+        setCardNotificacaoNovidades(true);
       }
     }
   }, [montado, aluno, versaoAtualizacao]);
@@ -764,6 +765,68 @@ export default function PortalDashboard() {
           }}
         />
       )}
+
+      {/* ═══ CARD FLUTUANTE DE NOTIFICAÇÃO DE NOVIDADES (CONVITE INTERATIVO) ═══ */}
+      <AnimatePresence>
+        {cardNotificacaoNovidades && !modalNovidadesAberto && (
+          <motion.div
+            initial={{ opacity: 0, y: 40, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 40, scale: 0.92 }}
+            transition={{ type: "spring", damping: 22, stiffness: 300 }}
+            className="fixed bottom-6 right-6 z-50 max-w-sm w-[calc(100vw-3rem)] bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl border border-indigo-500/30 dark:border-indigo-500/40 rounded-3xl p-5 shadow-[0_12px_45px_rgba(99,102,241,0.28)] flex flex-col gap-3 select-none"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-indigo-500 via-purple-600 to-pink-500 flex items-center justify-center text-xl shrink-0 shadow-md shadow-indigo-500/20">
+                  🚀
+                </div>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="font-display font-black text-xs uppercase tracking-wider text-slate-900 dark:text-white">
+                      Nova Atualização!
+                    </h4>
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-500/30">
+                      {versaoAtualizacao.startsWith("v") ? versaoAtualizacao : `v${versaoAtualizacao}`}
+                    </span>
+                  </div>
+                  <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-snug mt-0.5">
+                    Hall da Fama, Coding Practice Mobile e Login Rápido liberados!
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setCardNotificacaoNovidades(false)}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-1 rounded-lg transition-colors cursor-pointer"
+                title="Fechar notificação"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 pt-1">
+              <button
+                onClick={() => {
+                  setCardNotificacaoNovidades(false);
+                  setModalNovidadesAberto(true);
+                }}
+                className="cursor-pointer flex-1 bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 hover:brightness-110 text-white font-black text-xs py-2.5 px-4 rounded-xl shadow-md shadow-indigo-500/25 transition-all flex items-center justify-center gap-1.5 active:scale-95"
+              >
+                <span>✨ Ver Novidades</span>
+                <span>→</span>
+              </button>
+
+              <button
+                onClick={() => setCardNotificacaoNovidades(false)}
+                className="cursor-pointer px-3 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 font-bold text-xs rounded-xl border border-slate-200 dark:border-white/10 transition-colors active:scale-95"
+              >
+                Depois
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {missaoAberta && aluno && (
         <ResponderMissaoModal

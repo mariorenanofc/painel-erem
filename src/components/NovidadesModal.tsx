@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
-import { useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
@@ -12,121 +12,302 @@ interface NovidadesModalProps {
   markdown?: string;
 }
 
-export default function NovidadesModal({ onClose, versao = "2.0.0", markdown = "" }: NovidadesModalProps) {
+interface ItemNovidade {
+  texto: string;
+}
+
+interface SlideNovidade {
+  id: string;
+  icone: string;
+  badge: string;
+  badgeCor: string;
+  titulo: string;
+  subtitulo: string;
+  itens: ItemNovidade[];
+}
+
+// Remove formatação bruta de markdown (como **, *, `, #) de títulos
+function limparTextoMarkdown(str: string): string {
+  return str
+    .replace(/^#+\s*/, "")
+    .replace(/\*\*(.*?)\*\*/g, "$1")
+    .replace(/\*(.*?)\*/g, "$1")
+    .replace(/`(.*?)`/g, "$1")
+    .trim();
+}
+
+// Extrai emoji inicial se houver
+function extrairEmoji(str: string): { emoji: string; texto: string } {
+  const match = str.match(/^([\uD800-\uDBFF][\uDC00-\uDFFF]|[\u2600-\u27BF]|\p{Emoji_Presentation}|\p{Extended_Pictographic})/u);
+  if (match) {
+    const emoji = match[0];
+    const texto = str.slice(emoji.length).trim();
+    return { emoji, texto };
+  }
+  return { emoji: "🚀", texto: str };
+}
+
+export const SLIDES_PADRAO_V2_2: SlideNovidade[] = [
+  {
+    id: "hall-da-fama",
+    icone: "🏛️",
+    badge: "Hall da Fama",
+    badgeCor: "bg-amber-500/15 text-amber-300 border-amber-500/30",
+    titulo: "Santuário dos Veteranos & Stories 9:16",
+    subtitulo: "Celebre os formandos e compartilhe conquistas em alta resolução",
+    itens: [
+      { texto: "📸 **Cards para Story (9:16):** Exporte imagens em alta definição para Instagram e WhatsApp com QR Code dinâmico." },
+      { texto: "🏛️ **Vitrine de Veteranos:** Conheça os formandos oficiais com memorial, stack, projetos e certificações." },
+      { texto: "🌗 **Contraste Perfeito:** Visual 100% calibrado para leitura nítida em modo claro e escuro." }
+    ]
+  },
+  {
+    id: "coding-practice",
+    icone: "📱",
+    badge: "Coding Practice",
+    badgeCor: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
+    titulo: "Blindagem Mobile para Smartphones",
+    subtitulo: "Pratique código no celular sem erros involuntários de digitação",
+    itens: [
+      { texto: "🛡️ **Anti-Shift Inteligente:** O teclado do celular não força mais maiúsculas acidentais em código." },
+      { texto: "⚡ **Barra de Símbolos:** Atalhos rápidos de toque para `Tab`, `{`, `}`, `(`, `)`, `;`, `=`, etc." },
+      { texto: "⌨️ **Sem Perder Foco:** Toque nos símbolos na tela sem que o teclado virtual do celular feche." }
+    ]
+  },
+  {
+    id: "auth-rapida",
+    icone: "⚡",
+    badge: "Acesso & Performance",
+    badgeCor: "bg-indigo-500/15 text-indigo-300 border-indigo-500/30",
+    titulo: "Login Nativo em Menos de 40ms",
+    subtitulo: "Fim definitivo de travamentos na tela de autenticação",
+    itens: [
+      { texto: "🚀 **Acesso Ultrarrápido:** Conexão nativa e direta com o banco de dados sem esperas externas." },
+      { texto: "📅 **Datas Inteligentes:** Aceita qualquer formato de data de nascimento sem travar." },
+      { texto: "🔍 **Recuperar Matrícula:** Localize sua conta instantaneamente em caso de esquecimento." }
+    ]
+  }
+];
+
+export default function NovidadesModal({
+  onClose,
+  versao = "v2.2.0",
+  markdown = ""
+}: NovidadesModalProps) {
+  const [slideAtual, setSlideAtual] = useState(0);
+
+  // Converte markdown inteligente em slides enxutos ou usa os slides padrão
+  const slides: SlideNovidade[] = useMemo(() => {
+    if (!markdown || !markdown.trim()) {
+      return SLIDES_PADRAO_V2_2;
+    }
+
+    // Se o markdown tiver divisões de seções (### ou ---)
+    const blocos = markdown.split(/(?:^|\n)---\n/g).map((b) => b.trim()).filter(Boolean);
+
+    if (blocos.length === 0) {
+      return SLIDES_PADRAO_V2_2;
+    }
+
+    const resultado: SlideNovidade[] = [];
+
+    blocos.forEach((bloco, idx) => {
+      const linhas = bloco.split("\n").map((l) => l.trim()).filter(Boolean);
+      if (linhas.length === 0) return;
+
+      // Procura linha de título (começando com ### ou a primeira linha)
+      const indiceTitulo = linhas.findIndex((l) => l.startsWith("###"));
+      let linhaTitulo = indiceTitulo !== -1 ? linhas[indiceTitulo] : linhas[0];
+      linhaTitulo = linhaTitulo.replace(/^###\s*/, "").trim();
+
+      const { emoji, texto: tituloPuro } = extrairEmoji(limparTextoMarkdown(linhaTitulo));
+
+      // As demais linhas viram itens curtos
+      const itensLinhas = linhas
+        .filter((_, i) => i !== (indiceTitulo !== -1 ? indiceTitulo : 0))
+        .map((l) => l.replace(/^[*•-]\s*/, "").trim())
+        .filter((l) => l.length > 0 && !l.startsWith("###"))
+        .slice(0, 4); // Limita a no máximo 3 ou 4 itens para nunca poluir a tela
+
+      resultado.push({
+        id: `slide-${idx}`,
+        icone: emoji,
+        badge: `Novidade ${idx + 1}`,
+        badgeCor: idx === 0 ? "bg-amber-500/15 text-amber-300 border-amber-500/30" : idx === 1 ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30" : "bg-indigo-500/15 text-indigo-300 border-indigo-500/30",
+        titulo: tituloPuro || `Novidade #${idx + 1}`,
+        subtitulo: "Confira as melhorias implementadas na plataforma",
+        itens: itensLinhas.length > 0 ? itensLinhas.map((t) => ({ texto: t })) : [{ texto: "Melhorias gerais de estabilidade e interface." }]
+      });
+    });
+
+    return resultado.length > 0 ? resultado : SLIDES_PADRAO_V2_2;
+  }, [markdown]);
+
+  const totalSlides = slides.length;
+  const slide = slides[slideAtual] || slides[0];
+
   useEffect(() => {
     confetti({
-      particleCount: 150,
-      spread: 80,
+      particleCount: 70,
+      spread: 60,
       origin: { y: 0.3 },
-      colors: ["#6366f1", "#a855f7", "#ec4899", "#10b981", "#ffffff"],
-      zIndex: 99999,
+      colors: ["#6366f1", "#a855f7", "#fbbf24", "#10b981", "#ffffff"],
+      zIndex: 99999
     });
   }, []);
 
+  const avancar = () => {
+    if (slideAtual < totalSlides - 1) {
+      setSlideAtual((prev) => prev + 1);
+    } else {
+      onClose();
+    }
+  };
+
+  const voltar = () => {
+    if (slideAtual > 0) {
+      setSlideAtual((prev) => prev - 1);
+    }
+  };
+
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-        {/* Backdrop */}
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 selection:bg-indigo-500 selection:text-white">
+        {/* Backdrop com desfoque profundo */}
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={onClose}
-          className="absolute inset-0 bg-slate-950/60 backdrop-blur-md"
+          className="absolute inset-0 bg-slate-950/75 backdrop-blur-md"
         />
 
-        {/* Modal Container */}
+        {/* Modal Container Compacto e Elegante */}
         <motion.div
-          initial={{ scale: 0.93, opacity: 0, y: 20 }}
+          initial={{ scale: 0.94, opacity: 0, y: 15 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.93, opacity: 0, y: 20 }}
+          exit={{ scale: 0.94, opacity: 0, y: 15 }}
           transition={{ type: "spring", damping: 25, stiffness: 350 }}
-          className="glass-panel-heavy bg-white/90 dark:bg-slate-900/90 rounded-[2.5rem] shadow-[0_0_50px_rgba(99,102,241,0.2)] border border-slate-200/80 dark:border-white/5 w-full max-w-lg overflow-hidden flex flex-col relative z-10"
+          className="bg-white dark:bg-slate-900 rounded-3xl sm:rounded-[2.2rem] shadow-[0_0_50px_rgba(99,102,241,0.22)] border border-slate-200/90 dark:border-white/10 w-full max-w-lg overflow-hidden flex flex-col relative z-10"
         >
-          {/* Header do Modal com Gradiente */}
-          <div className="bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 p-7 text-center relative overflow-hidden shrink-0">
-            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-15 mix-blend-overlay" />
-            <motion.div
-              initial={{ scale: 0, rotate: -20 }}
-              animate={{ scale: 1, rotate: 0 }}
-              transition={{ type: "spring", damping: 10, delay: 0.15 }}
-              className="text-5xl mb-3 relative z-10 select-none"
-            >
-              🚀
-            </motion.div>
-            <h2 className="font-display font-black text-2xl text-white uppercase tracking-widest relative z-10 drop-shadow-md">
-              Atualização {versao}
-            </h2>
-            <p className="text-indigo-150 text-[10px] font-black mt-1.5 relative z-10 tracking-widest uppercase opacity-90">
-              Novidades Gamificadas da Plataforma
+          {/* Header Superior Limpo com Gradiente */}
+          <div className="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 px-6 py-5 text-center relative overflow-hidden shrink-0">
+            <div className="flex items-center justify-between mb-3 relative z-10">
+              <span className="text-[10px] font-black uppercase tracking-widest text-indigo-100 bg-white/20 px-3 py-0.5 rounded-full border border-white/25">
+                🚀 Atualização {versao}
+              </span>
+
+              {/* Botão Fechar */}
+              <button
+                onClick={onClose}
+                className="w-7 h-7 rounded-full bg-black/20 hover:bg-black/40 text-white flex items-center justify-center transition-colors cursor-pointer text-xs font-bold"
+                title="Fechar"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Stepper / Indicador de Telas */}
+            <div className="flex items-center justify-center gap-1.5 relative z-10">
+              {slides.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setSlideAtual(idx)}
+                  className={`h-1.5 rounded-full transition-all cursor-pointer ${
+                    idx === slideAtual ? "w-7 bg-white shadow-xs" : "w-2 bg-white/40 hover:bg-white/60"
+                  }`}
+                  title={`Ir para novidade ${idx + 1}`}
+                />
+              ))}
+            </div>
+
+            <p className="text-white/80 text-[10px] font-bold mt-2 relative z-10 uppercase tracking-widest">
+              Passo {slideAtual + 1} de {totalSlides}
             </p>
           </div>
 
-          {/* Conteúdo rolável */}
-          <div className="p-6 md:p-8 overflow-y-auto max-h-[55vh] custom-scrollbar bg-white/40 dark:bg-transparent space-y-5">
-            {!markdown ? (
-              <p className="text-center italic opacity-70">Nenhuma novidade registrada no momento.</p>
-            ) : (
-              markdown.split(/(?=^### |^\*\*\*|^---)/gm).map((parte, index) => {
-                if (!parte.trim().startsWith("###")) {
-                  return (
-                    <div key={index} className="px-1 prose prose-slate dark:prose-invert prose-sm md:prose-base prose-a:text-pink-500 font-medium text-slate-600 dark:text-slate-300 text-center leading-relaxed mb-4 max-w-none">
-                      <ReactMarkdown>{parte}</ReactMarkdown>
-                    </div>
-                  );
-                }
+          {/* Conteúdo Dinâmico do Slide */}
+          <div className="p-5 sm:p-7 flex-1 flex flex-col justify-between">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={slide.id}
+                initial={{ opacity: 0, x: 15 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -15 }}
+                transition={{ duration: 0.18 }}
+                className="space-y-3.5"
+              >
+                {/* Ícone e Título Principal (Totalmente Sem Asteriscos) */}
+                <div className="flex items-start gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 dark:bg-slate-800 border border-indigo-200/50 dark:border-white/10 flex items-center justify-center text-2xl shrink-0 shadow-xs">
+                    {slide.icone}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className={`inline-block text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md border mb-1 ${slide.badgeCor}`}>
+                      {slide.badge}
+                    </span>
+                    <h3 className="font-display font-black text-lg sm:text-xl text-slate-900 dark:text-white leading-snug truncate">
+                      {slide.titulo}
+                    </h3>
+                  </div>
+                </div>
 
-                // Definir estilos baseados no índice para variar o visual
-                let cardClass = "";
-                let headingClass = "";
-                let pClass = "";
+                <p className="text-xs font-medium text-slate-500 dark:text-slate-400 leading-relaxed">
+                  {slide.subtitulo}
+                </p>
 
-                if (index % 3 === 1) {
-                  cardClass = "bg-gradient-to-br from-indigo-500 to-purple-600 p-5 rounded-2xl shadow-md border border-indigo-400 relative overflow-hidden";
-                  headingClass = "font-display font-black text-white text-sm md:text-base flex items-center gap-2 mb-2 m-0";
-                  pClass = "text-xs md:text-sm text-indigo-50 leading-relaxed font-medium m-0";
-                } else if (index % 3 === 2) {
-                  cardClass = "bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950/15 dark:to-emerald-900/10 border border-emerald-250 dark:border-emerald-900/30 p-4.5 rounded-2xl shadow-sm";
-                  headingClass = "font-display font-black text-emerald-900 dark:text-emerald-400 text-sm md:text-base flex items-center gap-2 mb-1.5 m-0";
-                  pClass = "text-xs md:text-sm text-emerald-800 dark:text-emerald-350 leading-relaxed font-medium m-0";
-                } else {
-                  cardClass = "bg-slate-50/50 dark:bg-slate-950/20 border border-slate-200/60 dark:border-slate-800 p-4.5 rounded-2xl shadow-sm";
-                  headingClass = "font-display font-black text-slate-800 dark:text-slate-200 text-sm md:text-base flex items-center gap-2 mb-1.5 m-0";
-                  pClass = "text-xs md:text-sm text-slate-600 dark:text-slate-400 leading-relaxed font-medium m-0";
-                }
-
-                return (
-                  <motion.div
-                    key={index}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 + index * 0.05 }}
-                    className={cardClass}
-                  >
-                    <ReactMarkdown
-                      components={{
-                        h3: ({ node, ...props }) => <h3 className={headingClass} {...props} />,
-                        p: ({ node, ...props }) => <p className={pClass} {...props} />,
-                        strong: ({ node, ...props }) => <strong className="font-bold opacity-100" {...props} />
-                      }}
+                {/* Lista de Tópicos Objetivos */}
+                <div className="space-y-2 pt-1">
+                  {slide.itens.map((item, iIdx) => (
+                    <div
+                      key={iIdx}
+                      className="p-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/70 dark:border-white/5 text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-normal flex items-start gap-2.5"
                     >
-                      {parte}
-                    </ReactMarkdown>
-                  </motion.div>
-                );
-              })
-            )}
+                      <span className="text-indigo-500 dark:text-indigo-400 mt-0.5 shrink-0 text-sm">✦</span>
+                      <div className="flex-1">
+                        <ReactMarkdown
+                          components={{
+                            strong: ({ ...props }) => (
+                              <strong className="font-bold text-slate-900 dark:text-white" {...props} />
+                            ),
+                            code: ({ ...props }) => (
+                              <code className="bg-slate-200/80 dark:bg-slate-900 px-1.5 py-0.5 rounded text-[11px] font-mono text-indigo-600 dark:text-indigo-300 font-semibold" {...props} />
+                            )
+                          }}
+                        >
+                          {item.texto}
+                        </ReactMarkdown>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            </AnimatePresence>
           </div>
 
-          {/* Rodapé fixo do Modal */}
-          <div className="p-6 border-t border-slate-200/80 dark:border-slate-800/80 bg-white/30 dark:bg-transparent shrink-0">
-            <motion.button
-              whileHover={{ scale: 1.01 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={onClose}
-              className="cursor-pointer w-full bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 hover:from-indigo-600 hover:to-pink-600 text-white font-black py-4 rounded-2xl shadow-lg shadow-indigo-500/10 uppercase tracking-widest text-sm select-none"
+          {/* Rodapé Fixo com Navegação */}
+          <div className="px-5 py-4 border-t border-slate-200/80 dark:border-slate-800/80 bg-slate-50/60 dark:bg-slate-950/40 flex items-center justify-between gap-3 shrink-0">
+            <button
+              onClick={voltar}
+              disabled={slideAtual === 0}
+              className={`px-3.5 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
+                slideAtual === 0
+                  ? "opacity-0 pointer-events-none"
+                  : "bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200"
+              }`}
             >
-              ACESSAR NOVAS FUNÇÕES! 🚀
+              <span>←</span>
+              <span>Anterior</span>
+            </button>
+
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={avancar}
+              className="cursor-pointer px-5 py-2.5 bg-gradient-to-r from-indigo-500 via-purple-600 to-pink-500 hover:brightness-110 text-white font-black text-xs sm:text-sm rounded-xl shadow-md shadow-indigo-500/20 uppercase tracking-wider flex items-center gap-2 select-none"
+            >
+              <span>{slideAtual === totalSlides - 1 ? "🎉 Entendido!" : "Próxima"}</span>
+              <span>{slideAtual === totalSlides - 1 ? "🚀" : "→"}</span>
             </motion.button>
           </div>
         </motion.div>

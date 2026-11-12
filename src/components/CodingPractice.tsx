@@ -676,23 +676,40 @@ export default function CodingPractice({
     let isMatch = false;
     let advanceCount = 0;
 
-    // 1. Tenta correspondência exata para múltiplos caracteres (ex: crase + tecla não-combinável -> `c)
+    // 1. Tenta correspondência para múltiplos caracteres com tolerância mobile de maiúsculas involuntárias
     let matchCount = 0;
     while (
       matchCount < typed.length &&
-      currentIndex + matchCount < targetCode.length &&
-      typed[matchCount] === targetCode[currentIndex + matchCount]
+      currentIndex + matchCount < targetCode.length
     ) {
-      matchCount++;
+      const tChar = typed[matchCount];
+      const eChar = targetCode[currentIndex + matchCount];
+      if (tChar === eChar) {
+        matchCount++;
+      } else if (
+        tChar.toLowerCase() === eChar &&
+        eChar !== eChar.toUpperCase()
+      ) {
+        // Tolerância mobile: se o código espera minúsculo e o smartphone digitou maiúsculo
+        matchCount++;
+      } else {
+        break;
+      }
     }
 
     if (matchCount > 0) {
       isMatch = true;
       advanceCount = matchCount;
     }
-    // 2. Lógica inteligente para tratar dead keys combinadas (ex: crase + a -> à)
+    // 2. Lógica inteligente para 1 caractere (com blindagem de maiúsculas mobile e dead keys)
     else if (typed.length === 1) {
+      const isExpectedLowercase = expectedChar && expectedChar === expectedChar.toLowerCase() && expectedChar !== expectedChar.toUpperCase();
+
       if (typed === expectedChar) {
+        isMatch = true;
+        advanceCount = 1;
+      } else if (isExpectedLowercase && typed.toLowerCase() === expectedChar) {
+        // 📱 BLINDAGEM MOBILE: Celular forçou Maiúsculo (Shift automático do teclado móvel), mas o código requer minúsculo
         isMatch = true;
         advanceCount = 1;
       } else if (deadKeyAccentDecompositions[expectedChar]) {
@@ -839,11 +856,15 @@ export default function CodingPractice({
     }
   };
 
-  // Botões Virtuais
+  // Botões Virtuais com tolerância de maiúsculas mobile
   const handleVirtualKeyPress = (char: string) => {
     if (completed || pausado) return;
 
-    if (char === expectedChar) {
+    const isExpectedLowercase = expectedChar && expectedChar === expectedChar.toLowerCase() && expectedChar !== expectedChar.toUpperCase();
+    const isDirectMatch = char === expectedChar;
+    const isCaseInsensitiveMatch = isExpectedLowercase && char.toLowerCase() === expectedChar;
+
+    if (isDirectMatch || isCaseInsensitiveMatch) {
       playSynthesizedSound("correct", muted);
       const nextIndex = currentIndex + 1;
       setCurrentIndex(nextIndex);
@@ -864,6 +885,76 @@ export default function CodingPractice({
       }
     }
     resetFoco();
+  };
+
+  // Disparo de atalhos rápidos da Barra Mobile
+  const handleSymbolPress = (symbol: string) => {
+    if (completed || pausado) return;
+
+    if (symbol === "Tab") {
+      // 1. Literal Tab
+      if (expectedChar === "\t") {
+        playSynthesizedSound("correct", muted);
+        const nextIndex = currentIndex + 1;
+        setCurrentIndex(nextIndex);
+        if (nextIndex >= targetCode.length) {
+          setCompleted(true);
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
+        return;
+      }
+      // 2. Indentação por espaços
+      if (expectedChar === " ") {
+        let isIndentation = true;
+        for (let i = currentIndex - 1; i >= 0; i--) {
+          if (targetCode[i] === "\n") break;
+          if (targetCode[i] !== " ") { isIndentation = false; break; }
+        }
+        let spaceCount = 0;
+        while (currentIndex + spaceCount < targetCode.length && targetCode[currentIndex + spaceCount] === " ") {
+          spaceCount++;
+        }
+        if (isIndentation || spaceCount >= 2) {
+          playSynthesizedSound("correct", muted);
+          const nextIndex = currentIndex + spaceCount;
+          setCurrentIndex(nextIndex);
+          if (nextIndex >= targetCode.length) {
+            setCompleted(true);
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+          }
+          return;
+        }
+      }
+      playSynthesizedSound("error", muted);
+      setShakeTrigger((prev) => prev + 1);
+      if (lastErrorIndexRef.current !== currentIndex) {
+        setErrorsCount((prev) => prev + 1);
+        lastErrorIndexRef.current = currentIndex;
+      }
+      return;
+    }
+
+    if (symbol === "Enter") {
+      if (expectedChar === "\n") {
+        playSynthesizedSound("correct", muted);
+        const nextIndex = currentIndex + 1;
+        setCurrentIndex(nextIndex);
+        if (nextIndex >= targetCode.length) {
+          setCompleted(true);
+          confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+        }
+      } else {
+        playSynthesizedSound("error", muted);
+        setShakeTrigger((prev) => prev + 1);
+        if (lastErrorIndexRef.current !== currentIndex) {
+          setErrorsCount((prev) => prev + 1);
+          lastErrorIndexRef.current = currentIndex;
+        }
+      }
+      return;
+    }
+
+    handleVirtualKeyPress(symbol);
   };
 
   // Copiar código concluído
@@ -1197,13 +1288,59 @@ export default function CodingPractice({
         </div>
       </div>
 
-      {/* ═══ ALERTA DE TECLADO ABNT2 E CONFIGURAÇÕES ═══ */}
+      {/* ═══ ALERTA DE TECLADO E BLINDAGEM MOBILE ═══ */}
       {!completed && (
-        <div className={`${alertPadding} bg-amber-500/10 border-b border-amber-500/20 text-amber-300 font-medium flex items-center justify-between shrink-0 select-none`}>
-          <p className="leading-relaxed flex items-center gap-2">
+        <div className={`${alertPadding} bg-amber-500/10 border-b border-amber-500/20 text-amber-300 font-medium flex flex-wrap items-center justify-between gap-2 shrink-0 select-none`}>
+          <p className="leading-relaxed flex items-center gap-2 text-xs">
             <span>⚠️</span>
-            <strong>Atenção ao teclado:</strong> Use o layout <strong>Português (ABNT2)</strong> para evitar erros involuntários em teclas como <code>ç</code>, <code>;</code>, <code>{"{"}</code> e <code>{"}"}</code>.
+            <span>Use o layout <strong>Português (ABNT2)</strong> para teclas como <code>ç</code>, <code>;</code>, <code>{"{"}</code> e <code>{"}"}</code>.</span>
           </p>
+          <div className="flex items-center gap-1.5 text-[10px] font-bold text-emerald-400 bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 rounded-lg shadow-xs">
+            <span>📱</span>
+            <span>Blindagem Mobile Ativa</span>
+          </div>
+        </div>
+      )}
+
+      {/* ═══ BARRA RÁPIDA DE SÍMBOLOS PARA SMARTPHONE (MOBILE ACCESSORY BAR) ═══ */}
+      {!completed && (
+        <div className="bg-slate-900/95 border-b border-indigo-500/20 px-2 sm:px-4 py-2 flex items-center gap-1.5 overflow-x-auto select-none shrink-0 no-scrollbar">
+          <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1">
+            <span>⚡</span>
+            <span className="hidden sm:inline">Atalhos:</span>
+          </span>
+
+          {/* Símbolos essenciais de código */}
+          {["Tab", "{", "}", "(", ")", "[", "]", ";", "=", "<", ">", '"', "'", "`", ":", "/", ".", "Enter"].map((sym) => {
+            const isNext =
+              (sym === "Tab" && expectedKeyName === "Tab") ||
+              (sym === "Enter" && expectedKeyName === "Enter") ||
+              sym === expectedChar;
+
+            return (
+              <button
+                key={sym}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onTouchStart={(e) => {
+                  e.preventDefault();
+                  handleSymbolPress(sym);
+                }}
+                onClick={(e) => {
+                  e.preventDefault();
+                  handleSymbolPress(sym);
+                }}
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold shrink-0 transition-all cursor-pointer border select-none ${
+                  isNext
+                    ? "bg-indigo-600 text-white border-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.6)] scale-105 animate-pulse"
+                    : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 active:scale-95"
+                }`}
+                title={`Digitar ${sym}`}
+              >
+                {sym === "Tab" ? "⇥ Tab" : sym === "Enter" ? "↵ Enter" : sym}
+              </button>
+            );
+          })}
         </div>
       )}
 
@@ -1212,7 +1349,7 @@ export default function CodingPractice({
         onClick={resetFoco}
         className={`flex-1 ${codeAreaPadding} overflow-auto text-slate-100 font-mono text-sm leading-relaxed relative select-none cursor-text custom-scrollbar border ${codeAreaMargin} rounded-2xl transition-all duration-300 ${activeStyle.mainBorderGlow}`}
       >
-        {/* TEXTAREA OCULTA COM POSITION FIXED (EVITA SCROLL JUMPING DO BROWSER) */}
+        {/* TEXTAREA OCULTA COM POSITION FIXED (EVITA SCROLL JUMPING DO BROWSER E COM BLINDAGEM MOBILE) */}
         <textarea
           ref={inputRef}
           onChange={handleInput}
@@ -1222,6 +1359,13 @@ export default function CodingPractice({
           className="fixed opacity-0 pointer-events-none w-0 h-0"
           autoFocus
           disabled={completed || enviando || pausado}
+          autoCapitalize="none"
+          autoCorrect="off"
+          autoComplete="off"
+          spellCheck={false}
+          inputMode="text"
+          enterKeyHint="enter"
+          tabIndex={0}
           onPaste={(e) => {
             e.preventDefault();
             alert("⚠️ Não vale colar o código! Digite caractere por caractere.");

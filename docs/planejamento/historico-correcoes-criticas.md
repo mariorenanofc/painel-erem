@@ -186,3 +186,17 @@ Mapeamento e disponibilização dos certificados oficiais emitidos pelo **Progra
    - Criação do componente `src/components/CertificadosModal.tsx` com design moderno, identificação temática por tecnologia (CSS 🎨, HTML 🌐, JS ⚡, Lógica 🧠), visualização de PDF (`urlPreview`) e download direto (`urlDownload`).
    - Adição de botão de acesso rápido no cockpit do portal e atalho direto no menu de perfil do `PortalHeader.tsx`.
    - Adição da aba "Certificados" no `PerfilModal.tsx` e visualização de certificados na ficha do aluno do tutor (`StudentModal.tsx`).
+
+---
+
+# Fase 7: Blindagem Mobile no Coding Practice e Autenticação Nativa (Novembro/2026)
+
+1. **Autenticação Instantânea e Eliminação de Travamento no Login do Portal:**
+   - **Problema:** `/portal/login` realizava requisições client-side diretas para o Google Apps Script (`GOOGLE_API_URL`), que sofria timeouts (> 10s), deixando o botão de login em loading infinito (`Autenticando...`) e o `/portal` preso em `<TrilhaTechLoader />`.
+   - **Solução:** Migração para as rotas nativas `/api/alunos/login` e `/api/alunos/recuperar-matricula` com `dbAdmin` direto no Firestore (< 40ms) e normalização flexível de formatos de data de nascimento (`YYYY-MM-DD`, `DD/MM/YYYY`, ISO).
+2. **Blindagem Mobile no `CodingPractice.tsx` (Digitação em Smartphones):**
+   - **Problema:** Teclados móveis (Android/Gboard, Samsung Keyboard, iOS) forçavam Shift/Maiúsculo automaticamente no início de cada linha ou após símbolos, gerando erros involuntários em palavras-chave e símbolos de código.
+   - **Solução:**
+     - Injeção de `autoCapitalize="none"`, `autoCorrect="off"`, `autoComplete="off"` e `spellCheck={false}` no `<textarea>`.
+     - Interceptação inteligente no motor (`handleInput` e `handleVirtualKeyPress`): se o código requer minúsculo e o teclado móvel enviou maiúsculo, aceita como acerto sem penalização.
+     - Criação da **Barra Rápida de Símbolos Mobile (*Mobile Dev Accessory Bar*)**: botões de acesso instantâneo a `{`, `}`, `(`, `)`, `[`, `]`, `;`, `=`, `<`, `>`, `"`, `'`, `Tab`, `Enter` com destaque animado (*pulse*) no próximo caractere esperado, sem fechar o teclado virtual do celular.

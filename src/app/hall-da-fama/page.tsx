@@ -7,8 +7,10 @@ import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import PerfilPublicoModal from "@/src/components/PerfilPublicoModal";
+import CardCompartilharModal from "@/src/components/CardCompartilharModal";
 import { apiAluno } from "@/src/services/api";
 import { obterInfoBadge } from "@/src/utils/badges";
+import { DadosCardStory } from "@/src/types";
 
 const fetcher = (url: string) => fetch(url).then(res => res.json());
 
@@ -82,6 +84,7 @@ export default function HallDaFamaPage() {
   });
 
   const [perfilAberto, setPerfilAberto] = useState<string | null>(null);
+  const [formandoCompartilhar, setFormandoCompartilhar] = useState<DadosCardStory | null>(null);
   const [busca, setBusca] = useState("");
   const [filtroAba, setFiltroAba] = useState<"TODOS" | "OURO" | "FULLSTACK">("TODOS");
   const [aplausosMap, setAplausosMap] = useState<Record<string, number>>({});
@@ -293,7 +296,7 @@ export default function HallDaFamaPage() {
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-100 dark:bg-slate-900/90 dark:bg-gradient-to-r dark:from-amber-500/20 dark:via-yellow-500/20 dark:to-amber-500/20 border border-amber-300 dark:border-amber-400/40 rounded-full text-xs font-black uppercase tracking-widest text-amber-900 dark:text-amber-300 mb-4 shadow-sm dark:shadow-[0_0_25px_rgba(251,191,36,0.25)]"
+            className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-50 dark:bg-amber-500/15 border border-amber-300 dark:border-amber-500/30 rounded-full text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-300 mb-4 shadow-sm dark:shadow-[0_0_25px_rgba(251,191,36,0.25)] backdrop-blur-md"
           >
             <span>🎓</span> Conclusão de Curso &bull; Obras &bull; Conquistas
           </motion.div>
@@ -308,7 +311,7 @@ export default function HallDaFamaPage() {
 
           {/* PLACAR DE HONRA GLOBAL (STATS) */}
           <div className="grid grid-cols-3 gap-3 md:gap-6 mt-8 max-w-2xl mx-auto">
-            <div className="bg-white/90 dark:bg-slate-900/60 dark:bg-gradient-to-b dark:from-amber-500/10 dark:to-transparent p-4 rounded-2xl border border-amber-200 dark:border-amber-500/30 shadow-sm dark:shadow-none">
+            <div className="bg-white dark:bg-slate-900/80 p-4 rounded-2xl border border-amber-200 dark:border-amber-500/30 shadow-sm dark:shadow-none">
               <span className="text-2xl md:text-3xl font-black text-amber-600 dark:text-amber-300 block">
                 {baseVeteranos.length}
               </span>
@@ -317,7 +320,7 @@ export default function HallDaFamaPage() {
               </span>
             </div>
 
-            <div className="bg-white/90 dark:bg-slate-900/60 dark:bg-gradient-to-b dark:from-purple-500/10 dark:to-transparent p-4 rounded-2xl border border-purple-200 dark:border-purple-500/30 shadow-sm dark:shadow-none">
+            <div className="bg-white dark:bg-slate-900/80 p-4 rounded-2xl border border-purple-200 dark:border-purple-500/30 shadow-sm dark:shadow-none">
               <span className="text-2xl md:text-3xl font-black text-purple-600 dark:text-purple-300 block">
                 83+
               </span>
@@ -326,7 +329,7 @@ export default function HallDaFamaPage() {
               </span>
             </div>
 
-            <div className="bg-white/90 dark:bg-slate-900/60 dark:bg-gradient-to-b dark:from-emerald-500/10 dark:to-transparent p-4 rounded-2xl border border-emerald-200 dark:border-emerald-500/30 shadow-sm dark:shadow-none">
+            <div className="bg-white dark:bg-slate-900/80 p-4 rounded-2xl border border-emerald-200 dark:border-emerald-500/30 shadow-sm dark:shadow-none">
               <span className="text-2xl md:text-3xl font-black text-emerald-600 dark:text-emerald-300 block">
                 100%
               </span>
@@ -600,7 +603,7 @@ export default function HallDaFamaPage() {
                       })()}
                     </div>
 
-                    {/* Rodapé do Card: Pontuação & Botão de Aplausos */}
+                    {/* Rodapé do Card: Pontuação & Botões de Ação */}
                     <div className="pt-4 border-t border-slate-100 dark:border-white/10 flex items-center justify-between gap-2 mt-2">
                       <div>
                         <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
@@ -611,17 +614,48 @@ export default function HallDaFamaPage() {
                         </span>
                       </div>
 
-                      <motion.button
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        disabled={aplaudindoMatricula === vet.matricula}
-                        onClick={(e) => handleAplaudir(vet.matricula, e)}
-                        className="cursor-pointer px-3.5 py-2 bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-slate-950 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-[0_0_15px_rgba(251,191,36,0.3)] transition-all disabled:opacity-50"
-                        title={estaConectado ? "Aplaudir a conquista deste formando (1 por dia)" : "Conecte-se com sua matrícula para aplaudir"}
-                      >
-                        <span>👏</span>
-                        <span>{totalAplausos}</span>
-                      </motion.button>
+                      <div className="flex items-center gap-2">
+                        {/* Botão para Gerar Card de Story */}
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setFormandoCompartilhar({
+                              matricula: vet.matricula,
+                              nome: vet.nome,
+                              avatar: vet.avatar,
+                              anoFormacao: vet.anoFormacao,
+                              xpFinal: vet.xpFinal,
+                              nivelFinal: vet.nivelFinal,
+                              especialidade: vet.especialidade,
+                              seloHonorifico: vet.destaque,
+                              fraseFormatura: vet.fraseFormatura,
+                              techStack: vet.techStack,
+                              projetosConcluidos: vet.projetosConcluidos,
+                              totalAplausos,
+                            });
+                          }}
+                          className="cursor-pointer px-2.5 py-2 bg-slate-100 dark:bg-white/10 hover:bg-slate-200 dark:hover:bg-white/15 text-slate-700 dark:text-slate-200 rounded-xl text-xs font-bold transition-all border border-slate-200 dark:border-white/10 shadow-xs flex items-center gap-1.5"
+                          title="Gerar Card para Story (Instagram/WhatsApp)"
+                        >
+                          <span className="text-sm">📸</span>
+                          <span className="hidden sm:inline text-[10px] font-black uppercase tracking-wider">Story</span>
+                        </motion.button>
+
+                        {/* Botão de Aplausos */}
+                        <motion.button
+                          whileHover={{ scale: 1.05 }}
+                          whileTap={{ scale: 0.95 }}
+                          disabled={aplaudindoMatricula === vet.matricula}
+                          onClick={(e) => handleAplaudir(vet.matricula, e)}
+                          className="cursor-pointer px-3.5 py-2 bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-slate-950 rounded-xl text-xs font-black flex items-center gap-1.5 shadow-[0_0_15px_rgba(251,191,36,0.3)] transition-all disabled:opacity-50"
+                          title={estaConectado ? "Aplaudir a conquista deste formando (1 por dia)" : "Conecte-se com sua matrícula para aplaudir"}
+                        >
+                          <span>👏</span>
+                          <span>{totalAplausos}</span>
+                        </motion.button>
+                      </div>
                     </div>
                   </motion.div>
                 );
@@ -673,6 +707,15 @@ export default function HallDaFamaPage() {
           matriculaVisualizador={matriculaVisualizador}
           matriculaAlvo={perfilAberto}
           onClose={() => setPerfilAberto(null)}
+        />
+      )}
+
+      {/* Modal de Compartilhamento do Story (9:16) */}
+      {formandoCompartilhar && (
+        <CardCompartilharModal
+          isOpen={Boolean(formandoCompartilhar)}
+          onClose={() => setFormandoCompartilhar(null)}
+          formando={formandoCompartilhar}
         />
       )}
 

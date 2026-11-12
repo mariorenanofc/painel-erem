@@ -28,29 +28,21 @@ export default function PortalLogin() {
   } | null>(null);
   const [erroRecuperacao, setErroRecuperacao] = useState("");
 
-  const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL || "";
-
-  // Busca o nome do projeto na inicialização
+  // Busca o nome do projeto na inicialização via API local
   useEffect(() => {
     const buscarConfiguracoes = async () => {
       try {
-        const res = await fetch(GOOGLE_API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify({ action: "buscar_configuracoes" }),
-        });
+        const res = await fetch("/api/configuracoes");
         const data = await res.json();
-        if (data.status === "sucesso") {
-          setNomeProjeto(
-            data.configuracoes.nomeProjeto || "Portal Educacional",
-          );
+        if (data.status === "sucesso" && data.configuracoes?.nomeProjeto) {
+          setNomeProjeto(data.configuracoes.nomeProjeto);
         }
       } catch (e) {
         console.error("Erro ao buscar configurações", e);
       }
     };
-    if (GOOGLE_API_URL) buscarConfiguracoes();
-  }, [GOOGLE_API_URL]);
+    buscarConfiguracoes();
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,13 +53,12 @@ export default function PortalLogin() {
 
     setCarregando(true);
     try {
-      const res = await fetch(GOOGLE_API_URL, {
+      const res = await fetch("/api/alunos/login", {
         method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "login_aluno",
-          matricula: matricula,
-          dataNasc: dataNasc,
+          matricula: matricula.trim(),
+          dataNasc: dataNasc.trim(),
         }),
       });
 
@@ -81,9 +72,9 @@ export default function PortalLogin() {
         setNomeBloqueado(resposta.nome || "Aluno");
         setAcessoNegado(true);
       } else {
-        toast(resposta.mensagem, "warning", "Ops!");
+        toast(resposta.mensagem || "Credenciais inválidas.", "warning", "Ops!");
       }
-    } catch (erro) {
+    } catch {
       toast("Erro de conexão com o servidor.", "error", "Falha na Rede");
     } finally {
       setCarregando(false);
@@ -100,20 +91,13 @@ export default function PortalLogin() {
     setErroRecuperacao("");
     setResultadoRecuperacao(null);
 
-    let dataFormatada = dataNascRecuperacao;
-    if (dataNascRecuperacao.includes("-")) {
-      const partes = dataNascRecuperacao.split("-");
-      dataFormatada = `${partes[2]}/${partes[1]}/${partes[0]}`;
-    }
-
     try {
-      const res = await fetch(GOOGLE_API_URL, {
+      const res = await fetch("/api/alunos/recuperar-matricula", {
         method: "POST",
-        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          action: "recuperar_matricula",
-          nome: nomeRecuperacao,
-          dataNasc: dataFormatada,
+          nome: nomeRecuperacao.trim(),
+          dataNasc: dataNascRecuperacao.trim(),
         }),
       });
       const data = await res.json();
@@ -126,7 +110,7 @@ export default function PortalLogin() {
         setMatricula(data.matricula);
         setDataNasc(dataNascRecuperacao);
       } else {
-        setErroRecuperacao(data.mensagem);
+        setErroRecuperacao(data.mensagem || "Aluno não encontrado.");
       }
     } catch {
       setErroRecuperacao("Erro de conexão com o servidor.");

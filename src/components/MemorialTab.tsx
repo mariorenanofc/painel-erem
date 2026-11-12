@@ -6,11 +6,14 @@ import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import { apiAluno } from "@/src/services/api";
 import { MemorialFormatura, CertificacaoTech, QuestaoTechPublica } from "@/src/types";
+import CardCompartilharModal from "./CardCompartilharModal";
 
 interface MemorialTabProps {
   matricula: string;
   nomeAluno: string;
   turma: string;
+  xpTotal?: number;
+  avatarAtual?: string;
 }
 
 interface TechDisponivel {
@@ -32,9 +35,10 @@ const AVATARES_FORMATURA = [
   { id: "dev-scholar-3", url: "https://api.dicebear.com/9.x/bottts/svg?seed=BrenoSilva", label: "Líder em IA" },
 ];
 
-export default function MemorialTab({ matricula, nomeAluno, turma }: MemorialTabProps) {
+export default function MemorialTab({ matricula, nomeAluno, turma, xpTotal = 0, avatarAtual }: MemorialTabProps) {
   const [carregando, setCarregando] = useState(true);
   const [salvando, setSalvando] = useState(false);
+  const [modalCompartilharAberto, setModalCompartilharAberto] = useState(false);
   const [mensagemSucesso, setMensagemSucesso] = useState<string | null>(null);
   const [mensagemErro, setMensagemErro] = useState<string | null>(null);
 
@@ -277,11 +281,22 @@ export default function MemorialTab({ matricula, nomeAluno, turma }: MemorialTab
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <span className="text-xs font-bold text-amber-500 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20 flex items-center gap-1.5">
             <span>👏</span>
             <span>{totalAplausos} Aplausos Recebidos</span>
           </span>
+
+          {publicadoNoHall && (
+            <button
+              type="button"
+              onClick={() => setModalCompartilharAberto(true)}
+              className="cursor-pointer px-3.5 py-1.5 bg-gradient-to-r from-amber-500 to-yellow-400 hover:brightness-110 text-slate-950 font-black text-xs uppercase tracking-wider rounded-xl transition-all shadow-md flex items-center gap-1.5 active:scale-95"
+            >
+              <span>📸</span>
+              <span>Gerar Meu Story</span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -811,6 +826,27 @@ export default function MemorialTab({ matricula, nomeAluno, turma }: MemorialTab
           </div>
         )}
       </AnimatePresence>
+
+      {/* MODAL DE COMPARTILHAMENTO DE STORY (9:16) */}
+      {modalCompartilharAberto && (
+        <CardCompartilharModal
+          isOpen={modalCompartilharAberto}
+          onClose={() => setModalCompartilharAberto(false)}
+          formando={{
+            matricula,
+            nome: nomeAluno,
+            avatar: fotoUrl || avatarAtual || "https://api.dicebear.com/9.x/bottts/svg?seed=GraduationGold",
+            anoFormacao: 2026,
+            xpFinal: xpTotal || 0,
+            nivelFinal: "Veterano",
+            especialidade: especialidadeOficial,
+            seloHonorifico,
+            fraseFormatura,
+            techStack: techStackAprovada,
+            totalAplausos,
+          }}
+        />
+      )}
     </div>
   );
 }

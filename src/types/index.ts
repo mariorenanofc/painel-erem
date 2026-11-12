@@ -632,3 +632,28 @@ export interface CertificadoPFT {
   urlDownload: string; // Link direto para download do PDF
   dataImportacao?: string;
 }
+
+// ==========================================
+// 10. CARD DE STORY DO HALL DA FAMA (9:16)
+// ==========================================
+export interface DadosCardStory {
+  matricula: string;
+  nome: string;
+  avatar: string;
+  anoFormacao: number;
+  xpFinal: number;
+  nivelFinal: string;
+  especialidade?: string;
+  seloHonorifico?: string;
+  fraseFormatura?: string;
+  techStack?: string[];
+  projetosConcluidos?: number;
+  totalAplausos?: number;
+}
+
+export interface CardCompartilharModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  formando: DadosCardStory;
+}
+

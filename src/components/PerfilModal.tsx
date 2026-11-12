@@ -441,6 +441,8 @@ export default function PerfilModal({
                   matricula={dadosPerfil.matricula}
                   nomeAluno={dadosPerfil.nome}
                   turma={dadosPerfil.turma}
+                  xpTotal={dadosBadges?.xpTotal || 0}
+                  avatarAtual={avatarAtual}
                 />
               )}
             </>

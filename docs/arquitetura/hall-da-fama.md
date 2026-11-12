@@ -25,7 +25,7 @@ Ele serve como o guia definitivo para saber:
 | **Etapa 2** | Aba/Modal "Curadoria do Hall da Fama" no Painel do Tutor | ✅ Concluído | `src/components/CuradoriaHallModal.tsx` & `src/app/trilhatech/page.tsx` |
 | **Etapa 2** | API do Tutor para aprovação, selos de honra e parecer | ✅ Concluído | `src/app/api/tutor/memorial/curadoria/route.ts` |
 | **Etapa 3** | Modal de Certificados Oficiais PFT & Verificador | ✅ Concluído | `src/components/CertificadosModal.tsx` |
-| **Etapa 3** | Gerador de Card para Story (Instagram/WhatsApp) | ⏳ Pendente | `src/components/CardCompartilharModal.tsx` |
+| **Etapa 3** | Gerador de Card para Story (Instagram/WhatsApp) | ✅ Concluído | `src/components/CardCompartilharModal.tsx` |
 
 ---
 
@@ -198,8 +198,8 @@ export interface MemorialFormatura {
    - [ ] Validar exibição da *Palavra do Mestre* (`parecerTutor`) e dos links de *Projeto Aprovado* (`projetoDestaque.aprovadoPeloTutor`) nos Collector Cards.
    - [ ] Fazer commit e push da Etapa 2 após aprovação final do tutor.
 2. **Construção da Etapa 3:**
-   - [ ] Criar o modal de **Certificado Digital Verificável** (`src/components/CertificadoModal.tsx`) com design oficial e opção de impressão/PDF.
-   - [ ] Criar o gerador de **Card para Story (Instagram/WhatsApp/LinkedIn)** (`src/components/CardCompartilharModal.tsx`).
+   - [x] Criar o visualizador de **Certificados Oficiais do PFT** (`src/components/CertificadosModal.tsx`) integrado ao Portal e perfil.
+   - [x] Criar o gerador de **Card para Story (Instagram/WhatsApp/LinkedIn)** (`src/components/CardCompartilharModal.tsx`) com renderização em PNG HD (1080x1920) e temas de fundo.
 
 ---
 

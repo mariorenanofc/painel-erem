@@ -36,9 +36,9 @@ export default function PortalCockpit({
         {/* ========================================================= */}
         {/* LADO ESQUERDO: SAUDAÇÃO & DOCK DE AÇÕES COM SUPORTE LIGHT/DARK */}
         {/* ========================================================= */}
-        <div className="lg:col-span-7 relative overflow-hidden bg-white/80 dark:bg-slate-900/70 backdrop-blur-2xl p-6 sm:p-8 rounded-3xl shadow-xl dark:shadow-2xl border border-slate-200/80 dark:border-white/10 flex flex-col justify-between group transition-colors duration-300">
+        <div className="lg:col-span-7 relative overflow-hidden bg-white/90 dark:bg-slate-900/80 backdrop-blur-2xl p-6 sm:p-8 rounded-3xl shadow-xl dark:shadow-2xl border border-slate-200 dark:border-white/10 flex flex-col justify-between group transition-colors duration-300">
           {/* Luz de fundo sutil (Ambient Glow) */}
-          <div className="absolute top-0 right-0 w-80 h-80 bg-brand-primary/10 dark:bg-brand-primary/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute top-0 right-0 w-80 h-80 bg-orange-500/10 dark:bg-orange-500/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute bottom-0 left-10 w-64 h-64 bg-emerald-500/5 dark:bg-emerald-500/5 rounded-full blur-3xl pointer-events-none" />
 
           {/* Cabeçalho de Boas-Vindas */}
@@ -46,7 +46,7 @@ export default function PortalCockpit({
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-2xl sm:text-3xl font-display font-black text-slate-800 dark:text-white tracking-tight leading-tight">
                 Bem-vindo,{" "}
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary via-indigo-600 to-brand-secondary dark:from-white dark:via-slate-100 dark:to-slate-300">
+                <span className="text-orange-600 dark:text-orange-400">
                   {primeiroNome}
                 </span>
                 !
@@ -54,7 +54,7 @@ export default function PortalCockpit({
 
               {ofensivaDias > 0 && (
                 <Tooltip content="🔥 Sequência de dias ativos no Trilha Tech" position="bottom">
-                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-orange-500/10 to-amber-500/10 dark:from-orange-500/20 dark:to-amber-500/20 text-orange-600 dark:text-orange-400 text-[11px] font-black uppercase tracking-wider border border-orange-300 dark:border-orange-500/30 shadow-sm cursor-help">
+                  <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-orange-500/10 to-amber-500/10 dark:from-orange-500/20 dark:to-amber-500/20 text-orange-600 dark:text-orange-400 text-[11px] font-black uppercase tracking-wider border border-orange-300 dark:border-orange-500/30 shadow-xs cursor-help">
                     <span className="text-sm animate-pulse">🔥</span>
                     <span>{ofensivaDias} Dias de Ofensiva</span>
                   </div>
@@ -65,7 +65,7 @@ export default function PortalCockpit({
             <p className="text-slate-500 dark:text-slate-400 text-xs sm:text-sm mt-2 flex items-center gap-2 font-medium">
               <span>
                 Você tem{" "}
-                <strong className="text-amber-600 dark:text-amber-400 font-bold">
+                <strong className="text-orange-600 dark:text-orange-400 font-bold">
                   {missoesPendentes} missões pendentes
                 </strong>
                 .
@@ -86,14 +86,14 @@ export default function PortalCockpit({
                 className={`cursor-pointer group/btn relative overflow-hidden rounded-2xl p-4 text-left transition-all border flex items-center gap-3.5 ${
                   checkinRealizado
                     ? "bg-slate-100/70 dark:bg-slate-900/40 border-slate-200 dark:border-emerald-500/20 opacity-80 cursor-default"
-                    : "bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 dark:from-amber-500/15 dark:via-orange-500/10 dark:to-amber-500/5 hover:from-amber-500/20 hover:to-orange-500/15 border-amber-300 dark:border-amber-500/30 hover:border-amber-400 shadow-sm shadow-amber-500/10"
+                    : "bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 dark:from-amber-500/15 dark:via-orange-500/10 dark:to-amber-500/5 hover:from-amber-500/20 hover:to-orange-500/15 border-amber-300 dark:border-amber-500/30 hover:border-amber-400 shadow-xs shadow-amber-500/10"
                 }`}
               >
                 <div
                   className={`w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0 transition-all ${
                     checkinRealizado
                       ? "bg-emerald-100 dark:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-500/30"
-                      : "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-500/30 shadow-sm group-hover/btn:scale-105"
+                      : "bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-300 dark:border-amber-500/30 shadow-xs group-hover/btn:scale-105"
                   }`}
                 >
                   {checkinRealizado ? "✅" : "🔥"}
@@ -115,9 +115,9 @@ export default function PortalCockpit({
                 href="https://classroom.google.com/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="group/btn relative overflow-hidden bg-slate-50/90 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-2xl p-4 text-left transition-all border border-slate-200/80 dark:border-white/10 hover:border-blue-400/50 dark:hover:border-blue-500/40 shadow-sm flex items-center gap-3.5"
+                className="group/btn relative overflow-hidden bg-slate-100/70 dark:bg-slate-900/50 hover:bg-slate-200/70 dark:hover:bg-slate-800/60 rounded-2xl p-4 text-left transition-all border border-slate-200 dark:border-white/10 hover:border-orange-400/50 dark:hover:border-orange-500/40 shadow-xs flex items-center gap-3.5"
               >
-                <div className="w-11 h-11 rounded-xl bg-blue-100 dark:bg-blue-500/15 border border-blue-200 dark:border-blue-500/25 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl shrink-0 group-hover/btn:scale-105 transition-all shadow-sm">
+                <div className="w-11 h-11 rounded-xl bg-blue-100 dark:bg-blue-500/15 border border-blue-200 dark:border-blue-500/25 text-blue-600 dark:text-blue-400 flex items-center justify-center text-xl shrink-0 group-hover/btn:scale-105 transition-all shadow-xs">
                   🏫
                 </div>
                 <div className="min-w-0 flex-1">
@@ -135,9 +135,9 @@ export default function PortalCockpit({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onAbrirGabaritos}
-                className="cursor-pointer group/btn relative overflow-hidden bg-slate-50/90 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-2xl p-4 text-left transition-all border border-slate-200/80 dark:border-white/10 hover:border-indigo-400/50 dark:hover:border-indigo-500/40 shadow-sm flex items-center gap-3.5"
+                className="cursor-pointer group/btn relative overflow-hidden bg-slate-100/70 dark:bg-slate-900/50 hover:bg-slate-200/70 dark:hover:bg-slate-800/60 rounded-2xl p-4 text-left transition-all border border-slate-200 dark:border-white/10 hover:border-orange-400/50 dark:hover:border-orange-500/40 shadow-xs flex items-center gap-3.5"
               >
-                <div className="w-11 h-11 rounded-xl bg-indigo-100 dark:bg-indigo-500/15 border border-indigo-200 dark:border-indigo-500/25 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl shrink-0 group-hover/btn:scale-105 transition-all shadow-sm">
+                <div className="w-11 h-11 rounded-xl bg-indigo-100 dark:bg-indigo-500/15 border border-indigo-200 dark:border-indigo-500/25 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-xl shrink-0 group-hover/btn:scale-105 transition-all shadow-xs">
                   🗝️
                 </div>
                 <div className="min-w-0 flex-1">
@@ -154,12 +154,12 @@ export default function PortalCockpit({
             {/* FILEIRA 2: GAMIFICAÇÃO & SOCIAL */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {/* 4. Central de Jogos & Duelos (Unificado) */}
-              <div className="relative overflow-hidden bg-slate-50/90 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-2xl p-4 transition-all border border-slate-200/80 dark:border-white/10 hover:border-purple-400/50 dark:hover:border-purple-500/40 shadow-sm flex items-center justify-between gap-3 group/arcade">
+              <div className="relative overflow-hidden bg-slate-100/70 dark:bg-slate-900/50 hover:bg-slate-200/70 dark:hover:bg-slate-800/60 rounded-2xl p-4 transition-all border border-slate-200 dark:border-white/10 hover:border-purple-400/50 dark:hover:border-purple-500/40 shadow-xs flex items-center justify-between gap-3 group/arcade">
                 <div
                   onClick={onAbrirJogos}
                   className="cursor-pointer flex items-center gap-3.5 min-w-0 flex-1"
                 >
-                  <div className="w-11 h-11 rounded-xl bg-purple-100 dark:bg-purple-500/15 border border-purple-200 dark:border-purple-500/25 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl shrink-0 group-hover/arcade:scale-105 transition-all shadow-sm">
+                  <div className="w-11 h-11 rounded-xl bg-purple-100 dark:bg-purple-500/15 border border-purple-200 dark:border-purple-500/25 text-purple-600 dark:text-purple-400 flex items-center justify-center text-xl shrink-0 group-hover/arcade:scale-105 transition-all shadow-xs">
                     🎮
                   </div>
                   <div className="min-w-0">
@@ -191,9 +191,9 @@ export default function PortalCockpit({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onAbrirPix}
-                className="cursor-pointer group/btn relative overflow-hidden bg-slate-50/90 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-2xl p-4 text-left transition-all border border-slate-200/80 dark:border-white/10 hover:border-emerald-400/50 dark:hover:border-emerald-500/40 shadow-sm flex items-center gap-3.5"
+                className="cursor-pointer group/btn relative overflow-hidden bg-slate-100/70 dark:bg-slate-900/50 hover:bg-slate-200/70 dark:hover:bg-slate-800/60 rounded-2xl p-4 text-left transition-all border border-slate-200 dark:border-white/10 hover:border-emerald-400/50 dark:hover:border-emerald-500/40 shadow-xs flex items-center gap-3.5"
               >
-                <div className="w-11 h-11 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/25 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl shrink-0 group-hover/btn:scale-105 transition-all shadow-sm">
+                <div className="w-11 h-11 rounded-xl bg-emerald-100 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/25 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-xl shrink-0 group-hover/btn:scale-105 transition-all shadow-xs">
                   💸
                 </div>
                 <div className="min-w-0 flex-1">
@@ -207,7 +207,7 @@ export default function PortalCockpit({
               </motion.button>
 
               {/* 6. Sorteios & Rifas */}
-              <div className="relative overflow-hidden bg-slate-50/90 dark:bg-slate-900/50 hover:bg-slate-100 dark:hover:bg-slate-800/60 rounded-2xl p-4 transition-all border border-slate-200/80 dark:border-white/10 hover:border-fuchsia-400/50 dark:hover:border-fuchsia-500/40 shadow-sm flex flex-col justify-between group/rifa">
+              <div className="relative overflow-hidden bg-slate-100/70 dark:bg-slate-900/50 hover:bg-slate-200/70 dark:hover:bg-slate-800/60 rounded-2xl p-4 transition-all border border-slate-200 dark:border-white/10 hover:border-fuchsia-400/50 dark:hover:border-fuchsia-500/40 shadow-xs flex flex-col justify-between group/rifa">
                 <div
                   onClick={onAbrirRifa}
                   className="cursor-pointer flex items-center gap-3.5"
@@ -255,31 +255,31 @@ export default function PortalCockpit({
           {/* GRID COM 3 CARDS COMPACTOS COM DESIGN GLASS LIGHT/DARK */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 w-full">
             {/* Card 1: Nível Atual */}
-            <div className="relative overflow-hidden bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 dark:border-white/10 hover:border-brand-primary/40 transition-all flex flex-col justify-between shadow-md dark:shadow-lg group">
+            <div className="relative overflow-hidden bg-white/90 dark:bg-slate-900/70 backdrop-blur-xl p-4 rounded-2xl border border-slate-200 dark:border-white/10 hover:border-orange-400/40 transition-all flex flex-col justify-between shadow-xs dark:shadow-md group">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
                   Nível Atual
                 </span>
-                <div className="w-8 h-8 rounded-lg bg-indigo-100 dark:bg-indigo-500/15 border border-indigo-200 dark:border-indigo-500/25 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-base shadow-sm">
+                <div className="w-8 h-8 rounded-lg bg-orange-100 dark:bg-orange-500/20 border border-orange-200 dark:border-orange-500/30 text-orange-600 dark:text-orange-400 flex items-center justify-center text-base shadow-xs">
                   🎓
                 </div>
               </div>
-              <p className="text-sm sm:text-base font-display font-black text-slate-800 dark:text-white group-hover:text-brand-primary dark:group-hover:text-brand-secondary transition-colors truncate">
+              <p className="text-sm sm:text-base font-display font-black text-slate-800 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-400 transition-colors truncate">
                 {nivelSistema}
               </p>
             </div>
 
             {/* Card 2: Saldo XP */}
-            <div className="relative overflow-hidden bg-white/80 dark:bg-slate-900/60 backdrop-blur-xl p-4 rounded-2xl border border-slate-200/80 dark:border-white/10 hover:border-amber-400/40 transition-all flex flex-col justify-between shadow-md dark:shadow-lg group">
+            <div className="relative overflow-hidden bg-white/90 dark:bg-slate-900/70 backdrop-blur-xl p-4 rounded-2xl border border-slate-200 dark:border-white/10 hover:border-amber-400/40 transition-all flex flex-col justify-between shadow-xs dark:shadow-md group">
               <div className="flex items-center justify-between mb-2">
                 <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 dark:text-slate-400">
                   XP Acumulado
                 </span>
-                <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/25 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base shadow-sm">
+                <div className="w-8 h-8 rounded-lg bg-amber-100 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/25 text-amber-600 dark:text-amber-400 flex items-center justify-center text-base shadow-xs">
                   ⭐
                 </div>
               </div>
-              <p className="text-lg sm:text-xl font-display font-black text-amber-600 dark:text-amber-300 truncate">
+              <p className="text-lg sm:text-xl font-display font-black text-orange-600 dark:text-orange-400 truncate">
                 {xpTotalSistema.toLocaleString("pt-BR")}
               </p>
             </div>
@@ -290,17 +290,17 @@ export default function PortalCockpit({
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
                 onClick={onAbrirCertificados}
-                className={`w-full cursor-pointer relative overflow-hidden backdrop-blur-xl p-4 rounded-2xl border transition-all flex flex-col justify-between shadow-md dark:shadow-lg group ${
+                className={`w-full cursor-pointer relative overflow-hidden backdrop-blur-xl p-4 rounded-2xl border transition-all flex flex-col justify-between shadow-xs dark:shadow-md group ${
                   totalCertificados > 0
-                    ? "bg-emerald-50/70 dark:bg-gradient-to-br dark:from-emerald-950/40 dark:to-slate-900/70 border-emerald-300 dark:border-emerald-500/40 hover:border-emerald-400 shadow-sm"
-                    : "bg-white/80 dark:bg-slate-900/60 border-slate-200/80 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20"
+                    ? "bg-emerald-50/70 dark:bg-emerald-950/30 border-emerald-300 dark:border-emerald-500/30 hover:border-emerald-400 shadow-xs"
+                    : "bg-white/90 dark:bg-slate-900/70 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20"
                 }`}
               >
                 <div className="flex items-center justify-between mb-2">
                   <span className="text-[10px] font-black uppercase tracking-widest text-emerald-700 dark:text-emerald-400">
                     Certificados
                   </span>
-                  <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base shadow-sm">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-100 dark:bg-emerald-500/20 border border-emerald-200 dark:border-emerald-500/30 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-base shadow-xs">
                     📜
                   </div>
                 </div>
@@ -317,10 +317,10 @@ export default function PortalCockpit({
           </div>
 
           {/* CARD DE PROGRESSO DE NÍVEL REFINADO */}
-          <div className="relative overflow-hidden bg-white/80 dark:bg-slate-900/60 backdrop-blur-2xl rounded-3xl p-6 border border-slate-200/80 dark:border-white/10 w-full flex-1 flex flex-col justify-center shadow-md dark:shadow-xl transition-colors duration-300">
+          <div className="relative overflow-hidden bg-white/90 dark:bg-slate-900/70 backdrop-blur-2xl rounded-3xl p-6 border border-slate-200 dark:border-white/10 w-full flex-1 flex flex-col justify-center shadow-xs dark:shadow-md transition-colors duration-300">
             <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
               <span>Progresso de Evolução</span>
-              <span className="text-brand-primary dark:text-brand-secondary font-mono px-2 py-0.5 rounded-md bg-brand-primary/10 border border-brand-primary/20 font-bold">
+              <span className="text-orange-600 dark:text-orange-400 font-mono px-2 py-0.5 rounded-md bg-orange-500/10 border border-orange-500/20 font-bold">
                 {progressoNivel.isMaximo
                   ? "Nível Máximo!"
                   : `Rumo ao ${progressoNivel.nomeProximo}`}
@@ -328,12 +328,12 @@ export default function PortalCockpit({
             </div>
 
             {/* Trilha de Progresso com Brilho Neon */}
-            <div className="w-full bg-slate-100 dark:bg-slate-950/80 rounded-full h-3.5 mb-3 overflow-hidden shadow-inner border border-slate-200 dark:border-white/5 p-0.5">
+            <div className="w-full bg-slate-100 dark:bg-slate-950/90 rounded-full h-3.5 mb-3 overflow-hidden shadow-inner border border-slate-200 dark:border-white/5 p-0.5">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${progressoNivel.porcentagem}%` }}
                 transition={{ duration: 1.2, ease: "easeOut" }}
-                className="bg-gradient-to-r from-blue-500 via-indigo-500 to-brand-secondary h-full rounded-full relative shadow-sm"
+                className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 h-full rounded-full relative shadow-xs"
               >
                 <div className="absolute top-0 left-0 w-full h-full bg-white/20 animate-pulse rounded-full" />
               </motion.div>
@@ -345,7 +345,7 @@ export default function PortalCockpit({
               ) : (
                 <>
                   Faltam{" "}
-                  <strong className="text-brand-primary dark:text-brand-secondary font-black font-mono">
+                  <strong className="text-orange-600 dark:text-orange-400 font-black font-mono">
                     {progressoNivel.faltam.toLocaleString("pt-BR")} XP
                   </strong>{" "}
                   para o próximo nível! 🚀

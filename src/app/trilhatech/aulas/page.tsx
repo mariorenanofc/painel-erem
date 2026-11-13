@@ -28,6 +28,7 @@ import CalendarioOficial from "@/src/components/CalendarioOficial";
 import RoletaSorteioModal from "@/src/components/RoletaSorteioModal";
 import AuditoriaEntregasModal from "@/src/components/AuditoriaEntregasModal";
 import LancamentoNovidadesModal from "@/src/components/LancamentoNovidadesModal";
+import PftBackgroundPattern from "@/src/components/PftBackgroundPattern";
 
 const fetcherAtividades = async () => {
   return await apiTutor.buscarTodasAtividades("Todas", "Todos");
@@ -888,7 +889,10 @@ export default function GestaoAulasPage() {
     );
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-24 transition-colors duration-300">
+    <main className="min-h-screen relative bg-pft-sand dark:bg-pft-navy-deep font-sans pb-24 transition-colors duration-300 overflow-hidden">
+      {/* PFT Authentic Circuit & Nodes Motif */}
+      <PftBackgroundPattern />
+
       {/* ================= TODOS OS MODAIS AGRUPADOS NO TOPO DA ÁRVORE (BOA PRÁTICA REACT) ================= */}
       <ImportadorLoteModal
         isOpen={modalImportadorAberto}
@@ -1378,25 +1382,25 @@ export default function GestaoAulasPage() {
           <div className="bg-slate-100 dark:bg-slate-950 p-1.5 rounded-2xl grid grid-cols-2 md:flex md:flex-row gap-1.5 w-full md:w-auto border border-slate-200 dark:border-slate-800 shadow-inner">
             <button
               onClick={() => setActiveTab("missoes")}
-              className={`w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${activeTab === "missoes" ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
+              className={`w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${activeTab === "missoes" ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
             >
               📋 Missões
             </button>
             <button
               onClick={() => setActiveTab("transacoes")}
-              className={`w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${activeTab === "transacoes" ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
+              className={`w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${activeTab === "transacoes" ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
             >
               🔄 Transações
             </button>
             <button
               onClick={() => setActiveTab("ferramentas")}
-              className={`xl:hidden w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${activeTab === "ferramentas" ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
+              className={`xl:hidden w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${activeTab === "ferramentas" ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
             >
               ⚙️ Ferramentas
             </button>
             <button
               onClick={() => setActiveTab("links")}
-              className={`xl:hidden w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${activeTab === "links" ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
+              className={`xl:hidden w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${activeTab === "links" ? "bg-white dark:bg-slate-900 text-orange-600 dark:text-orange-400 shadow-xs" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
             >
               🔗 Links Úteis
             </button>

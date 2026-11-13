@@ -27,8 +27,8 @@ export default function NovaConquistaModal({
           transition={{ type: "spring", damping: 25, stiffness: 350 }}
           className="glass-panel-heavy bg-white/90 dark:bg-slate-900/90 rounded-[2.5rem] shadow-[0_0_50px_rgba(245,158,11,0.2)] w-full max-w-sm overflow-hidden flex flex-col text-center border border-white/10 relative z-10"
         >
-          {/* Top border decorativa com gradiente dourado/fúcsia */}
-          <div className="h-2 w-full bg-gradient-to-r from-amber-400 via-fuchsia-500 to-pink-500" />
+          {/* Top border decorativa com gradiente oficial PFT */}
+          <div className="h-2 w-full bg-gradient-to-r from-orange-500 via-amber-400 to-blue-600" />
           
           <div className="absolute top-2 left-0 w-full h-40 bg-gradient-to-b from-amber-200/20 dark:from-amber-500/5 to-transparent pointer-events-none" />
           

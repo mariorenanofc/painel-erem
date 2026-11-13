@@ -42,6 +42,7 @@ import { apiAluno, apiGeral } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
 import ThreeInteractiveBg from "@/src/components/ThreeInteractiveBg";
 import TrilhaTechLoader from "@/src/components/TrilhaTechLoader";
+import PftBackgroundPattern from "@/src/components/PftBackgroundPattern";
 
 const subscribe = (callback: () => void) => {
   if (typeof window !== "undefined") {
@@ -154,7 +155,7 @@ export default function PortalDashboard() {
   const [jogosAberto, setJogosAberto] = useState(false);
   const [arenaAberta, setArenaAberta] = useState(false);
 
-  const [versaoAtualizacao, setVersaoAtualizacao] = useState("v2.2.1");
+  const [versaoAtualizacao, setVersaoAtualizacao] = useState("v2.4.0");
   const [markdownAtualizacao, setMarkdownAtualizacao] = useState("");
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
   const [cardNotificacaoNovidades, setCardNotificacaoNovidades] = useState(false);
@@ -733,9 +734,12 @@ export default function PortalDashboard() {
     return <TrilhaTechLoader />;
 
   return (
-    <main className="min-h-screen relative bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans pb-12 transition-colors duration-300 overflow-hidden">
+    <main className="min-h-screen relative bg-pft-sand dark:bg-pft-navy-deep text-slate-800 dark:text-slate-100 font-sans pb-12 transition-colors duration-300 overflow-hidden">
       {/* Three.js interactive custom background */}
       <ThreeInteractiveBg />
+
+      {/* PFT Authentic Circuit & Nodes Motif */}
+      <PftBackgroundPattern />
 
       {/* Ambient glowing blobs */}
       <div className="absolute top-[-10%] right-[-10%] w-[45vw] h-[45vw] rounded-full aurora-bg-blob-1 animate-float-slow pointer-events-none" />
@@ -827,14 +831,14 @@ export default function PortalDashboard() {
 
             {/* Pills temáticas das novidades */}
             <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-pink-500/10 text-pink-600 dark:text-pink-300 border border-pink-500/20 flex items-center gap-1">
-                🎂 Aniversários
-              </span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/20 flex items-center gap-1">
-                📱 Mobile Dev
+                🏆 Ranking Semanal
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-300 border border-orange-500/20 flex items-center gap-1">
+                🎨 Identidade PFT
               </span>
               <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 flex items-center gap-1">
-                🏛️ Hall da Fama
+                ⚡ Bônus Top 10
               </span>
             </div>
 
@@ -968,14 +972,14 @@ export default function PortalDashboard() {
 
       {/* AVISO DO WHATSAPP */}
       {!zapConfirmado && zapLink && (
-        <div className="bg-emerald-950/40 backdrop-blur-md text-white p-4 shadow-lg border-b border-emerald-500/20 flex flex-col md:flex-row items-center justify-between gap-4 animate-in slide-in-from-top duration-300 relative z-10">
+        <div className="bg-emerald-50 dark:bg-emerald-950/40 backdrop-blur-md text-emerald-950 dark:text-white p-4 shadow-md border-b border-emerald-200 dark:border-emerald-500/20 flex flex-col md:flex-row items-center justify-between gap-4 animate-in slide-in-from-top duration-300 relative z-10">
           <div className="flex items-center gap-3">
             <span className="text-4xl animate-bounce">💬</span>
             <div>
               <h3 className="font-display font-bold text-lg leading-tight">
                 Você ainda não está no nosso WhatsApp!
               </h3>
-              <p className="text-emerald-300 text-sm">
+              <p className="text-emerald-700 dark:text-emerald-300 text-sm">
                 É obrigatório entrar no grupo da sua turma para receber avisos e
                 não perder missões.
               </p>
@@ -993,7 +997,7 @@ export default function PortalDashboard() {
             <button
               onClick={confirmarEntradaGrupo}
               disabled={confirmandoZap}
-              className="cursor-pointer bg-slate-900 border border-slate-800 text-white font-bold py-2 px-6 rounded-xl shadow transition-all hover:bg-slate-800 disabled:opacity-50 flex-1 md:flex-none active:scale-95"
+              className="cursor-pointer bg-white hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white border border-slate-300 dark:border-slate-700 font-bold py-2 px-6 rounded-xl shadow-sm transition-all disabled:opacity-50 flex-1 md:flex-none active:scale-95"
             >
               {confirmandoZap ? "..." : "2. Já Entrei!"}
             </button>
@@ -1394,7 +1398,7 @@ export default function PortalDashboard() {
                           className={`cursor-pointer px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
                             modoVisualizacao === "grade"
                               ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/20"
-                              : "text-slate-400 hover:text-white"
+                              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                           }`}
                         >
                           🗂️ Grade
@@ -1405,7 +1409,7 @@ export default function PortalDashboard() {
                           className={`cursor-pointer px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
                             modoVisualizacao === "trilha"
                               ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-md shadow-emerald-500/20"
-                              : "text-slate-400 hover:text-white"
+                              : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white"
                           }`}
                         >
                           🗺️ Trilha
@@ -1599,12 +1603,12 @@ export default function PortalDashboard() {
                                                     ].status,
                                                   )
                                                 }
-                                                className={`cursor-pointer w-full text-white text-sm font-black py-3 px-4 rounded-xl transition-all active:scale-95 shadow-md ${isConcluida ? "bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-white border border-slate-200 dark:border-transparent" : isAguardandoValidacao ? "bg-amber-100 hover:bg-amber-200 text-amber-800 dark:bg-amber-600/20 dark:text-amber-300 dark:hover:bg-amber-600/30 border border-amber-300 dark:border-amber-500/30" : isDevolvida ? "bg-red-500 hover:bg-red-600 text-white shadow-red-500/20" : "bg-brand-primary hover:bg-indigo-600 text-white shadow-md shadow-brand-primary/20"}`}
+                                                className={`cursor-pointer w-full text-sm font-black py-3 px-4 rounded-xl transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1.5 ${isConcluida ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/50" : isAguardandoValidacao ? "bg-amber-100 hover:bg-amber-200 text-amber-900 dark:bg-amber-600/20 dark:text-amber-300 dark:hover:bg-amber-600/30 border border-amber-300 dark:border-amber-500/30" : isDevolvida ? "bg-red-500 hover:bg-red-600 text-white shadow-red-500/20" : "bg-pft-orange hover:bg-orange-600 text-white shadow-md shadow-orange-500/20"}`}
                                               >
                                                 {isConcluida
-                                                  ? "Ver Detalhes"
+                                                  ? "✓ Ver Detalhes"
                                                   : isAguardandoValidacao
-                                                    ? "Em Validação"
+                                                    ? "⏳ Em Validação"
                                                     : isDevolvida
                                                       ? "Refazer Missão 🔄"
                                                       : "Abrir Atividade"}
@@ -1685,12 +1689,12 @@ export default function PortalDashboard() {
                                                   <span
                                                     className={`text-[9px] font-black uppercase px-2.5 py-1 rounded-md border tracking-wider shadow-sm ${
                                                       !!ativ.resolucaoTyping
-                                                        ? "bg-indigo-500/10 text-indigo-405 border-indigo-500/20"
+                                                        ? "bg-indigo-500/10 text-indigo-400 border-indigo-500/20"
                                                         : ativ.tipo === "Quiz"
-                                                          ? "bg-amber-500/10 text-amber-450 border-amber-500/20"
+                                                          ? "bg-amber-500/10 text-amber-400 border-amber-500/20"
                                                           : ativ.tipo === "Material"
                                                             ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
-                                                            : "bg-blue-500/10 text-blue-450 border-blue-500/20"
+                                                            : "bg-blue-500/10 text-blue-400 border-blue-500/20"
                                                     }`}
                                                   >
                                                     {!!ativ.resolucaoTyping ? "Digitação" : ativ.tipo}
@@ -1736,20 +1740,20 @@ export default function PortalDashboard() {
                                                       ].status,
                                                     )
                                                   }
-                                                  className={`cursor-pointer w-full mt-4 text-white text-xs font-black py-3 px-4 rounded-xl transition-all active:scale-95 shadow-md ${
+                                                  className={`cursor-pointer w-full mt-4 text-xs font-black py-3 px-4 rounded-xl transition-all active:scale-95 shadow-sm flex items-center justify-center gap-1.5 ${
                                                     isConcluida
-                                                      ? "bg-slate-800 hover:bg-slate-700"
+                                                      ? "bg-emerald-50 hover:bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:hover:bg-emerald-900/50 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700/50"
                                                       : isAguardandoValidacao
-                                                        ? "bg-amber-600/20 text-amber-300 hover:bg-amber-600/30 border border-amber-500/30"
+                                                        ? "bg-amber-100 hover:bg-amber-200 text-amber-900 dark:bg-amber-600/20 dark:text-amber-300 dark:hover:bg-amber-600/30 border border-amber-300 dark:border-amber-500/30"
                                                         : isDevolvida
                                                           ? "bg-red-500 hover:bg-red-600 shadow-red-500/20"
-                                                          : "bg-brand-primary hover:bg-indigo-600"
+                                                          : "bg-pft-orange hover:bg-orange-600 text-white shadow-md shadow-orange-500/20"
                                                   }`}
                                                 >
                                                   {isConcluida
-                                                    ? "Ver Detalhes"
+                                                    ? "✓ Ver Detalhes"
                                                     : isAguardandoValidacao
-                                                      ? "Em Validação"
+                                                      ? "⏳ Em Validação"
                                                       : isDevolvida
                                                         ? "Refazer Missão 🔄"
                                                         : "Abrir Atividade"}
@@ -1967,7 +1971,7 @@ export default function PortalDashboard() {
                         <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                           Faltas
                         </p>
-                        <p className="text-2xl font-black text-rose-500 dark:text-rose-455 font-mono">
+                        <p className="text-2xl font-black text-rose-500 dark:text-rose-400 font-mono">
                           {dadosFrequencia.totalFaltas}
                         </p>
                       </div>

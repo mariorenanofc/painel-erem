@@ -96,7 +96,7 @@ export default function StudentModal({
           <div className="absolute top-0 right-0 w-80 h-80 bg-blue-500/10 dark:bg-blue-500/5 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
 
           {/* Header */}
-          <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-blue-955 p-6 flex justify-between items-center text-white shrink-0 relative border-b border-white/5">
+          <div className="bg-gradient-to-r from-blue-900 via-indigo-950 to-blue-950 p-6 flex justify-between items-center text-white shrink-0 relative border-b border-white/5">
             <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
             <div className="relative z-10">
               <h2 className="font-display font-black text-lg md:text-xl flex items-center gap-2.5 tracking-tight">
@@ -227,7 +227,7 @@ export default function StudentModal({
                   ) : (
                     /* Inscrição */
                     isEditing && (
-                      <div className="bg-blue-500/5 dark:bg-blue-955/10 p-5 rounded-3xl border border-blue-500/20 dark:border-blue-900/30 mt-2 shadow-inner">
+                      <div className="bg-blue-500/5 dark:bg-blue-950/10 p-5 rounded-3xl border border-blue-500/20 dark:border-blue-900/30 mt-2 shadow-inner">
                         <h3 className="text-[10px] font-black text-blue-700 dark:text-blue-400 uppercase tracking-widest mb-3">
                           🎓 Inscrever no Projeto Trilha Tech
                         </h3>
@@ -240,7 +240,7 @@ export default function StudentModal({
                               <select
                                 value={turmaCursoSelecionada}
                                 onChange={(e) => setTurmaCursoSelecionada(e.target.value)}
-                                className="cursor-pointer w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-705 dark:text-slate-200 rounded-xl p-3 pr-10 font-bold focus:border-blue-550 outline-none transition-all text-sm appearance-none shadow-sm"
+                                className="cursor-pointer w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-200 rounded-xl p-3 pr-10 font-bold focus:border-blue-500 outline-none transition-all text-sm appearance-none shadow-sm"
                               >
                                 <option value="" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Selecione a turma...</option>
                                 <option value="Turma 1 - 1º Ano" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">Turma 1 - 1º Ano</option>

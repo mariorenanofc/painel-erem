@@ -6,6 +6,7 @@ import Header from "@/src/components/Header";
 import { apiTutor } from "@/src/services/api";
 import { Atividade } from "@/src/types";
 import { motion } from "framer-motion";
+import PftBackgroundPattern from "@/src/components/PftBackgroundPattern";
 
 export default function GestaoGabaritosLotePage() {
   const router = useRouter();
@@ -167,7 +168,10 @@ export default function GestaoGabaritosLotePage() {
     return <div className="min-h-screen bg-slate-50 dark:bg-slate-950"></div>;
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 font-sans pb-24 transition-colors duration-300 relative overflow-hidden">
+    <main className="min-h-screen bg-pft-sand dark:bg-pft-navy-deep font-sans pb-24 transition-colors duration-300 relative overflow-hidden">
+      {/* PFT Authentic Circuit & Nodes Motif */}
+      <PftBackgroundPattern />
+
       {/* Decorative Glow Blobs */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 dark:bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-10 right-1/4 w-[600px] h-[600px] bg-teal-500/5 dark:bg-teal-500/8 rounded-full blur-[140px] pointer-events-none" />

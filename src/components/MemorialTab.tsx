@@ -623,17 +623,17 @@ export default function MemorialTab({ matricula, nomeAluno, turma, xpTotal = 0, 
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="glass-panel-heavy bg-slate-900 border border-white/10 rounded-3xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto text-white shadow-2xl relative"
+              className="glass-panel-heavy bg-white dark:bg-slate-900 border border-slate-200 dark:border-white/10 rounded-3xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto text-slate-800 dark:text-white shadow-2xl relative"
             >
               {/* Topo do Modal */}
-              <div className="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+              <div className="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-white/10 mb-4">
                 <div className="flex items-center gap-3">
                   <span className="text-3xl">{techEmTeste.icone}</span>
                   <div>
-                    <h3 className="font-display font-black text-lg text-amber-300">
+                    <h3 className="font-display font-black text-lg text-amber-600 dark:text-amber-400">
                       Avaliação Oficial de {techEmTeste.nome}
                     </h3>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
                       Critério de aprovação: 7 ou mais acertos de 10 (&ge; 70%)
                     </p>
                   </div>
@@ -641,7 +641,7 @@ export default function MemorialTab({ matricula, nomeAluno, turma, xpTotal = 0, 
 
                 <button
                   onClick={() => setModalTesteAberto(false)}
-                  className="text-slate-400 hover:text-white text-2xl leading-none cursor-pointer p-1"
+                  className="text-slate-400 hover:text-slate-700 dark:hover:text-white text-2xl leading-none cursor-pointer p-1"
                 >
                   &times;
                 </button>
@@ -687,7 +687,7 @@ export default function MemorialTab({ matricula, nomeAluno, turma, xpTotal = 0, 
                   <div className="pt-4 flex justify-center gap-3">
                     <button
                       onClick={() => setModalTesteAberto(false)}
-                      className="px-6 py-2.5 bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer"
+                      className="px-6 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/10 dark:hover:bg-white/20 text-slate-700 dark:text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-colors cursor-pointer border border-slate-200 dark:border-transparent"
                     >
                       Fechar
                     </button>
@@ -724,12 +724,12 @@ export default function MemorialTab({ matricula, nomeAluno, turma, xpTotal = 0, 
                     if (!questaoAtual) return null;
 
                     return (
-                      <div className="p-5 bg-white/5 border border-white/10 rounded-2xl space-y-4">
+                      <div className="p-5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl space-y-4">
                         <span className="text-[10px] font-black uppercase tracking-wider bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded-md">
                           Questão #{questaoAtual.id}
                         </span>
 
-                        <h4 className="text-sm md:text-base font-bold text-white leading-snug">
+                        <h4 className="text-sm md:text-base font-bold text-slate-900 dark:text-white leading-snug">
                           {questaoAtual.pergunta}
                         </h4>
 
@@ -749,8 +749,8 @@ export default function MemorialTab({ matricula, nomeAluno, turma, xpTotal = 0, 
                                 }}
                                 className={`w-full text-left p-3.5 rounded-xl border text-xs leading-relaxed transition-all cursor-pointer flex items-start gap-3 ${
                                   selecionada
-                                    ? "bg-amber-500/20 border-amber-400 text-white font-bold shadow-[0_0_15px_rgba(251,191,36,0.2)]"
-                                    : "bg-slate-800/60 border-white/5 text-slate-300 hover:bg-slate-800 hover:border-white/20"
+                                    ? "bg-orange-50 dark:bg-amber-500/20 border-orange-500 dark:border-amber-400 text-orange-950 dark:text-white font-bold shadow-sm"
+                                    : "bg-white dark:bg-slate-800/60 border-slate-200 dark:border-white/5 text-slate-700 dark:text-slate-300 hover:bg-orange-50/50 dark:hover:bg-slate-800 hover:border-orange-300 dark:hover:border-white/20"
                                 }`}
                               >
                                 <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black shrink-0 ${

@@ -28,13 +28,13 @@ export default function RegulamentoModal({ isOpen, onClose }: RegulamentoModalPr
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.93, opacity: 0, y: 15 }}
           transition={{ type: "spring", damping: 25, stiffness: 350 }}
-          className="glass-panel-heavy bg-white/95 dark:bg-slate-900/95 rounded-[2rem] shadow-[0_0_50px_rgba(16,185,129,0.15)] border border-slate-200/80 dark:border-white/5 w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col relative z-10"
+          className="glass-panel-heavy bg-white/95 dark:bg-slate-900/95 rounded-[2rem] shadow-[0_0_50px_rgba(255,85,0,0.15)] border border-slate-200/80 dark:border-white/5 w-full max-w-3xl max-h-[85vh] overflow-hidden flex flex-col relative z-10"
         >
           {/* Top glow decoration */}
-          <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-[90px] -mr-36 -mt-36 pointer-events-none" />
+          <div className="absolute top-0 right-0 w-72 h-72 bg-orange-500/10 dark:bg-orange-500/5 rounded-full blur-[90px] -mr-36 -mt-36 pointer-events-none" />
 
           {/* Cabeçalho */}
-          <div className="bg-gradient-to-r from-emerald-600 to-teal-800 dark:from-emerald-700 dark:to-teal-900 p-5 flex justify-between items-center text-white shrink-0 relative border-b border-white/5">
+          <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-blue-900 dark:from-[#08172e] dark:via-[#0e2442] dark:to-[#08172e] p-5 flex justify-between items-center text-white shrink-0 relative border-b border-white/5">
             <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
             <div className="relative z-10">
               <h2 className="font-display font-black text-lg md:text-xl flex items-center gap-2 tracking-tight">
@@ -43,7 +43,7 @@ export default function RegulamentoModal({ isOpen, onClose }: RegulamentoModalPr
                 </span>{" "}
                 Regulamento - Regras do Jogo
               </h2>
-              <p className="text-emerald-100 text-xs mt-0.5 opacity-90">
+              <p className="text-orange-100 text-xs mt-0.5 opacity-90">
                 Entenda o sistema de pontuação, rankings, ofensivas e premiações
               </p>
             </div>

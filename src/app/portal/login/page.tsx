@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/src/contexts/ToastContext";
 import { motion, AnimatePresence } from "framer-motion";
 import ThreeParticleBg from "@/src/components/ThreeParticleBg";
+import PftBackgroundPattern from "@/src/components/PftBackgroundPattern";
 
 export default function PortalLogin() {
   const { toast } = useToast();
@@ -167,10 +168,13 @@ export default function PortalLogin() {
   // TELA 2: LOGIN NORMAL E RECUPERAÇÃO
   // ==========================================
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-300">
+    <div className="min-h-screen bg-pft-sand dark:bg-pft-navy-deep text-slate-800 dark:text-slate-100 flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-300">
       
       {/* Three.js interactive canvas particle background */}
       <ThreeParticleBg />
+
+      {/* PFT Authentic Circuit & Nodes Motif */}
+      <PftBackgroundPattern />
 
       {/* Floating ambient blobs */}
       <div className="absolute top-[-10%] right-[-10%] w-[35vw] h-[35vw] rounded-full aurora-bg-blob-1 animate-float-slow pointer-events-none" />
@@ -182,18 +186,18 @@ export default function PortalLogin() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", damping: 18, stiffness: 90 }}
-        className="glass-panel w-full max-w-md p-8 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.15)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] relative z-10 border border-slate-200 dark:border-white/5"
+        className="glass-panel w-full max-w-md p-8 rounded-3xl shadow-[0_8px_32px_rgba(14,36,66,0.08)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.3)] relative z-10 border border-slate-200 dark:border-white/10"
       >
         <div className="text-center mb-8">
           <motion.div
             initial={{ scale: 0.5, rotate: -15 }}
             animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-            className="bg-gradient-to-tr from-brand-primary to-brand-secondary w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-4xl shadow-lg shadow-indigo-500/20"
+            className="bg-gradient-to-tr from-orange-500 to-slate-900 w-20 h-20 rounded-2xl flex items-center justify-center mx-auto mb-4 text-4xl shadow-lg shadow-orange-500/25"
           >
             🚀
           </motion.div>
-          <h1 className="text-3xl font-display font-black tracking-tight text-slate-800 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-white dark:via-indigo-200 dark:to-cyan-300 dark:text-neon-glow">
+          <h1 className="text-3xl font-display font-black tracking-tight text-slate-800 dark:text-white">
             {nomeProjeto}
           </h1>
           <p className="text-slate-500 dark:text-slate-400 text-sm mt-2 font-medium">
@@ -208,7 +212,7 @@ export default function PortalLogin() {
             </label>
             <input
               type="text"
-              className="w-full bg-slate-100 dark:bg-slate-950/45 border border-slate-300 dark:border-slate-700/60 rounded-xl p-3 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:outline-none text-slate-800 dark:text-white font-mono transition-all duration-200 placeholder-slate-400 dark:placeholder-slate-500"
+              className="w-full bg-slate-100 dark:bg-slate-950/45 border border-slate-300 dark:border-slate-700/60 rounded-xl p-3 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 focus:outline-none text-slate-800 dark:text-white font-mono transition-all duration-200 placeholder-slate-400 dark:placeholder-slate-500"
               placeholder="Digite sua matrícula"
               value={matricula}
               onChange={(e) => setMatricula(e.target.value.replace(/\D/g, ""))}
@@ -222,7 +226,7 @@ export default function PortalLogin() {
             </label>
             <input
               type="date"
-              className="w-full bg-slate-100 dark:bg-slate-950/45 border border-slate-300 dark:border-slate-700/60 rounded-xl p-3 focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/20 focus:outline-none text-slate-800 dark:text-white transition-all duration-200"
+              className="w-full bg-slate-100 dark:bg-slate-950/45 border border-slate-300 dark:border-slate-700/60 rounded-xl p-3 focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20 focus:outline-none text-slate-800 dark:text-white transition-all duration-200"
               value={dataNasc}
               onChange={(e) => setDataNasc(e.target.value)}
               required
@@ -234,7 +238,7 @@ export default function PortalLogin() {
             whileTap={{ scale: 0.98 }}
             type="submit"
             disabled={carregando}
-            className="w-full cursor-pointer bg-gradient-to-r from-brand-primary via-indigo-600 to-brand-secondary text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-indigo-600/30 hover:shadow-indigo-600/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+            className="w-full cursor-pointer bg-gradient-to-r from-orange-500 via-orange-600 to-slate-900 text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-orange-500/25 hover:shadow-orange-500/40 hover:brightness-105 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
             {carregando ? (
               <span className="flex items-center gap-2">
@@ -309,7 +313,7 @@ export default function PortalLogin() {
                     </span>
                   </div>
 
-                  <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-6 bg-emerald-50 dark:bg-emerald-950/20 py-2.5 rounded-xl border border-emerald-250 dark:border-emerald-900/30">
+                  <p className="text-xs font-bold text-emerald-700 dark:text-emerald-400 mb-6 bg-emerald-50 dark:bg-emerald-950/20 py-2.5 rounded-xl border border-emerald-200 dark:border-emerald-900/30">
                     ✅ Nós já preenchemos a tela de login para você!
                   </p>
 

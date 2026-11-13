@@ -154,14 +154,14 @@ export default function AlgorithmStepBuilder({ onGameOver, playSound, perderVida
         <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4">
           <HelpCircle className="w-8 h-8" />
         </div>
-        <h3 className="text-xl font-bold text-white mb-2">Ordenador de Fluxograma</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-6">
+        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Ordenador de Fluxograma</h3>
+        <p className="text-slate-600 dark:text-slate-400 text-sm max-w-sm mb-6">
           Ordene os blocos lógicos clicando sobre eles para montar a sequência correta de execução 
           do algoritmo.
         </p>
         <button
           onClick={handleStart}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold hover:shadow-lg hover:shadow-amber-500/20 transition-all flex items-center gap-2"
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black hover:shadow-lg hover:shadow-amber-500/20 transition-all flex items-center gap-2"
         >
           Iniciar Partida
           <Sparkles className="w-4 h-4" />
@@ -175,14 +175,14 @@ export default function AlgorithmStepBuilder({ onGameOver, playSound, perderVida
   return (
     <div className="flex-1 flex flex-col justify-between p-4 max-w-xl mx-auto w-full">
       {/* Placa de Info */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4 text-sm text-slate-400">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-3 mb-4 text-sm text-slate-600 dark:text-slate-400">
         <span>Fluxograma {currentIndex + 1} de 3</span>
         <span className="font-bold text-yellow-400">Pontos: {score}</span>
       </div>
 
       <div className="text-center mb-3">
         <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Desafio do Fluxo:</span>
-        <h4 className="text-sm sm:text-base font-extrabold text-white mt-0.5">{currentQ.title}</h4>
+        <h4 className="text-sm sm:text-base font-extrabold text-slate-800 dark:text-white mt-0.5">{currentQ.title}</h4>
       </div>
 
       {/* Container 1: Sequência de Passos Montados */}
@@ -198,12 +198,12 @@ export default function AlgorithmStepBuilder({ onGameOver, playSound, perderVida
                 <button
                   disabled={validated}
                   onClick={() => handlePlacedClick(step)}
-                  className={`py-2 px-4 rounded-xl border border-slate-800 text-xs font-bold text-white transition-all max-w-[280px] break-words text-center ${
+                  className={`py-2 px-4 rounded-xl border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-800 dark:text-white transition-all max-w-[280px] break-words text-center ${
                     validated 
                       ? (JSON.stringify(placedSteps) === JSON.stringify(currentQ.steps)
                           ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-400"
-                          : "bg-slate-900 border-slate-800 text-slate-400")
-                      : "bg-slate-900 hover:bg-slate-800 hover:border-slate-700"
+                          : "bg-slate-100 dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400")
+                      : "bg-white hover:bg-orange-50 dark:bg-slate-900 dark:hover:bg-slate-800 border-slate-200 hover:border-orange-500 dark:border-slate-800 text-slate-800 dark:text-white"
                   }`}
                 >
                   {step}
@@ -244,7 +244,7 @@ export default function AlgorithmStepBuilder({ onGameOver, playSound, perderVida
       <button
         disabled={validated || placedSteps.length === 0}
         onClick={handleValidate}
-        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-bold hover:shadow-lg hover:shadow-amber-500/20 transition-all text-sm disabled:opacity-40 disabled:pointer-events-none active:scale-98"
+        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black hover:shadow-lg hover:shadow-amber-500/20 transition-all text-sm disabled:opacity-40 disabled:pointer-events-none active:scale-98"
       >
         Validar Sequência
       </button>

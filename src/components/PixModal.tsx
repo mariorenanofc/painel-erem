@@ -170,10 +170,10 @@ export default function PixModal({
         animate={{ scale: 1, opacity: 1, y: 0 }}
         exit={{ scale: 0.93, opacity: 0, y: 15 }}
         transition={{ type: "spring", damping: 25, stiffness: 350 }}
-        className="glass-panel-heavy bg-white/90 dark:bg-slate-900/90 rounded-[2rem] shadow-[0_0_50px_rgba(16,185,129,0.15)] border border-slate-200/80 dark:border-white/5 w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] relative z-10"
+        className="glass-panel-heavy bg-white/95 dark:bg-[#0e2442]/95 rounded-[2rem] shadow-[0_0_50px_rgba(255,85,0,0.15)] border border-slate-200/80 dark:border-white/10 w-full max-w-md overflow-hidden flex flex-col max-h-[90vh] relative z-10"
       >
         {/* Cabeçalho do modal */}
-        <div className="bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-600 dark:from-emerald-700 dark:to-teal-800 p-5.5 flex justify-between items-center text-white shrink-0 relative">
+        <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-blue-900 dark:from-[#08172e] dark:via-[#0e2442] dark:to-[#08172e] p-5.5 flex justify-between items-center text-white shrink-0 relative">
           <div className="absolute inset-0 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
           <div className="relative z-10">
             <h2 className="font-display font-black text-xl flex items-center gap-2 tracking-tight">
@@ -182,7 +182,7 @@ export default function PixModal({
               </span>{" "}
               Pix de XP
             </h2>
-            <p className="text-emerald-100 text-xs mt-1 font-semibold tracking-wide uppercase opacity-90">
+            <p className="text-orange-100 text-xs mt-1 font-semibold tracking-wide uppercase opacity-90">
               Sua conta de pontos
             </p>
           </div>
@@ -276,7 +276,7 @@ export default function PixModal({
                   onClick={() => setAbaAtiva("enviar")}
                   className={`cursor-pointer flex-1 py-3 font-black text-xs uppercase tracking-wider transition-colors relative z-10 ${
                     abaAtiva === "enviar"
-                      ? "text-emerald-600 dark:text-emerald-400 font-black"
+                      ? "text-orange-600 dark:text-orange-400 font-black"
                       : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                   }`}
                 >
@@ -284,7 +284,7 @@ export default function PixModal({
                   {abaAtiva === "enviar" && (
                     <motion.div
                       layoutId="activeTabIndicator"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 dark:bg-emerald-400"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-orange-500 dark:bg-orange-400"
                     />
                   )}
                 </button>
@@ -292,7 +292,7 @@ export default function PixModal({
                   onClick={() => setAbaAtiva("extrato")}
                   className={`cursor-pointer flex-1 py-3 font-black text-xs uppercase tracking-wider transition-colors relative z-10 ${
                     abaAtiva === "extrato"
-                      ? "text-emerald-600 dark:text-emerald-400 font-black"
+                      ? "text-orange-600 dark:text-orange-400 font-black"
                       : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                   }`}
                 >
@@ -300,7 +300,7 @@ export default function PixModal({
                   {abaAtiva === "extrato" && (
                     <motion.div
                       layoutId="activeTabIndicator"
-                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 dark:bg-emerald-400"
+                      className="absolute bottom-0 left-0 right-0 h-0.5 bg-orange-500 dark:bg-orange-400"
                     />
                   )}
                 </button>
@@ -322,7 +322,7 @@ export default function PixModal({
                         <p className="text-[9px] uppercase font-black text-slate-400 dark:text-slate-500 tracking-wider">
                           Seu Saldo
                         </p>
-                        <p className="font-black text-emerald-600 dark:text-emerald-400 text-lg font-mono">
+                        <p className="font-black text-orange-600 dark:text-orange-400 text-lg font-mono">
                           {dadosPix.meuXpTotal} XP
                         </p>
                       </div>
@@ -415,7 +415,7 @@ export default function PixModal({
                             setPixSenha(e.target.value.replace(/\D/g, ""))
                           }
                           required
-                          className="w-40 text-slate-800 dark:text-slate-50 mx-auto block text-center text-2xl tracking-widest border border-amber-250 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-950/15 rounded-2xl p-2.5 outline-none focus:border-amber-500 transition-colors"
+                          className="w-40 text-slate-800 dark:text-slate-50 mx-auto block text-center text-2xl tracking-widest border border-amber-300 dark:border-amber-800 bg-amber-50/40 dark:bg-amber-950/15 rounded-2xl p-2.5 outline-none focus:border-orange-500 transition-colors"
                           placeholder="••••••"
                         />
                       </div>
@@ -429,7 +429,7 @@ export default function PixModal({
                         enviandoPix ||
                         dadosPix.limiteDiario - dadosPix.xpDoadoHoje <= 0
                       }
-                      className="cursor-pointer w-full mt-6 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-black text-sm py-4 rounded-2xl shadow-lg shadow-emerald-500/10 uppercase tracking-wider disabled:opacity-50 select-none"
+                      className="cursor-pointer w-full mt-6 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-sm py-4 rounded-2xl shadow-lg shadow-orange-500/20 uppercase tracking-wider disabled:opacity-50 select-none"
                     >
                       {enviandoPix
                         ? "Transferindo XP..."

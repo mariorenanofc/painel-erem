@@ -51,7 +51,7 @@ export default function ThreeParticleBg() {
 
     const particlesMaterial = new THREE.PointsMaterial({
       size: 0.03,
-      color: 0x818cf8, // Indigo-400
+      color: 0xff5500, // PFT Laranja
       transparent: true,
       opacity: 0.55,
       blending: THREE.AdditiveBlending,
@@ -166,10 +166,10 @@ export default function ThreeParticleBg() {
     ];
 
     const colors = [
-      0x6366f1, // Indigo
-      0x06b6d4, // Cyan
-      0xd946ef, // Fuchsia
-      0x10b981, // Emerald
+      0xff5500, // PFT Laranja
+      0x1b365d, // PFT Azul Marinho
+      0x34c759, // PFT Verde Broto
+      0xf59e0b, // Âmbar Destaque
     ];
 
     const floatingObjects: {

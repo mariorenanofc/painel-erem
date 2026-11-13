@@ -142,14 +142,14 @@ export default function LogicGatesSpeedrun({ onGameOver, playSound, perderVida }
         <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mb-4">
           <HelpCircle className="w-8 h-8" />
         </div>
-        <h3 className="text-xl font-bold text-white mb-2">Arena Tabela Verdade</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-6">
+        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Arena Tabela Verdade</h3>
+        <p className="text-slate-600 dark:text-slate-400 text-sm max-w-sm mb-6">
           Resolva as operações relacionais e lógicas. Responda rapidamente se a expressão é 
           Verdadeira (True) ou Falsa (False) antes do tempo acabar!
         </p>
         <button
           onClick={handleStart}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-blue-600 text-white font-bold hover:shadow-lg hover:shadow-indigo-500/20 transition-all flex items-center gap-2"
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black hover:shadow-lg hover:shadow-indigo-500/20 transition-all flex items-center gap-2"
         >
           Iniciar Partida
           <Sparkles className="w-4 h-4" />
@@ -163,7 +163,7 @@ export default function LogicGatesSpeedrun({ onGameOver, playSound, perderVida }
   return (
     <div className="flex-1 flex flex-col justify-between p-4 max-w-xl mx-auto w-full">
       {/* Placa de Info */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-6 text-sm text-slate-400">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-3 mb-6 text-sm text-slate-600 dark:text-slate-400">
         <div className="flex items-center gap-2">
           <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
             {currentQ.lang}
@@ -177,9 +177,9 @@ export default function LogicGatesSpeedrun({ onGameOver, playSound, perderVida }
       </div>
 
       {/* Caixa do Desafio */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-950 border border-slate-800 rounded-2xl mb-6 shadow-inner text-center relative overflow-hidden">
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl mb-6 shadow-sm text-center relative overflow-hidden">
         <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-3 block">Esta expressão é True ou False?</span>
-        <h4 className="text-2xl sm:text-3xl font-mono font-black text-white leading-relaxed select-none">
+        <h4 className="text-2xl sm:text-3xl font-mono font-black text-slate-900 dark:text-white leading-relaxed select-none">
           {currentQ.statement}
         </h4>
       </div>

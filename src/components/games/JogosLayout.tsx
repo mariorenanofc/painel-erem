@@ -201,7 +201,7 @@ export default function JogosLayout({
     return (
       <div className="absolute inset-0 grid grid-cols-3 grid-rows-6 gap-x-2 gap-y-16 overflow-hidden pointer-events-none select-none z-0 opacity-15">
         {Array.from({ length: 18 }).map((_, i) => (
-          <div key={i} className="flex items-center justify-center text-3xl sm:text-4xl font-mono font-black text-white transform -rotate-30 whitespace-nowrap">
+          <div key={i} className="flex items-center justify-center text-3xl sm:text-4xl font-mono font-black text-slate-900/10 dark:text-white transform -rotate-30 whitespace-nowrap">
             {watermarkText}
           </div>
         ))}
@@ -210,23 +210,23 @@ export default function JogosLayout({
   };
 
   return (
-    <div className="relative w-full min-h-[500px] flex flex-col bg-slate-950/95 border border-slate-800/80 rounded-2xl p-4 sm:p-6 overflow-hidden shadow-2xl">
+    <div className="relative w-full min-h-[500px] flex flex-col bg-white dark:bg-slate-950/95 border border-slate-200 dark:border-slate-800/80 text-slate-800 dark:text-white rounded-2xl p-4 sm:p-6 overflow-hidden shadow-2xl">
       {renderWatermark()}
       
       {/* Cabeçalho do Contêiner */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-800/80 pb-4 mb-4 gap-4 z-10">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-4 mb-4 gap-4 z-10">
         <div>
-          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-500 bg-clip-text text-transparent flex items-center gap-2">
+          <h2 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-orange-600 via-amber-500 to-blue-700 dark:from-orange-400 dark:via-amber-400 dark:to-blue-400 bg-clip-text text-transparent flex items-center gap-2">
             <Zap className="w-5 h-5 text-yellow-400 animate-pulse" />
             {title}
           </h2>
-          <p className="text-xs sm:text-sm text-slate-400 font-medium">{description}</p>
+          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 font-medium">{description}</p>
         </div>
         
         <div className="flex items-center gap-2 self-stretch sm:self-auto justify-end">
           {/* Corações Locais (Vidas da Partida) */}
           {gameState === "playing" && (
-            <div className="flex items-center gap-1 bg-slate-900 px-3 py-2 rounded-xl border border-slate-800">
+            <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 px-3 py-2 rounded-xl border border-slate-200 dark:border-slate-800">
               {Array.from({ length: 3 }).map((_, i) => (
                 <motion.div key={i} animate={vidasLocais > i ? {} : { scale: [1, 1.5, 0], opacity: 0 }}>
                   {vidasLocais > i ? (
@@ -236,7 +236,7 @@ export default function JogosLayout({
                   )}
                 </motion.div>
               ))}
-              <div className="w-px h-4 bg-slate-800 mx-1"></div>
+              <div className="w-px h-4 bg-slate-200 dark:bg-slate-800 mx-1"></div>
               <span className="text-xs text-slate-400 font-bold" title="Vidas Globais Restantes Hoje">
                 {vidasGlobais !== null ? `${vidasGlobais}/12` : "..."}
               </span>
@@ -246,14 +246,14 @@ export default function JogosLayout({
           {/* Controle de Som */}
           <button
             onClick={() => setSoundEnabled(!soundEnabled)}
-            className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-all"
+            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition-all"
             title={soundEnabled ? "Mutar Áudio" : "Ativar Áudio"}
           >
             {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
           </button>
           
           {/* Indicador de Segurança */}
-          <div className="p-2 rounded-xl bg-emerald-950/30 border border-emerald-900/50 text-emerald-400 flex items-center gap-1.5 text-xs font-semibold">
+          <div className="p-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/50 text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5 text-xs font-semibold">
             <Shield className="w-3.5 h-3.5" />
             <span className="hidden sm:inline">Proteção Ativa</span>
           </div>
@@ -261,7 +261,7 @@ export default function JogosLayout({
           {/* Fechar Jogo */}
           <button
             onClick={onClose}
-            className="p-2 rounded-xl bg-red-950/20 border border-red-900/50 text-red-400 hover:bg-red-900/30 transition-all ml-1"
+            className="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-900/30 border border-rose-200 dark:border-rose-900/50 text-rose-600 dark:text-rose-400 transition-all ml-1"
           >
             <X className="w-4 h-4" />
           </button>
@@ -280,13 +280,13 @@ export default function JogosLayout({
               className="w-full h-full flex flex-col"
             >
               {vidasGlobais !== null && vidasGlobais < 3 && gameState === "playing" ? (
-                <div className="flex flex-col items-center justify-center p-8 text-center bg-slate-900/80 rounded-2xl border border-slate-800">
+                <div className="flex flex-col items-center justify-center p-8 text-center bg-white dark:bg-slate-900/80 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-xl">
                   <HeartCrack className="w-12 h-12 text-red-500 mb-4" />
-                  <h3 className="text-xl font-bold text-white mb-2">Sem Corações Suficientes</h3>
+                  <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Sem Corações Suficientes</h3>
                   <p className="text-slate-400 max-w-sm mb-6">
                     Você precisa de pelo menos 3 corações diários para iniciar uma nova partida. Você tem {vidasGlobais}. Volte amanhã!
                   </p>
-                  <button onClick={onClose} className="px-6 py-2 bg-slate-800 hover:bg-slate-700 text-white rounded-xl transition-all">
+                  <button onClick={onClose} className="px-6 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-white border border-slate-300 dark:border-transparent font-bold rounded-xl transition-all cursor-pointer">
                     Voltar para o Menu
                   </button>
                 </div>
@@ -300,23 +300,23 @@ export default function JogosLayout({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              className="w-full max-w-md mx-auto p-6 sm:p-8 rounded-2xl bg-slate-900/80 border border-slate-800/80 backdrop-blur-md flex flex-col items-center text-center shadow-xl relative"
+              className="w-full max-w-md mx-auto p-6 sm:p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex flex-col items-center text-center shadow-2xl relative text-slate-800 dark:text-white"
             >
               {/* Círculo do Recorde */}
-              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-purple-600 to-pink-600 flex items-center justify-center shadow-lg shadow-purple-500/20 mb-6">
+              <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-orange-500 to-amber-500 flex items-center justify-center shadow-lg shadow-orange-500/25 mb-6">
                 <Trophy className="w-10 h-10 text-white animate-bounce" />
               </div>
               
-              <h3 className="text-2xl font-extrabold text-white mb-1">Fim de Jogo!</h3>
-              <p className="text-slate-400 text-sm mb-6">Sua pontuação foi registrada no painel.</p>
+              <h3 className="text-2xl font-black text-slate-800 dark:text-white mb-1">Fim de Jogo!</h3>
+              <p className="text-slate-500 dark:text-slate-400 text-sm mb-6">Sua pontuação foi registrada no painel.</p>
               
               {/* Placa de Estatísticas */}
               <div className="w-full grid grid-cols-2 gap-4 mb-6">
-                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500">Pontos</span>
-                  <div className="text-xl sm:text-2xl font-black text-white mt-1">{score}</div>
+                  <div className="text-xl sm:text-2xl font-black text-slate-800 dark:text-white mt-1">{score}</div>
                 </div>
-                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-slate-500">XP Conquistado</span>
                   <div className="text-xl sm:text-2xl font-black text-yellow-400 mt-1 flex items-center justify-center gap-1">
                     <Zap className="w-5 h-5 fill-yellow-400 text-yellow-400" />
@@ -326,7 +326,7 @@ export default function JogosLayout({
               </div>
 
               {/* Status do Salvamento / Anti-Cheat */}
-              <div className="w-full p-3 rounded-xl bg-slate-950 border border-slate-800/50 mb-8 text-xs font-semibold text-slate-400 flex items-center justify-center gap-2">
+              <div className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800/50 mb-8 text-xs font-semibold text-slate-400 flex items-center justify-center gap-2">
                 {saving ? (
                   <>
                     <RefreshCw className="w-3.5 h-3.5 text-blue-400 animate-spin" />
@@ -341,13 +341,13 @@ export default function JogosLayout({
               <div className="w-full flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={onClose}
-                  className="flex-1 py-3 px-4 rounded-xl border border-slate-800 text-slate-300 font-semibold hover:bg-slate-800 hover:text-white transition-all text-sm"
+                  className="flex-1 py-3 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-slate-300 dark:border-transparent text-slate-700 dark:text-slate-300 font-bold transition-all text-sm cursor-pointer"
                 >
                   Voltar para Lista
                 </button>
                 <button
                   onClick={handleRestart}
-                  className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-blue-500 to-purple-600 text-white font-bold hover:shadow-lg hover:shadow-blue-500/20 transition-all flex items-center justify-center gap-1.5 text-sm"
+                  className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 text-white font-black hover:from-orange-600 hover:to-amber-600 hover:shadow-lg hover:shadow-orange-500/20 transition-all flex items-center justify-center gap-1.5 text-sm"
                 >
                   <RefreshCw className="w-4 h-4" />
                   Jogar Novamente

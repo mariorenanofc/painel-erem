@@ -37,7 +37,7 @@ export default function ThreeInteractiveBg() {
 
     // Color Configs based on theme
     let isDark = document.documentElement.classList.contains("dark");
-    let baseHex = isDark ? 0x818cf8 : 0x6366f1; // Indigo colors
+    let baseHex = isDark ? 0xff5500 : 0x1b365d; // PFT Brand colors (Orange & Deep Navy)
     const baseColor = new THREE.Color(baseHex);
 
     // Mouse coordinates
@@ -165,7 +165,7 @@ export default function ThreeInteractiveBg() {
       clearActiveBackground();
 
       isDark = document.documentElement.classList.contains("dark");
-      baseHex = isDark ? 0x818cf8 : 0x6366f1;
+      baseHex = isDark ? 0xff5500 : 0x1b365d;
       baseColor.setHex(baseHex);
 
       if (activeMode === "constellation") {
@@ -364,7 +364,7 @@ export default function ThreeInteractiveBg() {
     // Theme Class MutationObserver
     const themeObserver = new MutationObserver(() => {
       isDark = document.documentElement.classList.contains("dark");
-      baseHex = isDark ? 0x818cf8 : 0x6366f1;
+      baseHex = isDark ? 0xff5500 : 0x1b365d;
       baseColor.setHex(baseHex);
       
       // Update material color options on theme shift

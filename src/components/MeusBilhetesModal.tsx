@@ -72,14 +72,14 @@ export default function MeusBilhetesModal({ isOpen, onClose, matricula }: MeusBi
             >
               <button
                 onClick={() => setBilheteSelecionado(null)}
-                className="text-indigo-500 hover:text-indigo-600 dark:text-indigo-400 dark:hover:text-indigo-350 font-black mb-5 flex items-center gap-1 cursor-pointer text-sm select-none"
+                className="text-orange-500 hover:text-orange-600 dark:text-orange-400 dark:hover:text-orange-300 font-black mb-5 flex items-center gap-1 cursor-pointer text-sm select-none"
               >
                 <span>←</span> Voltar para a lista
               </button>
 
               {/* Card Retro Ticket */}
               <div className="bg-slate-50/50 dark:bg-slate-950/40 p-6 md:p-8 rounded-[2rem] border border-slate-200/60 dark:border-slate-800/80 text-center relative shadow-inner overflow-hidden">
-                <div className="text-[10px] font-black text-indigo-600 dark:text-indigo-400 uppercase tracking-widest mb-2">
+                <div className="text-[10px] font-black text-orange-600 dark:text-orange-400 uppercase tracking-widest mb-2">
                   Bilhete de Sorteio
                 </div>
                 <h2 className="text-4xl md:text-5xl font-black text-slate-800 dark:text-white font-mono mb-6 tracking-wider">

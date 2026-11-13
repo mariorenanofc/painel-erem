@@ -92,7 +92,7 @@ export default function PortalHeader({
   };
 
   return (
-    <header className="bg-white/80 dark:bg-slate-900/40 sticky top-0 z-40 border-b border-slate-200/60 dark:border-white/5 shadow-lg backdrop-blur-md transition-colors duration-300">
+    <header className="bg-white/90 dark:bg-slate-900/85 sticky top-0 z-40 border-b border-slate-200 dark:border-white/10 shadow-sm dark:shadow-2xl backdrop-blur-md transition-colors duration-300">
       <div className="max-w-[1536px] w-full px-6 lg:px-8 py-3.5 mx-auto flex justify-between items-center relative transition-all duration-300">
         
         {/* LOGO E PROJETO */}
@@ -116,7 +116,7 @@ export default function PortalHeader({
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={toggleTheme}
-              className="cursor-pointer p-2 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-yellow-500/30 text-slate-700 dark:text-white rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-sm"
+              className="cursor-pointer p-2 bg-slate-100/70 dark:bg-slate-900/60 hover:bg-slate-200/70 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/10 hover:border-orange-400/50 text-slate-700 dark:text-white rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-xs"
               aria-label="Alternar tema"
             >
               <span className="text-lg leading-none block select-none">
@@ -132,7 +132,7 @@ export default function PortalHeader({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={onAbrirCalendario}
-                className="cursor-pointer p-2 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-indigo-600 dark:text-indigo-400 rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-sm"
+                className="cursor-pointer p-2 bg-slate-100/70 dark:bg-slate-900/60 hover:bg-slate-200/70 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/10 hover:border-orange-400/50 text-orange-600 dark:text-orange-400 rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-xs"
                 aria-label="Abrir calendário"
               >
                 <span className="text-lg leading-none block select-none">📅</span>
@@ -147,7 +147,7 @@ export default function PortalHeader({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={toggleNotificacoes}
-                className="cursor-pointer relative p-2 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-slate-700 dark:text-white rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-sm"
+                className="cursor-pointer relative p-2 bg-slate-100/70 dark:bg-slate-900/60 hover:bg-slate-200/70 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/10 hover:border-orange-400/50 text-slate-700 dark:text-white rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-xs"
                 aria-label="Notificações"
               >
               <span className="text-lg leading-none block select-none">🔔</span>
@@ -168,9 +168,9 @@ export default function PortalHeader({
                   initial={{ opacity: 0, y: 10, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.98 }}
-                  className="absolute right-0 mt-3 w-80 sm:w-88 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/80 dark:border-white/5 overflow-hidden z-50 select-none"
+                  className="absolute right-0 mt-3 w-80 sm:w-88 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden z-50 select-none"
                 >
-                  <div className="bg-slate-50/50 dark:bg-slate-950/40 p-3.5 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                  <div className="bg-slate-100/70 dark:bg-slate-950/60 p-3.5 sm:p-4 border-b border-slate-200 dark:border-white/10 flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <h3 className="font-display font-black text-slate-800 dark:text-white text-xs uppercase tracking-wider">
                         Notificações
@@ -184,7 +184,7 @@ export default function PortalHeader({
                     {notificacoes.length > 0 && (
                       <button
                         onClick={marcarTodasLidas}
-                        className="cursor-pointer text-[10px] font-bold text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                        className="cursor-pointer text-[10px] font-bold text-slate-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
                       >
                         Marcar lidas
                       </button>
@@ -305,9 +305,9 @@ export default function PortalHeader({
                 setMenuAberto(!menuAberto);
                 setNotificacoesAbertas(false);
               }}
-              className="cursor-pointer flex items-center gap-2.5 bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200/80 dark:border-slate-800 p-1.5 pr-3.5 rounded-full transition-colors text-slate-700 dark:text-white shadow-sm"
+              className="cursor-pointer flex items-center gap-2.5 bg-slate-100/70 dark:bg-slate-900/60 hover:bg-slate-200/70 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/10 p-1.5 pr-3.5 rounded-full transition-colors text-slate-700 dark:text-white shadow-xs"
             >
-              <div className="bg-gradient-to-tr from-brand-primary to-brand-secondary text-white font-black h-8 w-8 rounded-full flex items-center justify-center shadow-inner relative select-none">
+              <div className="bg-gradient-to-tr from-orange-500 to-slate-900 text-white font-black h-8 w-8 rounded-full flex items-center justify-center shadow-inner relative select-none">
                 <div className="absolute inset-0 bg-white/10 rounded-full" />
                 {primeiroNome.charAt(0)}
               </div>
@@ -331,11 +331,11 @@ export default function PortalHeader({
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 12, scale: 0.96 }}
                   transition={{ type: "spring", damping: 25, stiffness: 350 }}
-                  className="absolute right-0 mt-3 w-80 sm:w-84 bg-white/98 dark:bg-slate-950/98 backdrop-blur-2xl rounded-3xl shadow-2xl border border-slate-200/90 dark:border-white/10 overflow-hidden z-50 select-none transition-colors duration-300"
+                  className="absolute right-0 mt-3 w-80 sm:w-84 bg-white/98 dark:bg-slate-950/98 backdrop-blur-2xl rounded-3xl shadow-2xl border border-slate-200 dark:border-white/10 overflow-hidden z-50 select-none transition-colors duration-300"
                 >
                   {/* CABEÇALHO DO POPOVER COM IDENTIDADE DO ALUNO */}
-                  <div className="p-4 bg-gradient-to-br from-indigo-50/90 via-slate-50 to-white dark:from-indigo-950/60 dark:via-slate-900/80 dark:to-slate-950 border-b border-slate-200/80 dark:border-white/10 flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-brand-primary to-brand-secondary text-white font-black flex items-center justify-center text-xl shadow-inner shrink-0 relative">
+                  <div className="p-4 bg-gradient-to-br from-orange-50/80 via-amber-50/30 to-white dark:from-slate-900 dark:via-slate-900 dark:to-slate-950 border-b border-slate-200 dark:border-white/10 flex items-center gap-3.5">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-orange-500 to-slate-900 text-white font-black flex items-center justify-center text-xl shadow-inner shrink-0 relative">
                       <div className="absolute inset-0 bg-white/10 rounded-2xl" />
                       {primeiroNome.charAt(0)}
                     </div>

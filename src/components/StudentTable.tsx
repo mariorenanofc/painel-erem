@@ -89,7 +89,7 @@ export default function StudentTable({ alunosFiltrados, preencherEdicao }: Stude
                             : aluno.statusTrilha === "Reserva"
                               ? "bg-amber-100/80 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200/30 dark:border-amber-900/15"
                               : aluno.statusTrilha === "Inscrito"
-                                ? "bg-blue-100/80 dark:bg-blue-955/40 text-blue-700 dark:text-blue-400 border-blue-200/30 dark:border-blue-900/15"
+                                ? "bg-blue-100/80 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 border-blue-200/30 dark:border-blue-900/15"
                                 : "bg-slate-100 dark:bg-slate-950 text-slate-500 dark:text-slate-400 border-slate-200/50 dark:border-slate-800"
                         }`}>
                           🚀 Trilha Tech: {aluno.statusTrilha}

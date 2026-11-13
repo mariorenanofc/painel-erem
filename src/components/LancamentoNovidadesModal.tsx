@@ -31,31 +31,38 @@ interface DadosTelemetria {
   }>;
 }
 
-export const TEMPLATE_HOJE_MARKDOWN = `### 🎂 Aniversariantes no Calendário Escolar
-🎂 **Mural de Aniversários:** Acompanhe os aniversários de todos os colegas integrados ao calendário de aulas e prazos de missões.
-🔒 **Privacidade Respeitada:** Exibição elegante com Primeiro Nome e Último Sobrenome, sem expor dados sensíveis ou turmas.
-⚡ **Filtro Rápido:** Novo botão de filtro '🎂 Aniversários' para navegar diretamente pelas datas comemorativas do mês.
+export const TEMPLATE_HOJE_MARKDOWN = `### 🏆 Ranking Semanal Apurado (Semana 46)!
+⚡ **Fechamento Automático:** Apuração oficial da Semana 46 consolidada com sincronização direta do Google Classroom.
+🎁 **Bônus de XP no Top 10:** Os estudantes com melhor desempenho na semana já receberam seus pontos extras na conta!
+📊 **Consulte sua Posição:** Acesse a aba Ranking no Portal para ver o pódio da sua turma e o ranking geral.
 
 ---
 
-### 📱 Blindagem Mobile no Coding Practice
-🛡️ **Blindagem Anti-Shift:** O teclado virtual do celular não forçará mais maiúsculas acidentais. Se o código requer letra minúscula e o celular insistir em Shift, o motor aceita de forma transparente sem punir com erro.
-⚡ **Barra Rápida de Símbolos:** Toque direto em teclas essenciais (\`Tab\`, \`{\`, \`}\`, \`(\`, \`)\`, \`;\`, \`=\`, \`<\`, \`>\`, \`"\`, \`'\`, \`↵ Enter\`) com destaque animado no próximo caractere esperado.
-⌨️ **Foco Contínuo:** Os toques nos símbolos não fecham nem desconectam o teclado virtual nativo do seu smartphone.
+### 🎨 Nova Identidade Visual PFT (Projeto Florescendo Talentos)
+✨ **Paleta Oficial PFT:** Novo design harmônico com Laranja Vibrante, Azul Marinho Noturno, Areia Suave e Verde Broto para status de conclusão.
+🌐 **Grafismo Tubular Exclusivo:** Fundo dinâmico com circuitos e nós digitais inspirados nas trilhas tecnológicas do projeto.
+🌗 **Modo Claro e Modo Escuro:** Adaptação completa de alto contraste em 100% das telas, botões, modais e relatórios.
 
 ---
 
-### 🏛️ Santuário dos Veteranos & Stories 9:16
-📸 **Gerador de Cards para Story (9:16):** Exporte cards em alta definição com QR Code dinâmico para Instagram e WhatsApp nos temas *Ouro Cósmico*, *Cyber Neon* e *Aurora Deep*.
-🏛️ **Santuário Público das Lendas:** Conheça os formandos oficiais da Trilha Tech com memorial, projetos concluídos, stack e certificações aprovadas pelo tutor.
-🌗 **Contraste Perfeito:** Interface 100% calibrada para Modo Escuro e Modo Claro em todos os cards, estatísticas e badges.`;
+### 🚀 Cockpit & Telas Docentes Revitalizadas
+🌟 **Portal do Aluno:** Cockpit e cards de missões com gradientes canônicos e legibilidade reforçada em ambos os temas.
+🛡️ **Painel Docente / Tutor:** Dashboards, frequências, analytics e gabaritos alinhados à mesma linguagem visual moderna.
+⚡ **Zero Textos Ocultos:** Correções completas em estados de foco, hover e transições de tema.
+
+---
+
+### 🏛️ Santuário PFT & Leaderboards
+👏 **Aplausos e Stories:** Efeitos de celebração e geração de cards 9:16 integrados à nova atmosfera PFT.
+🏆 **Leaderboards e Certificados:** Visual refinado para honras escolares e certificados oficiais de conclusão.
+🏎️ **Performance e Fluidez:** Zero leituras extras no banco de dados e transição CSS instantânea.`;
 
 export default function LancamentoNovidadesModal({ onClose }: LancamentoNovidadesModalProps) {
   const { toast } = useToast();
   const [rascunho, setRascunho] = useState(
-    "Hoje implementamos: 1) Integração de aniversariantes no Calendário Escolar (primeiro nome e último sobrenome de todos os alunos, sem turma); 2) Blindagem mobile anti-shift e atalhos de código no Coding Practice; 3) Cards para Stories 9:16 e contraste dark/light no Hall da Fama."
+    "Hoje implementamos: 1) Transição visual completa para a identidade oficial do PFT (Projeto Florescendo Talentos) em 100% do portal (Laranja, Azul Marinho, Areia e Verde Broto); 2) Fundo com grafismo tubular de circuitos e nós tecnológicos; 3) Ajustes finos de alto contraste e hover no Portal, Cockpit, Tutor e Hall da Fama."
   );
-  const [versao, setVersao] = useState("v2.2.1");
+  const [versao, setVersao] = useState("v2.4.0");
   const [markdownGerado, setMarkdownGerado] = useState(TEMPLATE_HOJE_MARKDOWN);
   const [isGerando, setIsGerando] = useState(false);
   const [isSalvando, setIsSalvando] = useState(false);
@@ -86,9 +93,9 @@ export default function LancamentoNovidadesModal({ onClose }: LancamentoNovidade
   }, [abaAtiva, versao]);
 
   const carregarTemplateHoje = () => {
-    setVersao("v2.2.1");
+    setVersao("v2.4.0");
     setMarkdownGerado(TEMPLATE_HOJE_MARKDOWN);
-    toast("Novidades da versão v2.2.1 carregadas!", "info", "Atualizado");
+    toast("Novidades da versão v2.4.0 carregadas!", "info", "Atualizado");
   };
 
   const handleGerarIA = async () => {

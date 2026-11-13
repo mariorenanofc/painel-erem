@@ -4,9 +4,29 @@
   --font-sans: var(--font-plus-jakarta-sans), sans-serif;
   --font-display: var(--font-outfit), sans-serif;
   
-  --color-brand-primary: #6366f1;
-  --color-brand-secondary: #06b6d4;
-  --color-brand-accent: #d946ef;
+  --color-brand-primary: #ff5500;
+  --color-brand-secondary: #0e2442;
+  --color-brand-accent: #34c759;
+
+  /* PFT Design Tokens (Projeto Florescendo Talentos) */
+  --color-pft-orange: #ff5500;
+  --color-pft-orange-hover: #e64d00;
+  --color-pft-orange-light: #fff3eb;
+  --color-pft-orange-glow: rgba(255, 85, 0, 0.25);
+  
+  --color-pft-navy: #0e2442;
+  --color-pft-navy-deep: #08172e;
+  --color-pft-navy-card: #10294c;
+  --color-pft-navy-border: rgba(255, 255, 255, 0.08);
+
+  --color-pft-sand: #f7f5ec;
+  --color-pft-sand-card: #ffffff;
+  --color-pft-sand-border: #e6e2d1;
+  --color-pft-sand-muted: #6b7c93;
+
+  --color-pft-green: #34c759;
+  --color-pft-green-light: #eafaf1;
+  --color-pft-blue: #1b365d;
   
   --animate-float-slow: float-slow 15s ease-in-out infinite;
   --animate-float-medium: float-medium 10s ease-in-out infinite;
@@ -58,13 +78,17 @@
 @variant dark (&:where(.dark, .dark *));
 
 :root {
-  --background: #fafafa;
-  --foreground: #0f172a;
+  --background: #f7f5ec;
+  --foreground: #0e2442;
+  --pft-card: #ffffff;
+  --pft-border: #e6e2d1;
 }
 
 .dark {
-  --background: #030712;
-  --foreground: #f8fafc;
+  --background: #08172e;
+  --foreground: #f7f5ec;
+  --pft-card: #0e2442;
+  --pft-border: rgba(255, 255, 255, 0.08);
 }
 
 body {
@@ -76,34 +100,34 @@ body {
 
 /* Glassmorphism custom components */
 .glass-panel {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(15, 23, 42, 0.08);
-  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.02);
+  border: 1px solid var(--pft-border);
+  box-shadow: 0 4px 30px rgba(14, 36, 66, 0.04);
 }
 
 .dark .glass-panel {
-  background: rgba(17, 24, 39, 0.55);
+  background: rgba(14, 36, 66, 0.75);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   box-shadow: none;
 }
 
 .glass-panel-heavy {
-  background: rgba(255, 255, 255, 0.85);
+  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(15, 23, 42, 0.12);
-  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.04);
+  border: 1px solid var(--pft-border);
+  box-shadow: 0 10px 40px rgba(14, 36, 66, 0.06);
 }
 
 .dark .glass-panel-heavy {
-  background: rgba(10, 15, 30, 0.85);
+  background: rgba(8, 23, 46, 0.90);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: none;
 }
 
@@ -118,14 +142,14 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(99, 102, 241, 0.2);
+  background: rgba(255, 85, 0, 0.25);
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(99, 102, 241, 0.5);
+  background: rgba(255, 85, 0, 0.55);
   border-radius: 9999px;
   border: 2px solid transparent;
   background-clip: padding-box;
@@ -133,36 +157,36 @@ body {
 
 /* Neon text shadows */
 .text-neon-glow {
-  text-shadow: 0 0 10px rgba(99, 102, 241, 0.3), 0 0 20px rgba(99, 102, 241, 0.1);
+  text-shadow: 0 0 10px rgba(255, 85, 0, 0.25), 0 0 20px rgba(255, 85, 0, 0.1);
 }
 
 .dark .text-neon-glow {
-  text-shadow: 0 0 15px rgba(99, 102, 241, 0.5), 0 0 30px rgba(99, 102, 241, 0.2);
+  text-shadow: 0 0 15px rgba(255, 85, 0, 0.4), 0 0 30px rgba(255, 85, 0, 0.15);
 }
 
-/* Animated Aurora Background Glow Blobs */
+/* Animated Aurora Background Glow Blobs com Paleta Oficial PFT */
 .aurora-bg-blob-1 {
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, rgba(99, 102, 241, 0) 70%);
+  background: radial-gradient(circle, rgba(255, 85, 0, 0.18) 0%, rgba(255, 85, 0, 0) 70%);
 }
 
 .dark .aurora-bg-blob-1 {
-  background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0) 70%);
+  background: radial-gradient(circle, rgba(255, 85, 0, 0.12) 0%, rgba(255, 85, 0, 0) 70%);
 }
 
 .aurora-bg-blob-2 {
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.25) 0%, rgba(6, 182, 212, 0) 70%);
+  background: radial-gradient(circle, rgba(27, 54, 93, 0.15) 0%, rgba(27, 54, 93, 0) 70%);
 }
 
 .dark .aurora-bg-blob-2 {
-  background: radial-gradient(circle, rgba(6, 182, 212, 0.12) 0%, rgba(6, 182, 212, 0) 70%);
+  background: radial-gradient(circle, rgba(14, 36, 66, 0.35) 0%, rgba(14, 36, 66, 0) 70%);
 }
 
 .aurora-bg-blob-3 {
-  background: radial-gradient(circle, rgba(217, 70, 239, 0.2) 0%, rgba(217, 70, 239, 0) 70%);
+  background: radial-gradient(circle, rgba(52, 199, 89, 0.12) 0%, rgba(52, 199, 89, 0) 70%);
 }
 
 .dark .aurora-bg-blob-3 {
-  background: radial-gradient(circle, rgba(217, 70, 239, 0.1) 0%, rgba(217, 70, 239, 0) 70%);
+  background: radial-gradient(circle, rgba(52, 199, 89, 0.08) 0%, rgba(52, 199, 89, 0) 70%);
 }
 
 /* Glowing text loading fill animations */

@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
@@ -9,8 +8,36 @@ import { AlunoRisco, AlunoSimples } from "@/src/types/index";
 import { apiTutor } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
 import { motion, AnimatePresence } from "framer-motion";
+import PftBackgroundPattern from "@/src/components/PftBackgroundPattern";
 
-type FichaAluno = any;
+interface HistoricoXPItem {
+  id: string;
+  xp: number;
+  descricao?: string;
+  data?: string | number;
+  atividade?: string;
+  status?: string;
+}
+
+interface FichaAluno {
+  dadosPessoais?: {
+    nome?: string;
+    email?: string;
+    telefone?: string;
+    responsavel?: string;
+    obs?: string;
+  };
+  statusProjeto?: string;
+  turmaProjeto?: string;
+  xpTotal?: number;
+  nivel?: string;
+  frequencia?: {
+    taxa?: number;
+    totalPresencas?: number;
+    totalAulas?: number;
+  };
+  historicoXP?: HistoricoXPItem[];
+}
 
 export default function AnalyticsPage() {
   const router = useRouter();
@@ -109,7 +136,10 @@ export default function AnalyticsPage() {
     );
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 p-4 md:p-8 font-sans transition-colors duration-300 relative overflow-hidden">
+    <main className="min-h-screen bg-pft-sand dark:bg-pft-navy-deep p-4 md:p-8 font-sans transition-colors duration-300 relative overflow-hidden">
+      {/* PFT Authentic Circuit & Nodes Motif */}
+      <PftBackgroundPattern />
+
       {/* Ambient background glows */}
       <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-10 right-1/4 w-[600px] h-[600px] bg-fuchsia-500/5 dark:bg-fuchsia-500/8 rounded-full blur-[140px] pointer-events-none" />
@@ -579,7 +609,7 @@ export default function AnalyticsPage() {
                               </p>
                             ) : (
                               <div className="space-y-3.5">
-                                {ficha360.historicoXP.map((item: any, idx: number) => {
+                                {ficha360.historicoXP.map((item: HistoricoXPItem, idx: number) => {
                                   const isPix = item.id.includes("PIX");
                                   const isDoacao = isPix && item.xp < 0;
                                   const isBadge = item.id.includes("BADGE");
@@ -603,16 +633,18 @@ export default function AnalyticsPage() {
                                           </p>
                                           <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 flex items-center gap-1 font-black uppercase tracking-wider font-mono">
                                             <span>🕒</span>{" "}
-                                            {new Date(item.data)
-                                              .toLocaleString("pt-BR", {
-                                                day: "2-digit",
-                                                month: "2-digit",
-                                                year: "numeric",
-                                                hour: "2-digit",
-                                                minute: "2-digit",
-                                              })
-                                              .replace(",", " às")}{" "}
-                                            • Status: {item.status}
+                                            {item.data
+                                              ? new Date(item.data)
+                                                  .toLocaleString("pt-BR", {
+                                                    day: "2-digit",
+                                                    month: "2-digit",
+                                                    year: "numeric",
+                                                    hour: "2-digit",
+                                                    minute: "2-digit",
+                                                  })
+                                                  .replace(",", " às")
+                                              : "Data recente"}{" "}
+                                            • Status: {item.status || "Concluído"}
                                           </p>
                                         </div>
                                       </div>

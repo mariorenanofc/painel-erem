@@ -95,7 +95,7 @@ export default function DueloModal({
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/90 flex items-center justify-center">
-      <div className="w-full h-full max-w-7xl max-h-[95vh] relative overflow-hidden bg-slate-950 rounded-2xl border border-indigo-500/30 shadow-[0_0_50px_rgba(99,102,241,0.15)]">
+      <div className="w-full h-full max-w-7xl max-h-[95vh] relative overflow-hidden bg-white dark:bg-slate-950 rounded-2xl border border-slate-200 dark:border-orange-500/30 shadow-2xl">
         
         {/* Banner de Aviso Anti-Fraude */}
         <div className="absolute top-0 left-0 right-0 bg-red-600 text-white text-xs font-bold text-center py-1 z-50 animate-pulse">

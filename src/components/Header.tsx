@@ -47,13 +47,13 @@ export default function Header({
   };
 
   return (
-    <header className="bg-white/80 dark:bg-slate-900/40 p-4.5 rounded-[2rem] shadow-lg flex justify-between items-center mb-8 border border-slate-200/60 dark:border-white/5 relative z-20 backdrop-blur-md">
+    <header className="bg-white/90 dark:bg-slate-900/85 p-4.5 rounded-[2rem] shadow-xs dark:shadow-2xl flex justify-between items-center mb-8 border border-slate-200 dark:border-white/10 relative z-20 backdrop-blur-md transition-colors duration-300">
       {/* LOGO E TÍTULO CLICÁVEIS */}
       <Link
         href={destinoLink}
         className="flex items-center gap-3 hover:opacity-90 transition-all cursor-pointer group"
       >
-        <div className="w-10 h-10 bg-gradient-to-br from-brand-primary to-brand-secondary rounded-2xl flex items-center justify-center text-xl shadow-inner border border-white/10 group-hover:scale-105 transition-transform duration-300 relative">
+        <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-slate-900 rounded-2xl flex items-center justify-center text-xl shadow-inner border border-white/10 group-hover:scale-105 transition-transform duration-300 relative">
           <div className="absolute inset-0 bg-white/10 rounded-2xl" />
           🎓
         </div>
@@ -71,7 +71,7 @@ export default function Header({
         {carregando && (
           <div className="relative w-5 h-5 opacity-70">
             <div className="absolute inset-0 rounded-full border-2 border-slate-200 dark:border-slate-800" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-brand-primary animate-spin" />
+            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-orange-500 animate-spin" />
           </div>
         )}
 
@@ -90,7 +90,7 @@ export default function Header({
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={toggleTema}
-                className="cursor-pointer bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-slate-900 border border-slate-200/80 dark:border-slate-800 hover:border-yellow-500/30 text-slate-700 dark:text-white p-2 rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-sm"
+                className="cursor-pointer bg-slate-100/70 dark:bg-slate-900/60 hover:bg-slate-200/70 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/10 hover:border-amber-400/50 text-slate-700 dark:text-white p-2 rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-xs"
                 title={tema === "light" ? "Mudar para Modo Escuro" : "Mudar para Modo Claro"}
               >
                 <span className="text-lg leading-none select-none">
@@ -102,7 +102,7 @@ export default function Header({
               <motion.div whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }}>
                 <Link
                   href={destinoLink}
-                  className="cursor-pointer bg-slate-50 dark:bg-slate-950/60 hover:bg-slate-100 dark:hover:bg-brand-primary/80 border border-slate-200/80 dark:border-slate-800 hover:border-brand-primary/30 text-slate-700 dark:text-white p-2 px-3.5 rounded-xl transition-all flex items-center gap-2 shadow-sm text-xs font-black uppercase tracking-wider h-10 select-none"
+                  className="cursor-pointer bg-slate-100/70 dark:bg-slate-900/60 hover:bg-slate-200/70 dark:hover:bg-slate-800 border border-slate-200 dark:border-white/10 hover:border-orange-400/50 text-slate-700 dark:text-white p-2 px-3.5 rounded-xl transition-all flex items-center gap-2 shadow-xs text-xs font-black uppercase tracking-wider h-10 select-none"
                   title={textoLink}
                 >
                   <span className="hidden sm:block">
@@ -122,7 +122,7 @@ export default function Header({
                     e.preventDefault();
                     onLogout();
                   }}
-                  className="cursor-pointer bg-slate-50 dark:bg-slate-950/60 hover:bg-rose-500/10 dark:hover:bg-red-500/80 border border-slate-200/80 dark:border-slate-800 hover:border-rose-500/30 text-rose-600 dark:text-white p-2 rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-sm"
+                  className="cursor-pointer bg-slate-100/70 dark:bg-slate-900/60 hover:bg-rose-50 dark:hover:bg-rose-950/40 border border-slate-200 dark:border-white/10 hover:border-rose-400 text-rose-600 dark:text-rose-400 p-2 rounded-xl transition-all flex items-center justify-center w-10 h-10 shadow-xs"
                   title="Sair do Sistema"
                 >
                   <svg

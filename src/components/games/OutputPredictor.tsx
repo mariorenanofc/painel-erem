@@ -170,14 +170,14 @@ export default function OutputPredictor({ onGameOver, playSound, perderVida }: O
         <div className="w-16 h-16 rounded-2xl bg-teal-500/10 border border-teal-500/30 flex items-center justify-center text-teal-400 mb-4">
           <Terminal className="w-8 h-8" />
         </div>
-        <h3 className="text-xl font-bold text-white mb-2">Detetive do Console</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-6">
+        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Detetive do Console</h3>
+        <p className="text-slate-600 dark:text-slate-400 text-sm max-w-sm mb-6">
           Analise a execução do código de 2 a 3 linhas e descubra qual será o resultado exato 
           impresso no console/tela!
         </p>
         <button
           onClick={handleStart}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-teal-500 to-emerald-600 text-white font-bold hover:shadow-lg hover:shadow-teal-500/20 transition-all flex items-center gap-2"
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black hover:shadow-lg hover:shadow-teal-500/20 transition-all flex items-center gap-2"
         >
           Iniciar Partida
           <Sparkles className="w-4 h-4" />
@@ -191,7 +191,7 @@ export default function OutputPredictor({ onGameOver, playSound, perderVida }: O
   return (
     <div className="flex-1 flex flex-col justify-between p-4 max-w-xl mx-auto w-full">
       {/* Placa de Info */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-6 text-sm text-slate-400">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-3 mb-6 text-sm text-slate-600 dark:text-slate-400">
         <div className="flex items-center gap-2">
           <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
             {currentQ.lang}

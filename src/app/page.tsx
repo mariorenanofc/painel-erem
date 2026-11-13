@@ -16,6 +16,7 @@ import { formatarDataInput } from "../utils/formatters";
 import { Aluno } from "../types";
 import { useToast } from "@/src/contexts/ToastContext"; // <-- IMPORTAÇÃO DO CONTEXTO
 import ThreeInteractiveBg from "../components/ThreeInteractiveBg";
+import PftBackgroundPattern from "../components/PftBackgroundPattern";
 import TrilhaTechLoader from "../components/TrilhaTechLoader";
 
 const GOOGLE_API_URL = process.env.NEXT_PUBLIC_GOOGLE_API_URL as string;
@@ -392,7 +393,10 @@ export default function DashboardAlunos() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 p-4 md:p-8 font-sans relative overflow-hidden transition-colors duration-300">
+    <div className="min-h-screen bg-pft-sand dark:bg-pft-navy-deep text-slate-800 dark:text-slate-100 p-4 md:p-8 font-sans relative overflow-hidden transition-colors duration-300">
+      {/* Grafismo Oficial de Circuitos e Trilhas do PFT */}
+      <PftBackgroundPattern />
+
       {/* Three.js interactive custom background */}
       <ThreeInteractiveBg />
 

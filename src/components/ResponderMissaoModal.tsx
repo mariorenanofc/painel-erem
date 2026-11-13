@@ -170,7 +170,7 @@ export default function ResponderMissaoModal({
       ? "from-amber-500 via-orange-500 to-yellow-500 dark:from-slate-950 dark:via-amber-950/30 dark:to-slate-900"
       : missaoAberta.tipo === "Material"
         ? "from-emerald-500 via-teal-500 to-cyan-500 dark:from-slate-950 dark:via-emerald-950/30 dark:to-slate-900"
-        : "from-indigo-500 via-purple-500 to-pink-500 dark:from-slate-950 dark:via-indigo-950/30 dark:to-slate-900";
+        : "from-orange-600 via-amber-600 to-blue-900 dark:from-[#08172e] dark:via-[#0e2442] dark:to-[#08172e]";
 
   const tipoIcone =
     missaoAberta.tipo === "Quiz"
@@ -203,7 +203,7 @@ export default function ResponderMissaoModal({
           {isTypingActivity && isPendenteOuDevolvida ? (
             <>
               {/* Header Simplificado do Treinador */}
-              <div className="bg-gradient-to-r from-indigo-600 to-pink-600 p-5 flex justify-between items-center text-white shrink-0 relative">
+              <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-blue-900 dark:from-[#08172e] dark:via-[#0e2442] dark:to-[#08172e] p-5 flex justify-between items-center text-white shrink-0 relative">
                 <div className="relative z-10 flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
                     <span className="text-2xl">⌨️</span>
@@ -495,8 +495,8 @@ export default function ResponderMissaoModal({
                         whileTap={!inputDesabilitado ? { scale: 0.995 } : {}}
                         className={`flex items-start p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200 backdrop-blur-sm ${
                           isSelected
-                            ? "bg-indigo-50/80 dark:bg-indigo-900/20 border-indigo-500 dark:border-indigo-500 shadow-md shadow-indigo-500/10"
-                            : "bg-white/80 dark:bg-slate-800/60 border-slate-200/80 dark:border-slate-700/50 hover:border-indigo-300 dark:hover:border-indigo-600 hover:bg-slate-50 dark:hover:bg-slate-700/60"
+                            ? "bg-orange-50/90 dark:bg-orange-950/20 border-orange-500 dark:border-orange-500 shadow-md shadow-orange-500/10"
+                            : "bg-white dark:bg-slate-800/60 border-slate-200 dark:border-slate-700/50 hover:border-orange-400 dark:hover:border-orange-500 hover:bg-orange-50/40 dark:hover:bg-slate-700/60"
                         } ${inputDesabilitado ? "opacity-60 cursor-not-allowed" : ""}`}
                       >
                         <input
@@ -506,13 +506,13 @@ export default function ResponderMissaoModal({
                           checked={isSelected}
                           onChange={(e) => setResposta(e.target.value)}
                           disabled={inputDesabilitado}
-                          className="mt-1 mr-3 w-4 h-4 text-indigo-600 focus:ring-indigo-500 accent-indigo-500"
+                          className="mt-1 mr-3 w-4 h-4 text-orange-500 focus:ring-orange-500 accent-orange-500"
                         />
                         <div className="flex-1 overflow-x-auto">
-                          <strong className={`mr-2 text-sm font-black ${isSelected ? "text-indigo-700 dark:text-indigo-300" : "text-slate-600 dark:text-slate-300"}`}>
+                          <strong className={`mr-2 text-sm font-black ${isSelected ? "text-orange-600 dark:text-orange-400" : "text-slate-800 dark:text-slate-200"}`}>
                             {letra})
                           </strong>
-                          <code className="text-slate-600 dark:text-slate-400 font-mono text-sm whitespace-pre-wrap leading-tight">
+                          <code className="text-slate-800 dark:text-slate-200 font-mono text-sm font-semibold whitespace-pre-wrap leading-tight">
                             {opcaoTexto}
                           </code>
                         </div>

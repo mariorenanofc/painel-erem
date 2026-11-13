@@ -52,6 +52,13 @@ A transição gradual do Google Sheets para o Firestore Nativo (Fase 4) está co
    - [x] **Fase 2 (Motor de Fechamento & Estorno Seguro):** Engine `ciclosEngine.ts` com idempotência absoluta, IDs determinísticos na coleção `entregas`, isolamento total das notas escolares, atualização CQRS em `portal_views`, gravação de snapshot em `historico_ciclos`, ação `estornar_ciclo` e endpoint `/api/cron/fechar-ciclo`.
    - [x] **Fase 3 (Modal Renovado com Retroatividade):** `FechamentoCicloModal.tsx` com navegação entre "Ciclo Anterior" e "Ciclo Atual", auditoria com status `✅ Pago / Concluído`, abas de WhatsApp individuais (Turma 1, Turma 2, Geral) e botão de estorno de emergência.
    - [x] **Fase 4 (Calendário Oficial Integrado):** `CalendarioOficial.tsx` com visão mensal estilo Google Agenda, lista de prazos de missões, datas de aulas, contagem regressiva para fechamento de ciclo e feriados nacionais (fixos e móveis calculados por feriadosUtils.ts), com acesso no Portal do Aluno (botão de acesso rápido no header e menu de perfil) e no Painel do Tutor.
+6. **Transição Visual Oficial PFT (Projeto Florescendo Talentos) & Canonicidade Tailwind CSS (Concluído em 13/11/2026):**
+   - [x] **Fase 1 (Design Tokens & CSS Global):** Configuração de tokens em globals.css para Light (Areia #f7f5ec) e Dark (Azul Marinho #08172e/#0e2442), bordas PFT e blobs de iluminação ambiental.
+   - [x] **Fase 2 (Portal do Aluno, Cockpit & Login):** Implementação de PftBackgroundPattern.tsx com trilhas tubulares e nós de circuito, alinhamento dos fundos 3D Three.js e calibração de contraste nos botões e abas.
+   - [x] **Fase 3 (Área Docente / TrilhaTech):** Header, Dashboard, Aulas, Analytics, Configurações e Gabaritos vestidos com a nova identidade visual PFT; eliminação completa de tipos any com tipagem estrita (FichaAluno, HistoricoXPItem).
+   - [x] **Fase 4 (Hall da Fama, Modais Compartilhados & Release Sync):** Fundo PFT, luzes cósmicas laranja/azul e badges de honra no Hall da Fama; atualização das novidades para v2.3.0 em NovidadesModal.tsx e LancamentoNovidadesModal.tsx.
+   - [x] **Auditoria de Canonicidade:** Eliminação de classes arbitrárias fora da escala oficial do Tailwind CSS e validação estrita (npx tsc --noEmit código 0).
+
 
 ### ⏳ Onde Retomar na Próxima Sessão (Checklist de Continuidade)
 1. **Hall da Fama — Etapa 3 (Certificados & Compartilhamento):**

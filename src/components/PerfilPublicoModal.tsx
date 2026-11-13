@@ -176,8 +176,8 @@ export default function PerfilPublicoModal({
               : isPrata
               ? "bg-gradient-to-r from-slate-400 via-slate-300 to-slate-400 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.1)]"
               : isBronze
-              ? "bg-gradient-to-r from-orange-550 via-amber-600 to-orange-500 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.15)]"
-              : "bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-slate-950 dark:via-indigo-950/40 dark:to-slate-900"
+              ? "bg-gradient-to-r from-orange-600 via-amber-600 to-orange-500 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.15)]"
+              : "bg-gradient-to-r from-orange-600 via-amber-600 to-blue-700 dark:from-[#08172e] dark:via-[#0e2442] dark:to-[#08172e]"
           }`}>
             <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none"></div>
             {/* Height spacer inside the banner to set its volume */}

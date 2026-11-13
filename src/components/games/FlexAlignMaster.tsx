@@ -152,14 +152,14 @@ export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: F
         <div className="w-16 h-16 rounded-2xl bg-indigo-500/10 border border-indigo-500/30 flex items-center justify-center text-indigo-400 mb-4">
           <LayoutGrid className="w-8 h-8" />
         </div>
-        <h3 className="text-xl font-bold text-white mb-2">Alinhador Flexbox</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-6">
+        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Alinhador Flexbox</h3>
+        <p className="text-slate-600 dark:text-slate-400 text-sm max-w-sm mb-6">
           Selecione a propriedade de alinhamento CSS `justify-content` para mover os blocos do 
           container até os alvos tracejados!
         </p>
         <button
           onClick={handleStart}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold hover:shadow-lg hover:shadow-indigo-500/20 transition-all flex items-center gap-2"
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black hover:shadow-lg hover:shadow-indigo-500/20 transition-all flex items-center gap-2"
         >
           Iniciar Partida
           <Sparkles className="w-4 h-4" />
@@ -173,14 +173,14 @@ export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: F
   return (
     <div className="flex-1 flex flex-col justify-between p-4 max-w-xl mx-auto w-full">
       {/* Placa de Info */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4 text-sm text-slate-400">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-3 mb-4 text-sm text-slate-600 dark:text-slate-400">
         <span>Desafio {currentIndex + 1} de 4</span>
         <span className="font-bold text-yellow-400">Pontos: {score}</span>
       </div>
 
       <div className="text-center mb-3">
         <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Alvo Flex:</span>
-        <h4 className="text-sm sm:text-base font-extrabold text-white mt-0.5">{currentC.targetDesc}</h4>
+        <h4 className="text-sm sm:text-base font-extrabold text-slate-800 dark:text-white mt-0.5">{currentC.targetDesc}</h4>
       </div>
 
       {/* Caixa de Exibição do Flexbox Dinâmico */}
@@ -210,7 +210,7 @@ export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: F
               className={`py-2.5 px-2 rounded-xl border text-xs font-mono font-bold transition-all active:scale-98 ${
                 selectedJustify === val
                   ? "bg-indigo-500 border-indigo-400 text-white shadow-lg"
-                  : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700"
+                  : "bg-slate-50 hover:bg-orange-50 dark:bg-slate-900 border-slate-200 hover:border-orange-500 dark:border-slate-800 text-slate-700 dark:text-slate-400 font-bold"
               }`}
             >
               {val}
@@ -226,7 +226,7 @@ export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: F
               className={`py-2.5 px-2 rounded-xl border text-xs font-mono font-bold transition-all active:scale-98 ${
                 selectedJustify === val
                   ? "bg-indigo-500 border-indigo-400 text-white shadow-lg"
-                  : "bg-slate-900 border-slate-800 text-slate-400 hover:border-slate-700"
+                  : "bg-slate-50 hover:bg-orange-50 dark:bg-slate-900 border-slate-200 hover:border-orange-500 dark:border-slate-800 text-slate-700 dark:text-slate-400 font-bold"
               }`}
             >
               {val}
@@ -245,7 +245,7 @@ export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: F
       <button
         disabled={validated || !selectedJustify}
         onClick={handleValidate}
-        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 text-white font-bold hover:shadow-lg hover:shadow-indigo-500/20 transition-all text-sm disabled:opacity-40 disabled:pointer-events-none active:scale-98"
+        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black hover:shadow-lg hover:shadow-indigo-500/20 transition-all text-sm disabled:opacity-40 disabled:pointer-events-none active:scale-98"
       >
         Confirmar Alinhamento
       </button>

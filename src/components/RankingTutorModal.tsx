@@ -56,13 +56,13 @@ export default function RankingTutorModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-slate-50 dark:bg-slate-950 z-[60] overflow-y-auto font-sans flex flex-col transition-colors duration-300 select-none">
+    <div className="fixed inset-0 bg-pft-sand dark:bg-pft-navy-deep z-[60] overflow-y-auto font-sans flex flex-col transition-colors duration-300 select-none">
       
       {/* 3D Dynamic Interactive Star Constellation background behind the tutor table report */}
       <ThreeInteractiveBg />
 
       {/* HEADER BAR */}
-      <div className="bg-gradient-to-r from-brand-primary via-indigo-600 to-brand-secondary dark:from-slate-950 dark:via-indigo-950/20 dark:to-slate-900 text-white p-4 sticky top-0 z-20 shadow-md transition-colors duration-300">
+      <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-blue-900 dark:from-[#08172e] dark:via-[#0e2442] dark:to-[#08172e] text-white p-4 sticky top-0 z-20 shadow-md transition-colors duration-300">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <div>
             <h2 className="text-xl font-display font-black flex items-center gap-2 leading-tight">

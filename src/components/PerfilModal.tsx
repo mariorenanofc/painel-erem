@@ -78,7 +78,7 @@ export default function PerfilModal({
         className="glass-panel-heavy w-full max-w-3xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-[0_12px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] select-text border border-slate-200 dark:border-white/5 transition-colors duration-300"
       >
         {/* HEADER DO MODAL */}
-        <div className="bg-gradient-to-r from-brand-primary via-indigo-600 to-brand-secondary dark:from-slate-950 dark:via-indigo-950/40 dark:to-slate-900 p-6 text-white flex flex-col md:flex-row items-center md:items-start gap-6 relative shrink-0 transition-colors duration-300">
+        <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-blue-900 dark:from-[#08172e] dark:via-[#0e2442] dark:to-[#08172e] p-6 text-white flex flex-col md:flex-row items-center md:items-start gap-6 relative shrink-0 transition-colors duration-300">
           
           <motion.button
             whileHover={{ scale: 1.1, rotate: 90 }}
@@ -132,7 +132,7 @@ export default function PerfilModal({
               onClick={() => setAbaAtiva(tab.id as "dados" | "certificados" | "avatar" | "badges" | "aparencia" | "memorial")}
               className={`cursor-pointer whitespace-nowrap px-4 py-3.5 text-xs md:text-sm font-bold border-b-2 transition-all duration-200 ${
                 abaAtiva === tab.id
-                  ? "border-brand-primary text-brand-primary dark:text-brand-secondary bg-white/70 dark:bg-slate-900/60"
+                  ? "border-orange-500 text-orange-600 dark:text-orange-400 bg-white/70 dark:bg-slate-900/60"
                   : "border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/20"
               }`}
             >
@@ -145,7 +145,7 @@ export default function PerfilModal({
         <div className="p-6 overflow-y-auto bg-slate-50/40 dark:bg-slate-900/20 flex-1 transition-colors duration-300 select-none">
           {carregando ? (
             <div className="flex justify-center py-16">
-              <span className="w-10 h-10 border-4 border-indigo-500/30 border-t-brand-primary rounded-full animate-spin" />
+              <span className="w-10 h-10 border-4 border-orange-500/30 border-t-orange-500 rounded-full animate-spin" />
             </div>
           ) : dadosPerfil ? (
             <>
@@ -397,7 +397,7 @@ export default function PerfilModal({
                           className="p-4 rounded-2xl bg-white dark:bg-slate-950/40 border border-slate-200/80 dark:border-white/5 shadow-sm hover:shadow-md transition-all flex flex-col justify-between"
                         >
                           <div>
-                            <span className="text-[10px] font-black uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/40 px-2 py-0.5 rounded border border-indigo-200 dark:border-indigo-900/30">
+                            <span className="text-[10px] font-black uppercase tracking-wider text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/40 px-2 py-0.5 rounded border border-orange-200 dark:border-orange-900/30">
                               Módulo Concluído
                             </span>
                             <h4 className="font-bold text-sm text-slate-800 dark:text-slate-100 mt-2 line-clamp-2">
@@ -415,7 +415,7 @@ export default function PerfilModal({
                                   window.open(cert.urlPreview, "_blank");
                                 }
                               }}
-                              className="cursor-pointer flex-1 text-center py-1.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition-all shadow-sm"
+                              className="cursor-pointer flex-1 text-center py-1.5 px-3 rounded-xl bg-pft-orange hover:bg-orange-600 text-white text-xs font-bold transition-all shadow-md shadow-orange-500/20"
                             >
                               👁️ Visualizar no Portal
                             </button>

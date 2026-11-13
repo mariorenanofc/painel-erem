@@ -1,3 +1,19 @@
+# Histórico de Correções Críticas & Incidentes Resolvidos
+
+## 0. Automação de Ciclos Semanais e Mensais (Resolvido em 13/11/2026)
+- **Sintoma:** Ciclo semanal (`semanal_2026_W46`) permaneceu em estado "Pronto para Fechamento" após o horário de corte de sexta-feira (16:59), exigindo acionamento manual do tutor mesmo com o modo configurado para "100% Automático".
+- **Causa Raiz Identificada:**
+  1. *Seleção Incorreta de Chave Alvo no Backend:* Quando o cron executava `executarFechamentoCiclo("semanal")` sem parâmetro de chave, o código usava cegamente `getCicloAnteriorKeys`, selecionando o domingo da semana anterior (`semanaAnteriorKey` -> W45). Como W45 já estava arquivado, o ciclo recém-encerrado W46 era ignorado.
+  2. *Desvio de Fuso Horário UTC vs Horário de Brasília:* Nos servidores serverless da Vercel (nativos em UTC), `new Date().getHours()` retornava 3 horas à frente do horário oficial de Brasília (`America/Sao_Paulo`). Às 17h em Brasília, no servidor já eram 20h, gerando inconsistências no corte de horários e dias da semana.
+  3. *Ausência de Verificação Just-in-Time no Modal do Tutor:* A rota `listar_historico_ciclos` em `action-proxy/route.ts` apenas lia o Firestore sem invocar `verificarEFecharCiclosPendentes`, exibindo o botão manual se o cron externo da Vercel tivesse atrasado.
+- **Solução Arquitetural Aplicada:**
+  1. Criada a função de alta precisão `getDataBrasilia(date?: Date)` em `src/lib/dateUtils.ts` utilizando `Intl.DateTimeFormat` com fuso `America/Sao_Paulo`.
+  2. Atualizada a resolução de chave padrão em `executarFechamentoCiclo` para usar `getOpcoesCicloSemanal(dataAtual, diaCorte, horaCorte)` no semanal e verificação de fim de mês no mensal.
+  3. Injetada verificação ativa Just-in-Time com throttle de 60s em `listar_historico_ciclos`, garantindo que no exato instante em que o tutor abre o modal de ciclos após o horário de corte, o ciclo pendente é automaticamente fechado, premiado e sincronizado.
+  4. Ciclo `semanal_2026_W46` apurado e premiado com sucesso com 20 estudantes bonificados (Top 10 de cada turma).
+
+---
+
 # Plano de Correção Crítica (Firestore, Badges, Jogos e Quiz)
 
 Identificamos a origem exata dos problemas críticos relatados em sala de aula. Abaixo estão as análises e o plano de ação para resolver cada um de forma definitiva.

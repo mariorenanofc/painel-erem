@@ -304,7 +304,7 @@ export default function CodingPractice({
   // Monitor de Altura da Janela para Layouts Responsivos Integrados
   const [windowHeight, setWindowHeight] = useState(800);
   const [windowWidth, setWindowWidth] = useState(1200);
-  
+
   useEffect(() => {
     if (typeof window !== "undefined") {
       setWindowHeight(window.innerHeight);
@@ -320,7 +320,7 @@ export default function CodingPractice({
         setWindowHeight(window.innerHeight);
         setWindowWidth(window.innerWidth);
       };
-      
+
       window.addEventListener("resize", handleResize);
       return () => window.removeEventListener("resize", handleResize);
     }
@@ -436,20 +436,20 @@ export default function CodingPractice({
           if (usr.matricula) {
             fetch(`/api/alunos/typing-progress?matricula=${usr.matricula}&idAtividade=${missaoAberta.id}`, {
               method: "DELETE"
-            }).catch(() => {});
+            }).catch(() => { });
           }
         }
       }
 
       let bestState: TypingProgressState | null = localParsed;
       if (cloudParsed) {
-         if (cloudParsed.autoSubmitted && !isDevolvida && !isPendenteOuNova) {
-            bestState = cloudParsed;
-         } else if (localParsed && localParsed.autoSubmitted && !isDevolvida && !isPendenteOuNova) {
-            bestState = localParsed;
-         } else if (!localParsed || (cloudParsed.currentIndex || 0) > (localParsed.currentIndex || 0)) {
-            bestState = cloudParsed;
-         }
+        if (cloudParsed.autoSubmitted && !isDevolvida && !isPendenteOuNova) {
+          bestState = cloudParsed;
+        } else if (localParsed && localParsed.autoSubmitted && !isDevolvida && !isPendenteOuNova) {
+          bestState = localParsed;
+        } else if (!localParsed || (cloudParsed.currentIndex || 0) > (localParsed.currentIndex || 0)) {
+          bestState = cloudParsed;
+        }
       }
 
       if (bestState) {
@@ -484,7 +484,7 @@ export default function CodingPractice({
   // Efeito para sincronizar progresso com a nuvem em eventos de saída (fechar aba, trocar aba)
   useEffect(() => {
     if (!iniciado || completed) return;
-    
+
     const syncToCloud = () => {
       const usr = JSON.parse(localStorage.getItem("alunoLogado") || "{}");
       if (usr.matricula) {
@@ -505,7 +505,7 @@ export default function CodingPractice({
             idAtividade: missaoAberta.id,
             state
           })
-        }).catch(() => {});
+        }).catch(() => { });
       }
     };
 
@@ -545,7 +545,7 @@ export default function CodingPractice({
             idAtividade: missaoAberta.id,
             state
           })
-        }).catch(() => {});
+        }).catch(() => { });
       }
     }
   }, [pausado, iniciado, completed, missaoAberta.id, currentIndex, errorsCount, secondsRemaining, extraSecondsUsed, targetCode.length]);
@@ -1063,11 +1063,11 @@ export default function CodingPractice({
       ? "max-w-[95%] max-h-[85vh] overflow-y-auto custom-scrollbar"
       : "max-w-[95%] sm:max-w-[85%] lg:max-w-[80%] xl:max-w-4xl max-h-[85vh] overflow-y-auto custom-scrollbar";
     return (
-      <div className="flex flex-col flex-1 h-full min-h-0 bg-slate-950 items-center justify-center p-6 select-none">
+      <div className="flex flex-col flex-1 h-full min-h-0 bg-slate-100 dark:bg-slate-950 items-center justify-center p-6 select-none">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className={`bg-slate-900 border border-emerald-500/30 ${welcomePadding} ${cardSize} rounded-3xl w-full text-center shadow-2xl relative overflow-x-hidden`}
+          className={`bg-white dark:bg-slate-900 border border-emerald-500/30 ${welcomePadding} ${cardSize} rounded-3xl w-full text-center shadow-2xl relative overflow-x-hidden text-slate-800 dark:text-white`}
         >
           <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-emerald-400 to-teal-500" />
 
@@ -1102,24 +1102,24 @@ export default function CodingPractice({
     const welcomeMargin = compactMode ? "mb-4" : "mb-8";
 
     return (
-      <div className="flex flex-col flex-1 h-full min-h-0 bg-slate-950 items-center justify-center p-6 select-none">
+      <div className="flex flex-col flex-1 h-full min-h-0 bg-slate-100 dark:bg-slate-950 items-center justify-center p-6 select-none">
         <motion.div
           initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`bg-slate-900 border border-slate-800/80 ${welcomePadding} ${cardSize} rounded-3xl w-full text-center shadow-2xl relative overflow-x-hidden`}
+          className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 ${welcomePadding} ${cardSize} rounded-3xl w-full text-center shadow-2xl relative overflow-x-hidden text-slate-800 dark:text-white`}
         >
           {/* Luz Trilhatech Neon no Topo */}
-          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+          <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-orange-500 via-amber-400 to-blue-600" />
 
           <div className={`${compactMode ? "text-3xl mb-2" : "text-5xl mb-4"} animate-bounce`}>⚡</div>
-          <h2 className={`font-display font-black ${compactMode ? "text-lg" : "text-2xl"} text-slate-100 uppercase tracking-wide mb-2`}>
+          <h2 className={`font-display font-black ${compactMode ? "text-lg" : "text-2xl"} text-slate-900 dark:text-slate-100 uppercase tracking-wide mb-2`}>
             {missaoAberta.titulo}
           </h2>
-          <p className="text-xs text-slate-400 leading-relaxed mb-6 whitespace-pre-wrap text-left bg-slate-950/30 p-4 rounded-xl border border-slate-800/50">
+          <p className="text-xs text-slate-400 leading-relaxed mb-6 whitespace-pre-wrap text-left bg-slate-50 dark:bg-slate-950/30 p-4 rounded-xl border border-slate-200 dark:border-slate-800/50 text-slate-700 dark:text-slate-400">
             {missaoAberta.descricao || "Pratique digitação rápida de código e ganhe XP de recompensa!"}
           </p>
 
-          <div className={`bg-slate-950/70 border border-slate-800 p-4.5 rounded-2xl ${welcomeMargin} flex flex-col gap-2.5 text-left text-xs font-semibold text-slate-300`}>
+          <div className={`bg-slate-50 dark:bg-slate-950/70 border border-slate-200 dark:border-slate-800 p-4.5 rounded-2xl ${welcomeMargin} flex flex-col gap-2.5 text-left text-xs font-semibold text-slate-700 dark:text-slate-300`}>
             <div className="flex justify-between items-center">
               <span>Total de Linhas:</span>
               <span className="font-bold font-mono text-indigo-400">{totalLines}</span>
@@ -1160,7 +1160,7 @@ export default function CodingPractice({
                       setIniciado(true);
                     }
                   }}
-                  className="w-full bg-gradient-to-r from-indigo-500 to-pink-500 text-white font-black text-xs uppercase tracking-widest py-3.5 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer border-none"
+                  className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs uppercase tracking-widest py-3.5 rounded-xl shadow-lg shadow-orange-500/20 active:scale-95 transition-all cursor-pointer border-none"
                 >
                   Continuar de onde parei
                 </button>
@@ -1203,7 +1203,7 @@ export default function CodingPractice({
                       setIniciado(true);
                     }
                   }}
-                  className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs uppercase tracking-widest py-3 rounded-xl transition-all cursor-pointer border-none"
+                  className="w-full bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-slate-800 dark:hover:bg-slate-700 dark:text-slate-300 font-bold text-xs uppercase tracking-widest py-3 rounded-xl transition-all cursor-pointer border-none"
                 >
                   Recomeçar (Mantendo Erros)
                 </button>
@@ -1211,7 +1211,7 @@ export default function CodingPractice({
             ) : (
               <button
                 onClick={() => setIniciado(true)}
-                className="w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 text-white font-black text-xs uppercase tracking-widest py-3.5 rounded-xl shadow-lg hover:brightness-110 active:scale-95 transition-all cursor-pointer border-none"
+                className="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs uppercase tracking-widest py-3.5 rounded-xl shadow-lg shadow-orange-500/20 active:scale-95 transition-all cursor-pointer border-none"
               >
                 Começar Desafio
               </button>
@@ -1330,11 +1330,10 @@ export default function CodingPractice({
                   e.preventDefault();
                   handleSymbolPress(sym);
                 }}
-                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold shrink-0 transition-all cursor-pointer border select-none ${
-                  isNext
+                className={`px-2.5 py-1 rounded-lg text-xs font-mono font-bold shrink-0 transition-all cursor-pointer border select-none ${isNext
                     ? "bg-indigo-600 text-white border-indigo-400 shadow-[0_0_12px_rgba(99,102,241,0.6)] scale-105 animate-pulse"
                     : "bg-slate-800 hover:bg-slate-700 text-slate-200 border-slate-700 active:scale-95"
-                }`}
+                  }`}
                 title={`Digitar ${sym}`}
               >
                 {sym === "Tab" ? "⇥ Tab" : sym === "Enter" ? "↵ Enter" : sym}
@@ -1663,7 +1662,7 @@ export default function CodingPractice({
 
       {/* ═══ TECLADO MINIMIZADO FLOAT ═══ */}
       {tecladoMinimizado && !completed && (
-        <div className="bg-slate-950 p-3.5 border-t border-slate-900 text-center shrink-0 select-none animate-in slide-in-from-bottom duration-250">
+        <div className="bg-white dark:bg-slate-950 p-3.5 border-t border-slate-200 dark:border-slate-900 text-center shrink-0 select-none animate-in slide-in-from-bottom duration-250">
           <button
             onClick={() => {
               if (isDuelMode) {
@@ -1694,14 +1693,14 @@ export default function CodingPractice({
       {/* ═══ TELA DE PAUSA PREMIUM (GRADIENTS TRILHATECH) ═══ */}
       {pausado && (
         <div className="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-5 z-20 animate-in fade-in duration-200 select-none">
-          <div className="text-center p-8 bg-slate-900 border border-slate-800/80 rounded-3xl max-w-sm w-full shadow-2xl relative overflow-hidden font-sans">
+          <div className="text-center p-8 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800/80 rounded-3xl max-w-sm w-full shadow-2xl relative overflow-hidden font-sans text-slate-800 dark:text-white">
             {/* Linha Neon Superior */}
-            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+            <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-orange-500 via-amber-400 to-blue-600" />
 
             <span className="text-4xl block mb-3 animate-pulse">⏸️</span>
-            <h3 className="font-display font-black text-lg uppercase tracking-wider text-slate-100 mb-4">Treino Pausado</h3>
+            <h3 className="font-display font-black text-lg uppercase tracking-wider text-slate-800 dark:text-slate-100 mb-4">Treino Pausado</h3>
 
-            <div className="bg-slate-950 border border-slate-800 p-4.5 rounded-2xl mb-6 flex flex-col gap-2 text-left text-xs font-semibold text-slate-300">
+            <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-4.5 rounded-2xl mb-6 flex flex-col gap-2 text-left text-xs font-semibold text-slate-700 dark:text-slate-300">
               <div className="flex justify-between items-center font-sans">
                 <span>Linhas digitadas:</span>
                 <span className="font-bold font-mono text-indigo-400">
@@ -1748,10 +1747,10 @@ export default function CodingPractice({
             <motion.div
               initial={{ scale: 0.95, y: 15 }}
               animate={{ scale: 1, y: 0 }}
-              className="glass-panel-heavy w-full max-w-md p-6 text-center text-white border border-slate-800 rounded-3xl shadow-2xl bg-slate-900 relative overflow-hidden"
+              className="glass-panel-heavy w-full max-w-md p-6 text-center text-slate-800 dark:text-white border border-slate-200 dark:border-slate-800 rounded-3xl shadow-2xl bg-white dark:bg-slate-900 relative overflow-hidden"
             >
               {/* Linha Neon Superior */}
-              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+              <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-orange-500 via-amber-400 to-blue-600" />
 
               <span className="text-5xl block mb-3 animate-bounce">🏆</span>
               <h3 className="font-display font-black text-xl md:text-2xl uppercase tracking-wider text-emerald-400 mb-2">Desafio Concluído!</h3>

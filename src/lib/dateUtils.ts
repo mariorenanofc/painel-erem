@@ -1,13 +1,84 @@
+export interface DataBrasiliaInfo {
+  ano: number;
+  mes: number; // 1-12
+  dia: number;
+  diaSemana: number; // 0-6 (0 = Domingo)
+  horas: number;
+  minutos: number;
+  segundos: number;
+  horaMinuto: string; // "HH:MM"
+  dateObj: Date; // Date correspondente ao instante local de Brasília
+}
+
+/**
+ * Converte qualquer Date para os componentes exatos do Horário Oficial de Brasília (America/Sao_Paulo).
+ * Essencial para servidores na nuvem (Vercel/AWS) que rodam nativamente em UTC.
+ */
+export function getDataBrasilia(date: Date = new Date()): DataBrasiliaInfo {
+  const formatter = new Intl.DateTimeFormat("en-US", {
+    timeZone: "America/Sao_Paulo",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "numeric",
+    second: "numeric",
+    hour12: false,
+    weekday: "short"
+  });
+
+  const parts = formatter.formatToParts(date);
+  const partMap: Record<string, string> = {};
+  for (const p of parts) {
+    partMap[p.type] = p.value;
+  }
+
+  const ano = parseInt(partMap["year"] || "2026", 10);
+  const mes = parseInt(partMap["month"] || "1", 10);
+  const dia = parseInt(partMap["day"] || "1", 10);
+  let horas = parseInt(partMap["hour"] || "0", 10);
+  if (horas === 24) horas = 0;
+  const minutos = parseInt(partMap["minute"] || "0", 10);
+  const segundos = parseInt(partMap["second"] || "0", 10);
+
+  const weekdayStr = partMap["weekday"] || "";
+  const weekdayMap: Record<string, number> = {
+    Sun: 0,
+    Mon: 1,
+    Tue: 2,
+    Wed: 3,
+    Thu: 4,
+    Fri: 5,
+    Sat: 6
+  };
+  const diaSemana = weekdayMap[weekdayStr] ?? new Date(ano, mes - 1, dia).getDay();
+  const horaMinuto = `${String(horas).padStart(2, "0")}:${String(minutos).padStart(2, "0")}`;
+  const dateObj = new Date(ano, mes - 1, dia, horas, minutos, segundos);
+
+  return {
+    ano,
+    mes,
+    dia,
+    diaSemana,
+    horas,
+    minutos,
+    segundos,
+    horaMinuto,
+    dateObj
+  };
+}
+
 export function getRankingKeys(date: Date = new Date()) {
-  const dataAtual = new Date(date);
+  const br = getDataBrasilia(date);
+  const dataAtual = br.dateObj;
   
   // Mês
-  const ano = dataAtual.getFullYear();
-  const mes = String(dataAtual.getMonth() + 1).padStart(2, "0");
+  const ano = br.ano;
+  const mes = String(br.mes).padStart(2, "0");
   const mesKey = `${ano}_${mes}`;
 
   // Semana (Segunda a Domingo)
-  const diaSemana = dataAtual.getDay();
+  const diaSemana = br.diaSemana;
   const diffParaSegunda = diaSemana === 0 ? 6 : diaSemana - 1;
   const inicioSemana = new Date(dataAtual);
   inicioSemana.setDate(dataAtual.getDate() - diffParaSegunda);
@@ -95,14 +166,14 @@ export function getLabelSemana(semanaKey: string): string {
  * Se for sexta após 16:59, sábado ou domingo, a semana corrente já é considerada o ciclo a fechar!
  */
 export function getOpcoesCicloSemanal(date: Date = new Date(), diaCorte: number = 5, horaCorte: string = "16:59") {
-  const dataAtual = new Date(date);
-  const { semanaKey: semanaAtualKey, inicioSemana } = getRankingKeys(dataAtual);
-  const { semanaAnteriorKey } = getCicloAnteriorKeys(dataAtual);
+  const br = getDataBrasilia(date);
+  const { semanaKey: semanaAtualKey } = getRankingKeys(br.dateObj);
+  const { semanaAnteriorKey } = getCicloAnteriorKeys(br.dateObj);
 
-  const diaSemanaAtual = dataAtual.getDay();
-  const horaMinutoAtual = String(dataAtual.getHours()).padStart(2, "0") + ":" + String(dataAtual.getMinutes()).padStart(2, "0");
+  const diaSemanaAtual = br.diaSemana;
+  const horaMinutoAtual = br.horaMinuto;
 
-  // Se já passou do dia/hora de fechamento nesta semana
+  // Se já passou do dia/hora de fechamento nesta semana (no fuso de Brasília)
   const passouCorteSemanaAtual =
     diaSemanaAtual > diaCorte || (diaSemanaAtual === diaCorte && horaMinutoAtual >= horaCorte);
 

@@ -86,13 +86,13 @@ export default function LojaRifaModal({
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.93, opacity: 0, y: 20 }}
             transition={{ type: "spring", damping: 25, stiffness: 350 }}
-            className="glass-panel-heavy bg-white/90 dark:bg-slate-900/90 rounded-[2.5rem] shadow-[0_0_50px_rgba(99,102,241,0.15)] border border-slate-200/80 dark:border-white/5 w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh] relative z-10"
+            className="glass-panel-heavy bg-pft-sand dark:bg-[#08172e] rounded-[2.5rem] shadow-[0_0_50px_rgba(255,85,0,0.15)] border border-slate-200/80 dark:border-white/10 w-full max-w-3xl overflow-hidden flex flex-col max-h-[90vh] relative z-10"
           >
             {/* Glow decorativo de fundo */}
-            <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
+            <div className="absolute top-0 right-0 w-80 h-80 bg-orange-500/10 dark:bg-orange-500/5 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
 
             {/* Header */}
-            <div className="bg-slate-950 p-6 text-center relative overflow-hidden shrink-0 border-b border-white/5">
+            <div className="bg-gradient-to-r from-orange-600 via-amber-600 to-blue-900 dark:from-[#08172e] dark:via-[#0e2442] dark:to-[#08172e] p-6 text-center relative overflow-hidden shrink-0 border-b border-white/10">
               <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] mix-blend-overlay pointer-events-none" />
               <button
                 onClick={onClose}
@@ -102,14 +102,14 @@ export default function LojaRifaModal({
               </button>
 
               <h2 className="text-3xl font-display font-black text-white relative z-10 flex items-center justify-center gap-3">
-                <span>🛒</span> Loja Trilha Tech
+                <span>🛒</span> Loja PFT / Trilha Tech
               </h2>
-              <p className="text-slate-400 font-medium relative z-10 mt-1.5 text-xs tracking-wide uppercase">
+              <p className="text-orange-100 font-medium relative z-10 mt-1.5 text-xs tracking-wide uppercase opacity-90">
                 Troque o seu XP por Bilhetes da Rifa Escolar
               </p>
               
-              <div className="mt-4 inline-flex items-center gap-3 bg-brand-primary/10 rounded-2xl px-6 py-2.5 border border-brand-primary/20 relative z-10 shadow-inner">
-                <span className="text-[10px] text-brand-secondary font-black uppercase tracking-wider">Saldo Disponível:</span>
+              <div className="mt-4 inline-flex items-center gap-3 bg-white/15 rounded-2xl px-6 py-2.5 border border-white/20 relative z-10 shadow-inner">
+                <span className="text-[10px] text-orange-200 font-black uppercase tracking-wider">Saldo Disponível:</span>
                 <span className="text-xl font-display font-black text-white font-mono">{saldoCarteira} XP</span>
               </div>
             </div>
@@ -144,12 +144,12 @@ export default function LojaRifaModal({
                             style={podeComprar ? { boxShadow: `0 0 30px ${pct.glow}` } : {}}
                             className={`relative rounded-3xl border-2 p-6 text-center transition-all duration-300 ${
                               podeComprar 
-                                ? "border-slate-200/50 dark:border-white/5 hover:border-brand-primary/40 bg-slate-50/50 dark:bg-slate-950/20 cursor-pointer shadow-md" 
+                                ? "border-slate-200/80 dark:border-white/10 hover:border-orange-500/50 bg-white/90 dark:bg-[#0e2442]/60 cursor-pointer shadow-md" 
                                 : "border-slate-100 dark:border-white/5 opacity-35 bg-slate-50/20 dark:bg-slate-950/10 cursor-not-allowed grayscale"
                             }`}
                           >
                             {pct.destaque && podeComprar && (
-                              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-rose-500 text-white text-[9px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md z-20">
+                              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-[9px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md z-20">
                                 {pct.destaque}
                               </div>
                             )}
@@ -160,7 +160,7 @@ export default function LojaRifaModal({
                             </div>
                             
                             <h3 className="font-display font-black text-slate-800 dark:text-white uppercase text-xs tracking-wider">{pct.nome}</h3>
-                            <p className="text-3xl font-display font-black text-brand-secondary font-mono my-3">{pct.bilhetes} <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mt-0.5">Tickets</span></p>
+                            <p className="text-3xl font-display font-black text-orange-600 dark:text-orange-400 font-mono my-3">{pct.bilhetes} <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mt-0.5">Tickets</span></p>
                             
                             <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/80">
                               <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Preço</p>
@@ -182,7 +182,7 @@ export default function LojaRifaModal({
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
                         onClick={onClose} 
-                        className="cursor-pointer text-slate-400 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white font-black text-xs uppercase tracking-widest transition-colors"
+                        className="cursor-pointer px-6 py-2.5 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-700 dark:text-slate-200 font-black text-xs uppercase tracking-widest transition-all"
                       >
                         Sair da Loja
                       </motion.button>

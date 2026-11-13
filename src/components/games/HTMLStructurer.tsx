@@ -132,14 +132,14 @@ export default function HTMLStructurer({ onGameOver, playSound, perderVida }: HT
         <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/30 flex items-center justify-center text-orange-400 mb-4">
           <Layout className="w-8 h-8" />
         </div>
-        <h3 className="text-xl font-bold text-white mb-2">Quebra-Cabeça HTML</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-6">
+        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Quebra-Cabeça HTML</h3>
+        <p className="text-slate-600 dark:text-slate-400 text-sm max-w-sm mb-6">
           Coloque as tags HTML na ordem hierárquica e semântica correta clicando nos blocos abaixo. 
           Cuidado com a ordem de abertura e fechamento das tags!
         </p>
         <button
           onClick={handleStart}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 text-white font-bold hover:shadow-lg hover:shadow-orange-500/20 transition-all flex items-center gap-2"
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black hover:shadow-lg hover:shadow-orange-500/20 transition-all flex items-center gap-2"
         >
           Iniciar Partida
           <Sparkles className="w-4 h-4" />
@@ -153,14 +153,14 @@ export default function HTMLStructurer({ onGameOver, playSound, perderVida }: HT
   return (
     <div className="flex-1 flex flex-col justify-between p-4 max-w-xl mx-auto w-full">
       {/* Placa de Info */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-4 text-sm text-slate-400">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-3 mb-4 text-sm text-slate-600 dark:text-slate-400">
         <span>Desafio {currentIndex + 1} de 3</span>
         <span className="font-bold text-yellow-400">Pontos: {score}</span>
       </div>
 
       <div className="text-center mb-3">
         <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Desafio do Código:</span>
-        <h4 className="text-sm sm:text-base font-extrabold text-white mt-0.5">{currentQ.title}</h4>
+        <h4 className="text-sm sm:text-base font-extrabold text-slate-800 dark:text-white mt-0.5">{currentQ.title}</h4>
       </div>
 
       {/* Container de Tags Montadas */}
@@ -175,7 +175,7 @@ export default function HTMLStructurer({ onGameOver, playSound, perderVida }: HT
               // Recuar tags aninhadas visualmente para simular identação
               const isClosed = block.startsWith("</") || block.endsWith("</html>") || block.endsWith("</body>") || block.endsWith("</head>") || block.endsWith("</ul>") || block.endsWith("</div>");
               const isChild = idx > 0 && idx < placedBlocks.length - 1 && !isClosed;
-              const indent = isChild ? "pl-4 text-sky-400" : "text-white";
+              const indent = isChild ? "pl-4 text-orange-600 dark:text-orange-400" : "text-slate-800 dark:text-white";
 
               return (
                 <button
@@ -218,7 +218,7 @@ export default function HTMLStructurer({ onGameOver, playSound, perderVida }: HT
       <button
         disabled={validated || placedBlocks.length === 0}
         onClick={handleValidate}
-        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-600 text-white font-bold hover:shadow-lg hover:shadow-orange-500/20 transition-all text-sm disabled:opacity-40 disabled:pointer-events-none active:scale-98"
+        className="w-full py-3.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black hover:shadow-lg hover:shadow-orange-500/20 transition-all text-sm disabled:opacity-40 disabled:pointer-events-none active:scale-98"
       >
         Validar Estrutura
       </button>

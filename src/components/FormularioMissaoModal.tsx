@@ -134,8 +134,8 @@ export default function FormularioMissaoModal({
           {/* Header */}
           <div className={`p-6 flex justify-between items-center text-white shrink-0 relative border-b border-white/5 ${
             idEditando 
-              ? "bg-gradient-to-r from-amber-500 via-orange-550 to-amber-700" 
-              : "bg-gradient-to-r from-blue-900 via-indigo-950 to-blue-955"
+              ? "bg-gradient-to-r from-amber-500 via-orange-600 to-amber-700" 
+              : "bg-gradient-to-r from-blue-900 via-indigo-950 to-blue-950"
           }`}>
             <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
             <div className="relative z-10">

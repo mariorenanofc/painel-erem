@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { dbAdmin, registrarLogSeguranca } from "@/src/lib/firebaseAdmin";
 import { fetchSheetsQueued } from "@/src/lib/sheetsQueue";
 import { invalidatePortalCache, invalidateRankingCache, invalidateConfigCache, clearAllPortalCaches, refreshFirestoreCacheAtividades, loadFirestoreCacheAtividades, getNextAtividadeId, loadFirestoreConfiguracoes, getCachedAdminAlunos, setCachedAdminAlunos, invalidateAdminAlunosCache, getCachedAnalyticsGeral, setCachedAnalyticsGeral, getCachedClassDates, getAlunosAtivosSnapshot, refreshAlunosAtivosSnapshot, loadRegrasCiclos, invalidateRegrasCiclosCache } from "@/src/lib/cache";
-import { executarFechamentoCiclo, executarEstornoCiclo } from "@/src/lib/ciclosEngine";
+import { executarFechamentoCiclo, executarEstornoCiclo, verificarEFecharCiclosPendentes } from "@/src/lib/ciclosEngine";
 import { Transaction, FieldValue, FieldPath, QueryDocumentSnapshot } from "firebase-admin/firestore";
 import { cookies } from "next/headers";
 import { getRankingKeys } from "@/src/lib/dateUtils";
@@ -93,6 +93,13 @@ export async function POST(request: Request) {
     }
 
     if (requestAction === "listar_historico_ciclos") {
+      // Verificação Just-in-Time: se o ciclo automático estiver pronto e pendente de fechamento, executa antes de listar
+      try {
+        await verificarEFecharCiclosPendentes(dbAdmin);
+      } catch (errJit: unknown) {
+        console.warn("[action-proxy:listar_historico_ciclos] Erro na verificação Just-in-Time:", (errJit as Error).message);
+      }
+
       const snap = await dbAdmin.collection("historico_ciclos").orderBy("dataFechamento", "desc").limit(20).get();
       const historico = snap.docs.map(doc => doc.data());
       return NextResponse.json({ status: "sucesso", historico });

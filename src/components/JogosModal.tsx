@@ -70,7 +70,7 @@ const GAMES: GameDefinition[] = [
     title: "Caçador de Bugs",
     description: "Encontre o erro sintático de iniciante na linha do código.",
     emoji: "🐛",
-    color: "from-rose-600 to-red-650 border-rose-500/20",
+    color: "from-rose-600 to-red-600 border-rose-500/20",
     component: JSBugHunter
   },
   {
@@ -86,7 +86,7 @@ const GAMES: GameDefinition[] = [
     title: "Tabela Verdade",
     description: "Responda se as expressões lógicas (AND/OR/NOT) são True ou False.",
     emoji: "⚖️",
-    color: "from-indigo-600 to-violet-650 border-indigo-500/20",
+    color: "from-indigo-600 to-violet-600 border-indigo-500/20",
     component: LogicGatesSpeedrun
   },
   {
@@ -187,7 +187,7 @@ export default function JogosModal({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="relative w-full max-w-4xl bg-slate-900 border border-slate-800/80 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh] z-10"
+          className="relative w-full max-w-4xl bg-pft-sand dark:bg-[#08172e] border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh] z-10"
         >
           {/* Corpo do Modal: Se não houver jogo ativo, renderiza catálogo. Se houver, renderiza jogo */}
           {activeGame ? (
@@ -220,22 +220,22 @@ export default function JogosModal({
           ) : (
             <>
               {/* Cabeçalho do Catálogo */}
-              <div className="flex items-center justify-between p-5 border-b border-slate-800/80">
+              <div className="flex items-center justify-between p-5 border-b border-slate-200/80 dark:border-white/10 bg-white/70 dark:bg-[#0e2442]/60">
                 <div className="flex items-center gap-3">
-                  <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400">
+                  <div className="p-2.5 rounded-xl bg-orange-500/15 border border-orange-500/30 text-orange-500">
                     <Gamepad2 className="w-6 h-6 animate-pulse" />
                   </div>
                   <div>
-                    <h2 className="text-lg sm:text-xl font-black text-white flex items-center gap-1.5">
-                      Arcade Educativo EREM
+                    <h2 className="text-lg sm:text-xl font-black text-slate-800 dark:text-white flex items-center gap-1.5">
+                      Arcade Educativo PFT
                     </h2>
-                    <p className="text-xs text-slate-400 font-semibold">Jogue minijogos curriculares para ganhar XP extra!</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Jogue minijogos curriculares para ganhar XP extra!</p>
                   </div>
                 </div>
 
                 <button
                   onClick={onClose}
-                  className="p-1.5 rounded-xl hover:bg-slate-800 border border-transparent hover:border-slate-700 text-slate-400 hover:text-white transition-all"
+                  className="p-1.5 rounded-xl hover:bg-slate-200 dark:hover:bg-white/10 border border-transparent hover:border-slate-300 dark:hover:border-white/20 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white transition-all cursor-pointer"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -244,26 +244,26 @@ export default function JogosModal({
               {/* Conteúdo do Catálogo */}
               <div className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-6">
                 {/* Placa do Progresso de Limite Diário (25 XP) */}
-                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-purple-950/20 via-slate-900 to-indigo-950/20 border border-purple-900/30 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-blue-500/10 dark:from-[#0e2442] dark:to-[#08172e] border border-orange-500/25 flex flex-col md:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-3 self-start md:self-center">
-                    <Zap className="w-7 h-7 text-yellow-400 fill-yellow-400 shrink-0" />
+                    <Zap className="w-7 h-7 text-orange-500 fill-orange-500 shrink-0" />
                     <div>
-                      <h4 className="text-sm font-bold text-white">Recompensas Diárias</h4>
-                      <p className="text-xs text-slate-400 font-medium">Cada 1.000 pontos marcados nos jogos garantem +1 XP.</p>
+                      <h4 className="text-sm font-bold text-slate-900 dark:text-white">Recompensas Diárias</h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">Cada 1.000 pontos marcados nos jogos garantem +1 XP.</p>
                     </div>
                   </div>
                   
                   {/* Barra de Progresso do Teto Diário */}
                   <div className="w-full md:w-64 flex flex-col gap-1.5">
                     <div className="flex justify-between items-center text-xs font-bold">
-                      <span className="text-slate-400">XP de hoje</span>
-                      <span className="text-yellow-400">{xpGanhoHoje} / 25 XP</span>
+                      <span className="text-slate-500 dark:text-slate-400">XP de hoje</span>
+                      <span className="text-orange-600 dark:text-orange-400 font-mono font-black">{xpGanhoHoje} / 25 XP</span>
                     </div>
-                    <div className="w-full h-3 rounded-full bg-slate-950 border border-slate-800/80 p-0.5 overflow-hidden">
+                    <div className="w-full h-3 rounded-full bg-slate-200 dark:bg-slate-950 border border-slate-300 dark:border-slate-800/80 p-0.5 overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${(xpGanhoHoje / 25) * 100}%` }}
-                        className="h-full rounded-full bg-gradient-to-r from-yellow-500 to-amber-500 shadow-md shadow-yellow-500/20"
+                        className="h-full rounded-full bg-gradient-to-r from-orange-500 to-amber-500 shadow-md shadow-orange-500/20"
                       />
                     </div>
                   </div>
@@ -272,7 +272,7 @@ export default function JogosModal({
                 {/* Grid dos Cards de Jogos */}
                 <div>
                   <h3 className="text-xs uppercase tracking-wider font-extrabold text-slate-500 mb-4 flex items-center gap-1.5">
-                    <BrainCircuit className="w-4 h-4 text-purple-400" />
+                    <BrainCircuit className="w-4 h-4 text-orange-500" />
                     Catálogo de Minijogos ({GAMES.length})
                   </h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -282,25 +282,25 @@ export default function JogosModal({
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className={`group p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 hover:bg-slate-800/80 flex gap-4 transition-all relative overflow-hidden`}
+                        className="group p-4 rounded-2xl bg-white/90 dark:bg-[#0e2442]/70 border border-slate-200/80 dark:border-white/10 hover:border-orange-500/50 hover:bg-white dark:hover:bg-[#0e2442] flex gap-4 transition-all relative overflow-hidden shadow-sm hover:shadow-md"
                       >
                         <div className="absolute inset-0 bg-gradient-to-b from-white/[0.015] to-transparent pointer-events-none" />
                         
                         {/* Efeito Neon de Hover */}
-                        <div className="absolute -inset-px bg-gradient-to-r from-transparent via-purple-500/0 to-transparent group-hover:via-purple-500/10 transition-all pointer-events-none rounded-2xl" />
+                        <div className="absolute -inset-px bg-gradient-to-r from-transparent via-orange-500/0 to-transparent group-hover:via-orange-500/10 transition-all pointer-events-none rounded-2xl" />
 
                         {/* Emoji/Ícone */}
-                        <div className="w-12 h-12 shrink-0 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-2xl shadow-inner group-hover:scale-105 transition-all">
+                        <div className="w-12 h-12 shrink-0 rounded-xl bg-slate-100 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex items-center justify-center text-2xl shadow-inner group-hover:scale-105 transition-all">
                           {game.emoji}
                         </div>
 
                         {/* Texto descritivo e Ação */}
                         <div className="flex-1 flex flex-col justify-between gap-3">
                           <div>
-                            <h4 className="text-sm font-extrabold text-white group-hover:text-purple-300 transition-colors">
+                            <h4 className="text-sm font-extrabold text-slate-900 dark:text-white group-hover:text-orange-600 dark:group-hover:text-orange-300 transition-colors">
                               {game.title}
                             </h4>
-                            <p className="text-xs text-slate-400 mt-1 leading-normal font-medium">
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-normal font-medium">
                               {game.description}
                             </p>
                           </div>
@@ -309,7 +309,7 @@ export default function JogosModal({
                             onClick={() => {
                               setActiveGame(game);
                             }}
-                            className="self-start text-[10px] uppercase font-bold tracking-wider text-purple-400 hover:text-white px-3 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-600 border border-purple-500/20 hover:border-purple-500 transition-all active:scale-95"
+                            className="self-start text-[10px] uppercase font-bold tracking-wider text-orange-600 dark:text-orange-400 hover:text-white px-3.5 py-1.5 rounded-lg bg-orange-500/10 hover:bg-orange-500 border border-orange-500/25 hover:border-orange-500 transition-all active:scale-95 cursor-pointer"
                           >
                             Jogar Agora
                           </button>

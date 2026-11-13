@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import confetti from "canvas-confetti";
 import PerfilPublicoModal from "@/src/components/PerfilPublicoModal";
 import CardCompartilharModal from "@/src/components/CardCompartilharModal";
+import PftBackgroundPattern from "@/src/components/PftBackgroundPattern";
 import { apiAluno } from "@/src/services/api";
 import { obterInfoBadge } from "@/src/utils/badges";
 import { DadosCardStory } from "@/src/types";
@@ -214,11 +215,14 @@ export default function HallDaFamaPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white relative overflow-x-hidden selection:bg-amber-400 selection:text-black transition-colors duration-300">
+    <div className="min-h-screen bg-pft-sand dark:bg-pft-navy-deep text-slate-900 dark:text-white relative overflow-x-hidden selection:bg-orange-500 selection:text-white transition-colors duration-300">
+      {/* Grafismo Oficial de Circuitos e Trilhas do PFT */}
+      <PftBackgroundPattern />
+
       {/* Luzes Nebulares Cósmicas de Fundo */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] bg-gradient-to-b from-amber-500/20 via-purple-600/10 to-transparent blur-[150px] rounded-full pointer-events-none opacity-60 dark:opacity-100" />
-      <div className="absolute top-1/4 right-0 w-[550px] h-[550px] bg-indigo-600/15 blur-[140px] rounded-full pointer-events-none" />
-      <div className="absolute bottom-1/4 left-0 w-[600px] h-[600px] bg-amber-600/10 blur-[130px] rounded-full pointer-events-none" />
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full max-w-5xl h-[500px] bg-gradient-to-b from-orange-500/15 via-blue-600/10 to-transparent blur-[140px] rounded-full pointer-events-none opacity-60 dark:opacity-90" />
+      <div className="absolute top-1/4 right-0 w-96 h-96 bg-orange-500/10 blur-[130px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-1/4 left-0 w-96 h-96 bg-blue-600/10 blur-[130px] rounded-full pointer-events-none" />
 
       {/* Toast Flutuante de Notificação */}
       <AnimatePresence>
@@ -242,13 +246,13 @@ export default function HallDaFamaPage() {
       </AnimatePresence>
 
       {/* Navegação Superior */}
-      <nav className="border-b border-slate-200/80 dark:border-white/10 bg-white/80 dark:bg-slate-950/80 backdrop-blur-xl sticky top-0 z-40 transition-colors duration-300 shadow-sm">
+      <nav className="border-b border-slate-200/80 dark:border-white/10 bg-white/85 dark:bg-[#08172e]/85 backdrop-blur-xl sticky top-0 z-40 transition-colors duration-300 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 md:px-8 py-3.5 flex items-center justify-between">
           <Link
             href="/portal"
-            className="group px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200/80 dark:border-white/10 hover:border-amber-400 text-slate-800 dark:text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 hover:shadow-[0_0_15px_rgba(251,191,36,0.25)] shadow-xs"
+            className="group px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 border border-slate-200/80 dark:border-white/10 hover:border-orange-500 text-slate-800 dark:text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-2 hover:shadow-[0_0_15px_rgba(255,85,0,0.25)] shadow-xs"
           >
-            <span className="text-amber-500 group-hover:-translate-x-1 transition-transform">&larr;</span>
+            <span className="text-orange-500 group-hover:-translate-x-1 transition-transform">&larr;</span>
             <span>Voltar ao Portal</span>
           </Link>
 
@@ -296,17 +300,17 @@ export default function HallDaFamaPage() {
           <motion.div
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
-            className="inline-flex items-center gap-2 px-4 py-1.5 bg-amber-50 dark:bg-amber-500/15 border border-amber-300 dark:border-amber-500/30 rounded-full text-xs font-black uppercase tracking-widest text-amber-800 dark:text-amber-300 mb-4 shadow-sm dark:shadow-[0_0_25px_rgba(251,191,36,0.25)] backdrop-blur-md"
+            className="inline-flex items-center gap-2 px-4 py-1.5 bg-orange-50 dark:bg-orange-500/15 border border-orange-300 dark:border-orange-500/30 rounded-full text-xs font-black uppercase tracking-widest text-orange-800 dark:text-orange-300 mb-4 shadow-sm dark:shadow-[0_0_25px_rgba(255,85,0,0.25)] backdrop-blur-md"
           >
             <span>🎓</span> Conclusão de Curso &bull; Obras &bull; Conquistas
           </motion.div>
 
-          <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-amber-600 via-yellow-600 to-amber-700 dark:from-amber-100 dark:via-yellow-300 dark:to-amber-500 uppercase tracking-tight filter drop-shadow-[0_0_30px_rgba(251,191,36,0.35)] leading-tight">
+          <h1 className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-orange-600 via-amber-500 to-orange-700 dark:from-orange-400 dark:via-amber-300 dark:to-orange-200 uppercase tracking-tight filter drop-shadow-[0_0_30px_rgba(255,85,0,0.3)] leading-tight">
             Hall da Fama
           </h1>
 
           <p className="text-base md:text-lg text-slate-600 dark:text-slate-300 font-medium mt-3 leading-relaxed">
-            As lendas que concluíram com louvor o curso da <strong className="text-amber-700 dark:text-amber-300">Trilha Tech</strong>. Conheça suas especialidades, conquistas eternas e projetos que marcaram nossa história.
+            As lendas que concluíram com louvor o curso da <strong className="text-orange-600 dark:text-orange-400">Trilha Tech</strong>. Conheça suas especialidades, conquistas eternas e projetos que marcaram nossa história.
           </p>
 
           {/* PLACAR DE HONRA GLOBAL (STATS) */}
@@ -441,10 +445,10 @@ export default function HallDaFamaPage() {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: idx * 0.06 }}
                     onClick={() => setPerfilAberto(vet.matricula)}
-                    className="group cursor-pointer relative bg-white/95 dark:bg-slate-900 dark:bg-gradient-to-b dark:from-slate-900/90 dark:via-slate-900/80 dark:to-slate-950 border border-slate-200/90 dark:border-white/10 hover:border-amber-400/80 dark:hover:border-amber-400/60 rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1.5 shadow-md hover:shadow-xl dark:shadow-none flex flex-col justify-between overflow-hidden"
+                    className="group cursor-pointer relative bg-white/95 dark:bg-[#0e2442]/90 dark:bg-gradient-to-b dark:from-[#0e2442]/95 dark:to-[#08172e]/95 border border-slate-200/90 dark:border-white/10 hover:border-orange-500/80 dark:hover:border-orange-400/60 rounded-3xl p-6 transition-all duration-300 hover:-translate-y-1.5 shadow-md hover:shadow-xl dark:shadow-none flex flex-col justify-between overflow-hidden"
                   >
                     {/* Efeito Glow Interno */}
-                    <div className="absolute top-0 right-0 w-44 h-44 bg-amber-500/5 group-hover:bg-amber-500/15 rounded-full blur-2xl pointer-events-none transition-all" />
+                    <div className="absolute top-0 right-0 w-44 h-44 bg-orange-500/5 group-hover:bg-orange-500/15 rounded-full blur-2xl pointer-events-none transition-all" />
 
                     <div>
                       {/* Topo do Card: Badge de Turma e Especialidade */}
@@ -667,10 +671,10 @@ export default function HallDaFamaPage() {
         {/* ========================================================
             SEÇÃO INFORMATIVA: COMO ENTRAR NO HALL DA FAMA
            ======================================================== */}
-        <section className="mt-16 bg-gradient-to-r from-amber-50/90 via-purple-50/50 to-slate-50/90 dark:from-amber-500/10 dark:via-purple-950/20 dark:to-slate-900 border border-amber-300 dark:border-amber-500/30 rounded-3xl p-6 md:p-10 shadow-xl transition-colors duration-300">
+        <section className="mt-16 bg-gradient-to-r from-orange-50/90 via-amber-50/50 to-slate-50/90 dark:from-[#0e2442]/80 dark:via-[#0e2442]/50 dark:to-[#08172e]/80 border border-orange-300 dark:border-orange-500/30 rounded-3xl p-6 md:p-10 shadow-xl transition-colors duration-300">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div>
-              <div className="inline-flex items-center gap-2 px-3 py-1 bg-amber-100 text-amber-900 border-amber-300 dark:bg-amber-500/20 dark:text-amber-300 dark:border-amber-500/30 rounded-full text-xs font-black mb-2 border">
+              <div className="inline-flex items-center gap-2 px-3 py-1 bg-orange-100 text-orange-900 border-orange-300 dark:bg-orange-500/20 dark:text-orange-300 dark:border-orange-500/30 rounded-full text-xs font-black mb-2 border">
                 <span>⚡</span> Para os Alunos Atuais
               </div>
               <h2 className="text-2xl md:text-3xl font-black text-slate-900 dark:text-white">

@@ -96,14 +96,14 @@ export default function QuizTeoricoInfinito({
         <div className="w-16 h-16 rounded-2xl bg-fuchsia-500/10 border border-fuchsia-500/30 flex items-center justify-center text-fuchsia-400 mb-4 shadow-lg shadow-fuchsia-500/10">
           <BrainCircuit className="w-8 h-8" />
         </div>
-        <h3 className="text-xl font-bold text-white mb-2">Quiz Teórico Infinito</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-6">
+        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Quiz Teórico Infinito</h3>
+        <p className="text-slate-600 dark:text-slate-400 text-sm max-w-sm mb-6">
           Teste seus conhecimentos em Hardware, Software, Algoritmos, Python, JS, HTML e CSS.
           O banco contém milhares de perguntas para você praticar!
         </p>
         <button
           onClick={handleStart}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-600 text-white font-bold hover:shadow-lg hover:shadow-fuchsia-500/30 transition-all flex items-center gap-2 active:scale-95"
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black hover:shadow-lg hover:shadow-fuchsia-500/30 transition-all flex items-center gap-2 active:scale-95"
         >
           Iniciar Quiz
           <HelpCircle className="w-4 h-4" />
@@ -119,19 +119,19 @@ export default function QuizTeoricoInfinito({
   return (
     <div className="flex-1 flex flex-col justify-between p-4 max-w-xl mx-auto w-full h-full relative z-10">
       {/* Cabeçalho do Quiz */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-6 text-sm text-slate-400">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-3 mb-6 text-sm text-slate-600 dark:text-slate-400">
         <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-[10px] font-bold text-fuchsia-400 uppercase tracking-wider">
+          <span className="px-2 py-0.5 rounded bg-orange-500/10 border border-orange-500/25 text-[10px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-wider">
             {currentQ.theme}
           </span>
           <span>Questão {currentIndex + 1} de 10</span>
         </div>
-        <span className="font-bold text-yellow-400">Pontos: {score}</span>
+        <span className="font-bold text-orange-600 dark:text-amber-400">Pontos: {score}</span>
       </div>
 
       {/* Caixa da Pergunta */}
-      <div className="flex-1 flex flex-col bg-slate-900 border border-slate-800 rounded-2xl mb-6 shadow-inner p-6 justify-center text-center min-h-[140px]">
-        <h2 className="text-lg sm:text-xl font-bold text-white leading-relaxed">
+      <div className="flex-1 flex flex-col bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl mb-6 shadow-sm p-6 justify-center text-center min-h-[140px]">
+        <h2 className="text-lg sm:text-xl font-black text-slate-900 dark:text-white leading-relaxed">
           {currentQ.question.replace(/\s*\(Var \d+\)/, '')}
         </h2>
       </div>
@@ -142,7 +142,7 @@ export default function QuizTeoricoInfinito({
           <button
             key={idx}
             onClick={() => handleOptionClick(opt)}
-            className="py-4 px-4 rounded-xl bg-slate-950 border border-slate-800 hover:border-fuchsia-500/50 hover:bg-slate-900 text-white text-center transition-all text-sm font-medium active:scale-98 shadow-sm flex items-center justify-center min-h-[80px]"
+            className="py-4 px-4 rounded-xl bg-slate-50 hover:bg-orange-50/70 dark:bg-slate-950 dark:hover:bg-slate-900 border border-slate-200 hover:border-orange-500 dark:border-slate-800 dark:hover:border-orange-500/50 text-slate-800 dark:text-white text-center transition-all text-sm font-bold active:scale-98 shadow-sm flex items-center justify-center min-h-[80px] cursor-pointer"
           >
             {opt}
           </button>

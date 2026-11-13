@@ -8,6 +8,7 @@ import PortalHeader from "@/src/components/PortalHeader";
 import { apiAluno, apiGeral } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
 import ThreeInteractiveBg from "@/src/components/ThreeInteractiveBg";
+import PftBackgroundPattern from "@/src/components/PftBackgroundPattern";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function GabaritosPage() {
@@ -151,13 +152,16 @@ export default function GabaritosPage() {
   if (!montado || !aluno) return null;
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-sans pb-24 transition-colors duration-300 relative overflow-hidden text-left">
+    <main className="min-h-screen bg-pft-sand dark:bg-pft-navy-deep text-slate-800 dark:text-slate-100 font-sans pb-24 transition-colors duration-300 relative overflow-hidden text-left">
+      {/* Grafismo Oficial de Circuitos e Trilhas do PFT */}
+      <PftBackgroundPattern />
+
       {/* Three.js interactive custom background */}
       <ThreeInteractiveBg />
 
       {/* Ambient background glows */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-indigo-500/5 dark:bg-indigo-500/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-10 right-1/4 w-[600px] h-[600px] bg-fuchsia-500/5 dark:bg-fuchsia-500/8 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-orange-500/10 rounded-full blur-[140px] pointer-events-none" />
+      <div className="absolute bottom-10 right-1/4 w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none" />
 
       {/* PORTAL HEADER CONTAINER */}
       <div className="max-w-[1536px] w-full mx-auto px-6 lg:px-8 pt-6 relative z-50">
@@ -201,14 +205,14 @@ export default function GabaritosPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => router.push("/portal")}
-              className="cursor-pointer text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+              className="cursor-pointer text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white px-4 py-2.5 bg-white dark:bg-[#0e2442] border border-slate-200 dark:border-white/10 rounded-xl transition-all shadow-sm flex items-center gap-1.5 hover:border-orange-500"
             >
               ← Voltar
             </motion.button>
             <div className="text-left">
               <h2 className="font-display font-black text-2xl text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
                 Central de Gabaritos
-                <span className="text-[9px] font-black tracking-widest uppercase bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-2.5 py-0.5 rounded-lg border border-indigo-500/20 dark:border-indigo-900/10 shadow-sm align-middle">
+                <span className="text-[9px] font-black tracking-widest uppercase bg-orange-500/15 text-orange-600 dark:text-orange-400 px-2.5 py-0.5 rounded-lg border border-orange-500/30 shadow-sm align-middle">
                   Student Vault
                 </span>
               </h2>
@@ -219,10 +223,10 @@ export default function GabaritosPage() {
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
             onClick={() => setOcultarConcluidas(!ocultarConcluidas)}
-            className={`cursor-pointer px-5 py-3.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all border shadow-md flex items-center gap-2 ${
+            className={`cursor-pointer px-5 py-3.5 text-xs font-black uppercase tracking-wider rounded-xl transition-all border shadow-sm flex items-center gap-2 ${
               ocultarConcluidas
-                ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border-amber-500/35"
-                : "bg-slate-900 hover:bg-black text-slate-400 border-white/5"
+                ? "bg-orange-500/15 hover:bg-orange-500/25 text-orange-600 dark:text-orange-400 border-orange-500/35"
+                : "bg-white hover:bg-slate-50 text-slate-800 border-slate-300 dark:bg-[#0e2442] dark:hover:bg-[#132f54] dark:text-white dark:border-white/10"
             }`}
           >
             {ocultarConcluidas
@@ -236,7 +240,7 @@ export default function GabaritosPage() {
       <div className="max-w-[1536px] w-full mx-auto px-6 lg:px-8 relative z-10">
         
         {/* WORKFLOW GUIDE */}
-        <div className="bg-white/80 dark:bg-slate-900/40 rounded-[2rem] p-6 mb-8 border border-slate-200/60 dark:border-white/5 backdrop-blur-md shadow-lg flex flex-col lg:flex-row items-center gap-6 justify-between">
+        <div className="bg-white/90 dark:bg-[#0e2442]/80 rounded-[2rem] p-6 mb-8 border border-slate-200/80 dark:border-white/10 backdrop-blur-md shadow-lg flex flex-col lg:flex-row items-center gap-6 justify-between">
           <div className="flex items-start gap-4 w-full">
             <div className="text-3xl select-none pt-0.5">📓</div>
             <div className="flex-1">
@@ -248,15 +252,15 @@ export default function GabaritosPage() {
                   <strong className="text-emerald-600 dark:text-emerald-400 block mb-1">
                     Para os Desafios Teóricos:
                   </strong>
-                  <p className="text-slate-500 dark:text-slate-400 font-semibold leading-relaxed lowercase first-letter:uppercase">
+                  <p className="text-slate-600 dark:text-slate-400 font-semibold leading-relaxed lowercase first-letter:uppercase">
                     Clique na letra correspondente (A, B, C, D) na tabela para ser redirecionado ao Classroom do AVA.
                   </p>
                 </div>
                 <div className="bg-slate-50 dark:bg-slate-950/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-inner">
-                  <strong className="text-amber-500 dark:text-amber-400 block mb-1">
+                  <strong className="text-amber-600 dark:text-amber-400 block mb-1">
                     Para os Miniprojetos (CodePen):
                   </strong>
-                  <p className="text-slate-500 dark:text-slate-400 font-semibold leading-relaxed lowercase first-letter:uppercase">
+                  <p className="text-slate-600 dark:text-slate-400 font-semibold leading-relaxed lowercase first-letter:uppercase">
                     Clique no Link Base para criar o seu Fork. Depois, clique no nome da AULA para fazer a entrega no AVA.
                   </p>
                 </div>
@@ -267,14 +271,14 @@ export default function GabaritosPage() {
 
         {/* GABARITOS MATRIX */}
         {carregando ? (
-          <div className="flex flex-col items-center justify-center py-20 opacity-60">
-            <div className="w-10 h-10 border-4 border-slate-200 border-t-indigo-500 rounded-full animate-spin mb-4" />
-            <p className="font-bold text-xs uppercase tracking-widest text-slate-400 animate-pulse">
+          <div className="flex flex-col items-center justify-center py-20">
+            <div className="w-10 h-10 border-4 border-orange-200 dark:border-slate-800 border-t-orange-500 rounded-full animate-spin mb-4" />
+            <p className="font-bold text-xs uppercase tracking-widest text-slate-700 dark:text-slate-300 animate-pulse">
               Descriptografando matrizes...
             </p>
           </div>
         ) : Object.keys(matrizAgrupada).length === 0 ? (
-          <div className="bg-white/80 dark:bg-slate-900/40 p-12 rounded-[2.5rem] border border-slate-200 dark:border-white/5 text-center text-slate-400 dark:text-slate-500 shadow-md flex flex-col items-center select-none">
+          <div className="bg-white/90 dark:bg-[#0e2442]/80 p-12 rounded-[2.5rem] border border-slate-200 dark:border-white/10 text-center text-slate-400 dark:text-slate-500 shadow-md flex flex-col items-center select-none">
             <div className="text-5xl mb-4">✨</div>
             <p className="font-black text-slate-800 dark:text-white uppercase tracking-wider text-sm">
               Tudo limpo por aqui!
@@ -317,7 +321,7 @@ export default function GabaritosPage() {
                 return (
                   <div
                     key={nomeModulo}
-                    className="bg-white/80 dark:bg-slate-900/40 rounded-[2.5rem] border border-slate-200/60 dark:border-white/5 overflow-hidden shadow-lg backdrop-blur-md transition-all"
+                    className="bg-white/90 dark:bg-[#0e2442]/80 rounded-[2.5rem] border border-slate-200/80 dark:border-white/10 overflow-hidden shadow-lg backdrop-blur-md transition-all"
                   >
                     {/* CABEÇALHO DO MÓDULO */}
                     <div
@@ -400,7 +404,7 @@ export default function GabaritosPage() {
                                       className={`inline-flex w-8 h-8 items-center justify-center rounded-full font-mono font-black text-sm shadow-sm transition-all cursor-pointer border ${
                                         ativs.desafio1.status === "Avaliado" || ativs.desafio1.status === "Concluída"
                                           ? "bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-600 opacity-60"
-                                          : "bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-450 hover:bg-rose-500/20"
+                                          : "bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20"
                                       }`}
                                       title={ativs.desafio1.linkClassroom ? "Entregar no AVA" : "Sem link do AVA"}
                                     >
@@ -423,7 +427,7 @@ export default function GabaritosPage() {
                                       className={`inline-flex w-8 h-8 items-center justify-center rounded-full font-mono font-black text-sm shadow-sm transition-all cursor-pointer border ${
                                         ativs.desafio2.status === "Avaliado" || ativs.desafio2.status === "Concluída"
                                           ? "bg-slate-100 dark:bg-slate-950 border-slate-200 dark:border-slate-800 text-slate-400 dark:text-slate-600 opacity-60"
-                                          : "bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-450 hover:bg-rose-500/20"
+                                          : "bg-rose-500/10 border-rose-500/20 text-rose-600 dark:text-rose-400 hover:bg-rose-500/20"
                                       }`}
                                       title={ativs.desafio2.linkClassroom ? "Entregar no AVA" : "Sem link do AVA"}
                                     >

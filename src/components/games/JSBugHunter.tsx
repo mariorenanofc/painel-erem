@@ -181,14 +181,14 @@ export default function JSBugHunter({ onGameOver, playSound, perderVida }: JSBug
         <div className="w-16 h-16 rounded-2xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400 mb-4">
           <Bug className="w-8 h-8" />
         </div>
-        <h3 className="text-xl font-bold text-white mb-2">Caçador de Bugs Simples</h3>
-        <p className="text-slate-400 text-sm max-w-sm mb-6">
+        <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Caçador de Bugs Simples</h3>
+        <p className="text-slate-600 dark:text-slate-400 text-sm max-w-sm mb-6">
           Analise o bloco de código de 3 linhas. Uma delas contém um erro de sintaxe ou digitação. 
           Toque diretamente sobre a linha que tem o bug!
         </p>
         <button
           onClick={handleStart}
-          className="px-6 py-3 rounded-xl bg-gradient-to-r from-rose-500 to-red-650 text-white font-bold hover:shadow-lg hover:shadow-rose-500/20 transition-all flex items-center gap-2"
+          className="px-6 py-3 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black hover:shadow-lg hover:shadow-rose-500/20 transition-all flex items-center gap-2"
         >
           Iniciar Partida
           <Sparkles className="w-4 h-4" />
@@ -202,21 +202,21 @@ export default function JSBugHunter({ onGameOver, playSound, perderVida }: JSBug
   return (
     <div className="flex-1 flex flex-col justify-between p-4 max-w-xl mx-auto w-full">
       {/* Placa de Info */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 mb-6 text-sm text-slate-400">
+      <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80 pb-3 mb-6 text-sm text-slate-600 dark:text-slate-400">
         <span>Código {currentIndex + 1} de 5</span>
-        <span className="font-bold text-yellow-400">Pontos: {score}</span>
+        <span className="font-bold text-orange-600 dark:text-amber-400">Pontos: {score}</span>
       </div>
 
       <div className="text-center mb-2">
         <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Instrução:</span>
-        <p className="text-sm text-slate-300 font-medium">Toque sobre a linha que possui o erro de sintaxe.</p>
+        <p className="text-sm text-slate-700 dark:text-slate-300 font-bold">Toque sobre a linha que possui o erro de sintaxe.</p>
       </div>
 
       {/* Editor Interativo de Linhas */}
-      <div className="flex-1 flex flex-col justify-center bg-slate-950 border border-slate-800 rounded-2xl mb-6 shadow-inner overflow-hidden p-4 min-h-[160px]">
+      <div className="flex-1 flex flex-col justify-center bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl mb-6 shadow-inner overflow-hidden p-4 min-h-[160px]">
         <div className="flex flex-col gap-1 font-mono text-sm sm:text-base text-left select-none">
           {currentQ.lines.map((line, idx) => {
-            let lineBg = "hover:bg-slate-900 border-transparent";
+            let lineBg = "hover:bg-slate-200/80 dark:hover:bg-slate-900 border-transparent text-slate-800 dark:text-slate-200";
             
             if (selectedLine !== null) {
               if (idx === currentQ.errorLineIndex) {
@@ -233,7 +233,7 @@ export default function JSBugHunter({ onGameOver, playSound, perderVida }: JSBug
                 onClick={() => handleLineClick(idx)}
                 className={`w-full text-left py-3.5 px-4 rounded-xl border flex items-start gap-4 transition-all ${lineBg}`}
               >
-                <span className="text-slate-600 font-bold select-none w-4">{idx + 1}</span>
+                <span className="text-slate-400 dark:text-slate-500 font-bold select-none w-4">{idx + 1}</span>
                 <span className="whitespace-pre-wrap break-all flex-1">{line}</span>
               </button>
             );
@@ -242,7 +242,7 @@ export default function JSBugHunter({ onGameOver, playSound, perderVida }: JSBug
       </div>
 
       {/* Placa de Explicação / Feedback */}
-      <div className="min-h-[64px] flex items-center justify-center p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 text-center text-xs font-semibold text-slate-300">
+      <div className="min-h-[64px] flex items-center justify-center p-3.5 rounded-xl bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-center text-xs font-semibold text-slate-700 dark:text-slate-300">
         {feedbackMsg || "Clique em uma linha acima para inspecionar..."}
       </div>
     </div>

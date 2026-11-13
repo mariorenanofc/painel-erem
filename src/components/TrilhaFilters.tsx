@@ -42,7 +42,7 @@ export default function TrilhaFilters({
           </label>
           <div className="relative">
             <select
-              className="cursor-pointer w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl p-3.5 pr-10 focus:border-blue-550 outline-none transition-all text-sm appearance-none shadow-sm font-bold"
+              className="cursor-pointer w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl p-3.5 pr-10 focus:border-blue-500 outline-none transition-all text-sm appearance-none shadow-sm font-bold"
               value={filtroTurma}
               onChange={(e) => setFiltroTurma(e.target.value)}
             >
@@ -63,7 +63,7 @@ export default function TrilhaFilters({
           </label>
           <div className="relative">
             <select
-              className="cursor-pointer w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl p-3.5 pr-10 focus:border-blue-550 outline-none transition-all text-sm appearance-none shadow-sm font-bold"
+              className="cursor-pointer w-full bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl p-3.5 pr-10 focus:border-blue-500 outline-none transition-all text-sm appearance-none shadow-sm font-bold"
               value={filtroStatus}
               onChange={(e) => setFiltroStatus(e.target.value)}
             >

@@ -154,14 +154,14 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="relative w-full max-w-5xl max-h-[90vh] flex flex-col bg-slate-900 border border-slate-800 rounded-2xl p-6 overflow-hidden shadow-2xl"
+            className="relative w-full max-w-5xl max-h-[90vh] flex flex-col bg-white dark:bg-[#08172e] text-slate-800 dark:text-white border border-slate-200 dark:border-white/10 rounded-3xl p-6 overflow-hidden shadow-2xl"
           >
             {confirmDialog && (
-              <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/80 backdrop-blur-sm">
-                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-slate-800 border border-slate-700 p-6 rounded-xl shadow-2xl max-w-sm w-full text-center">
+              <div className="absolute inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm">
+                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 rounded-xl shadow-2xl max-w-sm w-full text-center">
                   <div className="text-4xl mb-4">⚠️</div>
-                  <h3 className="text-xl font-bold text-white mb-2">Atenção!</h3>
-                  <p className="text-slate-300 mb-6 text-sm">
+                  <h3 className="text-xl font-bold text-slate-800 dark:text-white mb-2">Atenção!</h3>
+                  <p className="text-slate-600 dark:text-slate-300 mb-6 text-sm">
                     {confirmDialog.type === "desafiar" 
                       ? `Deseja desafiar ${confirmDialog.nome} apostando 50 XP da sua carteira?` 
                       : "Aceitar este desafio descontará 50 XP da sua carteira. Você está pronto?"}
@@ -169,7 +169,7 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
                   <div className="flex gap-4 justify-center">
                     <button 
                       onClick={() => setConfirmDialog(null)}
-                      className="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold transition-colors text-sm"
+                      className="px-4 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600 dark:text-slate-300 font-bold transition-colors text-sm cursor-pointer border border-slate-300 dark:border-transparent"
                     >
                       Cancelar
                     </button>
@@ -182,7 +182,7 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
                         }
                         setConfirmDialog(null);
                       }}
-                      className="px-4 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-bold transition-colors text-sm"
+                      className="px-4 py-2 rounded-lg bg-orange-500 hover:bg-orange-600 text-white font-bold transition-colors text-sm shadow-md shadow-orange-500/20 cursor-pointer"
                     >
                       Confirmar Apostar
                     </button>
@@ -192,14 +192,14 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
             )}
 
             <div className="flex items-center justify-between mb-6 shrink-0">
-              <h2 className="text-2xl font-black text-white flex items-center gap-2">
+              <h2 className="text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2">
                 ⚔️ Arena 1v1
               </h2>
               <div className="flex items-center gap-4">
-                <button onClick={carregarDados} className="text-sm bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded text-slate-300">
+                <button onClick={carregarDados} className="text-sm bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 px-3 py-1 rounded text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-transparent font-semibold transition-colors">
                   Atualizar
                 </button>
-                <button onClick={onClose} className="text-slate-400 hover:text-white transition-colors">
+                <button onClick={onClose} className="text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors">
                   <span className="text-2xl">×</span>
                 </button>
               </div>
@@ -208,7 +208,7 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 overflow-y-auto custom-scrollbar pb-4 pr-2">
         {/* Jogadores Online */}
         <div>
-          <h3 className="text-lg font-bold text-slate-300 mb-4 flex items-center gap-2">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-300 mb-4 flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
             Online Agora ({onlinePlayers.length})
           </h3>
@@ -216,15 +216,15 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
             {loading ? <p className="text-slate-500 text-sm">Carregando...</p> : 
              onlinePlayers.length === 0 ? <p className="text-slate-500 text-sm">Nenhum outro jogador online no momento.</p> :
              onlinePlayers.map(p => (
-               <div key={p.matricula} className="bg-slate-800/50 border border-slate-700/50 p-3 rounded-xl flex items-center justify-between">
+               <div key={p.matricula} className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 p-3 rounded-xl flex items-center justify-between">
                  <div>
-                   <p className="font-bold text-slate-200">{p.nome}</p>
-                   <p className="text-xs text-slate-400">Turma {p.turma}</p>
+                   <p className="font-bold text-slate-800 dark:text-slate-200">{p.nome}</p>
+                   <p className="text-xs text-slate-500 dark:text-slate-400">Turma {p.turma}</p>
                  </div>
                  <button 
                    onClick={() => setConfirmDialog({ id: p.matricula, type: "desafiar", nome: p.nome, extraInfo: p.turma })}
                    disabled={actionLoadingId === p.matricula}
-                   className="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                   className="bg-orange-500 hover:bg-orange-600 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-md shadow-orange-500/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                  >
                    {actionLoadingId === p.matricula ? "Aguarde..." : "Desafiar (50 XP)"}
                  </button>
@@ -236,18 +236,18 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
 
         {/* Meus Duelos */}
         <div>
-          <h3 className="text-lg font-bold text-amber-400 mb-4 flex items-center gap-2">
+          <h3 className="text-lg font-bold text-amber-600 dark:text-amber-400 mb-4 flex items-center gap-2">
             🔥 Desafios Pendentes
           </h3>
           <div className="flex flex-col gap-2 mb-6">
             {duelosPendentes.filter(d => d.desafiado.matricula === matriculaMinha).length === 0 && 
-             <p className="text-slate-500 text-sm">Você não tem desafios recebidos pendentes.</p>}
+              <p className="text-slate-500 dark:text-slate-400 text-sm">Você não tem desafios recebidos pendentes.</p>}
             
             {duelosPendentes.filter(d => d.desafiado.matricula === matriculaMinha).map(d => (
-              <div key={d.id} className="bg-amber-900/20 border border-amber-700/50 p-3 rounded-xl flex items-center justify-between">
+              <div key={d.id} className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/50 p-3 rounded-xl flex items-center justify-between">
                 <div>
-                  <p className="font-bold text-amber-200">{d.desafiante.nome} te desafiou!</p>
-                  <p className="text-xs text-amber-400/70">Valendo {((d.apostaXP as number) || 50) * 2} XP</p>
+                  <p className="font-bold text-amber-900 dark:text-amber-200">{d.desafiante.nome} te desafiou!</p>
+                  <p className="text-xs text-amber-700 dark:text-amber-400/70">Valendo {((d.apostaXP as number) || 50) * 2} XP</p>
                 </div>
                 <button 
                   onClick={() => setConfirmDialog({ id: d.id, type: "aceitar" })}
@@ -261,21 +261,21 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
 
             {/* Desafios que EU enviei e estão aguardando */}
             {duelosPendentes.filter(d => d.desafiante.matricula === matriculaMinha).map(d => (
-              <div key={d.id} className="bg-slate-800/50 border border-slate-700/50 p-3 rounded-xl flex items-center justify-between opacity-70">
+              <div key={d.id} className="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50 p-3 rounded-xl flex items-center justify-between opacity-70">
                 <div>
-                  <p className="font-bold text-slate-300">Aguardando {d.desafiado.nome}...</p>
-                  <p className="text-xs text-slate-400">Você apostou {(d.apostaXP as number) || 50} XP</p>
+                  <p className="font-bold text-slate-700 dark:text-slate-300">Aguardando {d.desafiado.nome}...</p>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">Você apostou {(d.apostaXP as number) || 50} XP</p>
                 </div>
-                <span className="text-xs font-bold text-amber-500">⏳ Pendente</span>
+                <span className="text-xs font-bold text-amber-600 dark:text-amber-500">⏳ Pendente</span>
               </div>
             ))}
           </div>
 
-          <h3 className="text-lg font-bold text-slate-400 mb-4">
+          <h3 className="text-lg font-bold text-slate-800 dark:text-slate-300 mb-4 flex items-center gap-2">
             📜 Histórico de Hoje
           </h3>
           <div className="flex flex-col gap-2 max-h-72 overflow-y-auto pr-2 custom-scrollbar">
-            {historico.length === 0 && <p className="text-slate-600 text-sm">Nenhum duelo finalizado hoje.</p>}
+            {historico.length === 0 && <p className="text-slate-500 dark:text-slate-400 text-sm">Nenhum duelo finalizado hoje.</p>}
             {historico.map(d => {
               let resultadoTexto = "";
               let corTexto = "text-slate-400";
@@ -299,19 +299,19 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
               const adv = d.desafiante.matricula === matriculaMinha ? d.desafiado.nome : d.desafiante.nome;
 
               return (
-                <div key={d.id} className="flex flex-col gap-1 bg-slate-900/80 border border-slate-800 rounded-lg overflow-hidden shrink-0">
+                <div key={d.id} className="flex flex-col gap-1 bg-slate-50 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden shrink-0">
                   <div 
                     onClick={() => podeClicar && setExpandedHistoryId(expandedHistoryId === d.id ? null : d.id)}
-                    className={`p-2.5 flex justify-between items-center text-sm ${podeClicar ? 'cursor-pointer hover:bg-slate-800 transition-colors' : ''}`}
+                    className={`p-2.5 flex justify-between items-center text-sm ${podeClicar ? 'cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors' : ''}`}
                   >
-                    <span className="text-slate-300">vs {adv}</span>
+                    <span className="text-slate-800 dark:text-slate-300 font-semibold">vs {adv}</span>
                     <span className={corTexto}>{resultadoTexto}</span>
                   </div>
                   
                   {expandedHistoryId === d.id && (
-                    <div className="px-4 pt-3 pb-5 border-t border-slate-800/50 bg-slate-900">
+                    <div className="px-4 pt-3 pb-5 border-t border-slate-200 dark:border-slate-800/50 bg-slate-100/70 dark:bg-slate-900">
                        <div className="grid grid-cols-2 gap-4 text-center">
-                         <div className={`p-3 rounded-lg border bg-slate-950 shadow-inner flex flex-col justify-center items-center ${d.vencedor === d.desafiante.matricula ? 'border-green-500/30' : 'border-red-500/20'}`}>
+                         <div className={`p-3 rounded-lg border bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-inner flex flex-col justify-center items-center ${d.vencedor === d.desafiante.matricula ? 'border-green-500/30' : 'border-red-500/20'}`}>
                            <p className={`font-bold mb-1.5 ${d.vencedor === d.desafiante.matricula ? 'text-green-400' : 'text-slate-300'}`} title={d.desafiante.nome}>
                              {d.desafiante.nome.split(" ")[0]}
                            </p>
@@ -320,7 +320,7 @@ export default function DuelosPanel({ isOpen, onClose, onXpUpdate }: { isOpen: b
                              <span>Acerto: {Number(d.desafiante.precisao || 0).toFixed(1)}%</span>
                            </div>
                          </div>
-                         <div className={`p-3 rounded-lg border bg-slate-950 shadow-inner flex flex-col justify-center items-center ${d.vencedor === d.desafiado.matricula ? 'border-green-500/30' : 'border-red-500/20'}`}>
+                         <div className={`p-3 rounded-lg border bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 shadow-inner flex flex-col justify-center items-center ${d.vencedor === d.desafiado.matricula ? 'border-green-500/30' : 'border-red-500/20'}`}>
                            <p className={`font-bold mb-1.5 ${d.vencedor === d.desafiado.matricula ? 'text-green-400' : 'text-slate-300'}`} title={d.desafiado.nome}>
                              {d.desafiado.nome.split(" ")[0]}
                            </p>

@@ -50,51 +50,64 @@ function extrairEmoji(str: string): { emoji: string; texto: string } {
   return { emoji: "🚀", texto: str };
 }
 
-export const SLIDES_PADRAO_V2_2: SlideNovidade[] = [
+export const SLIDES_PADRAO_V2_4: SlideNovidade[] = [
   {
-    id: "aniversarios-calendario",
-    icone: "🎂",
-    badge: "Calendário & Comunidade",
-    badgeCor: "bg-pink-500/15 text-pink-300 border-pink-500/30",
-    titulo: "Aniversariantes no Calendário Escolar",
-    subtitulo: "Acompanhe as datas especiais de todos os colegas diretamente no cronograma",
+    id: "ranking-semanal-w46",
+    icone: "🏆",
+    badge: "Resultado Oficial da Semana",
+    badgeCor: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
+    titulo: "Ranking Semanal Apurado (Semana 46)!",
+    subtitulo: "O ciclo semanal foi encerrado e os bônus de XP já foram creditados",
     itens: [
-      { texto: "🎂 **Mural de Aniversários:** Veja os aniversariantes do dia e do mês integrados ao cronograma de aulas e prazos." },
-      { texto: "🔒 **Privacidade Respeitada:** Exibição elegante com Primeiro Nome e Último Sobrenome, sem expor dados sensíveis ou turmas." },
-      { texto: "⚡ **Filtro Rápido:** Novo botão de filtro '🎂 Aniversários' para localizar celebrações em um clique." }
+      { texto: "⚡ **Fechamento Automático:** Apuração oficial da Semana 46 consolidada com sincronização direta do Google Classroom." },
+      { texto: "🎁 **Bônus de XP no Top 10:** Os estudantes com melhor desempenho na semana já receberam seus pontos extras na conta!" },
+      { texto: "📊 **Consulte sua Posição:** Acesse a aba Ranking no Portal para ver o pódio da sua turma e o ranking geral." }
     ]
   },
   {
-    id: "coding-practice",
-    icone: "📱",
-    badge: "Coding Practice",
-    badgeCor: "bg-emerald-500/15 text-emerald-300 border-emerald-500/30",
-    titulo: "Blindagem Mobile para Smartphones",
-    subtitulo: "Pratique código no celular sem erros involuntários de digitação",
+    id: "identidade-pft",
+    icone: "🎨",
+    badge: "Nova Identidade Visual",
+    badgeCor: "bg-orange-500/15 text-orange-400 border-orange-500/30",
+    titulo: "Projeto Florescendo Talentos (PFT)",
+    subtitulo: "O portal agora veste as cores e elementos oficiais do PFT",
     itens: [
-      { texto: "🛡️ **Anti-Shift Inteligente:** O teclado do celular não força mais maiúsculas acidentais em código." },
-      { texto: "⚡ **Barra de Símbolos:** Atalhos rápidos de toque para `Tab`, `{`, `}`, `(`, `)`, `;`, `=`, etc." },
-      { texto: "⌨️ **Sem Perder Foco:** Toque nos símbolos na tela sem que o teclado virtual do celular feche." }
+      { texto: "✨ **Paleta Oficial PFT:** Novo design harmônico com Laranja Vibrante, Azul Marinho Noturno, Areia Suave e Verde Broto para status de conclusão." },
+      { texto: "🌐 **Grafismo Tubular Exclusivo:** Fundo dinâmico com circuitos e nós digitais inspirados nas trilhas tecnológicas do projeto." },
+      { texto: "🌗 **Modo Claro e Modo Escuro:** Adaptação completa de alto contraste em 100% das telas, botões, modais e relatórios." }
+    ]
+  },
+  {
+    id: "portal-cockpit",
+    icone: "🚀",
+    badge: "Experiência do Estudante",
+    badgeCor: "bg-blue-500/15 text-blue-400 border-blue-500/30",
+    titulo: "Cockpit & Telas Docentes Revitalizadas",
+    subtitulo: "Navegação mais suave, contrastada e sem pontos cegos de leitura",
+    itens: [
+      { texto: "🌟 **Portal do Aluno:** Cockpit e cards de missões com gradientes canônicos e legibilidade reforçada em ambos os temas." },
+      { texto: "🛡️ **Painel Docente / Tutor:** Dashboards, frequências, analytics e gabaritos alinhados à mesma linguagem visual moderna." },
+      { texto: "⚡ **Zero Textos Ocultos:** Correções completas em estados de foco, hover e transições de tema." }
     ]
   },
   {
     id: "hall-da-fama",
     icone: "🏛️",
-    badge: "Hall da Fama",
+    badge: "Hall da Fama & Modais",
     badgeCor: "bg-amber-500/15 text-amber-300 border-amber-500/30",
-    titulo: "Santuário dos Veteranos & Stories 9:16",
-    subtitulo: "Celebre os formandos e compartilhe conquistas em alta resolução",
+    titulo: "Santuário PFT & Leaderboards",
+    subtitulo: "Lendas formadas e rankings com estética refinada",
     itens: [
-      { texto: "📸 **Cards para Story (9:16):** Exporte imagens em alta definição para Instagram e WhatsApp com QR Code dinâmico." },
-      { texto: "🏛️ **Vitrine de Veteranos:** Conheça os formandos oficiais com memorial, stack, projetos e certificações." },
-      { texto: "🌗 **Contraste Perfeito:** Visual 100% calibrado para leitura nítida em modo claro e escuro." }
+      { texto: "👏 **Aplausos e Stories:** Efeitos de celebração e geração de cards 9:16 integrados à nova atmosfera PFT." },
+      { texto: "🏆 **Leaderboards e Certificados:** Visual refinado para honras escolares e certificados oficiais de conclusão." },
+      { texto: "🏎️ **Performance e Fluidez:** Zero leituras extras no banco de dados e transição CSS instantânea." }
     ]
   }
 ];
 
 export default function NovidadesModal({
   onClose,
-  versao = "v2.2.1",
+  versao = "v2.4.0",
   markdown = "",
   matricula = ""
 }: NovidadesModalProps) {
@@ -103,7 +116,7 @@ export default function NovidadesModal({
   // Converte markdown inteligente em slides enxutos ou usa os slides padrão
   const slides: SlideNovidade[] = useMemo(() => {
     if (!markdown || !markdown.trim()) {
-      return SLIDES_PADRAO_V2_2;
+      return SLIDES_PADRAO_V2_4;
     }
 
     // Normaliza divisões de seções (divide por cabeçalhos ### ou divisores ---)
@@ -115,7 +128,7 @@ export default function NovidadesModal({
     }
 
     if (blocosBrutos.length === 0) {
-      return SLIDES_PADRAO_V2_2;
+      return SLIDES_PADRAO_V2_4;
     }
 
     const resultado: SlideNovidade[] = [];
@@ -156,7 +169,7 @@ export default function NovidadesModal({
       });
     });
 
-    return resultado.length > 0 ? resultado : SLIDES_PADRAO_V2_2;
+    return resultado.length > 0 ? resultado : SLIDES_PADRAO_V2_4;
   }, [markdown]);
 
   const totalSlides = slides.length;

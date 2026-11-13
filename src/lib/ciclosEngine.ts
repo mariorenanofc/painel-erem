@@ -1,6 +1,6 @@
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { loadRegrasCiclos, invalidatePortalCache, invalidateRankingCache } from "@/src/lib/cache";
-import { getRankingKeys, getCicloAnteriorKeys, getOpcoesCicloSemanal } from "@/src/lib/dateUtils";
+import { getRankingKeys, getCicloAnteriorKeys, getOpcoesCicloSemanal, getDataBrasilia } from "@/src/lib/dateUtils";
 import { sincronizarAvaDireto } from "@/src/lib/avaSyncService";
 import { CicloHistoricoItem, RegrasCiclosConfig } from "@/src/types";
 
@@ -21,7 +21,7 @@ const CONTA_MESTRE = "1234567";
 /**
  * Executa o fechamento de um ciclo (semanal ou mensal) de forma 100% idempotente e atômica.
  * @param tipo "semanal" | "mensal"
- * @param chaveAlvo opcional (ex: "2026_10" ou "2026_W44"). Se não fornecido, fecha o ciclo anterior com base na data.
+ * @param chaveAlvo opcional (ex: "2026_10" ou "2026_W44"). Se não fornecido, calcula a chave correta com base no corte e regras.
  * @param autor quem disparou (ex: "tutor:Mário Renan" ou "automacao")
  */
 export async function executarFechamentoCiclo(
@@ -34,8 +34,24 @@ export async function executarFechamentoCiclo(
     let chaveFinal = chaveAlvo?.trim();
 
     if (!chaveFinal) {
-      const anteriores = getCicloAnteriorKeys(dataAtual);
-      chaveFinal = tipo === "mensal" ? anteriores.mesAnteriorKey : anteriores.semanaAnteriorKey;
+      const regrasGerais = await loadRegrasCiclos(dbAdmin);
+      if (tipo === "semanal") {
+        const diaCorte = regrasGerais.semanal.diaFechamento !== undefined ? Number(regrasGerais.semanal.diaFechamento) : 5;
+        const horaCorte = regrasGerais.semanal.horaFechamento || "16:59";
+        const opcoes = getOpcoesCicloSemanal(dataAtual, diaCorte, horaCorte);
+        chaveFinal = opcoes.semanaAlvoPrincipal;
+      } else {
+        const anteriores = getCicloAnteriorKeys(dataAtual);
+        const horaCorteMensal = regrasGerais.mensal.horaFechamento || "23:59";
+        const dataBrasilia = getDataBrasilia(dataAtual);
+        const ultimoDiaMes = new Date(dataBrasilia.ano, dataBrasilia.mes, 0).getDate();
+        if (dataBrasilia.dia === ultimoDiaMes && dataBrasilia.horaMinuto >= horaCorteMensal) {
+          const { mesKey } = getRankingKeys(dataAtual);
+          chaveFinal = mesKey;
+        } else {
+          chaveFinal = anteriores.mesAnteriorKey;
+        }
+      }
     }
 
     const cicloId = `${tipo}_${chaveFinal}`;
@@ -437,14 +453,13 @@ export async function verificarEFecharCiclosPendentes(db: FirebaseFirestore.Fire
 
     // 2. Verificar Ciclo Mensal
     if (regras.mensal.ativo && regras.mensal.modoExecucao === "automatico") {
-      const dataHoje = new Date();
-      const ultimoDiaMes = new Date(dataHoje.getFullYear(), dataHoje.getMonth() + 1, 0).getDate();
+      const br = getDataBrasilia(new Date());
+      const ultimoDiaMes = new Date(br.ano, br.mes, 0).getDate();
       const horaCorteMensal = regras.mensal.horaFechamento || "23:59";
-      const horaMinutoAtual = String(dataHoje.getHours()).padStart(2, "0") + ":" + String(dataHoje.getMinutes()).padStart(2, "0");
 
-      // Se for o último dia do mês e já passou da hora de corte
-      if (dataHoje.getDate() === ultimoDiaMes && horaMinutoAtual >= horaCorteMensal) {
-        const { mesKey } = getRankingKeys(dataHoje);
+      // Se for o último dia do mês e já passou da hora de corte (no fuso de Brasília)
+      if (br.dia === ultimoDiaMes && br.horaMinuto >= horaCorteMensal) {
+        const { mesKey } = getRankingKeys(br.dateObj);
         const cicloId = `mensal_${mesKey}`;
         const cicloDoc = await dbAdmin.collection("historico_ciclos").doc(cicloId).get();
         if (!cicloDoc.exists || cicloDoc.data()?.status !== "FECHADO") {

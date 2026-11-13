@@ -6,6 +6,7 @@ import CuradoriaHallModal from "@/src/components/CuradoriaHallModal";
 import TrilhaStatsCards from "@/src/components/TrilhaStatsCards";
 import TrilhaFilters from "@/src/components/TrilhaFilters";
 import TrilhaTable from "@/src/components/TrilhaTable";
+import PftBackgroundPattern from "@/src/components/PftBackgroundPattern";
 import { useState, useMemo, useEffect } from "react";
 import useSWR from "swr";
 import { Aluno } from "@/src/types";
@@ -173,9 +174,12 @@ export default function TrilhaTechPage() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300 p-4 md:p-8 font-sans relative overflow-hidden">
+    <main className="min-h-screen bg-pft-sand dark:bg-pft-navy-deep text-slate-800 dark:text-slate-100 transition-colors duration-300 p-4 md:p-8 font-sans relative overflow-hidden">
+      {/* PFT Authentic Circuit & Nodes Motif */}
+      <PftBackgroundPattern />
+
       {/* Decorative Glow Blobs */}
-      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-blue-500/5 dark:bg-blue-500/10 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-orange-500/5 dark:bg-orange-500/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-10 right-1/4 w-[600px] h-[600px] bg-cyan-500/5 dark:bg-cyan-500/8 rounded-full blur-[140px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10">
@@ -195,11 +199,11 @@ export default function TrilhaTechPage() {
           <div className="text-left">
             <h2 className="font-display font-black text-2xl md:text-3xl text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
               Alunos Trilha Tech
-              <span className="text-[10px] font-black tracking-widest uppercase bg-blue-500/10 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 px-3 py-1 rounded-xl border border-blue-500/20 dark:border-blue-900/10 shadow-sm align-middle">
+              <span className="text-[10px] font-black tracking-widest uppercase bg-orange-500/10 dark:bg-orange-500/20 text-orange-600 dark:text-orange-400 px-3 py-1 rounded-xl border border-orange-500/20 dark:border-orange-500/30 shadow-xs align-middle">
                 Tutor Area
               </span>
             </h2>
-            <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 font-semibold">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 font-semibold">
               Gerencie inscrições, turmas e emita listas de frequência da trilha gamificada.
             </p>
           </div>
@@ -216,7 +220,7 @@ export default function TrilhaTechPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => (window.location.href = "/trilhatech/aulas")}
-              className="cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white text-xs font-black uppercase tracking-wider py-3.5 px-6 rounded-2xl shadow-lg shadow-blue-500/10 transition-all flex items-center gap-2"
+              className="cursor-pointer bg-gradient-to-r from-orange-500 to-amber-600 hover:brightness-110 text-white text-xs font-black uppercase tracking-wider py-3.5 px-6 rounded-2xl shadow-lg shadow-orange-500/10 transition-all flex items-center gap-2"
             >
               <span>👨‍🏫</span> Gestão de Aulas
             </motion.button>
@@ -224,7 +228,7 @@ export default function TrilhaTechPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => (window.location.href = "/trilhatech/configuracoes")}
-              className="cursor-pointer bg-gray-800 hover:bg-gray-700 text-white text-xs font-black uppercase tracking-wider py-3.5 px-6 rounded-2xl transition-all flex items-center gap-2"
+              className="cursor-pointer bg-slate-800 hover:bg-slate-700 text-white text-xs font-black uppercase tracking-wider py-3.5 px-6 rounded-2xl transition-all flex items-center gap-2"
             >
               <span>⚙️</span> Configurações
             </motion.button>

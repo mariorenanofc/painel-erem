@@ -288,8 +288,8 @@ export default function ImportadorLoteModal({
           >
             <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/10 dark:bg-indigo-500/5 rounded-full blur-[100px] -mr-40 -mt-40 pointer-events-none" />
 
-            <div className="bg-linear-to-r from-blue-600 via-indigo-700 to-indigo-950 p-5 md:p-6 flex justify-between items-center text-white shrink-0 relative border-b border-white/5">
-              <div className="absolute inset-0 bg-linear-to-b from-white/5 to-transparent pointer-events-none" />
+            <div className="bg-gradient-to-r from-blue-600 via-indigo-700 to-indigo-950 p-5 md:p-6 flex justify-between items-center text-white shrink-0 relative border-b border-white/5">
+              <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
               <div className="relative z-10">
                 <h2 className="font-display font-black text-lg md:text-xl flex items-center gap-2.5 tracking-tight">
                   <span className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-sm shadow-inner">
@@ -762,7 +762,7 @@ export default function ImportadorLoteModal({
                     whileTap={{ scale: 0.99 }}
                     onClick={confirmarImportacao}
                     disabled={importando || contadores.selecionadas === 0}
-                    className="cursor-pointer px-8 py-2.5 rounded-xl bg-linear-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white font-black shadow-lg shadow-blue-500/10 text-xs uppercase tracking-wider transition-all disabled:opacity-50 flex items-center gap-2"
+                    className="cursor-pointer px-8 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white font-black shadow-lg shadow-blue-500/10 text-xs uppercase tracking-wider transition-all disabled:opacity-50 flex items-center gap-2"
                   >
                     {importando ? (
                       <>

@@ -317,7 +317,7 @@ export default function ConfiguracoesPage() {
             whileTap={{ scale: 0.98 }}
             onClick={salvarConfiguracoes}
             disabled={salvando}
-            className="cursor-pointer w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-650 hover:brightness-110 text-white font-black px-6 py-3.5 rounded-xl shadow-lg shadow-blue-500/10 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
+            className="cursor-pointer w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white font-black px-6 py-3.5 rounded-xl shadow-lg shadow-blue-500/10 transition-all active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
           >
             {salvando ? "Salvando..." : "💾 Salvar Alterações"}
           </motion.button>
@@ -338,7 +338,7 @@ export default function ConfiguracoesPage() {
                   className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
                     abaAtiva === "alunos"
                       ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
-                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
                   }`}
                 >
                   👥 Alunos & Gamificação
@@ -348,7 +348,7 @@ export default function ConfiguracoesPage() {
                   className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
                     abaAtiva === "frequencia"
                       ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
-                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
                   }`}
                 >
                   📅 Diário (Dias & Logs)
@@ -358,7 +358,7 @@ export default function ConfiguracoesPage() {
                   className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
                     abaAtiva === "atividades"
                       ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
-                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
                   }`}
                 >
                   📚 Atividades & Gabaritos
@@ -368,7 +368,7 @@ export default function ConfiguracoesPage() {
                   className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
                     abaAtiva === "entregas"
                       ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
-                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
                   }`}
                 >
                   📤 Entregas (Projetos)
@@ -378,7 +378,7 @@ export default function ConfiguracoesPage() {
                   className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
                     abaAtiva === "rifas"
                       ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
-                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
                   }`}
                 >
                   🎟️ Rifas e Sorteios
@@ -388,7 +388,7 @@ export default function ConfiguracoesPage() {
                   className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
                     abaAtiva === "curtidas"
                       ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
-                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
                   }`}
                 >
                   ❤️ Pix de XP (Transações)
@@ -404,7 +404,7 @@ export default function ConfiguracoesPage() {
                   className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
                     abaAtiva === "geral"
                       ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
-                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
                   }`}
                 >
                   ⚙️ Ajustes Gerais
@@ -414,7 +414,7 @@ export default function ConfiguracoesPage() {
                   className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
                     abaAtiva === "links"
                       ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
-                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
                   }`}
                 >
                   🔗 Links e WhatsApp
@@ -427,7 +427,7 @@ export default function ConfiguracoesPage() {
                   className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
                     abaAtiva === "modulos"
                       ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
-                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
                   }`}
                 >
                   📚 Módulos & SIEPE
@@ -440,7 +440,7 @@ export default function ConfiguracoesPage() {
                   className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
                     abaAtiva === "usuarios"
                       ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
-                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
                   }`}
                 >
                   👥 Usuários (Tutores)
@@ -453,7 +453,7 @@ export default function ConfiguracoesPage() {
                   className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border ${
                     abaAtiva === "seguranca"
                       ? "bg-red-600 border-red-700 text-white shadow-md"
-                      : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                      : "bg-white/80 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
                   }`}
                 >
                   🛡️ Logs de Segurança
@@ -467,7 +467,7 @@ export default function ConfiguracoesPage() {
                 className={`w-full text-left px-5 py-4 rounded-xl font-bold transition-all text-xs uppercase tracking-wider border mb-2 ${
                   abaAtiva === "ciclos"
                     ? "bg-indigo-600 border-indigo-700 text-white shadow-md"
-                    : "bg-white/80 dark:bg-slate-900/40 text-slate-650 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
+                    : "bg-white/80 dark:bg-slate-900/40 text-slate-600 dark:text-slate-400 border-slate-200/60 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-slate-900/30"
                 }`}
               >
                 ⚙️ Automação de Ciclos
@@ -518,7 +518,7 @@ export default function ConfiguracoesPage() {
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-450 uppercase mb-2">
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                             Nome da Escola
                           </label>
                           <input
@@ -529,7 +529,7 @@ export default function ConfiguracoesPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                             Nome do Projeto
                           </label>
                           <input
@@ -540,7 +540,7 @@ export default function ConfiguracoesPage() {
                           />
                         </div>
                         <div className="md:col-span-2">
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                             Turmas do Projeto (Separadas por vírgula)
                           </label>
                           <input
@@ -551,7 +551,7 @@ export default function ConfiguracoesPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                             Senha do Check-in Presencial
                           </label>
                           <input
@@ -562,7 +562,7 @@ export default function ConfiguracoesPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                             Modo Reposição
                           </label>
                           <div className="relative">
@@ -571,8 +571,8 @@ export default function ConfiguracoesPage() {
                               onChange={(e) => handleChange("MODO_REPOSICAO", e.target.value)}
                               className="cursor-pointer w-full bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 text-slate-800 dark:text-slate-200 rounded-xl p-3.5 pr-10 font-bold focus:border-blue-555 outline-none transition-all appearance-none shadow-sm"
                             >
-                              <option value="LIGADO" className="bg-white dark:bg-slate-900 text-slate-850 dark:text-slate-100">LIGADO (Ignora dias letivos)</option>
-                              <option value="DESLIGADO" className="bg-white dark:bg-slate-900 text-slate-850 dark:text-slate-100">DESLIGADO (Presença regulada)</option>
+                              <option value="LIGADO" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">LIGADO (Ignora dias letivos)</option>
+                              <option value="DESLIGADO" className="bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-100">DESLIGADO (Presença regulada)</option>
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400 font-bold text-xs">
                               ▼
@@ -580,7 +580,7 @@ export default function ConfiguracoesPage() {
                           </div>
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                             Limite Diário de XP do Aluno
                           </label>
                           <input
@@ -591,7 +591,7 @@ export default function ConfiguracoesPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                             Limite Diário de Envio Pix (XP)
                           </label>
                           <input
@@ -613,7 +613,7 @@ export default function ConfiguracoesPage() {
                       </h3>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                             Link do Grupo: Turma 1
                           </label>
                           <input
@@ -624,7 +624,7 @@ export default function ConfiguracoesPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                             Link do Grupo: Turma 2
                           </label>
                           <input
@@ -635,7 +635,7 @@ export default function ConfiguracoesPage() {
                           />
                         </div>
                         <div className="md:col-span-2">
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                             URL do Apps Script (Banco de Dados)
                           </label>
                           <input
@@ -646,7 +646,7 @@ export default function ConfiguracoesPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                             Link do Classroom AVA
                           </label>
                           <input
@@ -657,7 +657,7 @@ export default function ConfiguracoesPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                             Link da Matriz Curricular
                           </label>
                           <input
@@ -668,7 +668,7 @@ export default function ConfiguracoesPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                             Link do Cronograma Geral
                           </label>
                           <input
@@ -679,7 +679,7 @@ export default function ConfiguracoesPage() {
                           />
                         </div>
                         <div>
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                             Link de Ajuda / Suporte
                           </label>
                           <input
@@ -701,7 +701,7 @@ export default function ConfiguracoesPage() {
                       </h3>
                       <div className="grid grid-cols-1 gap-6 mb-8">
                         <div>
-                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-455 uppercase mb-2">
+                          <label className="block text-xs font-bold text-slate-500 dark:text-slate-400 uppercase mb-2">
                             Importação Automática SIEPE
                           </label>
                           <select
@@ -900,7 +900,7 @@ export default function ConfiguracoesPage() {
                         <h3 className="text-2xl font-display font-black text-slate-800 dark:text-white mb-2">
                           Bem-vindo ao Portal Trilha Tech!
                         </h3>
-                        <p className="text-sm font-semibold text-slate-450 dark:text-slate-500">
+                        <p className="text-sm font-semibold text-slate-400 dark:text-slate-500">
                           Vamos configurar o sistema na sua conta do Google em 3 passos rápidos.
                         </p>
                       </div>
@@ -913,7 +913,7 @@ export default function ConfiguracoesPage() {
                           <h4 className="font-bold text-slate-800 dark:text-white mb-2 ml-4">
                             Criar o seu Banco de Dados
                           </h4>
-                          <p className="text-xs text-slate-500 dark:text-slate-450 ml-4 mb-3 font-semibold leading-relaxed">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 ml-4 mb-3 font-semibold leading-relaxed">
                             Todo o sistema funciona baseado numa Planilha do Google. Faça uma cópia do modelo oficial para o seu Drive.
                           </p>
                           <a
@@ -933,10 +933,10 @@ export default function ConfiguracoesPage() {
                           <h4 className="font-bold text-slate-800 dark:text-white mb-2 ml-4">
                             Ativar a API (Apps Script)
                           </h4>
-                          <p className="text-xs text-slate-500 dark:text-slate-450 ml-4 mb-1 font-semibold leading-relaxed">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 ml-4 mb-1 font-semibold leading-relaxed">
                             Na sua planilha recém-copiada, vá em <strong>Extensões &gt; Apps Script</strong>. No canto superior direito, clique em <strong>Implantar &gt; Nova Implantação</strong>.
                           </p>
-                          <p className="text-xs text-slate-550 dark:text-slate-450 ml-4 font-semibold leading-relaxed">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 ml-4 font-semibold leading-relaxed">
                             Escolha tipo &quot;App da Web&quot;, execute como &quot;Você&quot; e defina acesso para &quot;Qualquer pessoa&quot;.
                           </p>
                         </div>
@@ -948,13 +948,13 @@ export default function ConfiguracoesPage() {
                           <h4 className="font-bold text-slate-800 dark:text-white mb-2 ml-4">
                             Vincular a URL no Frontend
                           </h4>
-                          <p className="text-xs text-slate-500 dark:text-slate-450 ml-4 mb-3 font-semibold leading-relaxed">
+                          <p className="text-xs text-slate-500 dark:text-slate-400 ml-4 mb-3 font-semibold leading-relaxed">
                             Copie a URL gerada no passo anterior. No código fonte deste portal (no arquivo <code>.env</code> ou <code>api.ts</code>), cole o link na variável <code>NEXT_PUBLIC_API_URL</code>.
                           </p>
                         </div>
                       </div>
 
-                      <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-850 flex justify-center">
+                      <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-center">
                         <button
                           onClick={() => setAbaAtiva("geral")}
                           className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-655 text-white text-xs font-black uppercase tracking-wider px-8 py-3.5 rounded-xl transition-all shadow-md cursor-pointer"

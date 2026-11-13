@@ -191,7 +191,7 @@ export default function GestaoGabaritosLotePage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => router.push("/trilhatech/aulas")}
-              className="cursor-pointer text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+              className="cursor-pointer text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
             >
               ← Voltar
             </motion.button>
@@ -270,7 +270,7 @@ export default function GestaoGabaritosLotePage() {
             <div className="w-10 h-10 border-4 border-slate-200 border-t-emerald-500 rounded-full animate-spin" />
           </div>
         ) : Object.keys(modulosAgrupados).length === 0 ? (
-          <div className="text-center py-20 text-slate-450 dark:text-slate-500 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 rounded-[2.5rem] font-black uppercase tracking-wider text-xs shadow-md">
+          <div className="text-center py-20 text-slate-400 dark:text-slate-500 bg-white/80 dark:bg-slate-900/40 border border-slate-200 dark:border-white/5 rounded-[2.5rem] font-black uppercase tracking-wider text-xs shadow-md">
             Nenhuma atividade encontrada para este filtro.
           </div>
         ) : (
@@ -306,7 +306,7 @@ export default function GestaoGabaritosLotePage() {
                         }}
                         className={`cursor-pointer px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-xl transition-all shadow-sm flex items-center gap-1.5 border ${
                           todosLiberados
-                            ? "bg-slate-100 dark:bg-slate-800 border-slate-250 dark:border-slate-700 text-slate-700 dark:text-slate-350 hover:bg-slate-200 dark:hover:bg-slate-700"
+                            ? "bg-slate-100 dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
                             : "bg-emerald-500/10 hover:bg-emerald-500/20 border-emerald-500/20 text-emerald-600 dark:text-emerald-400"
                         }`}
                       >
@@ -328,14 +328,14 @@ export default function GestaoGabaritosLotePage() {
                     <div className="overflow-x-auto custom-scrollbar animate-in slide-in-from-top-2">
                       <table className="w-full text-left border-separate border-spacing-0 min-w-[800px]">
                         <thead>
-                          <tr className="bg-slate-100/50 dark:bg-slate-950/40 text-slate-500 dark:text-slate-450 text-[10px] uppercase font-black tracking-wider border-b border-slate-200 dark:border-slate-800">
+                          <tr className="bg-slate-100/50 dark:bg-slate-950/40 text-slate-500 dark:text-slate-400 text-[10px] uppercase font-black tracking-wider border-b border-slate-200 dark:border-slate-800">
                             <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 w-1/4">Missão</th>
                             <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 w-1/4">Gabarito / Código Base</th>
                             <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 w-1/4">Link de Entrega (AVA)</th>
                             <th className="px-6 py-4 border-b border-slate-200 dark:border-slate-800 w-32 text-center">Liberado?</th>
                           </tr>
                         </thead>
-                        <tbody className="text-slate-700 dark:text-slate-350 text-xs divide-y divide-slate-150 dark:divide-slate-850">
+                        <tbody className="text-slate-700 dark:text-slate-300 text-xs divide-y divide-slate-100 dark:divide-slate-800">
                           {ativs.map((ativ) => {
                             const edicao = edicoes[ativ.id!] || {
                               gabarito: "",
@@ -352,7 +352,7 @@ export default function GestaoGabaritosLotePage() {
                                 {/* NOME E TIPO */}
                                 <td className="px-6 py-4">
                                   <div className="flex items-center gap-2 mb-1.5">
-                                    <span className="text-[9px] font-mono font-bold text-slate-450 dark:text-slate-500 bg-slate-100 dark:bg-slate-950 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
+                                    <span className="text-[9px] font-mono font-bold text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-950 px-2 py-0.5 rounded-lg border border-slate-200 dark:border-slate-800 shadow-sm">
                                       {ativ.id?.split("-")[1] || ativ.id}
                                     </span>
                                     <span
@@ -380,7 +380,7 @@ export default function GestaoGabaritosLotePage() {
                                     className={`w-full p-2.5 rounded-xl border text-xs outline-none focus:border-emerald-500 transition-all ${
                                       isQuiz
                                         ? "font-mono font-black text-center bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100 border-slate-200 dark:border-slate-800 focus:border-emerald-500"
-                                        : "font-mono bg-slate-50/50 dark:bg-slate-950 text-slate-600 dark:text-slate-350 border-slate-200 dark:border-slate-800 focus:border-blue-500"
+                                        : "font-mono bg-slate-50/50 dark:bg-slate-950 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-800 focus:border-blue-500"
                                     }`}
                                   />
                                 </td>
@@ -392,7 +392,7 @@ export default function GestaoGabaritosLotePage() {
                                     placeholder="https://classroom.google.com/..."
                                     value={edicao.linkClassroom}
                                     onChange={(e) => handleChange(ativ.id!, "linkClassroom", e.target.value)}
-                                    className="w-full p-2.5 bg-slate-50/50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-600 dark:text-slate-350 font-mono outline-none focus:border-indigo-500 transition-all"
+                                    className="w-full p-2.5 bg-slate-50/50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl text-xs text-slate-600 dark:text-slate-300 font-mono outline-none focus:border-indigo-500 transition-all"
                                   />
                                 </td>
 

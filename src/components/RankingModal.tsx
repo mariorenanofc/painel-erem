@@ -73,7 +73,7 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
         className="glass-panel-heavy w-full max-w-2xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-[0_12px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] border border-slate-200 dark:border-white/5 transition-colors duration-300"
       >
         {/* HEADER */}
-        <div className="bg-linear-to-r from-amber-500 via-orange-500 to-yellow-500 dark:from-slate-950 dark:via-amber-950/30 dark:to-slate-900 p-5 flex justify-between items-center text-white shrink-0 shadow-md relative transition-colors duration-300">
+        <div className="bg-gradient-to-r from-amber-500 via-orange-500 to-yellow-500 dark:from-slate-950 dark:via-amber-950/30 dark:to-slate-900 p-5 flex justify-between items-center text-white shrink-0 shadow-md relative transition-colors duration-300">
           <div>
             <h2 className="font-display font-black text-lg md:text-xl flex items-center gap-2 tracking-tight">
               <span>🏆</span> Leaderboard da Escola
@@ -207,18 +207,18 @@ export default function RankingModal({ aluno, onClose }: RankingModalProps) {
                       
                       if (userRank.posicao === 1) {
                         medalha = "🥇";
-                        styleCard = "bg-linear-to-r from-amber-500/10 via-yellow-500/5 to-transparent border-amber-400/50 dark:border-amber-500/30 shadow-[0_4px_15px_rgba(245,158,11,0.06)]";
+                        styleCard = "bg-gradient-to-r from-amber-500/10 via-yellow-500/5 to-transparent border-amber-400/50 dark:border-amber-500/30 shadow-[0_4px_15px_rgba(245,158,11,0.06)]";
                         styleNome = "text-amber-900 dark:text-amber-400";
                       } else if (userRank.posicao === 2) {
                         medalha = "🥈";
-                        styleCard = "bg-linear-to-r from-slate-400/10 via-slate-300/5 to-transparent border-slate-300/50 dark:border-slate-600/30 shadow-[0_4px_15px_rgba(156,163,175,0.04)]";
+                        styleCard = "bg-gradient-to-r from-slate-400/10 via-slate-300/5 to-transparent border-slate-300/50 dark:border-slate-600/30 shadow-[0_4px_15px_rgba(156,163,175,0.04)]";
                         styleNome = "text-slate-900 dark:text-slate-200";
                       } else if (userRank.posicao === 3) {
                         medalha = "🥉";
-                        styleCard = "bg-linear-to-r from-orange-400/10 via-orange-300/5 to-transparent border-orange-300/40 dark:border-orange-500/20 shadow-[0_4px_15px_rgba(249,115,22,0.04)]";
+                        styleCard = "bg-gradient-to-r from-orange-400/10 via-orange-300/5 to-transparent border-orange-300/40 dark:border-orange-500/20 shadow-[0_4px_15px_rgba(249,115,22,0.04)]";
                         styleNome = "text-orange-900 dark:text-orange-400";
                       } else if (isMe) {
-                        styleCard = "bg-linear-to-r from-indigo-500/10 via-cyan-500/5 to-transparent border-indigo-500/40 dark:border-indigo-500/30 shadow-[0_4px_15px_rgba(99,102,241,0.06)]";
+                        styleCard = "bg-gradient-to-r from-indigo-500/10 via-cyan-500/5 to-transparent border-indigo-500/40 dark:border-indigo-500/30 shadow-[0_4px_15px_rgba(99,102,241,0.06)]";
                         styleNome = "text-indigo-900 dark:text-indigo-400";
                       }
 

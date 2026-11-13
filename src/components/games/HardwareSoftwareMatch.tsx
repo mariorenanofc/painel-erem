@@ -160,7 +160,7 @@ export default function HardwareSoftwareMatch({ onGameOver, playSound, perderVid
       <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-900 border border-slate-800 rounded-2xl mb-6 shadow-lg min-h-[160px] text-center relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-b from-blue-500/[0.03] to-transparent pointer-events-none" />
         <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-2 block">Classifique o item:</span>
-        <h4 className="text-2xl sm:text-3xl font-black text-white bg-slate-950 border border-slate-850 px-6 py-4 rounded-2xl shadow-inner inline-block">
+        <h4 className="text-2xl sm:text-3xl font-black text-white bg-slate-950 border border-slate-800 px-6 py-4 rounded-2xl shadow-inner inline-block">
           {currentItem.name}
         </h4>
       </div>
@@ -171,7 +171,7 @@ export default function HardwareSoftwareMatch({ onGameOver, playSound, perderVid
         <div className="grid grid-cols-3 gap-2">
           <button
             onClick={() => handleCategorySelect("entrada")}
-            className="py-3 px-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/40 hover:bg-slate-850 text-white flex flex-col items-center gap-1.5 transition-all text-[11px] font-bold active:scale-98"
+            className="py-3 px-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/40 hover:bg-slate-800 text-white flex flex-col items-center gap-1.5 transition-all text-[11px] font-bold active:scale-98"
           >
             <Monitor className="w-4 h-4 text-blue-400" />
             <span>HW: Entrada</span>
@@ -179,7 +179,7 @@ export default function HardwareSoftwareMatch({ onGameOver, playSound, perderVid
           
           <button
             onClick={() => handleCategorySelect("saida")}
-            className="py-3 px-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/40 hover:bg-slate-850 text-white flex flex-col items-center gap-1.5 transition-all text-[11px] font-bold active:scale-98"
+            className="py-3 px-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/40 hover:bg-slate-800 text-white flex flex-col items-center gap-1.5 transition-all text-[11px] font-bold active:scale-98"
           >
             <Monitor className="w-4 h-4 text-emerald-400 rotate-180" />
             <span>HW: Saída</span>
@@ -187,7 +187,7 @@ export default function HardwareSoftwareMatch({ onGameOver, playSound, perderVid
 
           <button
             onClick={() => handleCategorySelect("componente")}
-            className="py-3 px-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/40 hover:bg-slate-850 text-white flex flex-col items-center gap-1.5 transition-all text-[11px] font-bold active:scale-98"
+            className="py-3 px-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500/40 hover:bg-slate-800 text-white flex flex-col items-center gap-1.5 transition-all text-[11px] font-bold active:scale-98"
           >
             <HardDrive className="w-4 h-4 text-pink-400" />
             <span>HW: Interno</span>
@@ -198,7 +198,7 @@ export default function HardwareSoftwareMatch({ onGameOver, playSound, perderVid
         <div className="grid grid-cols-2 gap-2">
           <button
             onClick={() => handleCategorySelect("software_sistema")}
-            className="py-3.5 px-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/40 hover:bg-slate-850 text-white flex items-center justify-center gap-2 transition-all text-xs font-bold active:scale-98"
+            className="py-3.5 px-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/40 hover:bg-slate-800 text-white flex items-center justify-center gap-2 transition-all text-xs font-bold active:scale-98"
           >
             <Cpu className="w-4 h-4 text-cyan-400" />
             <span>SW: Sistema Operacional</span>
@@ -206,7 +206,7 @@ export default function HardwareSoftwareMatch({ onGameOver, playSound, perderVid
           
           <button
             onClick={() => handleCategorySelect("software_app")}
-            className="py-3.5 px-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/40 hover:bg-slate-850 text-white flex items-center justify-center gap-2 transition-all text-xs font-bold active:scale-98"
+            className="py-3.5 px-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-cyan-500/40 hover:bg-slate-800 text-white flex items-center justify-center gap-2 transition-all text-xs font-bold active:scale-98"
           >
             <Layout className="w-4 h-4 text-yellow-400" />
             <span>SW: Aplicativo / Programa</span>

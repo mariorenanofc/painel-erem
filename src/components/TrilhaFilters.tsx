@@ -23,7 +23,7 @@ export default function TrilhaFilters({
       <div className="flex flex-col md:flex-row flex-wrap gap-5 w-full flex-1 items-start md:items-end">
         {/* Search */}
         <div className="w-full md:flex-1 md:min-w-[200px] lg:max-w-xs space-y-1.5 text-left">
-          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest">
+          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
             Buscar Aluno
           </label>
           <input
@@ -37,7 +37,7 @@ export default function TrilhaFilters({
         
         {/* Turma */}
         <div className="w-full md:w-52 shrink-0 space-y-1.5 text-left">
-          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest">
+          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
             Turma
           </label>
           <div className="relative">
@@ -58,7 +58,7 @@ export default function TrilhaFilters({
         
         {/* Status */}
         <div className="w-full md:w-52 shrink-0 space-y-1.5 text-left">
-          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest">
+          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
             Status
           </label>
           <div className="relative">

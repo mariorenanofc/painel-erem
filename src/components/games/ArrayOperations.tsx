@@ -209,7 +209,7 @@ export default function ArrayOperations({ onGameOver, playSound, perderVida }: A
       </div>
 
       {/* Caixa do Código */}
-      <div className="flex-1 flex flex-col bg-slate-950 border border-slate-850 rounded-2xl mb-6 shadow-inner overflow-hidden p-6 min-h-[140px] justify-center relative">
+      <div className="flex-1 flex flex-col bg-slate-950 border border-slate-800 rounded-2xl mb-6 shadow-inner overflow-hidden p-6 min-h-[140px] justify-center relative">
         <div className="absolute top-2 right-2 text-[9px] font-mono text-slate-700 pointer-events-none uppercase">
           List Engine
         </div>
@@ -231,7 +231,7 @@ export default function ArrayOperations({ onGameOver, playSound, perderVida }: A
           <button
             key={idx}
             onClick={() => handleOptionClick(opt)}
-            className="py-4 px-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/40 hover:bg-slate-850 text-white font-mono text-center transition-all text-sm font-semibold active:scale-98"
+            className="py-4 px-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500/40 hover:bg-slate-800 text-white font-mono text-center transition-all text-sm font-semibold active:scale-98"
           >
             {opt}
           </button>

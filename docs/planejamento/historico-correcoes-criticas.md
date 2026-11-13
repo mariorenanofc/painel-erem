@@ -214,3 +214,35 @@ Mapeamento e disponibilização dos certificados oficiais emitidos pelo **Progra
 2. **Resiliência do Parser de Novidades (`NovidadesModal.tsx` & `LancamentoNovidadesModal.tsx`):**
    - **Problema:** Textos antigos ou com parágrafos introdutórios longos gravados no Firestore geravam vazamento de markdown (`*upgrade*`, `**TrilhaTech**`) e sobrecarregavam a primeira tela do modal com títulos desproporcionais.
    - **Solução:** Parser aprimorado com divisão inteligente por seções (`---` e `###`), higienização estrita de formatações markdown em títulos (`limparTextoMarkdown`) e proteção contra quebra de layout quando a linha inicial for um parágrafo longo, garantindo apresentação fluida em slides limpos.
+
+
+---
+
+# Fase 9: Tríplice Evolução do Sistema de Notificações e Telemetria de Leitura (Novembro/2026)
+
+1. **Frente 1: Central de Notificações Enriquecida & Deep-Linking (`PortalHeader.tsx`):**
+   - Injeção de banner temático da versão no topo do dropdown de notificações com atalho direto para os slides de novidades.
+   - Suporte a deep-linking interativo: notificações de tarefas avaliadas ou devolvidas agora contam com gatilho direto (`Abrir missão ↗`) que abre o modal da missão sem necessidade de busca manual.
+   - Adição do botão "Marcar lidas" para controle e limpeza ágil da contagem.
+2. **Frente 2: Card Flutuante de Novidades & Acesso Permanente no Menu (`portal/page.tsx` & `PortalHeader.tsx`):**
+   - Silenciamento inteligente de 12 horas ao clicar em "Depois" ou "✕", evitando reexibições invasivas durante a mesma sessão de estudo.
+   - Exibição de pills temáticas resumindo as novidades (`🎂 Aniversários`, `📱 Mobile Dev`, `🏛️ Hall da Fama`).
+   - Acesso permanente: o aluno pode rever os slides de novidades a qualquer momento pelo Menu de Perfil no cabeçalho.
+3. **Frente 3: Telemetria de Engajamento para o Tutor (`/api/alunos/novidades/visualizar` & `/api/tutor/novidades/engajamento`):**
+   - Registro idempotente e de baixo custo via Firestore `FieldValue.arrayUnion` no singleton `metadata/telemetria_novidades`.
+   - Painel de telemetria no modal docente (`LancamentoNovidadesModal.tsx`): cálculo em tempo real da taxa de abertura geral (%), visualizações absolutas e adesão individualizada por turma.
+
+
+---
+
+# Fase 10: Cockpit Executivo do Tutor e Despoluição Visual com Gavetas Inteligentes (Novembro/2026)
+
+1. **Eliminação de Redundâncias e Separação por Frequência de Uso (`src/app/trilhatech/aulas/page.tsx`):**
+   - **Diagnóstico:** O painel de aulas sofria com hipertrofia de botões soltos: ações de baixa frequência (fechar ranking, god mode, sincronizar planilha, configurações) competiam com ações diárias da aula (senha da lousa, diário, ranking).
+   - **Topo Limpo (Apenas Ações Diárias da Aula):**
+     - Botões em destaque: `🎰 Sortear Rifa`, `🏆 Ranking` e `📍 Diário`.
+     - Dropdown unificado `⚡ Mais Ferramentas ▾`: centralizou em um menu executivo elegante com seções semânticas para *Inteligência & Conteúdo* (Analytics, Gabaritos, Leituras da Versão v2.2.1), *Recursos & Links* (AVA Classroom, Planilha BD, Matriz, Cronograma, Ajuda) e *Configurações Gerais*.
+   - **Coluna Lateral com Foco em Sala de Aula & Gaveta Avançada:**
+     - **Card de Sala:** Focado 100% na **Senha da Lousa** com campo estilizado de presença para projeção em lousa/TV.
+     - **Gaveta Colapsada (`🔧 Ações de Ciclo & Sistema ▾`):** Armazena de forma recolhida e não intrusiva as ações raras/administrativas (*Modo Reposição*, *Fechar Ranking / Ciclo*, *Sincronizar Planilha*, *God Mode*).
+   - **Garantia de Não-Regressão:** 100% dos handlers, modais e transições continuam estritamente preservados com tipagem rigorosa (`Zero Any`) e compilação TS com código 0.

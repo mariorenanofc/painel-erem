@@ -111,7 +111,7 @@ export default function FormularioMissaoModal({
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
           onClick={limparFormulario}
-          className="absolute inset-0 bg-slate-955/75 backdrop-blur-md"
+          className="absolute inset-0 bg-slate-950/75 backdrop-blur-md"
         />
 
         {/* Modal Container */}
@@ -134,7 +134,7 @@ export default function FormularioMissaoModal({
           {/* Header */}
           <div className={`p-6 flex justify-between items-center text-white shrink-0 relative border-b border-white/5 ${
             idEditando 
-              ? "bg-gradient-to-r from-amber-550 via-orange-550 to-amber-700" 
+              ? "bg-gradient-to-r from-amber-500 via-orange-550 to-amber-700" 
               : "bg-gradient-to-r from-blue-900 via-indigo-950 to-blue-955"
           }`}>
             <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
@@ -178,7 +178,7 @@ export default function FormularioMissaoModal({
                       <input
                         type="number"
                         placeholder="Ex: 1"
-                        className="w-16 p-2 text-sm font-black text-blue-650 dark:text-blue-400 bg-transparent outline-none text-center border-none"
+                        className="w-16 p-2 text-sm font-black text-blue-600 dark:text-blue-400 bg-transparent outline-none text-center border-none"
                         onBlur={(e) => {
                           const num = e.target.value;
                           if (!num) return;
@@ -279,7 +279,7 @@ export default function FormularioMissaoModal({
 
                 {/* Bento Row 4: Se for QUIZ */}
                 {tipo === "Quiz" && (
-                  <div className="bg-amber-500/5 dark:bg-amber-955/10 p-5 rounded-3xl border border-amber-500/25 dark:border-amber-900/30 space-y-4 shadow-sm">
+                  <div className="bg-amber-500/5 dark:bg-amber-950/10 p-5 rounded-3xl border border-amber-500/25 dark:border-amber-900/30 space-y-4 shadow-sm">
                     <h3 className="font-display font-black text-amber-800 dark:text-amber-400 text-xs uppercase tracking-wider mb-2">
                       Alternativas do Quiz
                     </h3>
@@ -409,7 +409,7 @@ export default function FormularioMissaoModal({
 
                 {/* Configurações Gerais (Data Limite, XP, Turma) */}
                 <div className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-3xl border border-slate-200/60 dark:border-slate-800 shadow-sm space-y-4">
-                  <h3 className="font-display font-black text-slate-700 dark:text-slate-350 text-xs uppercase tracking-wider">
+                  <h3 className="font-display font-black text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider">
                     ⚙️ Configurações Gerais
                   </h3>
                   
@@ -463,7 +463,7 @@ export default function FormularioMissaoModal({
 
                 {/* Bento Row 5: Links e Configurações */}
                 <div className="bg-slate-50/50 dark:bg-slate-950/20 p-5 rounded-3xl border border-slate-200/60 dark:border-slate-800 shadow-sm space-y-4">
-                  <h3 className="font-display font-black text-slate-700 dark:text-slate-350 text-xs uppercase tracking-wider">
+                  <h3 className="font-display font-black text-slate-700 dark:text-slate-300 text-xs uppercase tracking-wider">
                     🔗 Links & Recursos
                   </h3>
 
@@ -516,7 +516,7 @@ export default function FormularioMissaoModal({
 
                 {/* Bento Row 7: Treino de Digitação (Opcional, visível apenas para Projeto/Material) */}
                 {tipo !== "Quiz" && (
-                  <div className="bg-indigo-500/5 dark:bg-indigo-955/20 border border-indigo-500/25 dark:border-indigo-900/30 p-5 rounded-3xl space-y-4 shadow-sm">
+                  <div className="bg-indigo-500/5 dark:bg-indigo-950/20 border border-indigo-500/25 dark:border-indigo-900/30 p-5 rounded-3xl space-y-4 shadow-sm">
                     <h3 className="font-display font-black text-indigo-800 dark:text-indigo-400 text-xs uppercase tracking-wider flex items-center gap-1.5">
                       <span>⌨️</span> Treino de Digitação (Opcional)
                     </h3>
@@ -574,7 +574,7 @@ export default function FormularioMissaoModal({
               type="button"
               onClick={(e) => salvarNovaAtividade(e, "Rascunho")}
               disabled={salvando}
-              className="cursor-pointer px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider bg-amber-500/10 hover:bg-amber-500/15 text-amber-700 dark:text-amber-550 border border-amber-500/20 transition-all shadow-sm disabled:opacity-50"
+              className="cursor-pointer px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-wider bg-amber-500/10 hover:bg-amber-500/15 text-amber-700 dark:text-amber-500 border border-amber-500/20 transition-all shadow-sm disabled:opacity-50"
             >
               📝 Salvar Rascunho
             </motion.button>

@@ -105,7 +105,7 @@ export default function NovaConquistaModal({
               whileTap={{ scale: 0.97 }}
               onClick={() => onResgatar(badge)}
               disabled={loading}
-              className="cursor-pointer w-full bg-gradient-to-r from-amber-500 via-fuchsia-500 to-pink-500 hover:from-amber-600 hover:to-pink-650 text-white font-black text-sm py-4 rounded-2xl shadow-lg shadow-amber-500/20 uppercase tracking-widest transition-all disabled:opacity-50 disabled:transform-none select-none"
+              className="cursor-pointer w-full bg-gradient-to-r from-amber-500 via-fuchsia-500 to-pink-500 hover:from-amber-600 hover:to-pink-600 text-white font-black text-sm py-4 rounded-2xl shadow-lg shadow-amber-500/20 uppercase tracking-widest transition-all disabled:opacity-50 disabled:transform-none select-none"
             >
               {loading ? "Processando..." : "🏆 Resgatar Recompensa"}
             </motion.button>

@@ -42,7 +42,7 @@ export default function TrilhaStatsCards({
       >
         <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 dark:bg-blue-500/5 rounded-full blur-2xl pointer-events-none" />
         <div className="relative z-10">
-          <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+          <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
             <span className="text-xs">👥</span> Total de Inscritos
           </h3>
           <p className="text-4xl font-display font-black text-slate-800 dark:text-white font-mono mt-1">
@@ -62,7 +62,7 @@ export default function TrilhaStatsCards({
       >
         <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
         <div className="relative z-10">
-          <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+          <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
             <span className="text-xs">🏫</span> Ativos: Turma 1 (1º Ano)
           </h3>
           <div className="flex items-baseline gap-1 mt-1">
@@ -99,7 +99,7 @@ export default function TrilhaStatsCards({
       >
         <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
         <div className="relative z-10">
-          <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
+          <h3 className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest mb-1.5 flex items-center gap-1.5">
             <span className="text-xs">🏫</span> Ativos: Turma 2 (2º Ano)
           </h3>
           <div className="flex items-baseline gap-1 mt-1">

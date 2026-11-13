@@ -225,7 +225,7 @@ export default function LojaRifaModal({
                     </div>
 
                     {/* CONTRATO DE CONCORDÂNCIA */}
-                    <label className="flex items-start gap-3.5 p-4.5 bg-amber-500/10 dark:bg-amber-955/15 border border-amber-500/20 dark:border-amber-900/30 rounded-2xl cursor-pointer hover:bg-amber-500/15 transition-colors">
+                    <label className="flex items-start gap-3.5 p-4.5 bg-amber-500/10 dark:bg-amber-950/15 border border-amber-500/20 dark:border-amber-900/30 rounded-2xl cursor-pointer hover:bg-amber-500/15 transition-colors">
                       <input 
                         type="checkbox" 
                         checked={contratoAceite}
@@ -245,7 +245,7 @@ export default function LojaRifaModal({
                       className={`w-full mt-6 py-4 rounded-2xl font-display font-black uppercase tracking-wider text-white transition-all shadow-lg text-xs select-none ${
                         contratoAceite 
                           ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 shadow-emerald-500/10 cursor-pointer" 
-                          : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-550 cursor-not-allowed shadow-none"
+                          : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed shadow-none"
                       }`}
                     >
                       {comprando ? (

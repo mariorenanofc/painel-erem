@@ -80,7 +80,7 @@ function getSyntaxHighlightClass(char: string, absIdx: number, code: string, the
   if (isString) {
     if (theme === "hacker") return "text-emerald-400 font-bold";
     if (theme === "cyberpunk") return "text-yellow-350 font-bold";
-    return "text-amber-350 font-medium";
+    return "text-amber-300 font-medium";
   }
 
   // 3. Numbers
@@ -93,7 +93,7 @@ function getSyntaxHighlightClass(char: string, absIdx: number, code: string, the
   // 4. Operators and Brackets
   if (/[+\-*/%&|=!<>?:~^{}[\]()]/.test(char)) {
     if (theme === "hacker") return "text-green-400 font-bold";
-    if (theme === "cyberpunk") return "text-fuchsia-455 font-bold";
+    if (theme === "cyberpunk") return "text-fuchsia-400 font-bold";
     return "text-pink-400 font-semibold";
   }
 
@@ -141,13 +141,13 @@ function getSyntaxHighlightClass(char: string, absIdx: number, code: string, the
   }
   if (angleCount > 0) isHtmlTag = true;
   if (isHtmlTag) {
-    if (theme === "hacker") return "text-emerald-355";
+    if (theme === "hacker") return "text-emerald-300";
     if (theme === "cyberpunk") return "text-teal-300";
     return "text-teal-400";
   }
 
   if (theme === "hacker") return "text-green-450";
-  if (theme === "cyberpunk") return "text-fuchsia-350";
+  if (theme === "cyberpunk") return "text-fuchsia-300";
   return "text-slate-200";
 }
 
@@ -980,14 +980,14 @@ export default function CodingPractice({
     vscode: {
       bg: "bg-[#0b0f19]", // Cosmic Dark Blue
       textUntyped: "text-slate-400/45 font-normal dark:text-slate-400/40", // Destaque aumentado (Mais legível)
-      gutterBorder: "border-slate-850",
-      gutterText: "text-slate-650",
+      gutterBorder: "border-slate-800",
+      gutterText: "text-slate-600",
       statusBar: "bg-[#0d1424] border-slate-800/80 shadow-md",
       keyboardBg: "bg-[#0a0d16] border-slate-900/60 shadow-[0_0_20px_rgba(99,102,241,0.06)]",
       keyboardKeyBg: "bg-slate-900/85 border-slate-800 hover:text-white text-slate-400 hover:bg-slate-800 active:scale-95 active:brightness-90 transition-all",
-      cursorClass: "bg-indigo-550/45 text-white border-b-2 border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.3)]",
+      cursorClass: "bg-indigo-500/45 text-white border-b-2 border-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.3)]",
       highlightClass: "bg-gradient-to-r from-indigo-500 to-pink-500 text-white border-indigo-400 scale-105 shadow-md shadow-indigo-500/30 animate-pulse font-black",
-      mainBorderGlow: "border-slate-850 shadow-[0_0_30px_rgba(99,102,241,0.04)]"
+      mainBorderGlow: "border-slate-800 shadow-[0_0_30px_rgba(99,102,241,0.04)]"
     },
     hacker: {
       bg: "bg-[#010401]", // Matrix Dark Black
@@ -1119,7 +1119,7 @@ export default function CodingPractice({
             {missaoAberta.descricao || "Pratique digitação rápida de código e ganhe XP de recompensa!"}
           </p>
 
-          <div className={`bg-slate-950/70 border border-slate-850 p-4.5 rounded-2xl ${welcomeMargin} flex flex-col gap-2.5 text-left text-xs font-semibold text-slate-300`}>
+          <div className={`bg-slate-950/70 border border-slate-800 p-4.5 rounded-2xl ${welcomeMargin} flex flex-col gap-2.5 text-left text-xs font-semibold text-slate-300`}>
             <div className="flex justify-between items-center">
               <span>Total de Linhas:</span>
               <span className="font-bold font-mono text-indigo-400">{totalLines}</span>
@@ -1218,7 +1218,7 @@ export default function CodingPractice({
             )}
             <button
               onClick={onClose}
-              className="w-full bg-slate-805 hover:bg-slate-750 text-slate-400 font-bold text-xs uppercase tracking-widest py-3 rounded-xl transition-all cursor-pointer border-none"
+              className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold text-xs uppercase tracking-widest py-3 rounded-xl transition-all cursor-pointer border-none"
             >
               Voltar
             </button>
@@ -1252,7 +1252,7 @@ export default function CodingPractice({
           {/* MUTE CONTROLLER */}
           <button
             onClick={() => setMuted((prev) => !prev)}
-            className="p-2 rounded-xl bg-slate-850 hover:bg-slate-800 text-slate-350 border border-slate-700/50 cursor-pointer active:scale-95 transition-all text-xs"
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-800 text-slate-300 border border-slate-700/50 cursor-pointer active:scale-95 transition-all text-xs"
             title={muted ? "Ativar som" : "Desativar som"}
           >
             {muted ? "🔇" : "🔊"}
@@ -1262,7 +1262,7 @@ export default function CodingPractice({
           <select
             value={theme}
             onChange={(e) => setTheme(e.target.value as "vscode" | "hacker" | "cyberpunk")}
-            className="bg-slate-850 border border-slate-700/50 text-slate-300 text-xs font-black px-2.5 py-1.5 rounded-xl outline-none cursor-pointer hover:bg-slate-800 transition-colors"
+            className="bg-slate-800 border border-slate-700/50 text-slate-300 text-xs font-black px-2.5 py-1.5 rounded-xl outline-none cursor-pointer hover:bg-slate-800 transition-colors"
           >
             <option value="vscode">VS Code Dark</option>
             <option value="hacker">Hacker Neon</option>
@@ -1281,7 +1281,7 @@ export default function CodingPractice({
 
           <button
             onClick={() => setPausado(true)}
-            className="bg-slate-850 hover:bg-slate-800 text-slate-300 px-3.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 border border-slate-700/50 cursor-pointer transition-all active:scale-95"
+            className="bg-slate-800 hover:bg-slate-800 text-slate-300 px-3.5 py-1.5 rounded-xl text-xs font-black flex items-center gap-1.5 border border-slate-700/50 cursor-pointer transition-all active:scale-95"
           >
             ⏸️ Pausar
           </button>
@@ -1374,7 +1374,7 @@ export default function CodingPractice({
 
         {/* Efeito visual de foco perdido */}
         {!inputFoco && !completed && !pausado && (
-          <div className="absolute inset-0 bg-slate-955/90 backdrop-blur-sm flex items-center justify-center z-10 animate-in fade-in duration-200">
+          <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-sm flex items-center justify-center z-10 animate-in fade-in duration-200">
             <div className="text-center p-6 bg-slate-900 border border-slate-800 rounded-2xl max-w-xs shadow-xl">
               <span className="text-3xl block mb-2">⌨️</span>
               <h4 className="font-black uppercase tracking-wider text-xs text-slate-200 mb-1">Foco Perdido</h4>
@@ -1701,7 +1701,7 @@ export default function CodingPractice({
             <span className="text-4xl block mb-3 animate-pulse">⏸️</span>
             <h3 className="font-display font-black text-lg uppercase tracking-wider text-slate-100 mb-4">Treino Pausado</h3>
 
-            <div className="bg-slate-955 border border-slate-800 p-4.5 rounded-2xl mb-6 flex flex-col gap-2 text-left text-xs font-semibold text-slate-350">
+            <div className="bg-slate-950 border border-slate-800 p-4.5 rounded-2xl mb-6 flex flex-col gap-2 text-left text-xs font-semibold text-slate-300">
               <div className="flex justify-between items-center font-sans">
                 <span>Linhas digitadas:</span>
                 <span className="font-bold font-mono text-indigo-400">
@@ -1714,7 +1714,7 @@ export default function CodingPractice({
               </div>
               <div className="flex justify-between items-center font-sans">
                 <span>Acurácia Média:</span>
-                <span className="font-bold font-mono text-emerald-450">{accuracy}%</span>
+                <span className="font-bold font-mono text-emerald-400">{accuracy}%</span>
               </div>
               <div className="flex justify-between items-center font-sans">
                 <span>Velocidade de Digitação:</span>
@@ -1743,7 +1743,7 @@ export default function CodingPractice({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 bg-slate-955/95 backdrop-blur-md flex items-center justify-center p-5 z-25 select-none font-sans"
+            className="absolute inset-0 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-5 z-25 select-none font-sans"
           >
             <motion.div
               initial={{ scale: 0.95, y: 15 }}
@@ -1754,7 +1754,7 @@ export default function CodingPractice({
               <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
               <span className="text-5xl block mb-3 animate-bounce">🏆</span>
-              <h3 className="font-display font-black text-xl md:text-2xl uppercase tracking-wider text-emerald-455 mb-2">Desafio Concluído!</h3>
+              <h3 className="font-display font-black text-xl md:text-2xl uppercase tracking-wider text-emerald-400 mb-2">Desafio Concluído!</h3>
               <p className="text-xs text-slate-400 mb-5 leading-relaxed font-sans">Você digitou o Mini Projeto com precisão de sintaxe e indentação!</p>
 
               {/* Box de Pontuação */}
@@ -1865,7 +1865,7 @@ export default function CodingPractice({
                 <button
                   onClick={onClose}
                   disabled={enviando}
-                  className="flex-1 bg-slate-800 hover:bg-slate-750 text-slate-400 font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer border-none"
+                  className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition-colors cursor-pointer border-none"
                 >
                   Fechar
                 </button>

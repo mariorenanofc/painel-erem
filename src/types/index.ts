@@ -186,6 +186,9 @@ export interface Notificacao {
   xp: number;
   tempo: number;
   tipo: string;
+  atividadeId?: string;
+  linkAcao?: string;
+  subtitulo?: string;
 }
 
 // ==========================================
@@ -459,6 +462,10 @@ export interface PortalHeaderProps {
   onAbrirCertificados?: () => void;
   totalCertificados?: number;
   onLogout: () => void;
+  onAbrirNovidades?: () => void;
+  versaoAtualizacao?: string;
+  onAbrirMissaoPorId?: (atividadeId: string) => void;
+  temNovidadeNaoLida?: boolean;
 }
 
 export interface PortalCockpitProps {

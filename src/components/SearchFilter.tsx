@@ -20,7 +20,7 @@ export default function SearchFilter({
       <div className="flex flex-col md:flex-row flex-wrap gap-5 w-full xl:w-auto flex-1 items-start md:items-end">
         {/* Turma Dropdown */}
         <div className="w-full md:flex-1 md:min-w-[200px] lg:max-w-xs space-y-1.5 text-left">
-          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest">
+          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
             Filtrar por Turma
           </label>
           <div className="relative">
@@ -50,7 +50,7 @@ export default function SearchFilter({
 
         {/* Busca */}
         <div className="w-full md:flex-1 md:min-w-[220px] lg:max-w-sm space-y-1.5 text-left">
-          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase tracking-widest">
+          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
             Buscar Aluno
           </label>
           <input 
@@ -102,7 +102,7 @@ export default function SearchFilter({
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={abrirModalNovoAluno}
-          className="cursor-pointer w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-650 hover:brightness-110 text-white font-black py-3.5 px-7 rounded-2xl shadow-lg shadow-blue-500/10 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
+          className="cursor-pointer w-full sm:w-auto bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white font-black py-3.5 px-7 rounded-2xl shadow-lg shadow-blue-500/10 transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
         >
           <span className="text-sm leading-none">+</span> Cadastrar Aluno
         </motion.button>

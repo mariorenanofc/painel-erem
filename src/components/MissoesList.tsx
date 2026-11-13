@@ -394,11 +394,11 @@ export default function MissoesList({
                                                 </span>
                                               )}
                                               {ativ.validadasAVA && ativ.validadasAVA > 0 && (
-                                                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-450 border border-emerald-250 dark:border-emerald-900/35 shadow-sm">
+                                                <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-lg bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border border-emerald-250 dark:border-emerald-900/35 shadow-sm">
                                                   ✅ {ativ.validadasAVA} Validadas AVA
                                                 </span>
                                               )}
-                                              <span className="text-[10px] text-slate-400 dark:text-slate-550 font-mono">
+                                              <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
                                                 ID: {ativ.id?.split("-")[1] || ativ.id}
                                               </span>
                                             </div>
@@ -408,7 +408,7 @@ export default function MissoesList({
                                             >
                                               {ativ.titulo}
                                             </h5>
-                                            <div className="flex items-center gap-3 mt-1.5 text-[10px] text-slate-550 dark:text-slate-405 font-semibold">
+                                            <div className="flex items-center gap-3 mt-1.5 text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
                                               <span className="text-emerald-600 dark:text-emerald-500 font-black">
                                                 ⭐ {ativ.xp} XP
                                               </span>
@@ -534,7 +534,7 @@ export default function MissoesList({
                   whileHover={{ scale: 1.01 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => setMissaoPreview(null)}
-                  className="cursor-pointer w-full py-3.5 bg-gradient-to-r from-blue-500 to-indigo-650 hover:from-blue-600 hover:to-indigo-700 text-white rounded-2xl font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-500/10"
+                  className="cursor-pointer w-full py-3.5 bg-gradient-to-r from-blue-500 to-indigo-600 hover:from-blue-600 hover:to-indigo-700 text-white rounded-2xl font-black text-sm uppercase tracking-wider shadow-lg shadow-blue-500/10"
                 >
                   Fechar Visualização
                 </motion.button>

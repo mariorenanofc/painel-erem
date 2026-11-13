@@ -140,7 +140,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
             </div>
 
             {props.abaDiario === "mensal" ? (
-              <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-550 bg-white/50 dark:bg-slate-950/20 px-4 py-2.5 rounded-xl border border-slate-200/50 dark:border-slate-800 shadow-sm transition-colors">
+              <div className="flex items-center gap-4 text-[10px] font-black uppercase tracking-wider text-slate-400 dark:text-slate-500 bg-white/50 dark:bg-slate-950/20 px-4 py-2.5 rounded-xl border border-slate-200/50 dark:border-slate-800 shadow-sm transition-colors">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 dark:bg-emerald-500/80"></span>{" "}
                   Presente
@@ -150,7 +150,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                   Falta
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 dark:bg-amber-550/80"></span>{" "}
+                  <span className="w-2.5 h-2.5 rounded-full bg-amber-400 dark:bg-amber-500/80"></span>{" "}
                   Justificada
                 </span>
               </div>
@@ -329,7 +329,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
                                         idFalta: infoDia?.idFalta,
                                       })
                                     }
-                                    className="w-7 h-7 mx-auto bg-amber-100/90 dark:bg-amber-955/45 text-amber-600 dark:text-amber-400 rounded-lg flex items-center justify-center font-black text-[10px] cursor-pointer border border-amber-250/30 dark:border-amber-900/10 shadow-sm hover:brightness-110"
+                                    className="w-7 h-7 mx-auto bg-amber-100/90 dark:bg-amber-950/45 text-amber-600 dark:text-amber-400 rounded-lg flex items-center justify-center font-black text-[10px] cursor-pointer border border-amber-250/30 dark:border-amber-900/10 shadow-sm hover:brightness-110"
                                     title={`Justificada: ${infoDia?.justificativa || "Sem observação"} - Clique para editar`}
                                   >
                                     J
@@ -485,7 +485,7 @@ export default function GestaoFrequenciaModal(props: GestaoFrequenciaModalProps)
               <h3 className="font-display font-black text-lg text-slate-800 dark:text-slate-100 mb-1 flex items-center gap-1.5">
                 <span>📝</span> Justificar Falta
               </h3>
-              <p className="text-[11px] font-semibold text-slate-550 dark:text-slate-400 leading-relaxed mb-4">
+              <p className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 leading-relaxed mb-4">
                 Aluno: <strong className="text-slate-800 dark:text-slate-200 font-black">{props.modalJustificativaAberto.nome}</strong> <br />
                 Data da Falta: <strong className="text-slate-800 dark:text-slate-200 font-mono font-black">{props.modalJustificativaAberto.dia}</strong>
               </p>

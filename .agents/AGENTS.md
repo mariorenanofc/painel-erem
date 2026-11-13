@@ -96,6 +96,13 @@ Quando o usuário acionar você com poucos detalhes, identifique o tema pela tab
 * **Regra**: Sempre que novas funcionalidades, telas ou correções forem entregues, a IA **DEVE obrigatoriamente** atualizar os slides de novidades em [`src/components/NovidadesModal.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/NovidadesModal.tsx) e o modelo em [`src/components/LancamentoNovidadesModal.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/LancamentoNovidadesModal.tsx).
 * O conteúdo deve ser 100% verídico e descritivo em relação ao que foi codificado (telas reais, badges, recursos entregues), estruturado em telas (*slides*) para que os estudantes vejam o progresso da plataforma sem alucinações.
 
+### 4.5. Padrão Canônico Universal do Tailwind CSS
+* **Regra**: Toda nova interface, componente ou refatoração deve seguir estritamente as classes canônicas oficiais do Tailwind CSS para manter compatibilidade absoluta entre editores (VS Code), linters e versões:
+  1. **Gradientes**: Utilizar exclusivamente a forma canônica universal `bg-gradient-to-{r|l|t|b|tr|tl|br|bl}` (evitar `bg-linear-to-*`).
+  2. **Paleta de Cores Estrita**: Proibido inventar classes fora da escala nativa (ex: `slate-250`, `slate-350`, `slate-455`, `slate-850`). Utilizar estritamente os degraus oficiais: `50`, `100`, `200`, `300`, `400`, `500`, `600`, `700`, `800`, `900`, `950`.
+  3. **Abreviações Canônicas**: Utilizar `shrink-0`, `grow`, `whitespace-nowrap`.
+  4. **Higiene de Template Strings**: Em classes dinâmicas com operador ternário no JSX, manter o formato contínuo sem quebras de linha e sem espaços extras para evitar alertas de tokens inválidos no linter do editor.
+
 ---
 
 ## ⚡ 5. Protocolo de Comando Rápido (Acionamento Único)
@@ -155,6 +162,13 @@ Quando o usuário digitar comandos curtos como **"Valide"**, **"Audite"**, **"An
 ### 4.4. Sincronização Obrigatória das Novidades da Plataforma (`Release-Sync`)
 * **Regra**: Sempre que novas funcionalidades, telas ou correções forem entregues, a IA **DEVE obrigatoriamente** atualizar os slides de novidades em [`src/components/NovidadesModal.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/NovidadesModal.tsx) e o modelo em [`src/components/LancamentoNovidadesModal.tsx`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/components/LancamentoNovidadesModal.tsx).
 * O conteúdo deve ser 100% verídico e descritivo em relação ao que foi codificado (telas reais, badges, recursos entregues), estruturado em telas (*slides*) para que os estudantes vejam o progresso da plataforma sem alucinações.
+
+### 4.5. Padrão Canônico Universal do Tailwind CSS
+* **Regra**: Toda nova interface, componente ou refatoração deve seguir estritamente as classes canônicas oficiais do Tailwind CSS para manter compatibilidade absoluta entre editores (VS Code), linters e versões:
+  1. **Gradientes**: Utilizar exclusivamente a forma canônica universal `bg-gradient-to-{r|l|t|b|tr|tl|br|bl}` (evitar `bg-linear-to-*`).
+  2. **Paleta de Cores Estrita**: Proibido inventar classes fora da escala nativa (ex: `slate-250`, `slate-350`, `slate-455`, `slate-850`). Utilizar estritamente os degraus oficiais: `50`, `100`, `200`, `300`, `400`, `500`, `600`, `700`, `800`, `900`, `950`.
+  3. **Abreviações Canônicas**: Utilizar `shrink-0`, `grow`, `whitespace-nowrap`.
+  4. **Higiene de Template Strings**: Em classes dinâmicas com operador ternário no JSX, manter o formato contínuo sem quebras de linha e sem espaços extras para evitar alertas de tokens inválidos no linter do editor.
 
 ---
 

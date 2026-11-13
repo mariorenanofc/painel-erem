@@ -182,7 +182,7 @@ export default function AuditoriaEntregasModal({
           className="relative w-full max-w-4xl max-h-[92vh] bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 rounded-3xl shadow-2xl flex flex-col overflow-hidden z-10"
         >
           {/* Header */}
-          <div className="p-5 sm:p-6 border-b border-slate-200/80 dark:border-slate-800 bg-linear-to-r from-blue-900 via-indigo-950 to-slate-900 text-white shrink-0">
+          <div className="p-5 sm:p-6 border-b border-slate-200/80 dark:border-slate-800 bg-gradient-to-r from-blue-900 via-indigo-950 to-slate-900 text-white shrink-0">
             <div className="flex justify-between items-start">
               <div>
                 <span className="text-[10px] font-mono font-black uppercase tracking-widest px-2.5 py-0.5 rounded-full bg-indigo-500/30 text-indigo-200 border border-indigo-400/30">
@@ -272,7 +272,7 @@ export default function AuditoriaEntregasModal({
                 placeholder="Filtrar por nome do aluno, turma ou matrícula..."
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                className="w-full text-xs border border-slate-250 dark:border-slate-700 rounded-xl px-3.5 py-2 text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-900 outline-none focus:border-indigo-500 transition-all shadow-sm"
+                className="w-full text-xs border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2 text-slate-800 dark:text-slate-100 bg-white dark:bg-slate-900 outline-none focus:border-indigo-500 transition-all shadow-sm"
               />
             </div>
 

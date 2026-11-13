@@ -62,7 +62,7 @@ export default function RankingTutorModal({
       <ThreeInteractiveBg />
 
       {/* HEADER BAR */}
-      <div className="bg-gradient-to-r from-brand-primary via-indigo-650 to-brand-secondary dark:from-slate-950 dark:via-indigo-955/20 dark:to-slate-900 text-white p-4 sticky top-0 z-20 shadow-md transition-colors duration-300">
+      <div className="bg-gradient-to-r from-brand-primary via-indigo-600 to-brand-secondary dark:from-slate-950 dark:via-indigo-950/20 dark:to-slate-900 text-white p-4 sticky top-0 z-20 shadow-md transition-colors duration-300">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <div>
             <h2 className="text-xl font-display font-black flex items-center gap-2 leading-tight">
@@ -214,7 +214,7 @@ export default function RankingTutorModal({
                         1
                       </div>
                     </div>
-                    <div className="bg-amber-500/10 dark:bg-amber-550/10 w-full h-36 rounded-2xl border border-amber-400/30 dark:border-amber-500/30 flex flex-col items-center pt-9 px-1.5 text-center group-hover:bg-amber-500/20 dark:group-hover:bg-amber-500/15 transition-colors">
+                    <div className="bg-amber-500/10 dark:bg-amber-500/10 w-full h-36 rounded-2xl border border-amber-400/30 dark:border-amber-500/30 flex flex-col items-center pt-9 px-1.5 text-center group-hover:bg-amber-500/20 dark:group-hover:bg-amber-500/15 transition-colors">
                       <p className="font-bold text-[11px] line-clamp-2 text-amber-950 dark:text-amber-400 leading-tight">
                         {podio[0].nome}
                       </p>

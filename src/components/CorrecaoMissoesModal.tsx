@@ -158,7 +158,7 @@ export default function CorrecaoMissoesModal({
                               {entrega.matricula}
                             </span>
                             {aguardando && !isQuiz && (
-                              <span className="bg-amber-100/90 dark:bg-amber-955/35 text-amber-700 dark:text-amber-400 text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-lg border border-amber-200/40 dark:border-amber-900/20 animate-pulse">
+                              <span className="bg-amber-100/90 dark:bg-amber-950/35 text-amber-700 dark:text-amber-400 text-[9px] font-black tracking-wider uppercase px-2 py-0.5 rounded-lg border border-amber-200/40 dark:border-amber-900/20 animate-pulse">
                                 Novo
                               </span>
                             )}
@@ -228,7 +228,7 @@ export default function CorrecaoMissoesModal({
                                 </span>
                                 <span
                                   className={`font-display font-black text-xl ${
-                                    entrega.xpGanho > 0 ? "text-emerald-600 dark:text-emerald-450" : "text-red-500 dark:text-red-400"
+                                    entrega.xpGanho > 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500 dark:text-red-400"
                                   }`}
                                 >
                                   {entrega.xpGanho} XP
@@ -261,7 +261,7 @@ export default function CorrecaoMissoesModal({
                             <>
                               <div>
                                 <div className="mb-4">
-                                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase text-center mb-1.5 tracking-wider">
+                                  <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase text-center mb-1.5 tracking-wider">
                                     Nota (XP)
                                   </label>
                                   <div className="relative max-w-[140px] mx-auto">
@@ -304,7 +304,7 @@ export default function CorrecaoMissoesModal({
                                         feedbacksTemp[entrega.idEntrega] || entrega.feedback || "",
                                       )
                                     }
-                                    className="cursor-pointer flex-1 py-2.5 px-2 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all border border-emerald-650 dark:border-emerald-500 bg-emerald-600 dark:bg-emerald-600 text-white shadow-md shadow-emerald-500/10 disabled:opacity-50"
+                                    className="cursor-pointer flex-1 py-2.5 px-2 rounded-2xl text-[10px] font-black uppercase tracking-wider transition-all border border-emerald-600 dark:border-emerald-500 bg-emerald-600 dark:bg-emerald-600 text-white shadow-md shadow-emerald-500/10 disabled:opacity-50"
                                   >
                                     ✅ Aprovar
                                   </motion.button>
@@ -317,7 +317,7 @@ export default function CorrecaoMissoesModal({
                                     </span>
                                   )}
                                   {isAprovada && (
-                                    <span className="text-emerald-600 dark:text-emerald-450 font-black text-[10px] uppercase tracking-wider">
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-black text-[10px] uppercase tracking-wider">
                                       ✅ Avaliada ({entrega.xpGanho} XP)
                                     </span>
                                   )}

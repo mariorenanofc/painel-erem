@@ -186,7 +186,7 @@ export default function AlgorithmStepBuilder({ onGameOver, playSound, perderVida
       </div>
 
       {/* Container 1: Sequência de Passos Montados */}
-      <div className="flex-1 flex flex-col gap-2 p-4 bg-slate-950 border border-slate-850 rounded-xl mb-4 min-h-[160px] justify-center">
+      <div className="flex-1 flex flex-col gap-2 p-4 bg-slate-950 border border-slate-800 rounded-xl mb-4 min-h-[160px] justify-center">
         {placedSteps.length === 0 ? (
           <div className="text-center text-xs text-slate-600 font-semibold select-none py-8">
             Clique nos blocos abaixo na ordem lógica do fluxo...
@@ -203,7 +203,7 @@ export default function AlgorithmStepBuilder({ onGameOver, playSound, perderVida
                       ? (JSON.stringify(placedSteps) === JSON.stringify(currentQ.steps)
                           ? "bg-emerald-950/40 border-emerald-500/30 text-emerald-400"
                           : "bg-slate-900 border-slate-800 text-slate-400")
-                      : "bg-slate-900 hover:bg-slate-850 hover:border-slate-700"
+                      : "bg-slate-900 hover:bg-slate-800 hover:border-slate-700"
                   }`}
                 >
                   {step}
@@ -219,13 +219,13 @@ export default function AlgorithmStepBuilder({ onGameOver, playSound, perderVida
 
       {/* Container 2: Blocos Disponíveis para Clicar */}
       {availableSteps.length > 0 && (
-        <div className="flex flex-wrap gap-2 justify-center p-3 rounded-xl bg-slate-900/40 border border-slate-850/50 mb-4 min-h-[50px] items-center">
+        <div className="flex flex-wrap gap-2 justify-center p-3 rounded-xl bg-slate-900/40 border border-slate-800/50 mb-4 min-h-[50px] items-center">
           {availableSteps.map((step, idx) => (
             <button
               key={idx}
               disabled={validated}
               onClick={() => handleAvailableClick(step)}
-              className="py-2.5 px-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-amber-500/40 hover:bg-slate-850 text-white text-xs font-bold text-center transition-all active:scale-98"
+              className="py-2.5 px-4 rounded-xl bg-slate-900 border border-slate-800 hover:border-amber-500/40 hover:bg-slate-800 text-white text-xs font-bold text-center transition-all active:scale-98"
             >
               {step}
             </button>
@@ -235,7 +235,7 @@ export default function AlgorithmStepBuilder({ onGameOver, playSound, perderVida
 
       {/* Feedback Placa */}
       {feedback && (
-        <div className="mb-4 p-3 rounded-xl bg-slate-950 border border-slate-850 text-center text-xs font-bold text-slate-400">
+        <div className="mb-4 p-3 rounded-xl bg-slate-950 border border-slate-800 text-center text-xs font-bold text-slate-400">
           {feedback}
         </div>
       )}

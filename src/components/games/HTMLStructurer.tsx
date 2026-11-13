@@ -164,7 +164,7 @@ export default function HTMLStructurer({ onGameOver, playSound, perderVida }: HT
       </div>
 
       {/* Container de Tags Montadas */}
-      <div className="flex-1 flex flex-col gap-2 p-5 bg-slate-950 border border-slate-850 rounded-xl mb-4 min-h-[160px] justify-center">
+      <div className="flex-1 flex flex-col gap-2 p-5 bg-slate-950 border border-slate-800 rounded-xl mb-4 min-h-[160px] justify-center">
         {placedBlocks.length === 0 ? (
           <div className="text-center text-xs text-slate-600 font-semibold select-none py-8">
             Monte a hierarquia clicando nas tags de baixo...
@@ -194,13 +194,13 @@ export default function HTMLStructurer({ onGameOver, playSound, perderVida }: HT
 
       {/* Blocos Disponíveis */}
       {availableBlocks.length > 0 && (
-        <div className="flex flex-wrap gap-2 justify-center p-3 rounded-xl bg-slate-900/40 border border-slate-850/50 mb-4 min-h-[50px] items-center">
+        <div className="flex flex-wrap gap-2 justify-center p-3 rounded-xl bg-slate-900/40 border border-slate-800/50 mb-4 min-h-[50px] items-center">
           {availableBlocks.map((block, idx) => (
             <button
               key={idx}
               disabled={validated}
               onClick={() => handleAvailableClick(block)}
-              className="py-2 px-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-orange-500/40 hover:bg-slate-850 text-white font-mono text-xs font-bold text-center transition-all active:scale-98"
+              className="py-2 px-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-orange-500/40 hover:bg-slate-800 text-white font-mono text-xs font-bold text-center transition-all active:scale-98"
             >
               {block}
             </button>
@@ -210,7 +210,7 @@ export default function HTMLStructurer({ onGameOver, playSound, perderVida }: HT
 
       {/* Placa de Feedback */}
       {feedback && (
-        <div className="mb-4 p-3 rounded-xl bg-slate-950 border border-slate-850 text-center text-xs font-bold text-slate-400">
+        <div className="mb-4 p-3 rounded-xl bg-slate-950 border border-slate-800 text-center text-xs font-bold text-slate-400">
           {feedback}
         </div>
       )}

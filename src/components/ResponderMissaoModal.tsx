@@ -383,7 +383,7 @@ export default function ResponderMissaoModal({
                   <h3 className="text-indigo-800 dark:text-indigo-400 font-black text-sm flex items-center gap-2 mb-2">
                     <span className="text-base">⚡</span> Template Base para Desenvolvimento!
                   </h3>
-                  <p className="text-indigo-750 dark:text-indigo-300 text-xs font-medium mb-3 leading-relaxed">
+                  <p className="text-indigo-700 dark:text-indigo-300 text-xs font-medium mb-3 leading-relaxed">
                     Clique no botão abaixo para abrir o projeto inicial (CodePen/IDE) onde você irá programar esta atividade.
                   </p>
                   <motion.button
@@ -391,7 +391,7 @@ export default function ResponderMissaoModal({
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.98 }}
                     onClick={() => window.open(missaoAberta.opcaoA, "_blank")}
-                    className="cursor-pointer bg-gradient-to-r from-indigo-505 via-indigo-500 to-purple-600 text-white font-black py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider border-none w-full"
+                    className="cursor-pointer bg-gradient-to-r from-indigo-500 via-indigo-500 to-purple-600 text-white font-black py-3 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 text-sm uppercase tracking-wider border-none w-full"
                   >
                     ABRIR TEMPLATE BASE (IDE) 🔗
                   </motion.button>

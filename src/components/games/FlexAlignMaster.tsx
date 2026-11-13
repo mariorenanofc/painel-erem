@@ -184,7 +184,7 @@ export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: F
       </div>
 
       {/* Caixa de Exibição do Flexbox Dinâmico */}
-      <div className="flex-1 bg-slate-950 border border-slate-850 rounded-2xl mb-4 relative min-h-[160px] p-4 flex items-center shadow-inner overflow-hidden">
+      <div className="flex-1 bg-slate-950 border border-slate-800 rounded-2xl mb-4 relative min-h-[160px] p-4 flex items-center shadow-inner overflow-hidden">
         {/* Marca d'água das coordenadas tracejadas */}
         {currentC.targetLayout}
         
@@ -237,7 +237,7 @@ export default function FlexAlignMaster({ onGameOver, playSound, perderVida }: F
 
       {/* Feedback Placa */}
       {feedback && (
-        <div className="mb-4 p-3 rounded-xl bg-slate-950 border border-slate-850 text-center text-xs font-bold text-slate-400">
+        <div className="mb-4 p-3 rounded-xl bg-slate-950 border border-slate-800 text-center text-xs font-bold text-slate-400">
           {feedback}
         </div>
       )}

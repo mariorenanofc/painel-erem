@@ -430,14 +430,14 @@ export default function DashboardAlunos() {
                     Base escolar devidamente atualizada no servidor.
                   </p>
                   <div className="grid grid-cols-2 gap-3.5 text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-300">
-                    <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-250 dark:border-white/5 p-4 rounded-xl shadow-inner text-center">
+                    <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-white/5 p-4 rounded-xl shadow-inner text-center">
                       Novatos
                       <br />
                       <span className="text-3xl font-display font-black text-emerald-600 dark:text-emerald-400 mt-2 block">
                         {resultadoSiepe.inseridos}
                       </span>
                     </div>
-                    <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-250 dark:border-white/5 p-4 rounded-xl shadow-inner text-center">
+                    <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-white/5 p-4 rounded-xl shadow-inner text-center">
                       Atualizados
                       <br />
                       <span className="text-3xl font-display font-black text-blue-600 dark:text-brand-secondary mt-2 block">

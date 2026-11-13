@@ -139,7 +139,7 @@ export default function AnalyticsPage() {
           <div className="text-left">
             <h2 className="font-display font-black text-2xl text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
               Analytics & CRM
-              <span className="text-[9px] font-black tracking-widest uppercase bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-650 dark:text-indigo-400 px-2.5 py-0.5 rounded-lg border border-indigo-500/20 dark:border-indigo-900/10 shadow-sm align-middle">
+              <span className="text-[9px] font-black tracking-widest uppercase bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-2.5 py-0.5 rounded-lg border border-indigo-500/20 dark:border-indigo-900/10 shadow-sm align-middle">
                 Tutor Radar
               </span>
             </h2>
@@ -210,7 +210,7 @@ export default function AnalyticsPage() {
                         👥
                       </div>
                       <div>
-                        <p className="text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">
+                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                           Alunos Ativos
                         </p>
                         <p className="text-3xl font-display font-black text-slate-800 dark:text-white font-mono mt-0.5">
@@ -223,10 +223,10 @@ export default function AnalyticsPage() {
                         ⭐
                       </div>
                       <div>
-                        <p className="text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">
+                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                           XP Gerado (Economia)
                         </p>
-                        <p className="text-3xl font-display font-black text-emerald-600 dark:text-emerald-450 font-mono mt-0.5">
+                        <p className="text-3xl font-display font-black text-emerald-600 dark:text-emerald-400 font-mono mt-0.5">
                           {dadosGerais.totalXpEscola.toLocaleString("pt-BR")}
                         </p>
                       </div>
@@ -236,7 +236,7 @@ export default function AnalyticsPage() {
                         💸
                       </div>
                       <div>
-                        <p className="text-[10px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">
+                        <p className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                           Volume de Pix de XP
                         </p>
                         <p className="text-3xl font-display font-black text-purple-600 dark:text-purple-400 font-mono mt-0.5">
@@ -248,12 +248,12 @@ export default function AnalyticsPage() {
 
                   {/* RADAR DE RISCO */}
                   <div className="bg-white/85 dark:bg-slate-900/40 p-6 rounded-[2.5rem] shadow-lg border border-slate-200/60 dark:border-white/5 backdrop-blur-md transition-all">
-                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b border-slate-100 dark:border-slate-850 pb-4">
+                    <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
                       <div className="text-left">
                         <h3 className="font-display font-black text-slate-800 dark:text-white text-lg flex items-center gap-2.5">
                           <span className="text-red-500 animate-pulse select-none">🚨</span> Radar de Risco
                         </h3>
-                        <p className="text-xs text-slate-450 dark:text-slate-500 mt-1 font-semibold">
+                        <p className="text-xs text-slate-400 dark:text-slate-500 mt-1 font-semibold">
                           Alunos com frequência crítica (&lt;70%) ou com 2+ missões atrasadas.
                         </p>
                       </div>
@@ -291,7 +291,7 @@ export default function AnalyticsPage() {
                                   <h4 className="font-bold text-slate-800 dark:text-white text-sm truncate">
                                     {aluno.nome}
                                   </h4>
-                                  <p className="text-[9px] font-mono font-bold text-slate-450 dark:text-slate-500 mt-0.5">
+                                  <p className="text-[9px] font-mono font-bold text-slate-400 dark:text-slate-500 mt-0.5">
                                     {aluno.turma} • {aluno.matricula}
                                   </p>
                                 </div>
@@ -307,7 +307,7 @@ export default function AnalyticsPage() {
                                   </a>
                                 ) : (
                                   <span
-                                    className="bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-550 p-2 rounded-xl text-xs font-bold shrink-0 w-8 h-8 flex items-center justify-center select-none"
+                                    className="bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 p-2 rounded-xl text-xs font-bold shrink-0 w-8 h-8 flex items-center justify-center select-none"
                                     title="Sem telefone"
                                   >
                                     📵
@@ -332,7 +332,7 @@ export default function AnalyticsPage() {
                                 whileHover={{ scale: 1.02 }}
                                 whileTap={{ scale: 0.98 }}
                                 onClick={() => investigarAluno(aluno.matricula)}
-                                className="cursor-pointer w-full text-[10px] font-black uppercase tracking-wider text-slate-650 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-850 py-2.5 rounded-xl hover:bg-slate-100 transition-colors shadow-inner"
+                                className="cursor-pointer w-full text-[10px] font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 py-2.5 rounded-xl hover:bg-slate-100 transition-colors shadow-inner"
                               >
                                 Ver Ficha Completa
                               </motion.button>
@@ -387,7 +387,7 @@ export default function AnalyticsPage() {
                   {/* ALUNOS GRID LIST */}
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     {alunosFiltrados.length === 0 ? (
-                      <div className="col-span-full py-12 text-center text-slate-450 dark:text-slate-500 bg-white/80 dark:bg-slate-900/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 font-black uppercase tracking-wider text-xs shadow-md">
+                      <div className="col-span-full py-12 text-center text-slate-400 dark:text-slate-500 bg-white/80 dark:bg-slate-900/40 rounded-[2.5rem] border border-slate-200 dark:border-white/5 font-black uppercase tracking-wider text-xs shadow-md">
                         Nenhum aluno encontrado com estes filtros.
                       </div>
                     ) : (
@@ -400,14 +400,14 @@ export default function AnalyticsPage() {
                           className="bg-white/80 dark:bg-slate-900/40 p-4 px-5 rounded-2xl border border-slate-200/60 dark:border-white/5 flex justify-between items-center hover:shadow-md hover:border-amber-300 dark:hover:border-amber-500/50 cursor-pointer transition-all group text-left"
                         >
                           <div className="flex items-center gap-3.5">
-                            <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-base border border-slate-200 dark:border-slate-850 group-hover:bg-amber-500/10 group-hover:border-amber-500/20 group-hover:text-amber-500 transition-colors select-none">
+                            <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-slate-950 flex items-center justify-center text-base border border-slate-200 dark:border-slate-800 group-hover:bg-amber-500/10 group-hover:border-amber-500/20 group-hover:text-amber-500 transition-colors select-none">
                               👤
                             </div>
                             <div>
-                              <h4 className="font-bold text-slate-850 dark:text-white text-sm line-clamp-1">
+                              <h4 className="font-bold text-slate-800 dark:text-white text-sm line-clamp-1">
                                 {aluno.nome}
                               </h4>
-                              <p className="text-xs text-slate-450 dark:text-slate-500 font-bold mt-0.5">
+                              <p className="text-xs text-slate-400 dark:text-slate-500 font-bold mt-0.5">
                                 {aluno.turma} • {aluno.matricula}
                               </p>
                             </div>
@@ -426,7 +426,7 @@ export default function AnalyticsPage() {
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.97 }}
                     onClick={voltarParaLista}
-                    className="cursor-pointer bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black py-2.5 px-5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-850 transition-colors flex items-center gap-2 shadow-sm text-xs uppercase tracking-wider"
+                    className="cursor-pointer bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 text-slate-600 dark:text-slate-300 font-black py-2.5 px-5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors flex items-center gap-2 shadow-sm text-xs uppercase tracking-wider"
                   >
                     ← Voltar para o Diretório
                   </motion.button>
@@ -512,7 +512,7 @@ export default function AnalyticsPage() {
                       {/* FICHA DIREITA: ANALYTICS CARDS & HISTÓRICO */}
                       <div className="lg:col-span-2 space-y-6">
                         {ficha360.statusProjeto?.toLowerCase() === "reserva" && (
-                          <div className="bg-slate-100 dark:bg-slate-900/60 border border-slate-250 dark:border-slate-800 text-slate-600 dark:text-slate-350 p-5 rounded-2xl shadow-sm flex items-center gap-4 animate-pulse">
+                          <div className="bg-slate-100 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 p-5 rounded-2xl shadow-sm flex items-center gap-4 animate-pulse">
                             <span className="text-3xl select-none">🪑</span>
                             <div>
                               <h3 className="font-display font-black text-sm uppercase tracking-tight text-slate-800 dark:text-white">
@@ -529,10 +529,10 @@ export default function AnalyticsPage() {
                           <div className="bg-white/80 dark:bg-slate-900/40 p-5 rounded-2xl border border-slate-200/60 dark:border-white/5 shadow-sm flex items-center gap-4">
                             <div className="text-3xl select-none">⭐</div>
                             <div>
-                              <p className="text-[9px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">
+                              <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                                 XP Total
                               </p>
-                              <p className="text-2xl font-display font-black text-emerald-600 dark:text-emerald-450 mt-0.5 font-mono">
+                              <p className="text-2xl font-display font-black text-emerald-600 dark:text-emerald-400 mt-0.5 font-mono">
                                 {ficha360.xpTotal ?? 0}
                               </p>
                             </div>
@@ -540,7 +540,7 @@ export default function AnalyticsPage() {
                           <div className="bg-white/80 dark:bg-slate-900/40 p-5 rounded-2xl border border-slate-200/60 dark:border-white/5 shadow-sm flex items-center gap-4">
                             <div className="text-3xl select-none">🎓</div>
                             <div>
-                              <p className="text-[9px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">
+                              <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                                 Nível Atual
                               </p>
                               <p className="text-xl font-display font-black text-blue-600 dark:text-brand-secondary mt-1">
@@ -552,10 +552,10 @@ export default function AnalyticsPage() {
                           <div className="bg-white/80 dark:bg-slate-900/40 p-5 rounded-2xl border border-slate-200/60 dark:border-white/5 shadow-sm flex items-center gap-4">
                             <div className="text-3xl select-none">📍</div>
                             <div>
-                              <p className="text-[9px] font-black text-slate-450 dark:text-slate-500 uppercase tracking-widest">
+                              <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                                 Frequência
                               </p>
-                              <p className={`text-2xl font-display font-black mt-0.5 font-mono ${(ficha360.frequencia?.taxa ?? 100) >= 75 ? "text-emerald-600 dark:text-emerald-450" : "text-red-500"}`}>
+                              <p className={`text-2xl font-display font-black mt-0.5 font-mono ${(ficha360.frequencia?.taxa ?? 100) >= 75 ? "text-emerald-600 dark:text-emerald-400" : "text-red-500"}`}>
                                 {ficha360.frequencia?.taxa ?? 100}%
                               </p>
                               <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold mt-0.5">
@@ -574,7 +574,7 @@ export default function AnalyticsPage() {
                           </div>
                           <div className="max-h-96 overflow-y-auto p-5 custom-scrollbar">
                             {!ficha360.historicoXP || ficha360.historicoXP.length === 0 ? (
-                              <p className="text-center text-slate-450 dark:text-slate-500 py-10 font-bold text-xs uppercase tracking-wider italic">
+                              <p className="text-center text-slate-400 dark:text-slate-500 py-10 font-bold text-xs uppercase tracking-wider italic">
                                 Nenhum registro de atividade encontrado.
                               </p>
                             ) : (
@@ -617,7 +617,7 @@ export default function AnalyticsPage() {
                                         </div>
                                       </div>
                                       <div
-                                        className={`font-display font-black text-base font-mono ${isDoacao ? "text-rose-500" : "text-emerald-600 dark:text-emerald-450"}`}
+                                        className={`font-display font-black text-base font-mono ${isDoacao ? "text-rose-500" : "text-emerald-600 dark:text-emerald-400"}`}
                                       >
                                         {isDoacao ? "" : "+"}
                                         {item.xp} XP

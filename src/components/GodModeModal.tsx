@@ -251,7 +251,7 @@ export default function GodModeModal({
             <button
               onClick={() => setAbaAtiva("xp")}
               className={`cursor-pointer flex-1 py-3.5 rounded-xl font-display font-black text-xs uppercase tracking-wider transition-all select-none ${abaAtiva === "xp"
-                  ? "bg-purple-650 text-white shadow-md"
+                  ? "bg-purple-600 text-white shadow-md"
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200"
                 }`}
             >
@@ -345,7 +345,7 @@ export default function GodModeModal({
                         />
                       </div>
                       <div className="flex items-center">
-                        <div className="bg-slate-50/50 dark:bg-slate-950/30 border border-slate-200/60 dark:border-slate-800 p-4.5 rounded-2xl w-full text-xs font-semibold leading-relaxed text-slate-550 dark:text-slate-400 shadow-sm">
+                        <div className="bg-slate-50/50 dark:bg-slate-950/30 border border-slate-200/60 dark:border-slate-800 p-4.5 rounded-2xl w-full text-xs font-semibold leading-relaxed text-slate-500 dark:text-slate-400 shadow-sm">
                           💡 <span className="text-emerald-600 dark:text-emerald-400 font-bold">Positivo (+10)</span> para bonificar. <br />
                           🚨 <span className="text-red-500 dark:text-red-400 font-bold font-mono">Negativo (-100)</span> para punir IA ou cola.
                         </div>
@@ -401,7 +401,7 @@ export default function GodModeModal({
                     className="space-y-5"
                   >
                     {/* Alerta explicativo */}
-                    <div className="bg-amber-50/50 dark:bg-amber-955/15 p-4.5 rounded-2xl border border-amber-200/50 dark:border-amber-900/30">
+                    <div className="bg-amber-50/50 dark:bg-amber-950/15 p-4.5 rounded-2xl border border-amber-200/50 dark:border-amber-900/30">
                       <p className="text-xs text-amber-800 dark:text-amber-300 leading-relaxed font-semibold">
                         <strong>Destaque VIP:</strong> Ao coroar um novo campeão, o dono anterior perderá o destaque estético no mural público, mas receberá automaticamente uma <strong>Badge de Legado</strong> eterna em seu histórico.
                       </p>

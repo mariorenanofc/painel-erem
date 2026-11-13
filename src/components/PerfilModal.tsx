@@ -158,7 +158,7 @@ export default function PerfilModal({
                   }}
                   className="space-y-4 animate-in fade-in duration-300"
                 >
-                  <div className="bg-amber-50 dark:bg-amber-955/20 text-amber-800 dark:text-amber-300 text-xs p-3.5 rounded-2xl border border-amber-200 dark:border-amber-900/40 mb-4 leading-relaxed transition-colors font-medium">
+                  <div className="bg-amber-50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-300 text-xs p-3.5 rounded-2xl border border-amber-200 dark:border-amber-900/40 mb-4 leading-relaxed transition-colors font-medium">
                     <strong>⚠️ Permissão Restrita:</strong> Por motivos de segurança escolar, dados cadastrais principais são editáveis somente pela Gestão. Você tem permissão apenas para atualizar os seus telefones de contato.
                   </div>
 
@@ -268,7 +268,7 @@ export default function PerfilModal({
                       whileTap={{ scale: 0.98 }}
                       type="submit"
                       disabled={salvando}
-                      className="cursor-pointer bg-gradient-to-r from-brand-primary to-indigo-650 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-indigo-600/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                      className="cursor-pointer bg-gradient-to-r from-brand-primary to-indigo-600 text-white px-6 py-3 rounded-xl font-bold shadow-lg shadow-indigo-600/25 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
                     >
                       {salvando ? "Salvando..." : "Atualizar Contato"}
                     </motion.button>

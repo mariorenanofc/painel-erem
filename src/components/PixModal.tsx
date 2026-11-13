@@ -276,7 +276,7 @@ export default function PixModal({
                   onClick={() => setAbaAtiva("enviar")}
                   className={`cursor-pointer flex-1 py-3 font-black text-xs uppercase tracking-wider transition-colors relative z-10 ${
                     abaAtiva === "enviar"
-                      ? "text-emerald-600 dark:text-emerald-450 font-black"
+                      ? "text-emerald-600 dark:text-emerald-400 font-black"
                       : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                   }`}
                 >
@@ -292,7 +292,7 @@ export default function PixModal({
                   onClick={() => setAbaAtiva("extrato")}
                   className={`cursor-pointer flex-1 py-3 font-black text-xs uppercase tracking-wider transition-colors relative z-10 ${
                     abaAtiva === "extrato"
-                      ? "text-emerald-600 dark:text-emerald-450 font-black"
+                      ? "text-emerald-600 dark:text-emerald-400 font-black"
                       : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
                   }`}
                 >
@@ -342,7 +342,7 @@ export default function PixModal({
 
                     <div className="space-y-4.5">
                       <div>
-                        <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase mb-1.5 tracking-wider">
+                        <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-1.5 tracking-wider">
                           Para quem você quer enviar?
                         </label>
                         <select
@@ -362,7 +362,7 @@ export default function PixModal({
 
                       <div className="flex flex-col sm:flex-row gap-4">
                         <div className="flex-1">
-                          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase mb-1.5 tracking-wider">
+                          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-1.5 tracking-wider">
                             Valor (XP)
                           </label>
                           <input
@@ -378,12 +378,12 @@ export default function PixModal({
                             value={pixQuantidade}
                             onChange={(e) => setPixQuantidade(e.target.value)}
                             required
-                            className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-emerald-700 dark:text-emerald-450 font-black rounded-2xl p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors font-mono placeholder-slate-400"
+                            className="w-full bg-slate-50 dark:bg-slate-950/60 border border-slate-200 dark:border-slate-800 text-emerald-700 dark:text-emerald-400 font-black rounded-2xl p-3 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500 transition-colors font-mono placeholder-slate-400"
                             placeholder="10"
                           />
                         </div>
                         <div className="flex-1 sm:flex-[1.5]">
-                          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-550 uppercase mb-1.5 tracking-wider">
+                          <label className="block text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase mb-1.5 tracking-wider">
                             Motivo
                           </label>
                           <select
@@ -470,7 +470,7 @@ export default function PixModal({
                                 className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 border ${
                                   item.tipo === "RECEBEU"
                                     ? "bg-emerald-100/80 dark:bg-emerald-950/45 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/30"
-                                    : "bg-slate-100 dark:bg-slate-950/60 text-slate-550 dark:text-slate-300 border-slate-200 dark:border-slate-800"
+                                    : "bg-slate-100 dark:bg-slate-950/60 text-slate-500 dark:text-slate-300 border-slate-200 dark:border-slate-800"
                                 }`}
                               >
                                 {item.tipo === "RECEBEU" ? "↙️" : "↗️"}
@@ -504,7 +504,7 @@ export default function PixModal({
                             <div
                               className={`font-black shrink-0 ml-2 font-mono text-sm ${
                                 item.tipo === "RECEBEU"
-                                  ? "text-emerald-600 dark:text-emerald-450"
+                                  ? "text-emerald-600 dark:text-emerald-400"
                                   : "text-slate-600 dark:text-slate-300"
                               }`}
                             >

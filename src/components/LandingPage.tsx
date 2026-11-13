@@ -52,7 +52,7 @@ export default function LandingPage({ onLoginTutor }: LandingPageProps) {
           </button>
           <button
             onClick={() => window.location.href = "/portal"}
-            className="cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-650 hover:brightness-110 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-black uppercase tracking-wider shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+            className="cursor-pointer bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-110 text-white px-5 py-2.5 rounded-xl text-xs md:text-sm font-black uppercase tracking-wider shadow-lg shadow-blue-500/20 transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
           >
             <span>🎮</span> Portal do Aluno
           </button>

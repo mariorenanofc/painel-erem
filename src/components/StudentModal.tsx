@@ -23,7 +23,7 @@ const DataDisplay = ({
     {isLink && value && value !== "Sem email" && value !== "Não encontrado" ? (
       <a
         href={type === "tel" ? `tel:${value.replace(/\D/g, "")}` : `mailto:${value}`}
-        className="text-emerald-700 dark:text-emerald-450 font-black hover:underline text-sm md:text-base break-all"
+        className="text-emerald-700 dark:text-emerald-400 font-black hover:underline text-sm md:text-base break-all"
       >
         {value}
       </a>
@@ -185,7 +185,7 @@ export default function StudentModal({
                           <span className={`px-2.5 py-0.5 rounded-lg text-xs font-black uppercase tracking-wider ${formData.statusTrilha === "Ativo"
                               ? "bg-emerald-100 dark:bg-emerald-950/45 text-emerald-700 dark:text-emerald-400"
                               : formData.statusTrilha === "Inscrito"
-                                ? "bg-amber-100 dark:bg-amber-955/35 text-amber-700 dark:text-amber-400"
+                                ? "bg-amber-100 dark:bg-amber-950/35 text-amber-700 dark:text-amber-400"
                                 : "bg-red-100 dark:bg-red-955/35 text-red-700 dark:text-red-400"
                             }`}>
                             {formData.statusTrilha}

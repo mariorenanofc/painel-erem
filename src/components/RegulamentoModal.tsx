@@ -34,7 +34,7 @@ export default function RegulamentoModal({ isOpen, onClose }: RegulamentoModalPr
           <div className="absolute top-0 right-0 w-72 h-72 bg-emerald-500/10 dark:bg-emerald-500/5 rounded-full blur-[90px] -mr-36 -mt-36 pointer-events-none" />
 
           {/* Cabeçalho */}
-          <div className="bg-gradient-to-r from-emerald-650 to-teal-800 dark:from-emerald-700 dark:to-teal-900 p-5 flex justify-between items-center text-white shrink-0 relative border-b border-white/5">
+          <div className="bg-gradient-to-r from-emerald-600 to-teal-800 dark:from-emerald-700 dark:to-teal-900 p-5 flex justify-between items-center text-white shrink-0 relative border-b border-white/5">
             <div className="absolute inset-0 bg-gradient-to-b from-white/5 to-transparent pointer-events-none" />
             <div className="relative z-10">
               <h2 className="font-display font-black text-lg md:text-xl flex items-center gap-2 tracking-tight">
@@ -128,7 +128,7 @@ export default function RegulamentoModal({ isOpen, onClose }: RegulamentoModalPr
                 <ul className="list-disc pl-5 space-y-1">
                   <li>O XP vindo de <strong>atividades atrasadas sem justificativa</strong> é limitado a um teto máximo de <strong>50 XP por semana</strong> no Ranking Semanal (e <strong>150 XP por mês</strong> no Ranking Mensal).</li>
                   <li>
-                    <strong className="text-emerald-700 dark:text-emerald-450">Isenção por Falta Justificada:</strong> Se você tiver uma <strong>falta justificada</strong> oficial registrada na data limite original da atividade, ela fica totalmente <strong>isenta</strong> da trava! O XP do atraso contará integralmente (100%) no seu ranking daquela semana.
+                    <strong className="text-emerald-700 dark:text-emerald-400">Isenção por Falta Justificada:</strong> Se você tiver uma <strong>falta justificada</strong> oficial registrada na data limite original da atividade, ela fica totalmente <strong>isenta</strong> da trava! O XP do atraso contará integralmente (100%) no seu ranking daquela semana.
                   </li>
                 </ul>
               </div>

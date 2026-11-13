@@ -41,7 +41,7 @@ export default function BadgesGallery({ dados }: { dados: DadosParaBadges }) {
         <h3 className="font-display font-black text-slate-800 dark:text-white text-base uppercase tracking-wider flex items-center gap-2">
           <span>🏆</span> Mural de Conquistas
         </h3>
-        <span className="bg-amber-500/10 dark:bg-amber-955/35 text-amber-700 dark:text-amber-400 text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-lg border border-amber-500/20 dark:border-amber-900/10 shadow-sm">
+        <span className="bg-amber-500/10 dark:bg-amber-950/35 text-amber-700 dark:text-amber-400 text-xs font-black uppercase tracking-wider px-3.5 py-1 rounded-lg border border-amber-500/20 dark:border-amber-900/10 shadow-sm">
           {totalDesbloqueadas} / {badges.length} Desbloqueadas
         </span>
       </div>

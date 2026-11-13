@@ -177,7 +177,7 @@ export default function PerfilPublicoModal({
               ? "bg-gradient-to-r from-slate-400 via-slate-300 to-slate-400 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.1)]"
               : isBronze
               ? "bg-gradient-to-r from-orange-550 via-amber-600 to-orange-500 shadow-[inset_0_-10px_20px_rgba(0,0,0,0.15)]"
-              : "bg-gradient-to-r from-indigo-650 via-purple-650 to-pink-650 dark:from-slate-950 dark:via-indigo-950/40 dark:to-slate-900"
+              : "bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 dark:from-slate-950 dark:via-indigo-950/40 dark:to-slate-900"
           }`}>
             <div className="absolute top-0 left-0 w-full h-full bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 pointer-events-none"></div>
             {/* Height spacer inside the banner to set its volume */}
@@ -383,7 +383,7 @@ export default function PerfilPublicoModal({
                 {/* GRID DE MÉTRICAS E ESTATÍSTICAS */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   {[
-                    { label: "XP Total", val: perfil.xpTotal, emoji: "⭐", col: "text-emerald-600 dark:text-emerald-450" },
+                    { label: "XP Total", val: perfil.xpTotal, emoji: "⭐", col: "text-emerald-600 dark:text-emerald-400" },
                     { label: "Módulos/Missões", val: perfil.missoesConcluidas, emoji: "🎯", col: "text-blue-600 dark:text-blue-400" },
                     { label: "Pix Enviado", val: perfil.pixEnviado, emoji: "💸", col: "text-amber-600 dark:text-amber-450" },
                     { label: "Pix Recebido", val: perfil.pixRecebido, emoji: "🤝", col: "text-indigo-600 dark:text-indigo-400" }

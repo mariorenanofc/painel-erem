@@ -193,7 +193,7 @@ export default function CodingSpeedrun({ onGameOver, playSound, perderVida }: Co
       </div>
 
       {/* Bloco de Código Target */}
-      <div className="flex-1 flex items-center justify-center p-6 bg-slate-950/80 border border-slate-850/60 rounded-xl mb-6 min-h-[120px] text-center shadow-inner relative overflow-hidden">
+      <div className="flex-1 flex items-center justify-center p-6 bg-slate-950/80 border border-slate-800/60 rounded-xl mb-6 min-h-[120px] text-center shadow-inner relative overflow-hidden">
         <div className="absolute top-2 right-2 text-[9px] font-mono text-slate-700 pointer-events-none uppercase">
           Visão Geral
         </div>

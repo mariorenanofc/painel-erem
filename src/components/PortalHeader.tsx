@@ -1,4 +1,4 @@
-﻿/* eslint-disable react-hooks/set-state-in-effect */
+/* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
 import { useState, useRef, useEffect } from "react";
@@ -19,6 +19,10 @@ export default function PortalHeader({
   onAbrirCertificados,
   totalCertificados = 0,
   onLogout,
+  onAbrirNovidades,
+  versaoAtualizacao = "v2.2.1",
+  onAbrirMissaoPorId,
+  temNovidadeNaoLida = false,
 }: PortalHeaderProps) {
   const [menuAberto, setMenuAberto] = useState(false);
   const [notificacoesAbertas, setNotificacoesAbertas] = useState(false);
@@ -64,9 +68,16 @@ export default function PortalHeader({
   };
 
   const primeiroNome = nomeAluno.split(" ")[0];
-  const notificacoesNaoLidas = notificacoes.filter(
-    (n) => n.tempo > ultimoVisto,
-  ).length;
+  const notificacoesNaoLidas =
+    notificacoes.filter((n) => n.tempo > ultimoVisto).length +
+    (temNovidadeNaoLida ? 1 : 0);
+
+  const marcarTodasLidas = (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    const agora = Date.now();
+    setUltimoVisto(agora);
+    localStorage.setItem(`notif_vistas_${matricula}`, agora.toString());
+  };
 
   const toggleNotificacoes = () => {
     const abrindo = !notificacoesAbertas;
@@ -157,26 +168,74 @@ export default function PortalHeader({
                   initial={{ opacity: 0, y: 10, scale: 0.98 }}
                   animate={{ opacity: 1, y: 0, scale: 1 }}
                   exit={{ opacity: 0, y: 10, scale: 0.98 }}
-                  className="absolute right-0 mt-3 w-80 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/80 dark:border-white/5 overflow-hidden z-50"
+                  className="absolute right-0 mt-3 w-80 sm:w-88 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/80 dark:border-white/5 overflow-hidden z-50 select-none"
                 >
-                  <div className="bg-slate-50/50 dark:bg-slate-950/40 p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
-                    <h3 className="font-display font-black text-slate-800 dark:text-white text-xs uppercase tracking-wider">
-                      Notificações
-                    </h3>
-                    <span className="bg-indigo-50 dark:bg-indigo-955/35 text-indigo-650 dark:text-brand-secondary text-[9px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-lg border border-indigo-200/30 dark:border-indigo-900/10">
-                      Últimas {notificacoes.length}
-                    </span>
+                  <div className="bg-slate-50/50 dark:bg-slate-950/40 p-3.5 sm:p-4 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-display font-black text-slate-800 dark:text-white text-xs uppercase tracking-wider">
+                        Notificações
+                      </h3>
+                      {notificacoesNaoLidas > 0 && (
+                        <span className="bg-red-500/15 text-red-600 dark:text-red-400 text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-red-500/20">
+                          {notificacoesNaoLidas} nova(s)
+                        </span>
+                      )}
+                    </div>
+                    {notificacoes.length > 0 && (
+                      <button
+                        onClick={marcarTodasLidas}
+                        className="cursor-pointer text-[10px] font-bold text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                      >
+                        Marcar lidas
+                      </button>
+                    )}
                   </div>
-                  <div className="max-h-64 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800">
+
+                  {/* Banner de Destaque da Versão da Plataforma */}
+                  {onAbrirNovidades && (
+                    <div
+                      onClick={() => {
+                        onAbrirNovidades();
+                        setNotificacoesAbertas(false);
+                      }}
+                      className="p-3 bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 hover:from-indigo-500/15 hover:via-purple-500/15 hover:to-pink-500/15 border-b border-indigo-200/50 dark:border-indigo-500/20 flex items-center justify-between gap-2.5 cursor-pointer transition-all group"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-500 to-pink-500 flex items-center justify-center text-white text-xs shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                          🚀
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-black text-indigo-950 dark:text-indigo-200 truncate leading-tight">
+                            Novidades da Plataforma ({versaoAtualizacao})
+                          </p>
+                          <p className="text-[10px] text-indigo-700 dark:text-indigo-300 font-medium truncate mt-0.5">
+                            Toque para ver os novos recursos
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-bold text-indigo-600 dark:text-indigo-400 group-hover:translate-x-0.5 transition-transform">
+                        →
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="max-h-72 overflow-y-auto custom-scrollbar divide-y divide-slate-100 dark:divide-slate-800">
                     {notificacoes.length === 0 ? (
-                      <p className="text-center text-slate-400 dark:text-slate-500 text-xs py-8 font-semibold italic">
-                        Nenhuma novidade por aqui.
-                      </p>
+                      <div className="text-center py-8 px-4">
+                        <span className="text-2xl block mb-1">🎉</span>
+                        <p className="text-slate-500 dark:text-slate-400 text-xs font-bold">
+                          Você está em dia!
+                        </p>
+                        <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                          Nenhuma notificação pendente no momento.
+                        </p>
+                      </div>
                     ) : (
                       notificacoes.map((notif) => {
                         let iconeNotif = "💸";
                         let corBg = "bg-emerald-500/10 border-emerald-500/20";
                         let corTexto = "text-emerald-600 dark:text-emerald-400";
+                        const podeClicar = Boolean(onAbrirMissaoPorId && notif.atividadeId);
 
                         if (notif.tipo === "LIKE") {
                           iconeNotif = "❤️";
@@ -195,7 +254,17 @@ export default function PortalHeader({
                         return (
                           <div
                             key={notif.id}
-                            className="p-3.5 hover:bg-slate-50/50 dark:hover:bg-white/5 transition-colors flex gap-3 items-start text-left"
+                            onClick={() => {
+                              if (podeClicar && onAbrirMissaoPorId && notif.atividadeId) {
+                                onAbrirMissaoPorId(notif.atividadeId);
+                                setNotificacoesAbertas(false);
+                              }
+                            }}
+                            className={`p-3.5 transition-colors flex gap-3 items-start text-left ${
+                              podeClicar
+                                ? "cursor-pointer hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20"
+                                : "hover:bg-slate-50/50 dark:hover:bg-white/5"
+                            }`}
                           >
                             <div className={`p-2 rounded-xl shrink-0 text-sm ${corBg} border ${corTexto} flex items-center justify-center`}>
                               {iconeNotif}
@@ -204,11 +273,18 @@ export default function PortalHeader({
                               <p className="text-xs text-slate-700 dark:text-slate-300 leading-normal font-semibold">
                                 {notif.mensagem}
                               </p>
-                              {notif.xp > 0 && (
-                                <p className="text-[10px] text-brand-secondary mt-1 font-black uppercase tracking-wider font-mono">
-                                  +{notif.xp} XP creditados
-                                </p>
-                              )}
+                              <div className="flex items-center justify-between gap-2 mt-1">
+                                {notif.xp > 0 && (
+                                  <p className="text-[10px] text-brand-secondary font-black uppercase tracking-wider font-mono">
+                                    +{notif.xp} XP creditados
+                                  </p>
+                                )}
+                                {podeClicar && (
+                                  <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 hover:underline ml-auto flex items-center gap-0.5">
+                                    Abrir missão ↗
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </div>
                         );
@@ -385,6 +461,26 @@ export default function PortalHeader({
                           </span>
                           <span className="flex-1">Hall da Fama</span>
                         </button>
+
+                        {onAbrirNovidades && (
+                          <button
+                            onClick={() => {
+                              onAbrirNovidades();
+                              setMenuAberto(false);
+                            }}
+                            className="cursor-pointer w-full text-left px-3.5 py-2.5 text-xs text-indigo-700 dark:text-indigo-300 hover:text-indigo-800 dark:hover:text-indigo-200 font-bold bg-indigo-50/60 dark:bg-indigo-500/10 hover:bg-indigo-100/60 dark:hover:bg-indigo-500/20 rounded-xl transition-all flex items-center justify-between group border border-indigo-200/60 dark:border-indigo-500/20"
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className="w-7 h-7 rounded-lg bg-indigo-100 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-500/30 flex items-center justify-center text-sm shrink-0 group-hover:scale-105 transition-transform">
+                                🚀
+                              </span>
+                              <span>Novidades da Plataforma</span>
+                            </div>
+                            <span className="bg-indigo-600 text-white text-[10px] px-2 py-0.5 rounded-full font-black font-mono shadow-xs">
+                              {versaoAtualizacao}
+                            </span>
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>

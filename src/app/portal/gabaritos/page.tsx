@@ -201,14 +201,14 @@ export default function GabaritosPage() {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => router.push("/portal")}
-              className="cursor-pointer text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-850 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
+              className="cursor-pointer text-xs font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl transition-all shadow-sm flex items-center gap-1.5"
             >
               ← Voltar
             </motion.button>
             <div className="text-left">
               <h2 className="font-display font-black text-2xl text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
                 Central de Gabaritos
-                <span className="text-[9px] font-black tracking-widest uppercase bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-650 dark:text-indigo-400 px-2.5 py-0.5 rounded-lg border border-indigo-500/20 dark:border-indigo-900/10 shadow-sm align-middle">
+                <span className="text-[9px] font-black tracking-widest uppercase bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-2.5 py-0.5 rounded-lg border border-indigo-500/20 dark:border-indigo-900/10 shadow-sm align-middle">
                   Student Vault
                 </span>
               </h2>
@@ -253,7 +253,7 @@ export default function GabaritosPage() {
                   </p>
                 </div>
                 <div className="bg-slate-50 dark:bg-slate-950/40 p-4 rounded-xl border border-slate-200 dark:border-slate-800/80 shadow-inner">
-                  <strong className="text-amber-550 dark:text-amber-400 block mb-1">
+                  <strong className="text-amber-500 dark:text-amber-400 block mb-1">
                     Para os Miniprojetos (CodePen):
                   </strong>
                   <p className="text-slate-500 dark:text-slate-400 font-semibold leading-relaxed lowercase first-letter:uppercase">
@@ -274,7 +274,7 @@ export default function GabaritosPage() {
             </p>
           </div>
         ) : Object.keys(matrizAgrupada).length === 0 ? (
-          <div className="bg-white/80 dark:bg-slate-900/40 p-12 rounded-[2.5rem] border border-slate-200 dark:border-white/5 text-center text-slate-450 dark:text-slate-500 shadow-md flex flex-col items-center select-none">
+          <div className="bg-white/80 dark:bg-slate-900/40 p-12 rounded-[2.5rem] border border-slate-200 dark:border-white/5 text-center text-slate-400 dark:text-slate-500 shadow-md flex flex-col items-center select-none">
             <div className="text-5xl mb-4">✨</div>
             <p className="font-black text-slate-800 dark:text-white uppercase tracking-wider text-sm">
               Tudo limpo por aqui!
@@ -328,11 +328,11 @@ export default function GabaritosPage() {
                         <span>📚</span> {nomeModulo}
                       </h3>
                       <div className="flex items-center gap-3">
-                        <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-450 text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-xl border border-emerald-500/20">
+                        <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-xl border border-emerald-500/20">
                           {totalMissoes} Missões Liberadas
                         </span>
                         <span
-                          className={`text-slate-400 dark:text-slate-550 transition-transform ${isFechado ? "rotate-180" : ""}`}
+                          className={`text-slate-400 dark:text-slate-500 transition-transform ${isFechado ? "rotate-180" : ""}`}
                         >
                           ▼
                         </span>
@@ -345,19 +345,19 @@ export default function GabaritosPage() {
                         <table className="w-full border-separate border-spacing-0 min-w-[700px] rounded-2xl overflow-hidden border border-slate-200/80 dark:border-slate-800 shadow-sm">
                           <thead>
                             <tr className="bg-slate-100/60 dark:bg-slate-950/40 text-slate-500 dark:text-slate-400 text-[10px] uppercase font-black tracking-wider">
-                              <th className="px-4 py-4 w-32 text-center border-b border-slate-250 dark:border-slate-800">
+                              <th className="px-4 py-4 w-32 text-center border-b border-slate-200 dark:border-slate-800">
                                 AULAS
                               </th>
                               <th
-                                className="px-4 py-4 text-center border-b border-slate-250 dark:border-slate-800"
+                                className="px-4 py-4 text-center border-b border-slate-200 dark:border-slate-800"
                                 colSpan={2}
                               >
                                 DESAFIOS
                               </th>
-                              <th className="px-4 py-4 text-center border-b border-slate-250 dark:border-slate-800">
+                              <th className="px-4 py-4 text-center border-b border-slate-200 dark:border-slate-800">
                                 MINI PROJETO
                               </th>
-                              <th className="px-4 py-4 w-32 text-center border-b border-slate-250 dark:border-slate-800">
+                              <th className="px-4 py-4 w-32 text-center border-b border-slate-200 dark:border-slate-800">
                                 AULA
                               </th>
                             </tr>
@@ -377,7 +377,7 @@ export default function GabaritosPage() {
                               </th>
                             </tr>
                           </thead>
-                          <tbody className="text-slate-700 dark:text-slate-300 text-xs divide-y divide-slate-150 dark:divide-slate-850">
+                          <tbody className="text-slate-700 dark:text-slate-300 text-xs divide-y divide-slate-100 dark:divide-slate-800">
                             {aulasEntries.map(([aulaLabel, ativs]) => (
                               <tr
                                 key={aulaLabel}
@@ -494,7 +494,7 @@ export default function GabaritosPage() {
                                     className="flex flex-col sm:flex-row items-start sm:items-center justify-between bg-slate-50/60 dark:bg-slate-950/20 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 text-xs gap-3"
                                   >
                                     <div className="flex items-center gap-2.5">
-                                      <span className="text-[9px] font-black bg-slate-200 dark:bg-slate-850 border border-slate-300 dark:border-slate-800 px-2 py-1 rounded-lg text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                      <span className="text-[9px] font-black bg-slate-200 dark:bg-slate-800 border border-slate-300 dark:border-slate-800 px-2 py-1 rounded-lg text-slate-500 dark:text-slate-400 uppercase tracking-wider">
                                         {extra.tipo}
                                       </span>
                                       <span className="font-bold text-slate-800 dark:text-slate-200">

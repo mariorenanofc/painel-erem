@@ -177,7 +177,7 @@ export default function LogicGatesSpeedrun({ onGameOver, playSound, perderVida }
       </div>
 
       {/* Caixa do Desafio */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-950 border border-slate-850 rounded-2xl mb-6 shadow-inner text-center relative overflow-hidden">
+      <div className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-950 border border-slate-800 rounded-2xl mb-6 shadow-inner text-center relative overflow-hidden">
         <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold mb-3 block">Esta expressão é True ou False?</span>
         <h4 className="text-2xl sm:text-3xl font-mono font-black text-white leading-relaxed select-none">
           {currentQ.statement}

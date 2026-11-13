@@ -100,7 +100,7 @@ export default function StudentTable({ alunosFiltrados, preencherEdicao }: Stude
                   <td className="px-6 py-4 text-slate-500 dark:text-slate-400">
                     {formatarDataTabela(aluno.dataNasc)}
                   </td>
-                  <td className="px-6 py-4 font-mono font-bold text-emerald-600 dark:text-emerald-450">
+                  <td className="px-6 py-4 font-mono font-bold text-emerald-600 dark:text-emerald-400">
                     {aluno.matricula}
                   </td>
                   <td className="px-6 py-4">
@@ -116,7 +116,7 @@ export default function StudentTable({ alunosFiltrados, preencherEdicao }: Stude
                       whileHover={{ scale: 1.03 }}
                       whileTap={{ scale: 0.97 }}
                       onClick={() => preencherEdicao(aluno)}
-                      className="cursor-pointer text-emerald-600 dark:text-emerald-450 font-black uppercase text-[10px] tracking-wider hover:underline flex items-center gap-1.5 mx-auto bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 px-3.5 py-1.5 rounded-xl transition-all shadow-sm"
+                      className="cursor-pointer text-emerald-600 dark:text-emerald-400 font-black uppercase text-[10px] tracking-wider hover:underline flex items-center gap-1.5 mx-auto bg-emerald-500/10 hover:bg-emerald-500/15 border border-emerald-500/20 px-3.5 py-1.5 rounded-xl transition-all shadow-sm"
                     >
                       <span>📄</span> Visualizar
                     </motion.button>

@@ -213,7 +213,7 @@ export default function JSBugHunter({ onGameOver, playSound, perderVida }: JSBug
       </div>
 
       {/* Editor Interativo de Linhas */}
-      <div className="flex-1 flex flex-col justify-center bg-slate-950 border border-slate-850 rounded-2xl mb-6 shadow-inner overflow-hidden p-4 min-h-[160px]">
+      <div className="flex-1 flex flex-col justify-center bg-slate-950 border border-slate-800 rounded-2xl mb-6 shadow-inner overflow-hidden p-4 min-h-[160px]">
         <div className="flex flex-col gap-1 font-mono text-sm sm:text-base text-left select-none">
           {currentQ.lines.map((line, idx) => {
             let lineBg = "hover:bg-slate-900 border-transparent";
@@ -242,7 +242,7 @@ export default function JSBugHunter({ onGameOver, playSound, perderVida }: JSBug
       </div>
 
       {/* Placa de Explicação / Feedback */}
-      <div className="min-h-[64px] flex items-center justify-center p-3.5 rounded-xl bg-slate-900/60 border border-slate-850 text-center text-xs font-semibold text-slate-300">
+      <div className="min-h-[64px] flex items-center justify-center p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 text-center text-xs font-semibold text-slate-300">
         {feedbackMsg || "Clique em uma linha acima para inspecionar..."}
       </div>
     </div>

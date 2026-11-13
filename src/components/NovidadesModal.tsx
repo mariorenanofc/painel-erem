@@ -10,6 +10,7 @@ interface NovidadesModalProps {
   onClose: () => void;
   versao?: string;
   markdown?: string;
+  matricula?: string;
 }
 
 interface ItemNovidade {
@@ -94,7 +95,8 @@ export const SLIDES_PADRAO_V2_2: SlideNovidade[] = [
 export default function NovidadesModal({
   onClose,
   versao = "v2.2.1",
-  markdown = ""
+  markdown = "",
+  matricula = ""
 }: NovidadesModalProps) {
   const [slideAtual, setSlideAtual] = useState(0);
 
@@ -174,6 +176,13 @@ export default function NovidadesModal({
     if (slideAtual < totalSlides - 1) {
       setSlideAtual((prev) => prev + 1);
     } else {
+      if (matricula) {
+        fetch("/api/alunos/novidades/visualizar", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ matricula, versao })
+        }).catch(() => {});
+      }
       onClose();
     }
   };

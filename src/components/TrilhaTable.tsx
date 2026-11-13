@@ -64,7 +64,7 @@ export default function TrilhaTable({
                       )}
                     </div>
                   </td>
-                  <td className="px-6 py-4 font-mono font-bold text-emerald-600 dark:text-emerald-450">
+                  <td className="px-6 py-4 font-mono font-bold text-emerald-600 dark:text-emerald-400">
                     {aluno.matricula}
                   </td>
                   <td className="px-6 py-4 font-bold text-slate-500 dark:text-slate-400">

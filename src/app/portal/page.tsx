@@ -255,6 +255,12 @@ export default function PortalDashboard() {
     if (montado && aluno && versaoAtualizacao) {
       const versaoLida = localStorage.getItem(`novidades_${aluno.matricula}`);
       if (versaoLida !== versaoAtualizacao) {
+        const silenciadoAte = localStorage.getItem(`novidades_silenciado_${aluno.matricula}`);
+        const agora = Date.now();
+        // Se silenciado por menos de 12 horas (43.200.000 ms), não reexibe o card flutuante intrusivo
+        if (silenciadoAte && agora - Number(silenciadoAte) < 43200000) {
+          return;
+        }
         setCardNotificacaoNovidades(true);
       }
     }
@@ -487,6 +493,13 @@ export default function PortalDashboard() {
       toast("Erro ao tentar salvar perfil.", "error", "Erro de Rede");
     } finally {
       setSalvandoPerfil(false);
+    }
+  };
+
+  const abrirMissaoPorId = (id: string) => {
+    const ativ = atividades.find((a) => String(a.id) === String(id));
+    if (ativ) {
+      setMissaoAberta(ativ);
     }
   };
 
@@ -755,12 +768,14 @@ export default function PortalDashboard() {
         <NovidadesModal
           versao={versaoAtualizacao}
           markdown={markdownAtualizacao}
+          matricula={aluno?.matricula}
           onClose={() => {
-            if (aluno)
+            if (aluno) {
               localStorage.setItem(
                 `novidades_${aluno.matricula}`,
                 versaoAtualizacao,
               );
+            }
             setModalNovidadesAberto(false);
           }}
         />
@@ -791,18 +806,36 @@ export default function PortalDashboard() {
                     </span>
                   </div>
                   <p className="text-[11px] font-medium text-slate-500 dark:text-slate-400 leading-snug mt-0.5">
-                    Hall da Fama, Coding Practice Mobile e Login Rápido liberados!
+                    Aniversários no Calendário, Atalhos Mobile e Stories 9:16 liberados!
                   </p>
                 </div>
               </div>
 
               <button
-                onClick={() => setCardNotificacaoNovidades(false)}
+                onClick={() => {
+                  if (aluno) {
+                    localStorage.setItem(`novidades_silenciado_${aluno.matricula}`, Date.now().toString());
+                  }
+                  setCardNotificacaoNovidades(false);
+                }}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs p-1 rounded-lg transition-colors cursor-pointer"
                 title="Fechar notificação"
               >
                 ✕
               </button>
+            </div>
+
+            {/* Pills temáticas das novidades */}
+            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-pink-500/10 text-pink-600 dark:text-pink-300 border border-pink-500/20 flex items-center gap-1">
+                🎂 Aniversários
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-300 border border-emerald-500/20 flex items-center gap-1">
+                📱 Mobile Dev
+              </span>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-300 border border-amber-500/20 flex items-center gap-1">
+                🏛️ Hall da Fama
+              </span>
             </div>
 
             <div className="flex items-center gap-2 pt-1">
@@ -818,7 +851,12 @@ export default function PortalDashboard() {
               </button>
 
               <button
-                onClick={() => setCardNotificacaoNovidades(false)}
+                onClick={() => {
+                  if (aluno) {
+                    localStorage.setItem(`novidades_silenciado_${aluno.matricula}`, Date.now().toString());
+                  }
+                  setCardNotificacaoNovidades(false);
+                }}
                 className="cursor-pointer px-3 py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-white/5 dark:hover:bg-white/10 text-slate-600 dark:text-slate-300 font-bold text-xs rounded-xl border border-slate-200 dark:border-white/10 transition-colors active:scale-95"
               >
                 Depois
@@ -921,6 +959,10 @@ export default function PortalDashboard() {
           onAbrirCertificados={() => setModalCertificadosAberto(true)}
           totalCertificados={certificados.length}
           onLogout={fazerLogout}
+          onAbrirNovidades={() => setModalNovidadesAberto(true)}
+          versaoAtualizacao={versaoAtualizacao}
+          onAbrirMissaoPorId={abrirMissaoPorId}
+          temNovidadeNaoLida={cardNotificacaoNovidades}
         />
       </div>
 
@@ -1088,7 +1130,7 @@ export default function PortalDashboard() {
             <h3 className="text-lg font-display font-black text-amber-600 dark:text-amber-400 flex items-center gap-2 mb-4">
               <span>⏳</span> Atividades Enviadas mas Não Validadas ({atividadesAguardandoValidacao.length})
             </h3>
-            <p className="text-xs text-slate-550 dark:text-slate-400 mb-4">
+            <p className="text-xs text-slate-500 dark:text-slate-400 mb-4">
               Estas missões foram entregues no Portal, mas ainda precisam ser validadas no Google Classroom.
               Enquanto não forem validadas, o XP correspondente não será creditado. Se a atividade for validada com atraso,
               descontos de XP serão aplicados regressivamente.
@@ -1105,10 +1147,10 @@ export default function PortalDashboard() {
                     <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 dark:text-amber-400 px-2 py-0.5 bg-amber-500/10 rounded-md border border-amber-500/20">
                       {!!ativ.resolucaoTyping ? "Digitação" : ativ.tipo}
                     </span>
-                    <h4 className="font-display font-bold text-sm text-slate-805 dark:text-white mt-2 leading-tight">
+                    <h4 className="font-display font-bold text-sm text-slate-800 dark:text-white mt-2 leading-tight">
                       {ativ.titulo}
                     </h4>
-                    <p className="text-xs text-slate-550 dark:text-slate-400 mt-1 line-clamp-2">
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2">
                       {ativ.descricao}
                     </p>
                   </div>
@@ -1351,7 +1393,7 @@ export default function PortalDashboard() {
                           onClick={() => setModoVisualizacao("grade")}
                           className={`cursor-pointer px-4 py-2 text-xs font-black uppercase tracking-wider rounded-xl transition-all ${
                             modoVisualizacao === "grade"
-                              ? "bg-gradient-to-r from-blue-500 to-indigo-650 text-white shadow-md shadow-blue-500/20"
+                              ? "bg-gradient-to-r from-blue-500 to-indigo-600 text-white shadow-md shadow-blue-500/20"
                               : "text-slate-400 hover:text-white"
                           }`}
                         >
@@ -1613,7 +1655,7 @@ export default function PortalDashboard() {
                                                         : ativ.tipo === "Quiz"
                                                           ? "border-amber-400 text-amber-400 shadow-amber-400/10"
                                                           : ativ.tipo === "Material"
-                                                            ? "border-emerald-450 text-emerald-400 shadow-emerald-450/10"
+                                                            ? "border-emerald-400 text-emerald-400 shadow-emerald-400/10"
                                                             : "border-brand-primary text-brand-primary shadow-brand-primary/10"
                                               }`}
                                             >
@@ -1647,7 +1689,7 @@ export default function PortalDashboard() {
                                                         : ativ.tipo === "Quiz"
                                                           ? "bg-amber-500/10 text-amber-450 border-amber-500/20"
                                                           : ativ.tipo === "Material"
-                                                            ? "bg-emerald-500/10 text-emerald-450 border-emerald-500/20"
+                                                            ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
                                                             : "bg-blue-500/10 text-blue-450 border-blue-500/20"
                                                     }`}
                                                   >
@@ -1701,7 +1743,7 @@ export default function PortalDashboard() {
                                                         ? "bg-amber-600/20 text-amber-300 hover:bg-amber-600/30 border border-amber-500/30"
                                                         : isDevolvida
                                                           ? "bg-red-500 hover:bg-red-600 shadow-red-500/20"
-                                                          : "bg-brand-primary hover:bg-indigo-650"
+                                                          : "bg-brand-primary hover:bg-indigo-600"
                                                   }`}
                                                 >
                                                   {isConcluida
@@ -1917,7 +1959,7 @@ export default function PortalDashboard() {
                         <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-1">
                           Presenças
                         </p>
-                        <p className="text-2xl font-black text-emerald-600 dark:text-emerald-450 font-mono">
+                        <p className="text-2xl font-black text-emerald-600 dark:text-emerald-400 font-mono">
                           {dadosFrequencia.totalPresencas}
                         </p>
                       </div>
@@ -2037,7 +2079,7 @@ export default function PortalDashboard() {
               <div className="text-7xl animate-bounce mb-4 drop-shadow-md">
                 🎁
               </div>
-              <h2 className="font-black text-2xl text-slate-800 dark:text-slate-100 mb-2 uppercase text-amber-600 dark:text-amber-500">
+              <h2 className="font-black text-2xl text-amber-600 dark:text-amber-500 mb-2 uppercase">
                 Feliz Aniversário!
               </h2>
               <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-6">
@@ -2051,7 +2093,7 @@ export default function PortalDashboard() {
               <button
                 onClick={resgatarPresente}
                 disabled={resgatandoPresente}
-                className="cursor-pointer w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black py-4 rounded-xl shadow-lg transition-transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50 cursor-pointer"
+                className="cursor-pointer w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black py-4 rounded-xl shadow-lg transition-transform hover:-translate-y-1 active:translate-y-0 disabled:opacity-50"
               >
                 {resgatandoPresente
                   ? "Abrindo Presente..."

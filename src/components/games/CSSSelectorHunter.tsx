@@ -158,13 +158,13 @@ export default function CSSSelectorHunter({ onGameOver, playSound, perderVida }:
       {/* Instruções do Alvo */}
       <div className="mb-4 text-center">
         <span className="text-xs text-slate-500 uppercase tracking-wider font-semibold block mb-1">Selecione:</span>
-        <h4 className="text-base sm:text-lg font-bold text-white bg-slate-900 border border-slate-850 px-4 py-2.5 rounded-xl inline-block max-w-full">
+        <h4 className="text-base sm:text-lg font-bold text-white bg-slate-900 border border-slate-800 px-4 py-2.5 rounded-xl inline-block max-w-full">
           {currentQ.targetDesc}
         </h4>
       </div>
 
       {/* Editor HTML Simplificado */}
-      <div className="flex-1 flex flex-col bg-slate-950/80 border border-slate-850/60 rounded-xl mb-6 shadow-inner relative overflow-hidden p-4 min-h-[160px] justify-center">
+      <div className="flex-1 flex flex-col bg-slate-950/80 border border-slate-800/60 rounded-xl mb-6 shadow-inner relative overflow-hidden p-4 min-h-[160px] justify-center">
         <div className="absolute top-2 right-2 text-[9px] font-mono text-slate-700 pointer-events-none uppercase">
           Efetivo HTML
         </div>
@@ -179,7 +179,7 @@ export default function CSSSelectorHunter({ onGameOver, playSound, perderVida }:
           <button
             key={index}
             onClick={() => handleOptionClick(opt)}
-            className="py-4 px-5 rounded-xl bg-slate-900 border border-slate-800 hover:border-purple-500/50 hover:bg-slate-850 text-white font-mono text-center transition-all shadow-md focus:outline-none text-sm font-semibold active:scale-98"
+            className="py-4 px-5 rounded-xl bg-slate-900 border border-slate-800 hover:border-purple-500/50 hover:bg-slate-800 text-white font-mono text-center transition-all shadow-md focus:outline-none text-sm font-semibold active:scale-98"
           >
             {opt}
           </button>

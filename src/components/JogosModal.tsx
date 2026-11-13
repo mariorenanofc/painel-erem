@@ -54,7 +54,7 @@ const GAMES: GameDefinition[] = [
     title: "Mestre dos Seletores",
     description: "Escolha o seletor CSS correto para formatar o elemento HTML alvo.",
     emoji: "🎨",
-    color: "from-purple-600 to-pink-650 border-purple-500/20",
+    color: "from-purple-600 to-pink-600 border-purple-500/20",
     component: CSSSelectorHunter
   },
   {
@@ -94,7 +94,7 @@ const GAMES: GameDefinition[] = [
     title: "Detetive do Console",
     description: "Decifre o resultado exato que será impresso pelas variáveis.",
     emoji: "💻",
-    color: "from-teal-600 to-emerald-650 border-teal-500/20",
+    color: "from-teal-600 to-emerald-600 border-teal-500/20",
     component: OutputPredictor
   },
   {
@@ -102,7 +102,7 @@ const GAMES: GameDefinition[] = [
     title: "Quebra-Cabeça HTML",
     description: "Ordene as tags de abertura e fechamento na hierarquia correta.",
     emoji: "🧱",
-    color: "from-orange-600 to-amber-650 border-orange-500/20",
+    color: "from-orange-600 to-amber-600 border-orange-500/20",
     component: HTMLStructurer
   },
   {
@@ -110,7 +110,7 @@ const GAMES: GameDefinition[] = [
     title: "Alinhamento Flexbox",
     description: "Selecione propriedades Flexbox para mover elementos sobre os alvos.",
     emoji: "📐",
-    color: "from-sky-600 to-indigo-650 border-sky-500/20",
+    color: "from-sky-600 to-indigo-600 border-sky-500/20",
     component: FlexAlignMaster
   },
   {
@@ -118,7 +118,7 @@ const GAMES: GameDefinition[] = [
     title: "Desafio de Listas",
     description: "Preveja o resultado final de listas após adicionar ou remover itens.",
     emoji: "📦",
-    color: "from-violet-600 to-purple-650 border-violet-500/20",
+    color: "from-violet-600 to-purple-600 border-violet-500/20",
     component: ArrayOperations
   },
   {
@@ -282,7 +282,7 @@ export default function JogosModal({
                         initial={{ opacity: 0, y: 15 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: index * 0.05 }}
-                        className={`group p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 hover:bg-slate-850/80 flex gap-4 transition-all relative overflow-hidden`}
+                        className={`group p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 hover:border-slate-700/80 hover:bg-slate-800/80 flex gap-4 transition-all relative overflow-hidden`}
                       >
                         <div className="absolute inset-0 bg-gradient-to-b from-white/[0.015] to-transparent pointer-events-none" />
                         
@@ -290,7 +290,7 @@ export default function JogosModal({
                         <div className="absolute -inset-px bg-gradient-to-r from-transparent via-purple-500/0 to-transparent group-hover:via-purple-500/10 transition-all pointer-events-none rounded-2xl" />
 
                         {/* Emoji/Ícone */}
-                        <div className="w-12 h-12 shrink-0 rounded-xl bg-slate-950 border border-slate-850 flex items-center justify-center text-2xl shadow-inner group-hover:scale-105 transition-all">
+                        <div className="w-12 h-12 shrink-0 rounded-xl bg-slate-950 border border-slate-800 flex items-center justify-center text-2xl shadow-inner group-hover:scale-105 transition-all">
                           {game.emoji}
                         </div>
 

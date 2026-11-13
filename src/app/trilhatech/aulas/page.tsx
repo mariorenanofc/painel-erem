@@ -1,10 +1,10 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import useSWR from "swr";
 import Header from "@/src/components/Header";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { apiTutor, apiGeral } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
 
@@ -27,6 +27,7 @@ import FechamentoCicloModal from "@/src/components/FechamentoCicloModal";
 import CalendarioOficial from "@/src/components/CalendarioOficial";
 import RoletaSorteioModal from "@/src/components/RoletaSorteioModal";
 import AuditoriaEntregasModal from "@/src/components/AuditoriaEntregasModal";
+import LancamentoNovidadesModal from "@/src/components/LancamentoNovidadesModal";
 
 const fetcherAtividades = async () => {
   return await apiTutor.buscarTodasAtividades("Todas", "Todos");
@@ -68,6 +69,20 @@ export default function GestaoAulasPage() {
   const [modalNovaMissaoAberto, setModalNovaMissaoAberto] = useState(false);
   const [modalImportadorAberto, setModalImportadorAberto] = useState(false);
   const [modalSyncAberto, setModalSyncAberto] = useState(false);
+  const [modalNovidadesTutorAberto, setModalNovidadesTutorAberto] = useState(false);
+  const [menuLinksAberto, setMenuLinksAberto] = useState(false);
+  const [gavetaAvancadaAberta, setGavetaAvancadaAberta] = useState(false);
+  const linksDropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (linksDropdownRef.current && !linksDropdownRef.current.contains(event.target as Node)) {
+        setMenuLinksAberto(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // Estados do Formulário de Missão
   const [idEditando, setIdEditando] = useState<string | null>(null);
@@ -711,11 +726,11 @@ export default function GestaoAulasPage() {
           entregas.map((e) =>
             e.idEntrega === entrega.idEntrega
               ? {
-                  ...e,
-                  status: statusAvaliacao,
-                  xpGanho: nota,
-                  feedback: feedbackTutor,
-                }
+                ...e,
+                status: statusAvaliacao,
+                xpGanho: nota,
+                feedback: feedbackTutor,
+              }
               : e,
           ),
         );
@@ -740,11 +755,11 @@ export default function GestaoAulasPage() {
           prev.map((e) =>
             e.idEntrega === entrega.idEntrega
               ? {
-                  ...e,
-                  status: "Aguardando Correção",
-                  xpGanho: 0,
-                  feedback: "",
-                }
+                ...e,
+                status: "Aguardando Correção",
+                xpGanho: 0,
+                feedback: "",
+              }
               : e,
           ),
         );
@@ -1018,7 +1033,13 @@ export default function GestaoAulasPage() {
         />
       )}
 
-      
+      {modalNovidadesTutorAberto && (
+        <LancamentoNovidadesModal
+          onClose={() => setModalNovidadesTutorAberto(false)}
+        />
+      )}
+
+
       {/* 🚀 MODAL 1: FILTRO DE SINCRONIZAÇÃO */}
       {modalSyncAberto && (
         <div className="fixed inset-0 z-5000 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in">
@@ -1107,7 +1128,7 @@ export default function GestaoAulasPage() {
 
               {/* Ícone Estilo Núcleo de IA */}
               <div className="relative mx-auto mb-5 w-20 h-20 flex items-center justify-center">
-                <div className="absolute inset-0 rounded-2xl bg-linear-to-tr from-cyan-500/30 via-indigo-500/30 to-fuchsia-500/30 blur-md animate-pulse" />
+                <div className="absolute inset-0 rounded-2xl bg-gradient-to-tr from-cyan-500/30 via-indigo-500/30 to-fuchsia-500/30 blur-md animate-pulse" />
                 <div className="relative w-16 h-16 rounded-2xl bg-slate-800/80 border border-white/15 flex items-center justify-center shadow-lg backdrop-blur-sm">
                   <span className="text-3xl animate-[spin_6s_linear_infinite] inline-block filter drop-shadow-[0_0_8px_rgba(99,102,241,0.6)]">
                     ⚙️
@@ -1129,10 +1150,10 @@ export default function GestaoAulasPage() {
               {/* BARRA DE PROGRESSO COM GRADIENTE IA E SHIMMER */}
               <div className="w-full h-3.5 bg-slate-800/80 border border-white/10 rounded-full overflow-hidden p-0.5 shadow-inner mb-3.5 relative">
                 <div
-                  className="h-full bg-linear-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 rounded-full transition-all duration-300 ease-out relative shadow-[0_0_12px_rgba(99,102,241,0.5)]"
+                  className="h-full bg-gradient-to-r from-cyan-400 via-indigo-500 to-fuchsia-500 rounded-full transition-all duration-300 ease-out relative shadow-[0_0_12px_rgba(99,102,241,0.5)]"
                   style={{ width: `${progressoSync.progresso}%` }}
                 >
-                  <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/40 to-transparent animate-[shimmer_1.5s_infinite_linear]" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent animate-[shimmer_1.5s_infinite_linear]" />
                 </div>
               </div>
 
@@ -1182,31 +1203,22 @@ export default function GestaoAulasPage() {
             <div className="text-left">
               <h2 className="font-display font-black text-2xl text-slate-800 dark:text-white tracking-tight flex items-center gap-2.5">
                 Portal do Tutor
-                <span className="text-[9px] font-black tracking-widest uppercase bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-650 dark:text-indigo-400 px-2.5 py-0.5 rounded-lg border border-indigo-500/20 dark:border-indigo-900/10 shadow-sm align-middle">
+                <span className="text-[9px] font-black tracking-widest uppercase bg-indigo-500/10 dark:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 px-2.5 py-0.5 rounded-lg border border-indigo-500/20 dark:border-indigo-900/10 shadow-sm align-middle">
                   Aulas & Missões
                 </span>
               </h2>
             </div>
           </div>
 
-          {/* DASHBOARD SUPERIOR (SHORTCUTS) - DESKTOP ONLY */}
-          <div className="hidden xl:flex flex-wrap gap-2.5">
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => router.push("/trilhatech/configuracoes")}
-              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-fuchsia-500/35 dark:hover:border-fuchsia-500/35 hover:bg-fuchsia-500/5 dark:hover:bg-fuchsia-500/10 shadow-sm transition-all flex items-center gap-1.5"
-            >
-              ⚙️ Configs
-            </motion.button>
-
+          {/* DASHBOARD SUPERIOR (ATALHOS DA AULA + MENU EXECUTIVO) - DESKTOP ONLY */}
+          <div className="hidden xl:flex flex-wrap items-center gap-2.5">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setModalSorteioAberto(true)}
-              className="cursor-pointer px-4.5 py-2.5 bg-linear-to-r from-amber-500 to-orange-500 hover:brightness-110 text-white rounded-xl text-xs font-black shadow-md shadow-amber-500/5 flex items-center gap-1.5 border-none uppercase tracking-wider"
+              className="cursor-pointer px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-110 text-white rounded-xl text-xs font-black shadow-md shadow-amber-500/10 flex items-center gap-1.5 border-none uppercase tracking-wider transition-all"
             >
-              🎰 Sortear Rifa
+              <span>🎰</span> Sortear Rifa
             </motion.button>
 
             <motion.button
@@ -1216,78 +1228,175 @@ export default function GestaoAulasPage() {
                 setModalRankingAberto(true);
                 carregarRankingTutor("geral");
               }}
-              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-amber-500/35 hover:bg-amber-500/5 dark:hover:bg-amber-500/10 shadow-sm transition-all flex items-center gap-1.5"
+              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 hover:border-amber-500/40 hover:bg-amber-500/5 dark:hover:bg-amber-500/10 shadow-xs transition-all flex items-center gap-1.5"
             >
-              🏆 Ranking
+              <span>🏆</span> Ranking
             </motion.button>
 
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={abrirRelatorioFrequencia}
-              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-emerald-500/35 hover:bg-emerald-500/5 dark:hover:bg-emerald-500/10 shadow-sm transition-all flex items-center gap-1.5"
+              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-700 dark:text-slate-300 hover:border-emerald-500/40 hover:bg-emerald-500/5 dark:hover:bg-emerald-500/10 shadow-xs transition-all flex items-center gap-1.5"
             >
-              📍 Diário
+              <span>📍</span> Diário
             </motion.button>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => router.push("/trilhatech/analytics")}
-              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-indigo-500/35 hover:bg-indigo-500/5 dark:hover:bg-indigo-500/10 shadow-sm transition-all flex items-center gap-1.5"
-            >
-              📈 Analytics
-            </motion.button>
+            {/* MENU EXECUTIVO UNIFICADO DE FERRAMENTAS & LINKS */}
+            <div className="relative" ref={linksDropdownRef}>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setMenuLinksAberto((prev) => !prev)}
+                className={`cursor-pointer px-4 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider border transition-all flex items-center gap-2 shadow-xs ${
+                  menuLinksAberto
+                    ? "bg-indigo-50 dark:bg-indigo-950/60 border-indigo-400 text-indigo-600 dark:text-indigo-400"
+                    : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700"
+                }`}
+              >
+                <span>⚡</span> Mais Ferramentas <span className="text-[10px]">▾</span>
+              </motion.button>
 
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => router.push("/trilhatech/gabaritos")}
-              className="cursor-pointer px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-250 dark:border-slate-800 rounded-xl text-xs font-black uppercase tracking-wider text-slate-600 dark:text-slate-300 hover:border-emerald-555 hover:bg-emerald-500/5 dark:hover:bg-emerald-500/10 shadow-sm transition-all flex items-center gap-1.5"
-            >
-              📋 Gabaritos
-            </motion.button>
+              <AnimatePresence>
+                {menuLinksAberto && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 6, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.95 }}
+                    className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-slate-900 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-800 p-2.5 z-50 flex flex-col gap-1 divide-y divide-slate-100 dark:divide-slate-800/80"
+                  >
+                    {/* SEÇÃO 1: INTELIGÊNCIA & CONTEÚDO */}
+                    <div className="pb-1.5 space-y-0.5">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-3 py-1 block">
+                        Inteligência & Conteúdo
+                      </span>
+                      <button
+                        onClick={() => {
+                          setMenuLinksAberto(false);
+                          router.push("/trilhatech/analytics");
+                        }}
+                        className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                      >
+                        <span className="text-base">📈</span> Analytics da Turma
+                      </button>
+                      <button
+                        onClick={() => {
+                          setMenuLinksAberto(false);
+                          router.push("/trilhatech/gabaritos");
+                        }}
+                        className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors cursor-pointer"
+                      >
+                        <span className="text-base">📋</span> Gabaritos Oficiais
+                      </button>
+                      <button
+                        onClick={() => {
+                          setMenuLinksAberto(false);
+                          setModalNovidadesTutorAberto(true);
+                        }}
+                        className="w-full text-left flex items-center justify-between px-3 py-2 rounded-xl text-xs font-bold text-purple-700 dark:text-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950/40 transition-colors cursor-pointer"
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <span className="text-base">🚀</span> Leituras da Versão
+                        </span>
+                        <span className="text-[10px] font-mono bg-purple-100 dark:bg-purple-900/60 px-1.5 py-0.5 rounded text-purple-600 dark:text-purple-300">
+                          v2.2.1
+                        </span>
+                      </button>
+                    </div>
+
+                    {/* SEÇÃO 2: RECURSOS PEDAGÓGICOS EXTERNOS */}
+                    <div className="py-1.5 space-y-0.5">
+                      <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 px-3 py-1 block">
+                        Recursos & Links
+                      </span>
+                      <a
+                        href={linksGerais.classroom}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMenuLinksAberto(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                      >
+                        <span className="text-base">🏫</span> AVA Classroom
+                      </a>
+                      <a
+                        href={linksGerais.planilha}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMenuLinksAberto(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                      >
+                        <span className="text-base">📊</span> Planilha BD
+                      </a>
+                      <a
+                        href={linksGerais.matriz}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMenuLinksAberto(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                      >
+                        <span className="text-base">📑</span> Matriz Curricular
+                      </a>
+                      <a
+                        href={linksGerais.cronograma}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMenuLinksAberto(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/50 hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors"
+                      >
+                        <span className="text-base">🗓️</span> Cronograma
+                      </a>
+                      <a
+                        href={linksGerais.ajuda}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={() => setMenuLinksAberto(false)}
+                        className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                      >
+                        <span className="text-base">🆘</span> Manual & Ajuda
+                      </a>
+                    </div>
+
+                    {/* SEÇÃO 3: CONFIGURAÇÕES */}
+                    <div className="pt-1.5">
+                      <button
+                        onClick={() => {
+                          setMenuLinksAberto(false);
+                          router.push("/trilhatech/configuracoes");
+                        }}
+                        className="w-full text-left flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                      >
+                        <span className="text-base">⚙️</span> Painel de Configurações
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
           </div>
 
           {/* TAB SWITCHER MODERN/PREMIUM (SEGMENTED CONTROL STYLE) - RESPONSIVE GRID/ROW LAYOUT */}
-          <div className="bg-slate-150 dark:bg-slate-950 p-1.5 rounded-2xl grid grid-cols-2 md:flex md:flex-row gap-1.5 w-full md:w-auto border border-slate-200 dark:border-slate-850 shadow-inner">
+          <div className="bg-slate-100 dark:bg-slate-950 p-1.5 rounded-2xl grid grid-cols-2 md:flex md:flex-row gap-1.5 w-full md:w-auto border border-slate-200 dark:border-slate-800 shadow-inner">
             <button
               onClick={() => setActiveTab("missoes")}
-              className={`w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${
-                activeTab === "missoes"
-                  ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
-              }`}
+              className={`w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${activeTab === "missoes" ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
             >
               📋 Missões
             </button>
             <button
               onClick={() => setActiveTab("transacoes")}
-              className={`w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${
-                activeTab === "transacoes"
-                  ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
-              }`}
+              className={`w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${activeTab === "transacoes" ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
             >
               🔄 Transações
             </button>
             <button
               onClick={() => setActiveTab("ferramentas")}
-              className={`xl:hidden w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${
-                activeTab === "ferramentas"
-                  ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
-              }`}
+              className={`xl:hidden w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${activeTab === "ferramentas" ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
             >
               ⚙️ Ferramentas
             </button>
             <button
               onClick={() => setActiveTab("links")}
-              className={`xl:hidden w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${
-                activeTab === "links"
-                  ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm"
-                  : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"
-              }`}
+              className={`xl:hidden w-full md:w-auto cursor-pointer text-[11px] md:text-xs font-black uppercase tracking-wider px-2 md:px-5 py-2.5 rounded-xl transition-all flex items-center justify-center gap-1.5 border-none whitespace-nowrap ${activeTab === "links" ? "bg-white dark:bg-slate-900 text-indigo-600 dark:text-indigo-400 shadow-sm" : "text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white"}`}
             >
               🔗 Links Úteis
             </button>
@@ -1296,54 +1405,9 @@ export default function GestaoAulasPage() {
       </div>
 
       <div className="max-w-384 w-full mx-auto px-6 lg:px-8">
-        
-        {/* BARRA DE LINKS EXTERNOS COMPACTA - DESKTOP ONLY */}
-        <div className="hidden xl:flex flex-wrap gap-2 mb-6">
-          <a
-            href={linksGerais.planilha}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-md text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
-          >
-            <span>📊</span> Planilha BD
-          </a>
-          <a
-            href={linksGerais.classroom}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-md text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
-          >
-            <span>🏫</span> AVA Classroom
-          </a>
-          <a
-            href={linksGerais.matriz}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-md text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
-          >
-            <span>📑</span> Matriz Curricular
-          </a>
-          <a
-            href={linksGerais.cronograma}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-md text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
-          >
-            <span>🗓️</span> Cronograma
-          </a>
-          <a
-            href={linksGerais.ajuda}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3 py-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-md text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors flex items-center gap-1"
-          >
-            <span>🆘</span> Ajuda
-          </a>
-        </div>
-
         {/* DETALHE DE LINKS - MOBILE ONLY */}
         {activeTab === "links" && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             className="xl:hidden grid grid-cols-1 sm:grid-cols-2 gap-4 mb-8"
@@ -1357,7 +1421,7 @@ export default function GestaoAulasPage() {
               <div>
                 <div className="text-2xl mb-2">📊</div>
                 <h4 className="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider">Planilha BD</h4>
-                <p className="text-[10px] text-slate-450 dark:text-slate-455 mt-1 leading-relaxed">Acesse a base de dados central no Google Sheets contendo todos os dados brutos de alunos e pontuações.</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Acesse a base de dados central no Google Sheets contendo todos os dados brutos de alunos e pontuações.</p>
               </div>
             </a>
 
@@ -1370,7 +1434,7 @@ export default function GestaoAulasPage() {
               <div>
                 <div className="text-2xl mb-2">🏫</div>
                 <h4 className="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider">AVA Classroom</h4>
-                <p className="text-[10px] text-slate-455 dark:text-slate-450 mt-1 leading-relaxed">Acesse o ambiente virtual de aprendizagem do Google Classroom para verificar as publicações e turmas.</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Acesse o ambiente virtual de aprendizagem do Google Classroom para verificar as publicações e turmas.</p>
               </div>
             </a>
 
@@ -1383,7 +1447,7 @@ export default function GestaoAulasPage() {
               <div>
                 <div className="text-2xl mb-2">📑</div>
                 <h4 className="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider">Matriz Curricular</h4>
-                <p className="text-[10px] text-slate-455 dark:text-slate-450 mt-1 leading-relaxed">Verifique a matriz pedagógica do curso contendo todas as competências e trilhas de conteúdos.</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Verifique a matriz pedagógica do curso contendo todas as competências e trilhas de conteúdos.</p>
               </div>
             </a>
 
@@ -1396,7 +1460,7 @@ export default function GestaoAulasPage() {
               <div>
                 <div className="text-2xl mb-2">🗓️</div>
                 <h4 className="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider">Cronograma</h4>
-                <p className="text-[10px] text-slate-455 dark:text-slate-450 mt-1 leading-relaxed">Consulte o calendário letivo, datas das aulas presenciais, eventos e prazos finais.</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Consulte o calendário letivo, datas das aulas presenciais, eventos e prazos finais.</p>
               </div>
             </a>
 
@@ -1409,7 +1473,7 @@ export default function GestaoAulasPage() {
               <div>
                 <div className="text-2xl mb-2">🆘</div>
                 <h4 className="font-black text-sm text-slate-800 dark:text-white uppercase tracking-wider">Manual & Ajuda</h4>
-                <p className="text-[10px] text-slate-455 dark:text-slate-450 mt-1 leading-relaxed">Acesse a documentação do tutor e regras da gamificação para esclarecer dúvidas frequentes.</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">Acesse a documentação do tutor e regras da gamificação para esclarecer dúvidas frequentes.</p>
               </div>
             </a>
           </motion.div>
@@ -1419,7 +1483,7 @@ export default function GestaoAulasPage() {
           {/* PAINEL LATERAL DE CONFIGURAÇÕES - ALWAYS BLOCK ON DESKTOP, HIDE ON TRANSACTIONS, CONDITIONAL ON MOBILE */}
           <div className={`${activeTab === "ferramentas" ? "block" : "hidden"} ${activeTab === "transacoes" ? "xl:hidden" : "xl:block"} xl:col-span-1 space-y-4`}>
             {aniversariantes.length > 0 && (
-              <div className="bg-linear-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800/50 p-4 rounded-xl shadow-sm transition-colors">
+              <div className="bg-gradient-to-br from-amber-50 to-orange-50 dark:from-amber-900/20 dark:to-orange-900/20 border border-amber-200 dark:border-amber-800/50 p-4 rounded-xl shadow-sm transition-colors">
                 <h3 className="font-black text-sm uppercase tracking-tight text-amber-800 dark:text-amber-400 mb-1 flex items-center gap-2 transition-colors">
                   <span>🎂</span> Aniversariantes!
                 </h3>
@@ -1432,83 +1496,124 @@ export default function GestaoAulasPage() {
               </div>
             )}
 
-            <div className="bg-white dark:bg-slate-900 p-5 rounded-xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
-              <h3 className="font-black text-xs text-slate-500 dark:text-slate-400 uppercase tracking-widest border-b border-slate-100 dark:border-slate-800 pb-2 mb-4 transition-colors">
-                Configurações Rápidas
-              </h3>
+            {/* CARD 1: SALA DE AULA AO VIVO (SENHA DA LOUSA) */}
+            <div className="bg-white dark:bg-slate-900 p-5 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
+              <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-base">🔐</span>
+                  <h3 className="font-black text-xs text-slate-700 dark:text-slate-300 uppercase tracking-widest">
+                    Senha da Lousa
+                  </h3>
+                </div>
+                <span className="text-[10px] font-black uppercase tracking-wider bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/40">
+                  Ao Vivo
+                </span>
+              </div>
 
-              <div className="mb-5 bg-slate-50 dark:bg-slate-950 p-3 rounded-lg border border-slate-100 dark:border-slate-800 transition-colors">
-                <div className="flex justify-between items-center mb-1">
-                  <span
-                    className={`text-xs font-bold flex items-center gap-2 transition-colors ${modoReposicao ? "text-indigo-650 dark:text-indigo-400" : "text-slate-650 dark:text-slate-400"}`}
-                  >
-                    ⚙️ Modo Reposição
+              <p className="text-[11px] text-slate-500 dark:text-slate-400 mb-3 leading-snug">
+                Código para check-in de presença dos estudantes no portal.
+              </p>
+
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={senhaLousa}
+                  onChange={(e) =>
+                    setSenhaLousa(e.target.value.toUpperCase())
+                  }
+                  className="w-full font-mono font-black text-center tracking-widest border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 text-slate-900 dark:text-white uppercase text-lg focus:border-indigo-500 dark:focus:border-indigo-400 outline-none bg-slate-50 dark:bg-slate-950 transition-all shadow-inner"
+                  placeholder="CÓDIGO"
+                />
+                <button
+                  onClick={salvarNovaSenha}
+                  disabled={salvandoSenha}
+                  className="cursor-pointer bg-slate-900 hover:bg-black dark:bg-indigo-600 dark:hover:bg-indigo-500 text-white font-black px-4 rounded-xl transition-all text-xs shrink-0 shadow-sm disabled:opacity-50"
+                >
+                  {salvandoSenha ? "..." : "Salvar"}
+                </button>
+              </div>
+            </div>
+
+            {/* CARD 2: GAVETA AVANÇADA (AÇÕES DE CICLO & SISTEMA) */}
+            <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 overflow-hidden transition-all">
+              <button
+                onClick={() => setGavetaAvancadaAberta((prev) => !prev)}
+                className="w-full p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors text-left"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="text-sm">🔧</span>
+                  <span className="font-black text-xs text-slate-700 dark:text-slate-300 uppercase tracking-widest">
+                    Ações de Ciclo & Sistema
                   </span>
-                  <button
-                    onClick={toggleModoReposicao}
-                    disabled={carregandoReposicao}
-                    className={`cursor-pointer relative inline-flex h-5 w-9 items-center rounded-full transition-colors focus:outline-none ${modoReposicao ? "bg-indigo-600 dark:bg-indigo-500" : "bg-slate-300 dark:bg-slate-700"}`}
-                  >
-                    <span
-                      className={`inline-block h-3 w-3 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${modoReposicao ? "translate-x-5" : "translate-x-1"}`}
-                    />
-                  </button>
                 </div>
-                <p className="text-[9px] text-slate-400 dark:text-slate-500 leading-tight transition-colors">
-                  Ignora o dia da semana para permitir check-ins atrasados.
-                </p>
-              </div>
+                <motion.span
+                  animate={{ rotate: gavetaAvancadaAberta ? 180 : 0 }}
+                  transition={{ duration: 0.2 }}
+                  className="text-xs text-slate-400 font-bold"
+                >
+                  ▾
+                </motion.span>
+              </button>
 
-              <div className="mb-4">
-                <label className="text-xs font-bold text-slate-600 dark:text-slate-400 flex items-center gap-2 mb-1.5 transition-colors">
-                  <span>🔐</span> Senha da Lousa
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={senhaLousa}
-                    onChange={(e) =>
-                      setSenhaLousa(e.target.value.toUpperCase())
-                    }
-                    className="w-full font-mono font-black text-center border border-slate-200 dark:border-slate-700 rounded-md p-1.5 text-slate-800 dark:text-slate-100 uppercase text-sm focus:border-blue-500 dark:focus:border-blue-400 outline-none bg-slate-50 dark:bg-slate-950 transition-colors"
-                  />
-                  <button
-                    onClick={salvarNovaSenha}
-                    disabled={salvandoSenha}
-                    className="cursor-pointer bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white font-bold px-3 rounded-md transition-colors text-xs"
+              <AnimatePresence>
+                {gavetaAvancadaAberta && (
+                  <motion.div
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: "auto", opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="p-4 pt-1 border-t border-slate-100 dark:border-slate-800 space-y-3"
                   >
-                    {salvandoSenha ? "..." : "OK"}
-                  </button>
-                </div>
-              </div>
+                    {/* MODO REPOSIÇÃO */}
+                    <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-xl border border-slate-200 dark:border-slate-800">
+                      <div className="flex justify-between items-center mb-1">
+                        <span
+                          className={`text-xs font-bold flex items-center gap-1.5 transition-colors ${modoReposicao ? "text-indigo-600 dark:text-indigo-400 font-black" : "text-slate-700 dark:text-slate-300"}`}
+                        >
+                          <span>⚙️</span> Modo Reposição
+                        </span>
+                        <button
+                          onClick={toggleModoReposicao}
+                          disabled={carregandoReposicao}
+                          className={`cursor-pointer relative inline-flex h-5 w-10 items-center rounded-full transition-colors focus:outline-none ${modoReposicao ? "bg-indigo-600 dark:bg-indigo-500" : "bg-slate-300 dark:bg-slate-700"}`}
+                        >
+                          <span
+                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow-sm transition-transform duration-300 ${modoReposicao ? "translate-x-5.5" : "translate-x-1"}`}
+                          />
+                        </button>
+                      </div>
+                      <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-snug">
+                        Permite check-ins retroativos fora do dia letivo.
+                      </p>
+                    </div>
 
-              <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800 transition-colors">
-                <button
-                  onClick={sincronizarPlanilha}
-                  disabled={sincronizandoConfig}
-                  className="cursor-pointer w-full bg-indigo-50 dark:bg-indigo-900/30 hover:bg-indigo-100 dark:hover:bg-indigo-800/50 text-indigo-600 dark:text-indigo-400 text-xs font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-2 border border-indigo-200 dark:border-indigo-800"
-                >
-                  <span>{sincronizandoConfig ? "⏳" : "🔄"}</span> {sincronizandoConfig ? "Sincronizando..." : "Sincronizar da Planilha"}
-                </button>
-                <button
-                  onClick={() => router.push("/trilhatech/configuracoes")}
-                  className="cursor-pointer w-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 text-xs font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-700"
-                >
-                  <span>⚙️</span> Painel de Configurações
-                </button>
-                <button
-                  onClick={() => setModalGodModeAberto(true)}
-                  className="cursor-pointer w-full bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold py-2 rounded-lg transition-all flex items-center justify-center gap-2 border border-slate-800 dark:border-slate-700"
-                >
-                  <span>⚡</span> God Mode
-                </button>
-                <button
-                  onClick={() => setModalFechamentoAberto(true)}
-                  className="cursor-pointer w-full bg-amber-500 hover:bg-amber-600 dark:bg-amber-600 dark:hover:bg-amber-500 text-white text-xs font-black py-2.5 rounded-lg shadow-md transition-all flex items-center justify-center gap-2 border border-amber-600 dark:border-amber-500 mt-2 uppercase tracking-wide"
-                >
-                  <span>🏆</span> Fechar Ranking
-                </button>
-              </div>
+                    {/* FECHAR RANKING */}
+                    <button
+                      onClick={() => setModalFechamentoAberto(true)}
+                      className="cursor-pointer w-full bg-gradient-to-r from-amber-500 to-orange-500 hover:brightness-105 text-white text-xs font-black py-2.5 rounded-xl shadow-md shadow-amber-500/10 transition-all flex items-center justify-center gap-2 border-none uppercase tracking-wider"
+                    >
+                      <span>🏆</span> Fechar Ranking / Ciclo
+                    </button>
+
+                    {/* SINCRONIZAR PLANILHA */}
+                    <button
+                      onClick={sincronizarPlanilha}
+                      disabled={sincronizandoConfig}
+                      className="cursor-pointer w-full bg-slate-50 dark:bg-slate-950 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-2 border border-slate-200 dark:border-slate-800 disabled:opacity-50"
+                    >
+                      <span>{sincronizandoConfig ? "⏳" : "🔄"}</span> {sincronizandoConfig ? "Sincronizando..." : "Sincronizar da Planilha"}
+                    </button>
+
+                    {/* GOD MODE */}
+                    <button
+                      onClick={() => setModalGodModeAberto(true)}
+                      className="cursor-pointer w-full bg-slate-900 hover:bg-black dark:bg-slate-800 dark:hover:bg-slate-700 text-white text-xs font-bold py-2 rounded-xl transition-all flex items-center justify-center gap-2 border border-slate-800 dark:border-slate-700 shadow-xs"
+                    >
+                      <span>⚡</span> God Mode
+                    </button>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </div>
           </div>
 
@@ -1529,16 +1634,16 @@ export default function GestaoAulasPage() {
                 <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                   <button
                     onClick={async () => {
-                setModalCalendarioAberto(true);
-                try {
-                  const res = await apiTutor.buscarRegrasCiclos();
-                  if (res.status === "sucesso" && res.regras?.semanal?.diaFechamento !== undefined) {
-                    setDiaFechamentoSemanal(Number(res.regras.semanal.diaFechamento));
-                  }
-                } catch {
-                  // Fallback
-                }
-              }}
+                      setModalCalendarioAberto(true);
+                      try {
+                        const res = await apiTutor.buscarRegrasCiclos();
+                        if (res.status === "sucesso" && res.regras?.semanal?.diaFechamento !== undefined) {
+                          setDiaFechamentoSemanal(Number(res.regras.semanal.diaFechamento));
+                        }
+                      } catch {
+                        // Fallback
+                      }
+                    }}
                     className="cursor-pointer bg-white dark:bg-slate-900 border-2 border-indigo-200 dark:border-indigo-800/50 hover:border-indigo-400 dark:hover:border-indigo-600 hover:bg-indigo-50 dark:hover:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 px-4 py-2 rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-xs uppercase tracking-wider"
                   >
                     <span className="text-base leading-none">📅</span> Calendário Oficial
@@ -1585,7 +1690,7 @@ export default function GestaoAulasPage() {
           {/* ÁREA PRINCIPAL: CENTRAL DE TRANSAÇÕES */}
           <div className={`${activeTab === "transacoes" ? "block" : "hidden"} xl:col-span-4`}>
             <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 transition-colors duration-300">
-              
+
               {/* CABEÇALHO E FILTROS */}
               <div className="p-4 md:p-6 border-b border-slate-100 dark:border-slate-800 transition-colors">
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-5">
@@ -1610,7 +1715,7 @@ export default function GestaoAulasPage() {
                         setBuscaTransacoes(e.target.value);
                         setPaginaTransacoes(1);
                       }}
-                      className="w-full text-xs border border-slate-250 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-950 focus:border-indigo-500 outline-none transition-all shadow-sm"
+                      className="w-full text-xs border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-950 focus:border-indigo-500 outline-none transition-all shadow-sm"
                     />
                   </div>
                   <div>
@@ -1620,7 +1725,7 @@ export default function GestaoAulasPage() {
                         setFiltroCategoriaTransacoes(e.target.value);
                         setPaginaTransacoes(1);
                       }}
-                      className="w-full text-xs border border-slate-250 dark:border-slate-800 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-350 bg-slate-50 dark:bg-slate-950 outline-none transition-all shadow-sm font-bold"
+                      className="w-full text-xs border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 outline-none transition-all shadow-sm font-bold"
                     >
                       <option value="">Todas Categorias</option>
                       <option value="MISSOES">Missões</option>
@@ -1637,7 +1742,7 @@ export default function GestaoAulasPage() {
                         setFiltroStatusTransacoes(e.target.value);
                         setPaginaTransacoes(1);
                       }}
-                      className="w-full text-xs border border-slate-250 dark:border-slate-800 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-350 bg-slate-50 dark:bg-slate-950 outline-none transition-all shadow-sm font-bold"
+                      className="w-full text-xs border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 outline-none transition-all shadow-sm font-bold"
                     >
                       <option value="">Todos Status</option>
                       <option value="Aguardando Correção">Aguardando Correção</option>
@@ -1653,7 +1758,7 @@ export default function GestaoAulasPage() {
                         setLimiteTransacoes(Number(e.target.value));
                         setPaginaTransacoes(1);
                       }}
-                      className="w-full text-xs border border-slate-250 dark:border-slate-800 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-350 bg-slate-50 dark:bg-slate-950 outline-none transition-all shadow-sm font-black"
+                      className="w-full text-xs border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-3 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-950 outline-none transition-all shadow-sm font-black"
                     >
                       <option value={20}>Exibir 20</option>
                       <option value={50}>Exibir 50</option>
@@ -1672,7 +1777,7 @@ export default function GestaoAulasPage() {
                   </div>
                 ) : transacoes.length === 0 ? (
                   <div className="text-center py-20">
-                    <p className="text-sm font-bold text-slate-450 dark:text-slate-500">Nenhuma transação encontrada para os filtros atuais.</p>
+                    <p className="text-sm font-bold text-slate-400 dark:text-slate-500">Nenhuma transação encontrada para os filtros atuais.</p>
                   </div>
                 ) : (
                   <div className="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors shadow-sm">
@@ -1702,7 +1807,7 @@ export default function GestaoAulasPage() {
                           if (t.xpGanho > 0) xpBadgeColor = "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/20";
                           else if (t.xpGanho < 0) xpBadgeColor = "text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/20";
 
-                          let statusBadge = "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-450";
+                          let statusBadge = "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400";
                           if (t.status === "Aguardando Correção") statusBadge = "bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900/30";
                           else if (t.status === "Avaliado") statusBadge = "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 border border-emerald-250 dark:border-emerald-900/30";
                           else if (t.status === "Devolvida") statusBadge = "bg-blue-100 dark:bg-blue-950/40 text-blue-800 dark:text-blue-400 border border-blue-200 dark:border-blue-900/30";
@@ -1717,10 +1822,10 @@ export default function GestaoAulasPage() {
                               </td>
                               <td className="p-4 font-bold text-slate-600 dark:text-slate-400">
                                 <span className="px-2.5 py-1 bg-slate-100 dark:bg-slate-950 rounded-lg border border-slate-200 dark:border-slate-800 text-[10px] uppercase font-black tracking-wide">
-                                  {t.idAtividade === "TRANSFERENCIA-XP" ? "💸 Transferência" : 
-                                   t.idAtividade === "COMPRA_RIFA" ? "🎰 Compra Rifa" : 
-                                   t.idAtividade === "AJUSTE-MANUAL" ? "⚡ Ajuste Manual" : 
-                                   t.idAtividade === "SISTEMA" ? "🤖 Sistema" : `📋 Missão: ${t.idAtividade}`}
+                                  {t.idAtividade === "TRANSFERENCIA-XP" ? "💸 Transferência" :
+                                    t.idAtividade === "COMPRA_RIFA" ? "🎰 Compra Rifa" :
+                                      t.idAtividade === "AJUSTE-MANUAL" ? "⚡ Ajuste Manual" :
+                                        t.idAtividade === "SISTEMA" ? "🤖 Sistema" : `📋 Missão: ${t.idAtividade}`}
                                 </span>
                               </td>
                               <td className="p-4 font-medium max-w-xs truncate" title={t.respostaFormatada}>
@@ -1744,7 +1849,7 @@ export default function GestaoAulasPage() {
                                   <div className="inline-flex gap-1.5">
                                     <button
                                       onClick={() => abrirModalEditarTransacao(t)}
-                                      className="cursor-pointer px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded text-[10px] font-bold text-slate-700 dark:text-slate-350 border border-slate-250 dark:border-slate-700 transition-colors"
+                                      className="cursor-pointer px-2 py-1 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 rounded text-[10px] font-bold text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors"
                                     >
                                       Editar
                                     </button>
@@ -1768,21 +1873,21 @@ export default function GestaoAulasPage() {
                 {/* PAGINAÇÃO */}
                 {!carregandoTransacoes && totalTransacoes > 50 && (
                   <div className="flex justify-between items-center mt-5 px-1">
-                    <span className="text-[11px] font-bold text-slate-550 dark:text-slate-400">
+                    <span className="text-[11px] font-bold text-slate-500 dark:text-slate-400">
                       Mostrando {Math.min(totalTransacoes, (paginaTransacoes - 1) * 50 + 1)} - {Math.min(totalTransacoes, paginaTransacoes * 50)} de {totalTransacoes} registros
                     </span>
                     <div className="flex gap-2">
                       <button
                         disabled={paginaTransacoes === 1}
                         onClick={() => setPaginaTransacoes(prev => prev - 1)}
-                        className="cursor-pointer px-3 py-1.5 bg-white dark:bg-slate-900 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-50 text-slate-750 dark:text-slate-300"
+                        className="cursor-pointer px-3 py-1.5 bg-white dark:bg-slate-900 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-50 text-slate-700 dark:text-slate-300"
                       >
                         Anterior
                       </button>
                       <button
                         disabled={paginaTransacoes * 50 >= totalTransacoes}
                         onClick={() => setPaginaTransacoes(prev => prev + 1)}
-                        className="cursor-pointer px-3 py-1.5 bg-white dark:bg-slate-900 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-50 text-slate-750 dark:text-slate-300"
+                        className="cursor-pointer px-3 py-1.5 bg-white dark:bg-slate-900 text-xs font-bold rounded-lg border border-slate-200 dark:border-slate-800 disabled:opacity-50 text-slate-700 dark:text-slate-300"
                       >
                         Próxima
                       </button>
@@ -1813,7 +1918,7 @@ export default function GestaoAulasPage() {
                   ✕
                 </button>
               </div>
-              
+
               <div className="p-6 space-y-4">
                 <div>
                   <p className="text-xs text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Aluno / Matrícula</p>
@@ -1877,7 +1982,7 @@ export default function GestaoAulasPage() {
               <div className="p-6 border-t border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/40 flex justify-end gap-2.5">
                 <button
                   onClick={() => setTransacaoEditando(null)}
-                  className="cursor-pointer px-4 py-2 border border-slate-250 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 bg-white dark:bg-slate-900 transition-colors"
+                  className="cursor-pointer px-4 py-2 border border-slate-200 dark:border-slate-700 rounded-lg text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-900 bg-white dark:bg-slate-900 transition-colors"
                 >
                   Cancelar
                 </button>

@@ -341,7 +341,7 @@ export default function JogosLayout({
               <div className="w-full flex flex-col sm:flex-row gap-3">
                 <button
                   onClick={onClose}
-                  className="flex-1 py-3 px-4 rounded-xl border border-slate-800 text-slate-300 font-semibold hover:bg-slate-850 hover:text-white transition-all text-sm"
+                  className="flex-1 py-3 px-4 rounded-xl border border-slate-800 text-slate-300 font-semibold hover:bg-slate-800 hover:text-white transition-all text-sm"
                 >
                   Voltar para Lista
                 </button>

@@ -1825,7 +1825,7 @@ export default function GestaoAulasPage() {
 
                           let statusBadge = "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400";
                           if (t.status === "Aguardando Correção") statusBadge = "bg-amber-100 dark:bg-amber-950/40 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-900/30";
-                          else if (t.status === "Avaliado") statusBadge = "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 border border-emerald-250 dark:border-emerald-900/30";
+                          else if (t.status === "Avaliado") statusBadge = "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30";
                           else if (t.status === "Devolvida") statusBadge = "bg-blue-100 dark:bg-blue-950/40 text-blue-800 dark:text-blue-400 border border-blue-200 dark:border-blue-900/30";
                           else if (t.status === "EXCLUIDA") statusBadge = "bg-rose-100 dark:bg-rose-950/40 text-rose-800 dark:text-rose-400 border border-rose-200 dark:border-rose-900/30";
 
@@ -1871,7 +1871,7 @@ export default function GestaoAulasPage() {
                                     </button>
                                     <button
                                       onClick={() => excluirTransacao(t)}
-                                      className="cursor-pointer px-2 py-1 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-950/40 rounded text-[10px] font-bold text-rose-700 dark:text-rose-450 border border-rose-200 dark:border-rose-900/30 transition-colors"
+                                      className="cursor-pointer px-2 py-1 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/20 dark:hover:bg-rose-950/40 rounded text-[10px] font-bold text-rose-700 dark:text-rose-400 border border-rose-200 dark:border-rose-900/30 transition-colors"
                                     >
                                       Excluir
                                     </button>

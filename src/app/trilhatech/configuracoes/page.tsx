@@ -961,7 +961,7 @@ export default function ConfiguracoesPage() {
                       <div className="mt-8 pt-6 border-t border-slate-200 dark:border-slate-800 flex justify-center">
                         <button
                           onClick={() => setAbaAtiva("geral")}
-                          className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-655 text-white text-xs font-black uppercase tracking-wider px-8 py-3.5 rounded-xl transition-all shadow-md cursor-pointer"
+                          className="bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600 text-white text-xs font-black uppercase tracking-wider px-8 py-3.5 rounded-xl transition-all shadow-md cursor-pointer"
                         >
                           Concluí a instalação! Iniciar configuração
                         </button>

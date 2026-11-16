@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable react-hooks/set-state-in-effect */
 "use client";
 
@@ -107,10 +108,10 @@ export default function LojaRifaModal({
               <p className="text-orange-100 font-medium relative z-10 mt-1.5 text-xs tracking-wide uppercase opacity-90">
                 Troque o seu XP por Bilhetes da Rifa Escolar
               </p>
-              
+
               <div className="mt-4 inline-flex items-center gap-3 bg-white/15 rounded-2xl px-6 py-2.5 border border-white/20 relative z-10 shadow-inner">
                 <span className="text-[10px] text-orange-200 font-black uppercase tracking-wider">Saldo Disponível:</span>
-                <span className="text-xl font-display font-black text-white font-mono">{saldoCarteira} XP</span>
+                <span className="text-xl font-black text-white font-mono">{saldoCarteira} XP</span>
               </div>
             </div>
 
@@ -136,32 +137,31 @@ export default function LojaRifaModal({
                         const podeComprar = pct.preco <= limiteGasto;
 
                         return (
-                          <motion.div 
+                          <motion.div
                             key={pct.id}
                             whileHover={podeComprar ? { y: -4, scale: 1.02 } : {}}
                             whileTap={podeComprar ? { scale: 0.98 } : {}}
                             onClick={() => podeComprar && setPacoteSelecionado(pct.id)}
                             style={podeComprar ? { boxShadow: `0 0 30px ${pct.glow}` } : {}}
-                            className={`relative rounded-3xl border-2 p-6 text-center transition-all duration-300 ${
-                              podeComprar 
-                                ? "border-slate-200/80 dark:border-white/10 hover:border-orange-500/50 bg-white/90 dark:bg-[#0e2442]/60 cursor-pointer shadow-md" 
+                            className={`relative rounded-3xl border-2 p-6 text-center transition-all duration-300 ${podeComprar
+                                ? "border-slate-200/80 dark:border-white/10 hover:border-orange-500/50 bg-white/90 dark:bg-[#0e2442]/60 cursor-pointer shadow-md"
                                 : "border-slate-100 dark:border-white/5 opacity-35 bg-slate-50/20 dark:bg-slate-950/10 cursor-not-allowed grayscale"
-                            }`}
+                              }`}
                           >
                             {pct.destaque && podeComprar && (
                               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-orange-500 text-white text-[9px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-md z-20">
                                 {pct.destaque}
                               </div>
                             )}
-                            
+
                             <div className={`w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br ${pct.cor} flex items-center justify-center text-3xl shadow-inner mb-4 relative`}>
                               <div className="absolute inset-0 bg-white/10 rounded-2xl pointer-events-none" />
                               {pct.icon}
                             </div>
-                            
+
                             <h3 className="font-display font-black text-slate-800 dark:text-white uppercase text-xs tracking-wider">{pct.nome}</h3>
-                            <p className="text-3xl font-display font-black text-orange-600 dark:text-orange-400 font-mono my-3">{pct.bilhetes} <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mt-0.5">Tickets</span></p>
-                            
+                            <p className="text-3xl font-black text-orange-600 dark:text-orange-400 font-mono my-3">{pct.bilhetes} <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest block mt-0.5">Tickets</span></p>
+
                             <div className="mt-4 pt-4 border-t border-slate-200 dark:border-slate-800/80">
                               <p className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider mb-1">Preço</p>
                               <p className={`font-black font-mono text-sm ${podeComprar ? "text-slate-800 dark:text-white" : "text-rose-500"}`}>
@@ -178,10 +178,10 @@ export default function LojaRifaModal({
                     </div>
 
                     <div className="mt-8 flex justify-center">
-                      <motion.button 
+                      <motion.button
                         whileHover={{ scale: 1.02 }}
                         whileTap={{ scale: 0.98 }}
-                        onClick={onClose} 
+                        onClick={onClose}
                         className="cursor-pointer px-6 py-2.5 rounded-xl bg-slate-200 dark:bg-white/10 hover:bg-slate-300 dark:hover:bg-white/20 text-slate-700 dark:text-slate-200 font-black text-xs uppercase tracking-widest transition-all"
                       >
                         Sair da Loja
@@ -198,7 +198,7 @@ export default function LojaRifaModal({
                     transition={{ duration: 0.2 }}
                     className="max-w-md mx-auto py-2"
                   >
-                    <button 
+                    <button
                       onClick={() => { setPacoteSelecionado(null); setContratoAceite(false); }}
                       className="text-orange-600 dark:text-orange-400 font-black text-xs uppercase tracking-wider mb-5 hover:underline cursor-pointer flex items-center gap-1.5 active:scale-95 transition-transform"
                     >
@@ -209,7 +209,7 @@ export default function LojaRifaModal({
                       <h3 className="font-display font-black text-slate-800 dark:text-white text-base mb-4 text-center border-b border-slate-200 dark:border-slate-800 pb-4 uppercase tracking-wider">
                         Resumo da Compra
                       </h3>
-                      
+
                       <div className="flex justify-between items-center mb-3 text-xs">
                         <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Pacote Escolhido:</span>
                         <span className="font-black text-slate-800 dark:text-white">{pacotes.find(p => p.id === pacoteSelecionado)?.nome}</span>
@@ -220,14 +220,14 @@ export default function LojaRifaModal({
                       </div>
                       <div className="flex justify-between items-center pt-3.5 border-t border-slate-200 dark:border-slate-800 text-xs">
                         <span className="text-slate-800 dark:text-white font-black uppercase tracking-wider">Total a Pagar:</span>
-                        <span className="font-black text-rose-500 dark:text-rose-455 font-mono text-sm">- {pacotes.find(p => p.id === pacoteSelecionado)?.preco} XP</span>
+                        <span className="font-black text-rose-500 dark:text-rose-400 font-mono text-sm">- {pacotes.find(p => p.id === pacoteSelecionado)?.preco} XP</span>
                       </div>
                     </div>
 
                     {/* CONTRATO DE CONCORDÂNCIA */}
                     <label className="flex items-start gap-3.5 p-4.5 bg-amber-500/10 dark:bg-amber-950/15 border border-amber-500/20 dark:border-amber-900/30 rounded-2xl cursor-pointer hover:bg-amber-500/15 transition-colors">
-                      <input 
-                        type="checkbox" 
+                      <input
+                        type="checkbox"
                         checked={contratoAceite}
                         onChange={(e) => setContratoAceite(e.target.checked)}
                         className="mt-1 w-5 h-5 accent-amber-500 shrink-0 cursor-pointer rounded-lg"
@@ -242,11 +242,10 @@ export default function LojaRifaModal({
                       whileTap={contratoAceite ? { scale: 0.99 } : {}}
                       onClick={efetuarCompra}
                       disabled={comprando || !contratoAceite}
-                      className={`w-full mt-6 py-4 rounded-2xl font-display font-black uppercase tracking-wider text-white transition-all shadow-lg text-xs select-none ${
-                        contratoAceite 
-                          ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 shadow-emerald-500/10 cursor-pointer" 
+                      className={`w-full mt-6 py-4 rounded-2xl font-display font-black uppercase tracking-wider text-white transition-all shadow-lg text-xs select-none ${contratoAceite
+                          ? "bg-gradient-to-r from-emerald-500 to-teal-500 hover:brightness-110 shadow-emerald-500/10 cursor-pointer"
                           : "bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 cursor-not-allowed shadow-none"
-                      }`}
+                        }`}
                     >
                       {comprando ? (
                         <div className="flex items-center justify-center gap-2">

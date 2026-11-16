@@ -183,11 +183,10 @@ export default function AnalyticsPage() {
               setAbaAtiva("geral");
               voltarParaLista();
             }}
-            className={`cursor-pointer px-6 py-3.5 rounded-t-2xl font-black uppercase text-[10px] tracking-wider transition-all whitespace-nowrap relative ${
-              abaAtiva === "geral"
+            className={`cursor-pointer px-6 py-3.5 rounded-t-2xl font-black uppercase text-[10px] tracking-wider transition-all whitespace-nowrap relative ${abaAtiva === "geral"
                 ? "text-indigo-600 dark:text-indigo-400 bg-white/70 dark:bg-slate-900/30 border border-b-transparent border-slate-200 dark:border-slate-800"
                 : "text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-900/10"
-            }`}
+              }`}
           >
             📊 Visão Geral da Escola
             {abaAtiva === "geral" && (
@@ -200,11 +199,10 @@ export default function AnalyticsPage() {
           </button>
           <button
             onClick={() => setAbaAtiva("ficha")}
-            className={`cursor-pointer px-6 py-3.5 rounded-t-2xl font-black uppercase text-[10px] tracking-wider transition-all whitespace-nowrap relative ${
-              abaAtiva === "ficha"
+            className={`cursor-pointer px-6 py-3.5 rounded-t-2xl font-black uppercase text-[10px] tracking-wider transition-all whitespace-nowrap relative ${abaAtiva === "ficha"
                 ? "text-amber-600 dark:text-amber-400 bg-white/70 dark:bg-slate-900/30 border border-b-transparent border-slate-200 dark:border-slate-800"
                 : "text-slate-400 hover:text-slate-700 dark:text-slate-500 dark:hover:text-white hover:bg-slate-50 dark:hover:bg-slate-900/10"
-            }`}
+              }`}
           >
             🔍 Ficha 360º do Aluno
             {abaAtiva === "ficha" && (
@@ -467,12 +465,12 @@ export default function AnalyticsPage() {
                     </div>
                   ) : ficha360 ? (
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                      
+
                       {/* FICHA ESQUERDA: PROFILE */}
                       <div className="lg:col-span-1 space-y-6">
                         <div className="bg-slate-900 text-white rounded-[2.5rem] p-6 shadow-xl relative overflow-hidden border border-white/5">
                           <div className="absolute top-[-10%] right-[-10%] w-48 h-48 bg-indigo-500/10 rounded-full blur-[70px] pointer-events-none" />
-                          
+
                           <div className="w-18 h-18 bg-slate-800 rounded-2xl flex items-center justify-center text-3xl mb-5 border-2 border-slate-700 relative select-none">
                             👤
                           </div>
@@ -635,14 +633,14 @@ export default function AnalyticsPage() {
                                             <span>🕒</span>{" "}
                                             {item.data
                                               ? new Date(item.data)
-                                                  .toLocaleString("pt-BR", {
-                                                    day: "2-digit",
-                                                    month: "2-digit",
-                                                    year: "numeric",
-                                                    hour: "2-digit",
-                                                    minute: "2-digit",
-                                                  })
-                                                  .replace(",", " às")
+                                                .toLocaleString("pt-BR", {
+                                                  day: "2-digit",
+                                                  month: "2-digit",
+                                                  year: "numeric",
+                                                  hour: "2-digit",
+                                                  minute: "2-digit",
+                                                })
+                                                .replace(",", " às")
                                               : "Data recente"}{" "}
                                             • Status: {item.status || "Concluído"}
                                           </p>

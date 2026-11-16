@@ -74,7 +74,7 @@ export default function BadgesGallery({ dados }: { dados: DadosParaBadges }) {
                       whileTap={badge.desbloqueada ? { scale: 0.98 } : {}}
                       className={`relative flex flex-col items-center text-center p-5 rounded-2xl border transition-all duration-300 ${
                         badge.desbloqueada
-                          ? "bg-white dark:bg-slate-800 border-amber-250 dark:border-amber-500/50 shadow-md cursor-pointer"
+                          ? "bg-white dark:bg-slate-800 border-amber-200 dark:border-amber-500/50 shadow-md cursor-pointer"
                           : "bg-slate-100/50 dark:bg-slate-950/15 border-slate-200/50 dark:border-slate-800 opacity-55 grayscale hover:grayscale-[50%] cursor-not-allowed"
                       }`}
                     >

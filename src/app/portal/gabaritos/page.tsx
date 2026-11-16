@@ -470,7 +470,7 @@ export default function GabaritosPage() {
                                       Enviar AVA
                                     </motion.a>
                                   ) : (
-                                    <span className="text-slate-400/50 dark:text-slate-655 font-bold uppercase tracking-wider text-[10px]">
+                                    <span className="text-slate-400/50 dark:text-slate-600 font-bold uppercase tracking-wider text-[10px]">
                                       Não Iniciado
                                     </span>
                                   )}

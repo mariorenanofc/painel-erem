@@ -244,11 +244,11 @@ export default function PortalHeader({
                         } else if (notif.tipo === "DEVOLVIDA") {
                           iconeNotif = "⚠️";
                           corBg = "bg-red-500/10 border-red-500/20";
-                          corTexto = "text-red-650 dark:text-red-400";
+                          corTexto = "text-red-600 dark:text-red-400";
                         } else if (notif.tipo === "AVALIADA") {
                           iconeNotif = "⭐";
                           corBg = "bg-amber-500/10 border-amber-500/20";
-                          corTexto = "text-amber-600 dark:text-amber-450";
+                          corTexto = "text-amber-600 dark:text-amber-400";
                         }
 
                         return (

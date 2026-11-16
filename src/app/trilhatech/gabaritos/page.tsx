@@ -362,7 +362,7 @@ export default function GestaoGabaritosLotePage() {
                                     <span
                                       className={`text-[9px] font-black uppercase px-2 py-0.5 rounded-lg border ${
                                         isQuiz
-                                          ? "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-450"
+                                          ? "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400"
                                           : "bg-blue-500/10 border-blue-500/20 text-blue-600 dark:text-sky-300"
                                       }`}
                                     >

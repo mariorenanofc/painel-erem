@@ -2098,7 +2098,7 @@ export default function PortalDashboard() {
                     </div>
                   </div>
                 ) : (
-                  <p className="text-center text-red-500 dark:text-red-450 py-12 font-black text-sm uppercase tracking-wider">
+                  <p className="text-center text-red-500 dark:text-red-400 py-12 font-black text-sm uppercase tracking-wider">
                     Erro ao carregar os dados de frequência.
                   </p>
                 )}

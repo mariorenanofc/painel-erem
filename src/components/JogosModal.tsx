@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { apiAluno } from "@/src/services/api";
 import { X, Zap, Gamepad2, BrainCircuit } from "lucide-react";
 import JogosLayout from "./games/JogosLayout";
+import { useMotionConfig } from "@/src/lib/motion";
 
 // Importar os 10 mini-jogos
 import CodingSpeedrun from "./games/CodingSpeedrun";
@@ -139,6 +140,7 @@ export default function JogosModal({
 }: JogosModalProps) {
   const [activeGame, setActiveGame] = useState<GameDefinition | null>(null);
   const [xpGanhoHoje, setXpGanhoHoje] = useState(0);
+  const { modalVariants, backdropVariants } = useMotionConfig();
 
   const carregarProgressoXp = useCallback(async () => {
     if (!aluno) return;
@@ -173,9 +175,10 @@ export default function JogosModal({
       <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
         {/* Overlay Escuro */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          variants={backdropVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
           onClick={() => {
             if (!activeGame) onClose();
           }}
@@ -184,9 +187,10 @@ export default function JogosModal({
 
         {/* Janela Modal */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.95 }}
+          variants={modalVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
           className="relative w-full max-w-4xl bg-pft-sand dark:bg-[#08172e] border border-slate-200 dark:border-white/10 rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[92vh] z-10"
         >
           {/* Corpo do Modal: Se não houver jogo ativo, renderiza catálogo. Se houver, renderiza jogo */}

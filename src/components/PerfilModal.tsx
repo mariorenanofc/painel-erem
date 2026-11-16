@@ -6,6 +6,7 @@ import { PerfilAluno, CertificadoPFT } from "@/src/types";
 import { DadosParaBadges } from "@/src/utils/badges";
 import BadgesGallery from "./BadgesGallery";
 import MemorialTab from "./MemorialTab";
+import { useMotionConfig } from "@/src/lib/motion";
 
 interface PerfilModalProps {
   dadosPerfil: PerfilAluno | null;
@@ -53,6 +54,7 @@ export default function PerfilModal({
   onVisualizarCertificado,
 }: PerfilModalProps) {
   const [abaAtiva, setAbaAtiva] = useState<"dados" | "certificados" | "avatar" | "badges" | "aparencia" | "memorial">("dados");
+  const { modalVariants } = useMotionConfig();
   const [selectedBg, setSelectedBg] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("interactiveBg") || "constellation";
@@ -72,9 +74,10 @@ export default function PerfilModal({
     <div className="fixed inset-0 bg-slate-900/40 dark:bg-slate-950/60 backdrop-blur-md flex items-center justify-center z-50 p-4 animate-in fade-in transition-colors duration-300">
       
       <motion.div
-        initial={{ scale: 0.95, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.95, opacity: 0 }}
+        variants={modalVariants}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
         className="glass-panel-heavy w-full max-w-3xl rounded-3xl overflow-hidden flex flex-col max-h-[90vh] shadow-[0_12px_40px_rgba(0,0,0,0.15)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.3)] select-text border border-slate-200 dark:border-white/5 transition-colors duration-300"
       >
         {/* HEADER DO MODAL */}

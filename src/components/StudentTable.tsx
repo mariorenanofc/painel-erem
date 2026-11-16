@@ -24,7 +24,7 @@ const EmailCell = ({ email }: { email?: string }) => {
         <button
           onClick={copiarEmail}
           title={copiado ? "Copiado!" : "Copiar e-mail"}
-          className="cursor-pointer p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition-colors flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 shadow-sm"
+          className="cursor-pointer p-1.5 text-slate-400 hover:text-slate-700 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg active:scale-95 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 shadow-sm"
         >
           {copiado ? (
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">

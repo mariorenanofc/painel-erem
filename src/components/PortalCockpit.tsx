@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { PortalCockpitProps } from "../types";
 import Tooltip from "./ui/Tooltip";
+import { useMotionConfig } from "../lib/motion";
 
 export default function PortalCockpit({
   nomeAluno,
@@ -22,8 +23,13 @@ export default function PortalCockpit({
   onAbrirBilhetes,
   onAbrirRegulamento,
   onAbrirCertificados,
+  proximaMissao,
+  missoesDevolvidas = [],
+  onAbrirMissao,
 }: PortalCockpitProps) {
   const primeiroNome = nomeAluno ? nomeAluno.split(" ")[0] : "Estudante";
+  const { springTransition, easeOutTransition, prefersReduced } = useMotionConfig();
+  const isRetaFinal = !progressoNivel.isMaximo && progressoNivel.porcentagem >= 75;
 
   return (
     <div className="max-w-[1536px] w-full mx-auto p-4 md:p-8 mt-6 relative z-10">
@@ -316,13 +322,22 @@ export default function PortalCockpit({
             </Tooltip>
           </div>
 
-          {/* CARD DE PROGRESSO DE NÍVEL REFINADO */}
-          <div className="relative overflow-hidden bg-white/90 dark:bg-slate-900/70 backdrop-blur-2xl rounded-3xl p-6 border border-slate-200 dark:border-white/10 w-full flex-1 flex flex-col justify-center shadow-xs dark:shadow-md transition-colors duration-300">
+          {/* CARD DE PROGRESSO DE NÍVEL REFINADO (Regra 12: Goal-Gradient Effect) */}
+          <div className={`relative overflow-hidden bg-white/90 dark:bg-slate-900/70 backdrop-blur-2xl rounded-3xl p-6 border w-full flex-1 flex flex-col justify-center shadow-xs dark:shadow-md transition-colors duration-300 ${isRetaFinal ? "border-emerald-400/60 dark:border-emerald-500/40 ring-1 ring-emerald-500/20" : "border-slate-200 dark:border-white/10"}`}>
             <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
-              <span>Progresso de Evolução</span>
-              <span className="text-orange-600 dark:text-orange-400 font-mono px-2 py-0.5 rounded-md bg-orange-500/10 border border-orange-500/20 font-bold">
+              <span className="flex items-center gap-1.5">
+                Progresso de Evolução
+                {!progressoNivel.isMaximo && (
+                  <span className="px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-mono">
+                    {progressoNivel.porcentagem}%
+                  </span>
+                )}
+              </span>
+              <span className={`font-mono px-2 py-0.5 rounded-md border font-bold ${isRetaFinal ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/30 animate-pulse" : "text-orange-600 dark:text-orange-400 bg-orange-500/10 border-orange-500/20"}`}>
                 {progressoNivel.isMaximo
                   ? "Nível Máximo!"
+                  : isRetaFinal
+                  ? `🔥 Reta Final → ${progressoNivel.nomeProximo}`
                   : `Rumo ao ${progressoNivel.nomeProximo}`}
               </span>
             </div>
@@ -330,10 +345,10 @@ export default function PortalCockpit({
             {/* Trilha de Progresso com Brilho Neon */}
             <div className="w-full bg-slate-100 dark:bg-slate-950/90 rounded-full h-3.5 mb-3 overflow-hidden shadow-inner border border-slate-200 dark:border-white/5 p-0.5">
               <motion.div
-                initial={{ width: 0 }}
+                initial={prefersReduced ? { width: `${progressoNivel.porcentagem}%` } : { width: 0 }}
                 animate={{ width: `${progressoNivel.porcentagem}%` }}
-                transition={{ duration: 1.2, ease: "easeOut" }}
-                className="bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600 h-full rounded-full relative shadow-xs"
+                transition={prefersReduced ? { duration: 0 } : { duration: 1.1, ease: [0.22, 1, 0.36, 1] }}
+                className={`h-full rounded-full relative shadow-xs ${isRetaFinal ? "bg-gradient-to-r from-emerald-500 via-teal-400 to-emerald-600" : "bg-gradient-to-r from-orange-500 via-amber-500 to-orange-600"}`}
               >
                 <div className="absolute top-0 left-0 w-full h-full bg-white/20 animate-pulse rounded-full" />
               </motion.div>
@@ -342,6 +357,14 @@ export default function PortalCockpit({
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 text-center">
               {progressoNivel.isMaximo ? (
                 "🏆 Você alcançou o topo supremo do Trilha Tech!"
+              ) : isRetaFinal ? (
+                <>
+                  🔥 Quase lá! Faltam apenas{" "}
+                  <strong className="text-emerald-600 dark:text-emerald-400 font-black font-mono">
+                    {progressoNivel.faltam.toLocaleString("pt-BR")} XP
+                  </strong>{" "}
+                  para desbloquear <strong className="text-slate-700 dark:text-white">{progressoNivel.nomeProximo}</strong>!
+                </>
               ) : (
                 <>
                   Faltam{" "}
@@ -355,6 +378,91 @@ export default function PortalCockpit({
           </div>
         </div>
       </motion.div>
+
+      {/* ========================================================= */}
+      {/* REGRAS 16 & 19: ZEIGARNIK EFFECT (PENDÊNCIAS URGENTES) & VON RESTORFF (PRÓXIMA MISSÃO) */}
+      {/* ========================================================= */}
+      {(missoesDevolvidas.length > 0 || proximaMissao) && (
+        <div className="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-4">
+          {/* Zeigarnik Effect: Missões Devolvidas Aguardando Correção */}
+          {missoesDevolvidas.length > 0 && onAbrirMissao && (
+            <motion.div
+              initial={prefersReduced ? { opacity: 0 } : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={easeOutTransition}
+              className={`${proximaMissao ? "lg:col-span-6" : "lg:col-span-12"} relative overflow-hidden bg-red-50/95 dark:bg-red-950/35 border border-red-300 dark:border-red-500/40 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md`}
+            >
+              <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+                <div className="w-11 h-11 rounded-2xl bg-red-500/15 border border-red-500/30 flex items-center justify-center text-2xl shrink-0 animate-pulse">
+                  ⚠️
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-red-500 text-white shadow-xs">
+                      Ação Necessária
+                    </span>
+                    <span className="text-[11px] font-bold text-red-700 dark:text-red-300">
+                      {missoesDevolvidas.length} {missoesDevolvidas.length === 1 ? "missão devolvida" : "missões devolvidas"}
+                    </span>
+                  </div>
+                  <h4 className="font-display font-black text-slate-800 dark:text-white text-sm sm:text-base truncate">
+                    {missoesDevolvidas[0].titulo}
+                  </h4>
+                  <p className="text-xs text-red-700/80 dark:text-red-300/80 truncate">
+                    O tutor devolveu para ajustes. Corrija e reenvie para garantir seu XP!
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onAbrirMissao(missoesDevolvidas[0])}
+                className="cursor-pointer w-full sm:w-auto shrink-0 px-4 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-black text-xs shadow-md shadow-red-600/20 active:scale-95 transition-all"
+              >
+                Corrigir Agora →
+              </button>
+            </motion.div>
+          )}
+
+          {/* Von Restorff Effect: Próximo Passo Recomendado em Destaque */}
+          {proximaMissao && onAbrirMissao && (
+            <motion.div
+              initial={prefersReduced ? { opacity: 0 } : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={springTransition}
+              className={`${missoesDevolvidas.length > 0 ? "lg:col-span-6" : "lg:col-span-12"} relative overflow-hidden bg-gradient-to-r from-orange-50 via-amber-50/80 to-white dark:from-[#10294c] dark:via-[#0e2442] dark:to-[#08172e] border border-orange-300 dark:border-orange-500/40 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md hover:shadow-lg transition-shadow`}
+            >
+              <div className="flex items-start sm:items-center gap-3.5 min-w-0">
+                <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-orange-500 to-amber-500 text-white flex items-center justify-center text-2xl shrink-0 shadow-md shadow-orange-500/25">
+                  🎯
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <span className="text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-500 text-white shadow-xs">
+                      Próximo Passo
+                    </span>
+                    <span className="text-[11px] font-bold text-orange-700 dark:text-orange-300">
+                      ⭐ +{proximaMissao.xp} XP
+                    </span>
+                  </div>
+                  <h4 className="font-display font-black text-slate-800 dark:text-white text-sm sm:text-base truncate">
+                    {proximaMissao.titulo}
+                  </h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 truncate">
+                    {proximaMissao.modulo || "Trilha Principal"} • Pronta para entrega
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => onAbrirMissao(proximaMissao)}
+                className="cursor-pointer w-full sm:w-auto shrink-0 px-5 py-2.5 rounded-xl bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-black text-xs shadow-md shadow-orange-500/25 active:scale-95 transition-all"
+              >
+                Fazer Agora →
+              </button>
+            </motion.div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

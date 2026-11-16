@@ -60,8 +60,54 @@ A transição gradual do Google Sheets para o Firestore Nativo (Fase 4) está co
    - [x] **Auditoria de Canonicidade:** Eliminação de classes arbitrárias fora da escala oficial do Tailwind CSS e validação estrita (npx tsc --noEmit código 0).
 
 
+7. **Blindagem de Automação de Ciclos, Fuso de Brasília & Fechamento Semanal W46 (Concluído em 13/11/2026):**
+   - [x] Criação de `getDataBrasilia(date?: Date)` em `src/lib/dateUtils.ts` via `Intl.DateTimeFormat` (`America/Sao_Paulo`), eliminando distorções de fuso horário nos servidores UTC da Vercel.
+   - [x] Correção de chave padrão e seleção inteligente em `src/lib/ciclosEngine.ts` com base no dia e horário de corte configurados.
+   - [x] Verificação passiva Just-in-Time em `src/app/api/action-proxy/route.ts` (`listar_historico_ciclos`), garantindo fechamento instantâneo se o cron falhar.
+   - [x] Apuração oficial da Semana 46 com 20 estudantes bonificados no Top 10 e disparo de novidades `v2.4.0`.
+
+---
+
+## 6. 🎨 Fase 7: Refinamento de UI/UX, Microinterações & Psicologia Cognitiva (Os 20 Princípios)
+
+Plano de ação estruturado para transformar a plataforma em uma experiência ultra-polida, fluida e instintiva para estudantes e tutores, alinhado aos 20 princípios de animação, design de produto e psicologia cognitiva, respeitando a Constituição do Agente ([`.agents/AGENTS.md`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/.agents/AGENTS.md)).
+
+> 📊 **Impacto Firestore:** 0 leituras extras (opera exclusivamente com a visão consolidada CQRS `portal_views` e cache em memória).
+> ⚡ **Zero Regressões:** Manter estritamente tipos fortes (Zero `any`), compilação limpa (`npx tsc --noEmit`) e classes canônicas do Tailwind CSS.
+
+### 📋 Checklist de Execução por Etapas:
+
+- [x] **Etapa 7.1: Fundação de Acessibilidade & Física de Movimento (Regras 9, 2, 3, 7, 8)**
+  - [x] Adicionar suporte a `prefers-reduced-motion` no CSS global (`src/app/globals.css`) e hook unificado (`src/lib/motion.ts`) para desativar molas/escalas para usuários com sensibilidade vestibular.
+  - [x] Padronizar física de mola elástica (`spring physics`: `stiffness: 300-340, damping: 26-28`) e desaceleração suave (`easeOut on enter`) nos modais compartilhados (`CertificadosModal`, `ResponderMissaoModal`, `NovidadesModal`, `PerfilModal`, `JogosModal`).
+  - [x] Completar feedback de toque (`active:scale-95`) e elevação ao passar o mouse (`hover:-translate-y-1` + sombra difusa) nas tabelas e cards de certificados.
+
+- [x] **Etapa 7.2: Skeleton Loading & Eliminação de Spinners de Bloqueio (Regra 5)**
+  - [x] Criar `<CockpitSkeleton />`, `<GabaritoGridSkeleton />` e `<TableSkeleton />` em `src/components/Skeletons.tsx` com placeholders pulsando no formato real dos cards.
+  - [x] Substituir a tela de bloqueio total `TrilhaTechLoader` em `src/app/portal/page.tsx` pela montagem instantânea com esqueleto.
+  - [x] Substituir o spinner "Descriptografando matrizes..." em `src/app/portal/gabaritos/page.tsx` por `<GabaritoGridSkeleton />`.
+  - [x] Implementar `<TableSkeleton />` na frequência do aluno e extrato de transações em `src/app/trilhatech/aulas/page.tsx`.
+
+- [x] **Etapa 7.3: Stagger Transitions & Shared Element Layout (Regras 1, 4, 10)**
+  - [x] Implementar entrada em cascata escalonada (`staggerContainer`/`staggerItem`) na lista de trilhas e missões (`src/app/portal/page.tsx`), certificados (`CertificadosModal.tsx`) e ranking docente (`RankingTutorModal.tsx`).
+  - [x] Implementar Shared Element Transition com `layoutId` conectando o card da missão em `src/app/portal/page.tsx` ao `<ResponderMissaoModal.tsx>`, e os cards de certificado ao visualizador em `<CertificadosModal.tsx>`.
+  - [x] Garantir animações interrompíveis e seguras com `useMotionConfig()` respeitando `prefers-reduced-motion`.
+
+- [x] **Etapa 7.4: Psicologia do Aluno: Próximo Passo, Urgência & Metas (Regras 12, 16, 17, 19)**
+  - [x] **Von Restorff Effect (16):** Card mestre *"Próximo Passo"* em destaque visual no Cockpit (`PortalCockpit.tsx`) com acesso direto à próxima missão aberta.
+  - [x] **Zeigarnik Effect (19):** Banner de urgência no Cockpit para tarefas devolvidas pelo tutor aguardando correção com botão *"Corrigir Agora"*.
+  - [x] **Goal-Gradient Effect (12):** Barra de evolução com porcentagem real, destaque de *"Reta Final"* (>= 75%) e texto dinâmico de proximidade de patente.
+  - [x] **Serial Position Effect (17):** Posicionamento das ações de maior retenção nos extremos dos painéis.
+
+- [x] **Etapa 7.5: Optimistic UI & Peak-End Rule (Regras 6, 18, 11, 13, 14, 15, 20)**
+  - [x] **Optimistic UI (6):** Atualização instantânea (0ms) com rollback automático nas avaliações e reversões de entregas pelo tutor (`src/app/trilhatech/aulas/page.tsx`).
+  - [x] **Peak-End Rule (18):** Micro-celebração com confetti (respeitando `prefers-reduced-motion`) no envio bem-sucedido de missões e respostas corretas de quiz (`src/app/portal/page.tsx`) e na visualização/download de certificados oficiais (`CertificadosModal.tsx`).
+  - [x] **Auditoria de Proximidade, Similaridade e Região Comum (13, 14, 15, 20):** Validação final de espaçamentos, agrupamento contextual, zero `any`, e conservação de complexidade no backend CQRS.
+
+---
+
 ### ⏳ Onde Retomar na Próxima Sessão (Checklist de Continuidade)
 1. **Hall da Fama — Etapa 3 (Certificados & Compartilhamento):**
-   - Construir `src/components/CertificadoModal.tsx` (Certificado Digital Verificável) e `src/components/CardCompartilharModal.tsx` (Card para Stories).
+   - Construir `src/components/CertificadoModal.tsx` e `src/components/CardCompartilharModal.tsx`.
 2. **Refatoração Modular do Backend:**
    - Desmembrar gradualmente [`src/app/api/action-proxy/route.ts`](file:///c:/Users/Mario%20Renan/OneDrive/Área%20de%20Trabalho/painel-erem/src/app/api/action-proxy/route.ts) em handlers dedicados por domínio.

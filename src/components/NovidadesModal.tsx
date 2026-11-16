@@ -5,6 +5,7 @@ import { useState, useEffect, useMemo } from "react";
 import confetti from "canvas-confetti";
 import { motion, AnimatePresence } from "framer-motion";
 import ReactMarkdown from "react-markdown";
+import { useMotionConfig } from "../lib/motion";
 
 interface NovidadesModalProps {
   onClose: () => void;
@@ -50,7 +51,20 @@ function extrairEmoji(str: string): { emoji: string; texto: string } {
   return { emoji: "🚀", texto: str };
 }
 
-export const SLIDES_PADRAO_V2_4: SlideNovidade[] = [
+export const SLIDES_PADRAO_V2_5: SlideNovidade[] = [
+  {
+    id: "ux-fase-7",
+    icone: "⚡",
+    badge: "Nova Experiência de Uso",
+    badgeCor: "bg-orange-500/15 text-orange-400 border-orange-500/30",
+    titulo: "Portal Mais Rápido, Fluido e Inteligente!",
+    subtitulo: "Carregamento com esqueletos visuais, foco no próximo passo e celebrações",
+    itens: [
+      { texto: "🎯 **Card Próximo Passo & Alertas:** Seu próximo desafio aberto aparece em destaque direto no Cockpit, além de alertas imediatos para missões que precisem de correção." },
+      { texto: "🔥 **Barra de Evolução Reta Final:** Acompanhe exatamente sua porcentagem e quantos XP faltam para desbloquear a próxima patente." },
+      { texto: "✨ **Transições Fluidas & Skeletons:** Fim das telas de espera giratórias, entrada em cascata nas missões, expansão suave dos cards e celebração ao concluir entregas e certificados!" }
+    ]
+  },
   {
     id: "ranking-semanal-w46",
     icone: "🏆",
@@ -107,7 +121,7 @@ export const SLIDES_PADRAO_V2_4: SlideNovidade[] = [
 
 export default function NovidadesModal({
   onClose,
-  versao = "v2.4.0",
+  versao = "v2.5.0",
   markdown = "",
   matricula = ""
 }: NovidadesModalProps) {
@@ -116,7 +130,7 @@ export default function NovidadesModal({
   // Converte markdown inteligente em slides enxutos ou usa os slides padrão
   const slides: SlideNovidade[] = useMemo(() => {
     if (!markdown || !markdown.trim()) {
-      return SLIDES_PADRAO_V2_4;
+      return SLIDES_PADRAO_V2_5;
     }
 
     // Normaliza divisões de seções (divide por cabeçalhos ### ou divisores ---)
@@ -128,7 +142,7 @@ export default function NovidadesModal({
     }
 
     if (blocosBrutos.length === 0) {
-      return SLIDES_PADRAO_V2_4;
+      return SLIDES_PADRAO_V2_5;
     }
 
     const resultado: SlideNovidade[] = [];
@@ -169,13 +183,16 @@ export default function NovidadesModal({
       });
     });
 
-    return resultado.length > 0 ? resultado : SLIDES_PADRAO_V2_4;
+    return resultado.length > 0 ? resultado : SLIDES_PADRAO_V2_5;
   }, [markdown]);
 
   const totalSlides = slides.length;
   const slide = slides[slideAtual] || slides[0];
 
+  const { prefersReduced, modalVariants, backdropVariants } = useMotionConfig();
+
   useEffect(() => {
+    if (prefersReduced) return;
     confetti({
       particleCount: 70,
       spread: 60,
@@ -183,7 +200,7 @@ export default function NovidadesModal({
       colors: ["#6366f1", "#a855f7", "#fbbf24", "#10b981", "#ffffff"],
       zIndex: 99999
     });
-  }, []);
+  }, [prefersReduced]);
 
   const avancar = () => {
     if (slideAtual < totalSlides - 1) {
@@ -211,18 +228,20 @@ export default function NovidadesModal({
       <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 selection:bg-indigo-500 selection:text-white">
         {/* Backdrop com desfoque profundo */}
         <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
+          variants={backdropVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
           onClick={onClose}
           className="absolute inset-0 bg-slate-950/75 backdrop-blur-md"
         />
 
         {/* Modal Container Compacto e Elegante */}
         <motion.div
-          initial={{ scale: 0.94, opacity: 0, y: 15 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.94, opacity: 0, y: 15 }}
+          variants={modalVariants}
+          initial="hidden"
+          animate="visible"
+          exit="exit"
           transition={{ type: "spring", damping: 25, stiffness: 350 }}
           className="bg-white dark:bg-slate-900 rounded-3xl sm:rounded-[2.2rem] shadow-[0_0_50px_rgba(99,102,241,0.22)] border border-slate-200/90 dark:border-white/10 w-full max-w-lg overflow-hidden flex flex-col relative z-10"
         >

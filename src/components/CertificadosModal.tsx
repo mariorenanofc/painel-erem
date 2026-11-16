@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import confetti from "canvas-confetti";
 import { CertificadoPFT } from "../types";
+import { useMotionConfig } from "../lib/motion";
 
 interface CertificadosModalProps {
   isOpen: boolean;
@@ -98,6 +100,18 @@ export default function CertificadosModal({
   const [certificadoAtivo, setCertificadoAtivo] = useState<CertificadoPFT | null>(null);
   const [carregandoIframe, setCarregandoIframe] = useState(true);
   const [modoExpandido, setModoExpandido] = useState(false);
+  const { modalVariants, backdropVariants, hoverLift, springTransition, staggerContainer, staggerItem, prefersReduced } = useMotionConfig();
+
+  const celebrarCertificado = () => {
+    if (prefersReduced) return;
+    confetti({
+      particleCount: 55,
+      spread: 65,
+      origin: { y: 0.55 },
+      colors: ["#f59e0b", "#34c759", "#ff5500", "#ffffff"],
+      zIndex: 99999,
+    });
+  };
 
   // Sincroniza certificado inicial se fornecido
   useEffect(() => {
@@ -145,9 +159,10 @@ export default function CertificadosModal({
         <div className="fixed inset-0 z-[90] flex items-center justify-center p-2 sm:p-4 md:p-6 overflow-y-auto">
           {/* Backdrop */}
           <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
+            variants={backdropVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             onClick={() => {
               if (certificadoAtivo) {
                 setCertificadoAtivo(null);
@@ -160,10 +175,10 @@ export default function CertificadosModal({
 
           {/* Modal Container */}
           <motion.div
-            initial={{ opacity: 0, scale: 0.96, y: 20 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.96, y: 20 }}
-            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            variants={modalVariants}
+            initial="hidden"
+            animate="visible"
+            exit="exit"
             className={`relative w-full ${
               modoExpandido
                 ? "max-w-[98vw] h-[95vh]"
@@ -176,7 +191,11 @@ export default function CertificadosModal({
             {/* CASO 1: VISUALIZADOR CUSTOMIZADO DO CERTIFICADO DENTRO DO PORTAL */}
             {/* ============================================================== */}
             {certificadoAtivo ? (
-              <div className="flex flex-col flex-1 h-full min-h-[580px] md:min-h-[680px] bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-white select-none">
+              <motion.div
+                layoutId={prefersReduced ? undefined : `cert-card-${certificadoAtivo.id}`}
+                transition={springTransition}
+                className="flex flex-col flex-1 h-full min-h-[580px] md:min-h-[680px] bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-white select-none"
+              >
                 {/* BARRA SUPERIOR CUSTOMIZADA DO VISUALIZADOR */}
                 <div className="p-4 sm:p-5 bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-white/10 backdrop-blur-xl flex flex-wrap items-center justify-between gap-3">
                   {/* Lado Esquerdo: Voltar & Info */}
@@ -184,7 +203,7 @@ export default function CertificadosModal({
                     <button
                       type="button"
                       onClick={() => setCertificadoAtivo(null)}
-                      className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white font-bold text-xs transition-colors shrink-0"
+                      className="cursor-pointer inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-700 dark:bg-white/10 dark:hover:bg-white/20 dark:text-white font-bold text-xs active:scale-95 transition-all shrink-0"
                       title="Voltar para a lista de certificados"
                     >
                       <span>⬅️</span>
@@ -352,7 +371,7 @@ export default function CertificadosModal({
                     </a>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             ) : (
               /* ============================================================== */
               /* CASO 2: LISTA / GRADE DE CERTIFICADOS (MODAL INICIAL) */
@@ -392,7 +411,7 @@ export default function CertificadosModal({
                     {/* Botão Fechar */}
                     <button
                       onClick={onClose}
-                      className="cursor-pointer text-white/80 hover:text-white p-2 rounded-xl hover:bg-white/20 dark:hover:bg-white/10 transition-colors shrink-0"
+                      className="cursor-pointer text-white/80 hover:text-white p-2 rounded-xl hover:bg-white/20 dark:hover:bg-white/10 active:scale-95 transition-all shrink-0"
                       aria-label="Fechar"
                     >
                       <span className="text-xl leading-none">✕</span>
@@ -433,7 +452,12 @@ export default function CertificadosModal({
                     </div>
                   ) : (
                     /* Grid de Certificados */
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <motion.div
+                      variants={staggerContainer}
+                      initial="hidden"
+                      animate="visible"
+                      className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                    >
                       {certificados.map((cert) => {
                         const visual = getModuloVisual(cert.modulo);
                         const estaCopiado = copiadoId === cert.id;
@@ -441,9 +465,11 @@ export default function CertificadosModal({
                         return (
                           <motion.div
                             key={cert.id}
-                            whileHover={{ y: -3 }}
-                            transition={{ duration: 0.2 }}
-                            className="relative bg-slate-50 dark:bg-slate-950/40 rounded-2xl p-5 border border-slate-200/80 dark:border-white/5 shadow-sm hover:shadow-md hover:border-slate-300 dark:hover:border-white/15 transition-all flex flex-col justify-between"
+                            variants={staggerItem}
+                            layoutId={prefersReduced ? undefined : `cert-card-${cert.id}`}
+                            whileHover={hoverLift}
+                            transition={springTransition}
+                            className="relative bg-slate-50 dark:bg-slate-950/40 rounded-2xl p-5 border border-slate-200/80 dark:border-white/5 shadow-sm hover:shadow-lg hover:border-slate-300 dark:hover:border-white/15 transition-shadow flex flex-col justify-between"
                           >
                             {/* Topo do Card */}
                             <div>
@@ -474,7 +500,10 @@ export default function CertificadosModal({
                               {/* Visualizar Dentro do Portal */}
                               <button
                                 type="button"
-                                onClick={() => setCertificadoAtivo(cert)}
+                                onClick={() => {
+                                  celebrarCertificado();
+                                  setCertificadoAtivo(cert);
+                                }}
                                 className="cursor-pointer flex-1 min-w-[120px] inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-600 text-white text-xs font-black shadow-md shadow-indigo-600/20 active:scale-95 transition-all"
                               >
                                 <span>👁️</span>
@@ -487,6 +516,7 @@ export default function CertificadosModal({
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 download
+                                onClick={celebrarCertificado}
                                 className="cursor-pointer flex-1 min-w-[100px] inline-flex items-center justify-center gap-1.5 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black shadow-md shadow-emerald-600/20 active:scale-95 transition-all"
                               >
                                 <span>⬇️</span>
@@ -497,7 +527,7 @@ export default function CertificadosModal({
                               <button
                                 type="button"
                                 onClick={() => copiarLink(cert.id, cert.urlPreview)}
-                                className="cursor-pointer p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800 transition-colors text-xs"
+                                className="cursor-pointer p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-800 active:scale-95 transition-all text-xs"
                                 title="Copiar link do certificado"
                               >
                                 {estaCopiado ? "✅" : "🔗"}
@@ -506,7 +536,7 @@ export default function CertificadosModal({
                           </motion.div>
                         );
                       })}
-                    </div>
+                    </motion.div>
                   )}
                 </div>
 

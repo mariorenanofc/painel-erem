@@ -9,6 +9,7 @@ import { apiAluno, apiGeral } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
 import ThreeInteractiveBg from "@/src/components/ThreeInteractiveBg";
 import PftBackgroundPattern from "@/src/components/PftBackgroundPattern";
+import { GabaritoGridSkeleton } from "@/src/components/Skeletons";
 import { motion, AnimatePresence } from "framer-motion";
 
 export default function GabaritosPage() {
@@ -271,12 +272,7 @@ export default function GabaritosPage() {
 
         {/* GABARITOS MATRIX */}
         {carregando ? (
-          <div className="flex flex-col items-center justify-center py-20">
-            <div className="w-10 h-10 border-4 border-orange-200 dark:border-slate-800 border-t-orange-500 rounded-full animate-spin mb-4" />
-            <p className="font-bold text-xs uppercase tracking-widest text-slate-700 dark:text-slate-300 animate-pulse">
-              Descriptografando matrizes...
-            </p>
-          </div>
+          <GabaritoGridSkeleton />
         ) : Object.keys(matrizAgrupada).length === 0 ? (
           <div className="bg-white/90 dark:bg-[#0e2442]/80 p-12 rounded-[2.5rem] border border-slate-200 dark:border-white/10 text-center text-slate-400 dark:text-slate-500 shadow-md flex flex-col items-center select-none">
             <div className="text-5xl mb-4">✨</div>

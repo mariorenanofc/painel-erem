@@ -29,6 +29,7 @@ import RoletaSorteioModal from "@/src/components/RoletaSorteioModal";
 import AuditoriaEntregasModal from "@/src/components/AuditoriaEntregasModal";
 import LancamentoNovidadesModal from "@/src/components/LancamentoNovidadesModal";
 import PftBackgroundPattern from "@/src/components/PftBackgroundPattern";
+import { TableSkeleton } from "@/src/components/Skeletons";
 
 const fetcherAtividades = async () => {
   return await apiTutor.buscarTodasAtividades("Todas", "Todos");
@@ -712,6 +713,22 @@ export default function GestaoAulasPage() {
   ) => {
     const nota =
       statusAvaliacao === "Devolvida" ? 0 : notasTemp[entrega.idEntrega] || 0;
+    const entregasAnteriores = [...entregas];
+
+    // Regra 6 (Optimistic UI): Atualiza o card na hora (0ms)
+    setEntregas((prev) =>
+      prev.map((e) =>
+        e.idEntrega === entrega.idEntrega
+          ? {
+            ...e,
+            status: statusAvaliacao,
+            xpGanho: nota,
+            feedback: feedbackTutor,
+          }
+          : e,
+      ),
+    );
+
     try {
       const data = await apiTutor.avaliarEntrega(
         entrega.idEntrega,
@@ -723,27 +740,36 @@ export default function GestaoAulasPage() {
       );
       if (data.status === "sucesso") {
         toast(data.mensagem || "Avaliação salva com sucesso!", "success");
-        setEntregas(
-          entregas.map((e) =>
-            e.idEntrega === entrega.idEntrega
-              ? {
-                ...e,
-                status: statusAvaliacao,
-                xpGanho: nota,
-                feedback: feedbackTutor,
-              }
-              : e,
-          ),
-        );
         mutate();
+      } else {
+        setEntregas(entregasAnteriores);
+        toast(data.mensagem || "Não foi possível salvar a avaliação.", "error");
       }
     } catch {
-      toast("Erro ao avaliar.", "error");
+      setEntregas(entregasAnteriores);
+      toast("Erro ao avaliar. Alteração revertida.", "error");
     }
   };
 
   const reverterAluno = async (entrega: Entrega) => {
     if (!confirm(`Deseja realmente reverter a correção desta atividade para ${entrega.nomeAluno}?\n\nO status voltará para "Aguardando Correção" e eventuais pontos concedidos serão estornados.`)) return;
+    const entregasAnteriores = [...entregas];
+
+    // Regra 6 (Optimistic UI): Reverte o estado visual na hora (0ms)
+    setEntregas((prev) =>
+      prev.map((e) =>
+        e.idEntrega === entrega.idEntrega
+          ? {
+            ...e,
+            status: "Aguardando Correção",
+            xpGanho: 0,
+            feedback: "",
+          }
+          : e,
+      ),
+    );
+    setNotasTemp((prev) => ({ ...prev, [entrega.idEntrega]: 0 }));
+
     try {
       const data = await apiTutor.reverterEntrega(
         entrega.idEntrega,
@@ -752,25 +778,14 @@ export default function GestaoAulasPage() {
       );
       if (data.status === "sucesso") {
         toast(data.mensagem || "Entrega revertida para pendente com sucesso!", "success");
-        setEntregas((prev) =>
-          prev.map((e) =>
-            e.idEntrega === entrega.idEntrega
-              ? {
-                ...e,
-                status: "Aguardando Correção",
-                xpGanho: 0,
-                feedback: "",
-              }
-              : e,
-          ),
-        );
-        setNotasTemp((prev) => ({ ...prev, [entrega.idEntrega]: 0 }));
         mutate();
       } else {
+        setEntregas(entregasAnteriores);
         toast(data.mensagem || "Erro ao reverter entrega.", "error");
       }
     } catch {
-      toast("Erro de conexão ao reverter entrega.", "error");
+      setEntregas(entregasAnteriores);
+      toast("Erro de conexão ao reverter entrega. Estado restaurado.", "error");
     }
   };
 
@@ -1775,10 +1790,7 @@ export default function GestaoAulasPage() {
               {/* TABELA DE REGISTROS */}
               <div className="p-4 md:p-6 bg-slate-50/50 dark:bg-slate-950/50 rounded-b-2xl min-h-125 transition-colors duration-300">
                 {carregandoTransacoes ? (
-                  <div className="flex flex-col items-center justify-center py-20 gap-3">
-                    <span className="animate-spin text-3xl">🔄</span>
-                    <p className="text-xs font-bold text-slate-500 dark:text-slate-400">Buscando transações...</p>
-                  </div>
+                  <TableSkeleton rows={6} />
                 ) : transacoes.length === 0 ? (
                   <div className="text-center py-20">
                     <p className="text-sm font-bold text-slate-400 dark:text-slate-500">Nenhuma transação encontrada para os filtros atuais.</p>

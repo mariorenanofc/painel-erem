@@ -257,3 +257,42 @@ body {
   animation: aiPulseGlow 3s ease-in-out infinite;
 }
 
+/* Etapa 7.1: Acessibilidade Vestibular (Regra 9 - Reduced Motion) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  ::before,
+  ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .ai-conic-glow,
+  .ai-pulse-ambient,
+  .animate-bounce,
+  .animate-ping,
+  .animate-pulse {
+    animation: none !important;
+  }
+}
+
+/* Etapa 7.1: Microinterações Reutilizáveis (Regras 7 & 8) */
+.pft-pressable {
+  transition: transform 150ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 200ms ease-out;
+}
+.pft-pressable:active {
+  transform: scale(0.95);
+}
+
+.pft-card-lift {
+  transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1), box-shadow 220ms ease-out, border-color 200ms ease-out;
+}
+.pft-card-lift:hover {
+  transform: translateY(-4px);
+}
+.pft-card-lift:active {
+  transform: scale(0.985);
+}
+
+

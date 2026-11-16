@@ -41,8 +41,9 @@ import DuelosPanel from "@/src/components/DuelosPanel";
 import { apiAluno, apiGeral } from "@/src/services/api";
 import { useToast } from "@/src/contexts/ToastContext";
 import ThreeInteractiveBg from "@/src/components/ThreeInteractiveBg";
-import TrilhaTechLoader from "@/src/components/TrilhaTechLoader";
+import { CockpitSkeleton, TableSkeleton } from "@/src/components/Skeletons";
 import PftBackgroundPattern from "@/src/components/PftBackgroundPattern";
+import { useMotionConfig } from "@/src/lib/motion";
 
 const subscribe = (callback: () => void) => {
   if (typeof window !== "undefined") {
@@ -72,6 +73,7 @@ export default function PortalDashboard() {
   }, [dadosSalvos]);
 
   // ================= ESTADOS =================
+  const { staggerContainer, staggerItem, prefersReduced } = useMotionConfig();
   const [progressoNivel, setProgressoNivel] = useState({
     porcentagem: 0,
     faltam: 0,
@@ -155,7 +157,7 @@ export default function PortalDashboard() {
   const [jogosAberto, setJogosAberto] = useState(false);
   const [arenaAberta, setArenaAberta] = useState(false);
 
-  const [versaoAtualizacao, setVersaoAtualizacao] = useState("v2.4.0");
+  const [versaoAtualizacao, setVersaoAtualizacao] = useState("v2.5.0");
   const [markdownAtualizacao, setMarkdownAtualizacao] = useState("");
   const [modalNovidadesAberto, setModalNovidadesAberto] = useState(false);
   const [cardNotificacaoNovidades, setCardNotificacaoNovidades] = useState(false);
@@ -405,13 +407,29 @@ export default function PortalDashboard() {
         xpCalculado,
       );
       if (data.status === "sucesso") {
-        // 🔥 LÓGICA INTELIGENTE DE FEEDBACK PARA QUIZ VS PROJETO
+        // 🔥 LÓGICA INTELIGENTE DE FEEDBACK PARA QUIZ VS PROJETO (Regra 18: Peak-End Rule)
         if (data.mensagem.includes("Resposta errada")) {
           toast(data.mensagem, "quiz_wrong", "Quase lá...");
         } else if (data.mensagem.includes("Resposta correta")) {
           toast(data.mensagem, "quiz_correct", "Na Mosca!");
+          if (!prefersReduced) {
+            confetti({
+              particleCount: 45,
+              spread: 60,
+              origin: { y: 0.6 },
+              colors: ["#ff5500", "#34c759", "#fbbf24"],
+            });
+          }
         } else {
           toast(data.mensagem, "success", "Missão Enviada!");
+          if (!prefersReduced) {
+            confetti({
+              particleCount: 40,
+              spread: 55,
+              origin: { y: 0.6 },
+              colors: ["#ff5500", "#34c759", "#fbbf24"],
+            });
+          }
         }
 
         setMissaoAberta(null);
@@ -715,6 +733,23 @@ export default function PortalDashboard() {
     setMissaoAberta(missaoAjustada);
   };
 
+  // 🔥 REGRAS 16 & 19: Missões devolvidas (Zeigarnik) e Próxima Missão Recomendada (Von Restorff)
+  const missoesDevolvidas = useMemo(() => {
+    return atividades.filter((a) => a.status?.toLowerCase().trim() === "devolvida");
+  }, [atividades]);
+
+  const proximaMissao = useMemo(() => {
+    return (
+      atividades.find((a) => {
+        const st = a.status?.toLowerCase().trim() || "pendente";
+        if (st !== "pendente") return false;
+        const nomeMod = a.modulo && a.modulo.trim() !== "" ? a.modulo : "Módulo Geral";
+        const modStatus = (trilhasDeEstudo[nomeMod]?.status || "Aberto").toLowerCase();
+        return modStatus === "aberto" || modStatus.includes("recupera");
+      }) || null
+    );
+  }, [atividades, trilhasDeEstudo]);
+
   // 🔥 MOTOR DE TEMAS DE LINGUAGEM
   const getTemaCurso = (nomeCurso: string) => {
     const n = nomeCurso.toLowerCase();
@@ -731,7 +766,7 @@ export default function PortalDashboard() {
 
   // ================= RENDERIZAÇÃO =================
   if (!montado || !aluno || carregandoPortal)
-    return <TrilhaTechLoader />;
+    return <CockpitSkeleton />;
 
   return (
     <main className="min-h-screen relative bg-pft-sand dark:bg-pft-navy-deep text-slate-800 dark:text-slate-100 font-sans pb-12 transition-colors duration-300 overflow-hidden">
@@ -1027,6 +1062,12 @@ export default function PortalDashboard() {
         onAbrirBilhetes={() => setModalBilhetesAberto(true)}
         onAbrirRegulamento={() => setModalRegulamentoAberto(true)}
         onAbrirCertificados={() => setModalCertificadosAberto(true)}
+        proximaMissao={proximaMissao}
+        missoesDevolvidas={missoesDevolvidas}
+        onAbrirMissao={(ativ) => {
+          const nomeMod = ativ.modulo && ativ.modulo.trim() !== "" ? ativ.modulo : "Módulo Geral";
+          abrirMissaoEspecial(ativ, trilhasDeEstudo[nomeMod]?.status || "Aberto");
+        }}
       />
 
       {/* BANNER ÉPICO: HALL DA FAMA */}
@@ -1243,7 +1284,12 @@ export default function PortalDashboard() {
                   <h3 className="font-display font-black text-2xl text-slate-800 dark:text-white mb-6 flex items-center gap-2">
                     <span>🎓</span> Suas Trilhas de Estudo
                   </h3>
-                  <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6">
+                  <motion.div
+                    variants={staggerContainer}
+                    initial="hidden"
+                    animate="visible"
+                    className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-6"
+                  >
                     {Object.entries(trilhasDeEstudo).map(([nomeCurso, info]) => {
                       if (info.missoesFiltradas.length === 0) return null;
 
@@ -1300,8 +1346,9 @@ export default function PortalDashboard() {
 
                       return (
                         <motion.div
-                          whileHover={isTrancado ? {} : { y: -4, scale: 1.02 }}
-                          whileTap={isTrancado ? {} : { scale: 0.98 }}
+                          variants={staggerItem}
+                          whileHover={isTrancado || prefersReduced ? {} : { y: -4, scale: 1.02 }}
+                          whileTap={isTrancado || prefersReduced ? {} : { scale: 0.98 }}
                           key={nomeCurso}
                           onClick={() =>
                             !isTrancado && setCursoSelecionado(nomeCurso)
@@ -1356,7 +1403,7 @@ export default function PortalDashboard() {
                         </motion.div>
                       );
                     })}
-                  </div>
+                  </motion.div>
                 </div>
               ) : (
                 // ================= TELA 2: LISTA DE MISSÕES DO CURSO COM SANFONA DE AULAS =================
@@ -1517,7 +1564,12 @@ export default function PortalDashboard() {
 
                               {!isAulaFechada && (
                                 modoVisualizacao === "grade" ? (
-                                  <div className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-in slide-in-from-top-2 duration-300">
+                                  <motion.div
+                                    variants={staggerContainer}
+                                    initial="hidden"
+                                    animate="visible"
+                                    className="p-4 md:p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"
+                                  >
                                     {missoesDaAula.map((ativ) => {
                                       const st = ativ.status?.toLowerCase().trim();
                                       const isConcluida =
@@ -1528,9 +1580,11 @@ export default function PortalDashboard() {
                                       const isAguardandoValidacao = st === "aguardando validação" || st === "aguardando validacao";
 
                                       return (
-                                        <div
+                                        <motion.div
                                           key={ativ.id}
-                                          className={`bg-white dark:bg-slate-950/60 rounded-2xl border shadow-sm flex flex-col overflow-hidden relative transition-all hover:shadow-xl hover:-translate-y-1 ${isConcluida ? "border-emerald-500/30" : isAguardandoValidacao ? "border-amber-500/40 shadow-amber-500/5" : isDevolvida ? "border-red-500/40" : "border-slate-200/80 dark:border-white/5 hover:border-brand-primary/40"}`}
+                                          variants={staggerItem}
+                                          layoutId={prefersReduced ? undefined : `missao-card-${ativ.id}`}
+                                          className={`bg-white dark:bg-slate-950/60 rounded-2xl border shadow-sm flex flex-col overflow-hidden relative transition-shadow hover:shadow-xl hover:-translate-y-1 ${isConcluida ? "border-emerald-500/30" : isAguardandoValidacao ? "border-amber-500/40 shadow-amber-500/5" : isDevolvida ? "border-red-500/40" : "border-slate-200/80 dark:border-white/5 hover:border-brand-primary/40"}`}
                                         >
                                           <div
                                             className={`h-2 w-full ${isConcluida ? "bg-emerald-500" : isAguardandoValidacao ? "bg-amber-500" : isDevolvida ? "bg-red-500" : !!ativ.resolucaoTyping ? "bg-indigo-500" : ativ.tipo === "Quiz" ? "bg-amber-400" : ativ.tipo === "Material" ? "bg-emerald-400" : "bg-brand-primary"}`}
@@ -1615,10 +1669,10 @@ export default function PortalDashboard() {
                                               </button>
                                             </div>
                                           </div>
-                                        </div>
+                                        </motion.div>
                                       );
                                     })}
-                                  </div>
+                                  </motion.div>
                                 ) : (
                                   /* TRILHA DE APRENDIZADO (TIMELINE) */
                                   <div className="p-6 md:p-10 relative flex flex-col items-center w-full min-h-[250px] overflow-hidden animate-in slide-in-from-top-2 duration-300">
@@ -1938,15 +1992,7 @@ export default function PortalDashboard() {
               {/* Conteúdo rolável */}
               <div className="p-6 md:p-8 overflow-y-auto custom-scrollbar flex-1 bg-white/40 dark:bg-transparent">
                 {carregandoFrequencia ? (
-                  <div className="flex flex-col justify-center items-center py-16 opacity-60">
-                    <div className="relative w-10 h-10 mb-4">
-                      <div className="absolute inset-0 rounded-full border-4 border-slate-200 dark:border-slate-800" />
-                      <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-indigo-500 animate-spin" />
-                    </div>
-                    <p className="font-bold text-slate-600 dark:text-slate-400 text-xs tracking-wider uppercase">
-                      Buscando seu histórico...
-                    </p>
-                  </div>
+                  <TableSkeleton rows={5} />
                 ) : dadosFrequencia ? (
                   <div className="space-y-6 animate-in slide-in-from-bottom-4">
                     {/* Bento Grid de Estatísticas */}

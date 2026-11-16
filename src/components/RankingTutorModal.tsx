@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { AlunoRankingTutor } from "../types";
 import PerfilPublicoModal from "./PerfilPublicoModal";
 import ThreeInteractiveBg from "./ThreeInteractiveBg";
+import { useMotionConfig } from "../lib/motion";
 
 interface AlunoRankingComAvatar extends AlunoRankingTutor {
   avatar?: string;
@@ -34,6 +35,7 @@ export default function RankingTutorModal({
   onExportarCSV,
 }: RankingTutorModalProps) {
   const [perfilAlvo, setPerfilAlvo] = useState<string | null>(null);
+  const { prefersReduced, easeOutTransition } = useMotionConfig();
 
   const turmasRanking = useMemo(() => {
     const turmas = new Set(dadosRanking.map((a) => a.turma));
@@ -284,11 +286,14 @@ export default function RankingTutorModal({
                   </thead>
                   
                   <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                    {rankingFiltrado.map((aluno) => (
-                      <tr
+                    {rankingFiltrado.map((aluno, idx) => (
+                      <motion.tr
                         key={aluno.matricula}
+                        initial={prefersReduced ? { opacity: 0 } : { opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={prefersReduced ? { duration: 0.1 } : { ...easeOutTransition, delay: Math.min(idx * 0.035, 0.35) }}
                         onClick={() => setPerfilAlvo(aluno.matricula)}
-                        className={`cursor-pointer hover:bg-brand-primary/5 dark:hover:bg-slate-800/60 transition-colors ${
+                        className={`cursor-pointer hover:bg-brand-primary/5 dark:hover:bg-slate-800/60 active:scale-[0.99] transition-all ${
                           aluno.posicao && aluno.posicao <= 3
                             ? "bg-amber-500/5 dark:bg-amber-500/[0.03]"
                             : ""
@@ -332,7 +337,7 @@ export default function RankingTutorModal({
                             XP
                           </span>
                         </td>
-                      </tr>
+                      </motion.tr>
                     ))}
                   </tbody>
                 </table>

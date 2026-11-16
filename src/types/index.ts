@@ -491,6 +491,9 @@ export interface PortalCockpitProps {
   onAbrirBilhetes: () => void;
   onAbrirRegulamento: () => void;
   onAbrirCertificados: () => void;
+  proximaMissao?: Atividade | null;
+  missoesDevolvidas?: Atividade[];
+  onAbrirMissao?: (atividade: Atividade) => void;
 }
 
 // ==========================================

@@ -103,6 +103,14 @@ Quando o usuário acionar você com poucos detalhes, identifique o tema pela tab
   3. **Abreviações Canônicas**: Utilizar `shrink-0`, `grow`, `whitespace-nowrap`.
   4. **Higiene de Template Strings**: Em classes dinâmicas com operador ternário no JSX, manter o formato contínuo sem quebras de linha e sem espaços extras para evitar alertas de tokens inválidos no linter do editor.
 
+### 4.6. Padrão Obrigatório de UI/UX, Animação & Psicologia Cognitiva (Os 20 Princípios)
+* **Regra**: Toda nova tela, modal, lista ou fluxo interativo construído no projeto **DEVE obrigatoriamente** seguir os padrões implementados na Fase 7:
+  1. **Acessibilidade & Física (`src/lib/motion.ts` + `globals.css`)**: Importar e utilizar o hook `useMotionConfig()` (`springTransition`, `modalVariants`, `staggerContainer`, `staggerItem`, `prefersReduced`). Nunca criar animações ignorando `prefers-reduced-motion`.
+  2. **Skeleton Loading (`src/components/Skeletons.tsx`)**: É **proibido** usar telas de bloqueio ou spinners giratórios (`animate-spin`) em carregamentos de páginas, tabelas ou grids. Utilizar ou estender `<CockpitSkeleton />`, `<GabaritoGridSkeleton />` ou `<TableSkeleton />`.
+  3. **Stagger & Shared Element (`layoutId`)**: Listas e grids de cards devem usar entrada escalonada em cascata (`staggerContainer`/`staggerItem`). Cards que abrem modais de detalhe devem compartilhar `layoutId` (desativado quando `prefersReduced` for `true`).
+  4. **Feedback Tátil & Elevação**: Todo elemento clicável deve aplicar `active:scale-95` (Press Feedback) e cards interativos devem aplicar `hover:-translate-y-1` + sombra difusa (Hover Lift).
+  5. **Optimistic UI & Psicologia Cognitiva**: Mutações frequentes devem refletir na interface em 0ms com *rollback* em caso de erro; manter destaque para próxima ação recomendada (Von Restorff), alertas de pendências/devolvidas (Zeigarnik), incentivo de reta final em barras de progresso (Goal-Gradient) e micro-celebração em conquistas (Peak-End Rule), mantendo a complexidade matemática e CQRS encapsulada no backend (Tesler's Law).
+
 ---
 
 ## ⚡ 5. Protocolo de Comando Rápido (Acionamento Único)
@@ -169,6 +177,14 @@ Quando o usuário digitar comandos curtos como **"Valide"**, **"Audite"**, **"An
   2. **Paleta de Cores Estrita**: Proibido inventar classes fora da escala nativa (ex: `slate-250`, `slate-350`, `slate-455`, `slate-850`). Utilizar estritamente os degraus oficiais: `50`, `100`, `200`, `300`, `400`, `500`, `600`, `700`, `800`, `900`, `950`.
   3. **Abreviações Canônicas**: Utilizar `shrink-0`, `grow`, `whitespace-nowrap`.
   4. **Higiene de Template Strings**: Em classes dinâmicas com operador ternário no JSX, manter o formato contínuo sem quebras de linha e sem espaços extras para evitar alertas de tokens inválidos no linter do editor.
+
+### 4.6. Padrão Obrigatório de UI/UX, Animação & Psicologia Cognitiva (Os 20 Princípios)
+* **Regra**: Toda nova tela, modal, lista ou fluxo interativo construído no projeto **DEVE obrigatoriamente** seguir os padrões implementados na Fase 7:
+  1. **Acessibilidade & Física (`src/lib/motion.ts` + `globals.css`)**: Importar e utilizar o hook `useMotionConfig()` (`springTransition`, `modalVariants`, `staggerContainer`, `staggerItem`, `prefersReduced`). Nunca criar animações ignorando `prefers-reduced-motion`.
+  2. **Skeleton Loading (`src/components/Skeletons.tsx`)**: É **proibido** usar telas de bloqueio ou spinners giratórios (`animate-spin`) em carregamentos de páginas, tabelas ou grids. Utilizar ou estender `<CockpitSkeleton />`, `<GabaritoGridSkeleton />` ou `<TableSkeleton />`.
+  3. **Stagger & Shared Element (`layoutId`)**: Listas e grids de cards devem usar entrada escalonada em cascata (`staggerContainer`/`staggerItem`). Cards que abrem modais de detalhe devem compartilhar `layoutId` (desativado quando `prefersReduced` for `true`).
+  4. **Feedback Tátil & Elevação**: Todo elemento clicável deve aplicar `active:scale-95` (Press Feedback) e cards interativos devem aplicar `hover:-translate-y-1` + sombra difusa (Hover Lift).
+  5. **Optimistic UI & Psicologia Cognitiva**: Mutações frequentes devem refletir na interface em 0ms com *rollback* em caso de erro; manter destaque para próxima ação recomendada (Von Restorff), alertas de pendências/devolvidas (Zeigarnik), incentivo de reta final em barras de progresso (Goal-Gradient) e micro-celebração em conquistas (Peak-End Rule), mantendo a complexidade matemática e CQRS encapsulada no backend (Tesler's Law).
 
 ---
 

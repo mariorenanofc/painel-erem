@@ -31,7 +31,14 @@ interface DadosTelemetria {
   }>;
 }
 
-export const TEMPLATE_HOJE_MARKDOWN = `### 🏆 Ranking Semanal Apurado (Semana 46)!
+export const TEMPLATE_HOJE_MARKDOWN = `### ⚡ Portal Mais Rápido, Fluido e Inteligente!
+🎯 **Card Próximo Passo & Alertas:** Seu próximo desafio aberto aparece em destaque direto no Cockpit, além de alertas imediatos para missões que precisem de correção.
+🔥 **Barra de Evolução Reta Final:** Acompanhe exatamente sua porcentagem e quantos XP faltam para desbloquear a próxima patente.
+✨ **Transições Fluidas & Skeletons:** Fim das telas de espera giratórias, entrada em cascata nas missões, expansão suave dos cards e celebração ao concluir entregas e certificados!
+
+---
+
+### 🏆 Ranking Semanal Apurado (Semana 46)!
 ⚡ **Fechamento Automático:** Apuração oficial da Semana 46 consolidada com sincronização direta do Google Classroom.
 🎁 **Bônus de XP no Top 10:** Os estudantes com melhor desempenho na semana já receberam seus pontos extras na conta!
 📊 **Consulte sua Posição:** Acesse a aba Ranking no Portal para ver o pódio da sua turma e o ranking geral.
@@ -62,7 +69,7 @@ export default function LancamentoNovidadesModal({ onClose }: LancamentoNovidade
   const [rascunho, setRascunho] = useState(
     "Hoje implementamos: 1) Transição visual completa para a identidade oficial do PFT (Projeto Florescendo Talentos) em 100% do portal (Laranja, Azul Marinho, Areia e Verde Broto); 2) Fundo com grafismo tubular de circuitos e nós tecnológicos; 3) Ajustes finos de alto contraste e hover no Portal, Cockpit, Tutor e Hall da Fama."
   );
-  const [versao, setVersao] = useState("v2.4.0");
+  const [versao, setVersao] = useState("v2.5.0");
   const [markdownGerado, setMarkdownGerado] = useState(TEMPLATE_HOJE_MARKDOWN);
   const [isGerando, setIsGerando] = useState(false);
   const [isSalvando, setIsSalvando] = useState(false);
@@ -93,9 +100,9 @@ export default function LancamentoNovidadesModal({ onClose }: LancamentoNovidade
   }, [abaAtiva, versao]);
 
   const carregarTemplateHoje = () => {
-    setVersao("v2.4.0");
+    setVersao("v2.5.0");
     setMarkdownGerado(TEMPLATE_HOJE_MARKDOWN);
-    toast("Novidades da versão v2.4.0 carregadas!", "info", "Atualizado");
+    toast("Novidades da versão v2.5.0 carregadas!", "info", "Atualizado");
   };
 
   const handleGerarIA = async () => {

@@ -8,6 +8,7 @@ import CodingPractice from "./CodingPractice";
 import { useToast } from "@/src/contexts/ToastContext";
 import { apiAluno } from "@/src/services/api";
 import { PerfilAtualizado } from "./LojaRifaModal";
+import { useMotionConfig } from "@/src/lib/motion";
 
 interface ResponderMissaoModalProps {
   missaoAberta: Atividade;
@@ -64,6 +65,7 @@ export default function ResponderMissaoModal({
   onStatusAtualizado,
 }: ResponderMissaoModalProps) {
   const { toast } = useToast();
+  const { modalTransition, prefersReduced } = useMotionConfig();
   const [resposta, setResposta] = useState(respostaInicial);
   const [timerClassroom, setTimerClassroom] = useState(0);
   const [classroomAberto, setClassroomAberto] = useState(false);
@@ -190,10 +192,11 @@ export default function ResponderMissaoModal({
         isTypingActivity && isPendenteOuDevolvida ? "p-0" : "p-2 md:p-4"
       }`}>
         <motion.div
-          initial={isTypingActivity && isPendenteOuDevolvida ? { opacity: 0 } : { scale: 0.95, opacity: 0, y: 10 }}
+          layoutId={prefersReduced || (isTypingActivity && isPendenteOuDevolvida) ? undefined : `missao-card-${missaoAberta.id}`}
+          initial={(isTypingActivity && isPendenteOuDevolvida) || prefersReduced ? { opacity: 0 } : { scale: 0.95, opacity: 0, y: 10 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={isTypingActivity && isPendenteOuDevolvida ? { opacity: 0 } : { scale: 0.95, opacity: 0, y: 10 }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          exit={(isTypingActivity && isPendenteOuDevolvida) || prefersReduced ? { opacity: 0 } : { scale: 0.95, opacity: 0, y: 10 }}
+          transition={modalTransition}
           className={`glass-panel-heavy w-full ${
             isTypingActivity && isPendenteOuDevolvida 
               ? "w-screen h-screen max-w-full max-h-screen rounded-none border-none" 

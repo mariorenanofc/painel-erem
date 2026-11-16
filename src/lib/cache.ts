@@ -8,6 +8,7 @@ let lastKnownGlobalUpdate: number = 0;
 
 // Caches globais compartilhados para coleções de turmas e atividades
 let globalAtividadesCache: { data: AtividadeCacheItem[]; maiorIdNumerico?: number; updatedAt?: string; timestamp: number } | null = null;
+let lastAtividadesManifestCheck: number = 0;
 const globalClassDatesCache: Record<string, { data: unknown; timestamp: number }> = {};
 let globalModulosCache: { data: unknown; timestamp: number } | null = null;
 export const tutorAtividadesCache: Record<string, { data: unknown; timestamp: number }> = {};
@@ -146,11 +147,13 @@ export function setCachedAtividades(data: AtividadeCacheItem[], updatedAtISO?: s
   } else if (lastKnownGlobalUpdate === 0) {
     lastKnownGlobalUpdate = Date.now();
   }
+  const agora = Date.now();
+  lastAtividadesManifestCheck = agora;
   globalAtividadesCache = {
     data,
     updatedAt: updatedAtISO,
     maiorIdNumerico,
-    timestamp: Date.now()
+    timestamp: agora
   };
 }
 
@@ -292,9 +295,21 @@ export interface AtividadeCacheItem {
   limiteTempoTyping?: number;
 }
 
-export async function loadFirestoreCacheAtividades(dbAdmin: Firestore): Promise<{ atividades: AtividadeCacheItem[]; updatedAt?: string; maiorIdNumerico?: number }> {
-  // 1. Verificar memória RAM (L1) primeiro
-  if (globalAtividadesCache && Date.now() - globalAtividadesCache.timestamp < 1800000) {
+export async function loadFirestoreCacheAtividades(
+  dbAdmin: Firestore,
+  options?: { forceVersionCheck?: boolean }
+): Promise<{ atividades: AtividadeCacheItem[]; updatedAt?: string; maiorIdNumerico?: number }> {
+  const agora = Date.now();
+  const ramValida = Boolean(globalAtividadesCache && agora - globalAtividadesCache.timestamp < 1800000);
+
+  // Tutor (forceVersionCheck): sempre valida o manifesto (1 leitura).
+  // Alunos (padrão): throttle compartilhado de 60s em RAM (1 leitura para toda a turma a cada 60s).
+  const precisaChecarManifesto =
+    ramValida &&
+    (Boolean(options?.forceVersionCheck) || agora - lastAtividadesManifestCheck >= 60000);
+
+  // 1. Verificar memória RAM (L1) dentro da janela de validade sem precisar checar manifesto
+  if (ramValida && !precisaChecarManifesto && globalAtividadesCache) {
     return {
       atividades: globalAtividadesCache.data,
       updatedAt: globalAtividadesCache.updatedAt,
@@ -304,12 +319,30 @@ export async function loadFirestoreCacheAtividades(dbAdmin: Firestore): Promise<
 
   try {
     const cacheDoc = await dbAdmin.collection("cache").doc("atividades_publicadas").get();
+    lastAtividadesManifestCheck = Date.now();
+
     if (cacheDoc.exists) {
       const data = cacheDoc.data();
       const updatedAt = data?.updatedAt as string | undefined;
       const chunkCount = Number(data?.chunkCount) || 0;
       const maiorIdNumerico = Number(data?.maiorIdNumerico) || 0;
       const includesRascunhos = data?.includesRascunhos === true;
+
+      // Se a versão do manifesto no banco for igual à da RAM, retorna direto da RAM sem ler os chunks!
+      if (
+        ramValida &&
+        globalAtividadesCache &&
+        updatedAt &&
+        globalAtividadesCache.updatedAt === updatedAt &&
+        includesRascunhos
+      ) {
+        globalAtividadesCache.timestamp = Date.now();
+        return {
+          atividades: globalAtividadesCache.data,
+          updatedAt: globalAtividadesCache.updatedAt,
+          maiorIdNumerico: globalAtividadesCache.maiorIdNumerico
+        };
+      }
 
       if (chunkCount > 0 && includesRascunhos) {
         const chunkSnaps = await Promise.all(

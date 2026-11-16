@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { dbAdmin } from "@/src/lib/firebaseAdmin";
 import { QueryDocumentSnapshot } from "firebase-admin/firestore";
 import {
-  getCachedTutorAtividades,
-  setCachedTutorAtividades,
   loadFirestoreCacheAtividades,
   loadEstatisticasAtividadesResumo,
 } from "@/src/lib/cache";
@@ -46,24 +44,12 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const filtroTurma = searchParams.get("filtroTurma") || "Todas";
   const filtroTipo = searchParams.get("filtroTipo") || "Todos";
-  const nocache = searchParams.get("nocache") === "true";
-
-  if (!nocache) {
-    const cached = getCachedTutorAtividades(filtroTurma, filtroTipo);
-    if (cached) {
-      return NextResponse.json(cached, {
-        headers: {
-          "Cache-Control": "no-store, max-age=0, must-revalidate"
-        }
-      });
-    }
-  }
 
   try {
-    // 1. Buscar Atividades via Cache Particionado (0 leituras se em RAM, ou 7 leituras dos chunks em vez de 839)
-    // E Obter Estatísticas Consolidadas (0 leituras se em RAM, ou 1 leitura do resumo em vez de 857)
+    // 1. Buscar Atividades via Cache Particionado com Version Check de 1 leitura
+    // Garante que publicações, edições e exclusões reflitam em 0s mesmo entre containers distintos da Vercel.
     const [{ atividades: cachedAtividadesList }, statsMap, modulosCacheDoc] = await Promise.all([
-      loadFirestoreCacheAtividades(dbAdmin),
+      loadFirestoreCacheAtividades(dbAdmin, { forceVersionCheck: true }),
       loadEstatisticasAtividadesResumo(dbAdmin),
       dbAdmin.collection("cache").doc("modulos_gerais").get(),
     ]);
@@ -156,10 +142,6 @@ export async function GET(request: Request) {
       atividades,
       modulosMatriz: listaModulos
     };
-
-    if (!nocache) {
-      setCachedTutorAtividades(filtroTurma, filtroTipo, result);
-    }
 
     return NextResponse.json(result, {
       headers: {

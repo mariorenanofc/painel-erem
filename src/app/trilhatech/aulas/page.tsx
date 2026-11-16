@@ -540,15 +540,27 @@ export default function GestaoAulasPage() {
 
   const excluirAtividade = async (id: string) => {
     if (!confirm(`Tem certeza que deseja excluir a missão ${id}?`)) return;
+    const dadosAnteriores = data;
+    if (data?.atividades) {
+      mutate(
+        {
+          ...data,
+          atividades: data.atividades.filter((a: Atividade) => a.id !== id),
+        },
+        false,
+      );
+    }
     try {
       const res = await apiTutor.excluirAtividade(id);
       if (res.status === "sucesso") {
         toast("Missão excluída!", "success");
-        mutate();
+        await mutate();
       } else {
+        if (dadosAnteriores) mutate(dadosAnteriores, false);
         toast(res.mensagem || "Erro ao excluir atividade.", "error");
       }
     } catch {
+      if (dadosAnteriores) mutate(dadosAnteriores, false);
       toast("Erro ao excluir.", "error");
     }
   };
@@ -672,8 +684,31 @@ export default function GestaoAulasPage() {
       });
       if (res.status === "sucesso") {
         toast("Atividade salva com sucesso!", "success");
+        if (idEditando && data?.atividades) {
+          mutate(
+            {
+              ...data,
+              atividades: data.atividades.map((a: Atividade) =>
+                a.id === idEditando
+                  ? {
+                      ...a,
+                      titulo,
+                      descricao,
+                      dataLimite,
+                      xp: Number(xp),
+                      turmaAlvo,
+                      tipo,
+                      statusPublicacao: statusAcao,
+                      modulo,
+                    }
+                  : a,
+              ),
+            },
+            false,
+          );
+        }
         limparFormulario();
-        mutate();
+        await mutate();
       } else {
         toast(res.mensagem || "Erro ao salvar atividade.", "error");
       }

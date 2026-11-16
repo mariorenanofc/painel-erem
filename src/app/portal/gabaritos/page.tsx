@@ -519,7 +519,7 @@ export default function GabaritosPage() {
                                           whileTap={{ scale: 0.98 }}
                                           href={extra.linkClassroom}
                                           target="_blank"
-                                          className="text-center w-full sm:w-auto bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-600 dark:text-brand-secondary px-4.5 py-2.5 rounded-xl font-black uppercase tracking-wider text-[10px] transition-colors"
+                                          className="text-center w-full sm:w-auto bg-blue-500/10 hover:bg-blue-500/20 border border-blue-500/20 text-blue-600 dark:text-sky-300 px-4.5 py-2.5 rounded-xl font-black uppercase tracking-wider text-[10px] transition-colors"
                                         >
                                           Enviar AVA
                                         </motion.a>

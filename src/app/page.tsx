@@ -444,7 +444,7 @@ export default function DashboardAlunos() {
                     <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200 dark:border-white/5 p-4 rounded-xl shadow-inner text-center">
                       Atualizados
                       <br />
-                      <span className="text-3xl font-display font-black text-blue-600 dark:text-brand-secondary mt-2 block">
+                      <span className="text-3xl font-display font-black text-blue-600 dark:text-sky-400 mt-2 block">
                         {resultadoSiepe.atualizados}
                       </span>
                     </div>

@@ -229,7 +229,7 @@ export default function PerfilModal({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6 pt-4 border-t border-slate-200 dark:border-slate-800">
                     <div>
-                      <label className="block text-[11px] font-bold text-brand-primary dark:text-brand-secondary uppercase tracking-widest mb-1.5">
+                      <label className="block text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-widest mb-1.5">
                         Telefone do Aluno
                       </label>
                       <input
@@ -247,7 +247,7 @@ export default function PerfilModal({
                     </div>
                     
                     <div>
-                      <label className="block text-[11px] font-bold text-brand-primary dark:text-brand-secondary uppercase tracking-widest mb-1.5">
+                      <label className="block text-[11px] font-bold text-orange-600 dark:text-orange-400 uppercase tracking-widest mb-1.5">
                         Telefone do Responsável
                       </label>
                       <input
@@ -298,7 +298,7 @@ export default function PerfilModal({
                         onClick={() => onSalvarAvatar(emoji)}
                         className={`text-4xl p-3 rounded-2xl transition-all aspect-square flex items-center justify-center border-2 ${
                           avatarExibicao === emoji
-                            ? "bg-brand-primary/20 border-brand-primary dark:border-brand-secondary scale-105 shadow-md"
+                            ? "bg-brand-primary/20 border-brand-primary dark:border-orange-400 scale-105 shadow-md"
                             : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-brand-primary/40 hover:bg-slate-100 dark:hover:bg-slate-900"
                         }`}
                       >
@@ -338,7 +338,7 @@ export default function PerfilModal({
                         onClick={() => handleBgSelect(opt.id)}
                         className={`cursor-pointer p-4 rounded-2xl text-left border flex gap-4 transition-all duration-200 relative overflow-hidden ${
                           selectedBg === opt.id
-                            ? "bg-indigo-500/10 border-brand-primary dark:border-brand-secondary ring-1 ring-brand-primary/30"
+                            ? "bg-indigo-500/10 border-brand-primary dark:border-orange-400 ring-1 ring-brand-primary/30"
                             : "bg-white dark:bg-slate-950 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
                         }`}
                       >

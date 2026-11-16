@@ -261,7 +261,7 @@ export default function PortalLogin() {
               setNomeRecuperacao("");
               setDataNascRecuperacao("");
             }}
-            className="text-xs font-bold text-brand-secondary hover:text-indigo-400 transition-colors uppercase tracking-wider"
+            className="cursor-pointer text-xs font-bold text-slate-600 dark:text-sky-300 hover:text-orange-500 dark:hover:text-orange-400 transition-colors uppercase tracking-wider"
           >
             Esqueci minha matrícula
           </button>
@@ -308,7 +308,7 @@ export default function PortalLogin() {
                   </p>
 
                   <div className="bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-brand-primary/30 rounded-2xl p-4 mb-6 shadow-inner">
-                    <span className="text-3xl font-black text-indigo-600 dark:text-brand-secondary font-mono tracking-widest">
+                    <span className="text-3xl font-black text-indigo-600 dark:text-sky-300 font-mono tracking-widest">
                       {resultadoRecuperacao.matricula}
                     </span>
                   </div>

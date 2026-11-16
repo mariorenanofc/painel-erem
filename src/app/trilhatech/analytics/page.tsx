@@ -573,7 +573,7 @@ export default function AnalyticsPage() {
                               <p className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest">
                                 Nível Atual
                               </p>
-                              <p className="text-xl font-display font-black text-blue-600 dark:text-brand-secondary mt-1">
+                              <p className="text-xl font-display font-black text-blue-600 dark:text-sky-400 mt-1">
                                 {ficha360.nivel || "Iniciante"}
                               </p>
                             </div>

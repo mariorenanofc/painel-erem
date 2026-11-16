@@ -200,7 +200,7 @@ export default function LojaRifaModal({
                   >
                     <button 
                       onClick={() => { setPacoteSelecionado(null); setContratoAceite(false); }}
-                      className="text-brand-secondary font-black text-xs uppercase tracking-wider mb-5 hover:underline cursor-pointer flex items-center gap-1.5"
+                      className="text-orange-600 dark:text-orange-400 font-black text-xs uppercase tracking-wider mb-5 hover:underline cursor-pointer flex items-center gap-1.5 active:scale-95 transition-transform"
                     >
                       ← Voltar aos pacotes
                     </button>
@@ -216,7 +216,7 @@ export default function LojaRifaModal({
                       </div>
                       <div className="flex justify-between items-center mb-3 text-xs">
                         <span className="text-slate-400 dark:text-slate-500 font-bold uppercase tracking-wider">Tickets a Receber:</span>
-                        <span className="font-black text-brand-secondary">{pacotes.find(p => p.id === pacoteSelecionado)?.bilhetes} Tickets</span>
+                        <span className="font-black text-orange-600 dark:text-orange-400">{pacotes.find(p => p.id === pacoteSelecionado)?.bilhetes} Tickets</span>
                       </div>
                       <div className="flex justify-between items-center pt-3.5 border-t border-slate-200 dark:border-slate-800 text-xs">
                         <span className="text-slate-800 dark:text-white font-black uppercase tracking-wider">Total a Pagar:</span>

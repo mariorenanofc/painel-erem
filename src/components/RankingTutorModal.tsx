@@ -157,7 +157,7 @@ export default function RankingTutorModal({
                 🏆
               </motion.span>
             </div>
-            <p className="text-xs font-bold text-brand-primary dark:text-brand-secondary animate-pulse tracking-widest uppercase mt-1">
+            <p className="text-xs font-bold text-orange-600 dark:text-orange-400 animate-pulse tracking-widest uppercase mt-1">
               Computando Relatórios...
             </p>
           </div>
@@ -258,7 +258,7 @@ export default function RankingTutorModal({
                 <h3 className="font-bold text-slate-700 dark:text-slate-300 text-xs uppercase tracking-widest">
                   Lista Geral de Alunos
                 </h3>
-                <span className="bg-indigo-500/10 text-brand-primary dark:text-brand-secondary text-[10px] font-black px-2.5 py-1 rounded-full border border-indigo-500/20">
+                <span className="bg-indigo-500/10 text-indigo-700 dark:text-sky-300 text-[10px] font-black px-2.5 py-1 rounded-full border border-indigo-500/20">
                   {rankingFiltrado.length} Alunos
                 </span>
               </div>
@@ -324,7 +324,7 @@ export default function RankingTutorModal({
                         </td>
                         
                         <td className="p-3">
-                          <span className="bg-indigo-500/10 border border-indigo-500/20 text-brand-primary dark:text-brand-secondary text-[10px] font-black px-2 py-0.5 rounded">
+                          <span className="bg-indigo-500/10 border border-indigo-500/20 text-indigo-700 dark:text-sky-300 text-[10px] font-black px-2 py-0.5 rounded">
                             {aluno.nivel}
                           </span>
                         </td>

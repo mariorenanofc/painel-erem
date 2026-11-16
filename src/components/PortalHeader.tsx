@@ -275,7 +275,7 @@ export default function PortalHeader({
                               </p>
                               <div className="flex items-center justify-between gap-2 mt-1">
                                 {notif.xp > 0 && (
-                                  <p className="text-[10px] text-brand-secondary font-black uppercase tracking-wider font-mono">
+                                  <p className="text-[10px] text-orange-600 dark:text-orange-400 font-black uppercase tracking-wider font-mono">
                                     +{notif.xp} XP creditados
                                   </p>
                                 )}
@@ -347,7 +347,7 @@ export default function PortalHeader({
                         Matrícula: {matricula}
                       </p>
                       <div className="flex items-center gap-2 mt-1">
-                        <span className="px-2 py-0.5 rounded-md bg-brand-primary/10 dark:bg-brand-primary/20 text-brand-primary dark:text-brand-secondary text-[10px] font-bold border border-brand-primary/20 dark:border-brand-primary/30">
+                        <span className="px-2 py-0.5 rounded-md bg-orange-500/10 dark:bg-orange-500/20 text-orange-700 dark:text-orange-300 text-[10px] font-bold border border-orange-500/20 dark:border-orange-500/30">
                           {turma}
                         </span>
                         <span className="inline-flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-bold">
